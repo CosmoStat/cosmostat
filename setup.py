@@ -212,7 +212,7 @@ setup(
     package_data=pkgdata,
     scripts=scripts,
     ext_modules=[CMakeExtension(
-        "pycs", sourcedir=os.path.join("src", "cxx"))],
+        "pymrs", sourcedir=os.path.join("src", "cxx"))],
     cmdclass={
         "build_ext": CMakeBuild,
         "test": HybridTestCommand,
