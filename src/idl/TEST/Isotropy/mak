@@ -1,0 +1,4 @@
+ gcc chi2inv.c -o chi2inv -lgsl -lm -lgslcblas -I/opt/local/include -L/opt/local/lib
+gcc psi.c -o psi -lgsl -lm -lgslcblas -I/opt/local/include -L/opt/local/lib
+sudo port install gsl
+

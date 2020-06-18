@@ -1,0 +1,432 @@
+%VERSION:2
+11
+86
+0:BWT01_DIRECT
+1825:BWT01_INVERSE
+2961:DCT
+3512:FASTICA
+4605:GET_STAT
+6094:GMCA1D
+6828:GMCA2D
+7674:INVLINOGRAM
+8298:INVRID2D
+8891:JADE
+9993:SURVIVAL
+;+
+ NAME:
+    BWT01_DIRECT
+
+ PURPOSE:
+    Computes the wavelet transform of bidimensional array. 
+    Returns the first four moments of the wavelet coefficients.
+
+ CATEGORY:
+    Statistical tools for map analysis.
+
+ CALLING SEQUENCE:
+     W = BWT01_DIRECT( ARRAY, N_LEVELS, MOMENT)
+ 
+ INPUTS:
+     ARRAY:       Input map as a bidimensional array (NX, NY)
+     N_LEVELS:    Number of decomposition levels as an integer 
+
+ OPTIONAL INPUTS:
+     
+
+	
+ KEYWORD PARAMETERS:
+
+
+
+ OUTPUTS:
+     W:          Wavelet coefficient map, bidimensional array, same
+                 size as input map (NX, NY).     
+     MOMENT:     A named variable containing the first, second, third
+                 and fourth moment of the distribution of wavelet 
+                 coefficients.
+                 Array (4, 3, N_LEVELS). The first dimension contains
+                 the moments ordered as mentioned above. The second 
+                 dimension corresponds to the horizontal, vertical and
+                 cross coefficients. The third dimension represents
+                 the decomposition level.
+
+
+ OPTIONAL OUTPUTS:
+
+ COMMON BLOCKS:
+
+ SIDE EFFECTS:
+     If too many decomposition levels are requested: 
+          A warning is issued giving the maximum allowed N_LEVELS 
+          The wavelet decomposition is performed with this new value
+
+ RESTRICTIONS:
+    If the input array is not bidimensional, the procedure stops and returns
+    an expression = -1.
+                          
+ PROCEDURE: BWT01_DIR_STEP, CSCAL
+
+ EXAMPLE:
+      map = RANDOMN(seed, 512, 512)
+      W = BWT01_DIRECT( map, 4, moment)
+      print, moment(*, 0, 2)
+      ; Prints the four moments of the horizontal wavelet
+      ; coefficients at the third decomposition level
+
+ MODIFICATION HISTORY:
+      15/05/2002      Olivier FORNI (IAS) For Planck L2-DPC 
+;-
+;+
+ NAME:
+    BWT01_INVERSE
+
+ PURPOSE:
+    Computes the inverse wavelet transform of bidimensional wavelet 
+    coefficient array. 
+
+ CATEGORY:
+    Statistical tools for map analysis.
+
+ CALLING SEQUENCE:
+     W = BWT01_INVERSE( ARRAY, N_LEVELS)
+ 
+ INPUTS:
+     ARRAY:       Input wavelet coefficient map as a bidimensional array
+     N_LEVELS:    Number of decomposition levels as an integer 
+
+ OPTIONAL INPUTS:
+     
+
+	
+ KEYWORD PARAMETERS:
+
+
+
+ OUTPUTS:
+     W:          Map, bidimensional array, same size as the wavelet 
+                 coefficient map (NX, NY).     
+
+
+ OPTIONAL OUTPUTS:
+
+ COMMON BLOCKS:
+
+
+ SIDE EFFECTS:
+     If too many decomposition levels are requested: 
+          A warning is issued giving the maximum allowed N_LEVELS 
+          The wavelet decomposition is performed with this new value
+
+ RESTRICTIONS:
+     Procedure is stopped if: The input array is not bidimensional
+
+ PROCEDURE: BWT01_INV_STEP
+
+ EXAMPLE:
+      map = RANDOMN(seed, 512, 512)
+      W = BWT01_DIRECT( map, 4)
+      map_inverse = BWT01_INVERSE( W, 4)
+
+ MODIFICATION HISTORY:
+      15/05/2002      Olivier FORNI (IAS) For Planck L2-DPC 
+;-
+;+
+Y=dct(X) is the discrete cosine transform of a vector
+X of length N or of a square array X of size NxN.
+
+Z=dct(Y,/INVERSE) computes the inverse
+
+If you are going to do the same transform or the inverse
+many times then it is inefficient to compute C each time.
+You can save C the first time by using keyword T.
+Y1=DCT(X1,T=C) constructs and returns the array C
+while doing the forward transform. Now, with a new
+array X2
+Y2=DCT(X2,C) uses array C without computing it. To do
+the inverse simply
+Z2=DCT(Y2,C,/INVERSE) etc.
+
+H. Rhody
+April 20, 2005
+;-
+;+
+ NAME:
+	fastica
+	
+ PURPOSE:
+	This is a very simple implementation of the fastica algorithm.
+   This code is a simplified adaptation of the code in Matlab freely
+    available at www.cis.hut.fi/projects/ica/fastica/
+
+    It uses a cubic non linearity. Some tuning of the parameters may be necessary to adapt to a particular 
+    application.
+
+ CALLING SEQUENCE:
+	fastica, ObservSig, NbSource, MixingMat,  DeMixingMat, Sources, nonlinearity = nonlinearity
+
+ INPUTS:
+		ObservSig : mixing of input signal (ObservSig = A # input signals)
+               ObservSig(i,*) = ith vector
+       NbSource  : number of sources in input signal
+
+ OPTIONAL INPUTS:
+	nonlinearity: string = 'pow3',  'tanh', 'gaus', 'skew'  or 'sym' . Default is 'pow3'.
+	 
+ KEYWORD PARAMETERS:
+
+ OUTPUTS:
+  MixingMat : demixing matrix (ObservSig = MixingMat #  Sources)
+  DeMixingMat : demixing matrix  (Sources = DeMixingMat # ObservSig)
+  Sources : Reconstructed sources = DeMixingMat # ObservSig
+                Sources(i, *) = ith source, with i = 0. NbSource - 1
+
+ MODIFICATION HISTORY:
+Yassir Moudden & Jerome Bobin
+;-
+;+
+ NAME:
+        get_stat
+
+ PURPOSE:
+		Return statistical information relative to a given data set. The return value is an IDL array of 9 elements.
+			Tab[0] = standard deviation
+			Tab[1] = skewness
+			Tab[2] = Kurtosis
+			Tab[3] = Min
+			Tab[4] = Max 
+			Tab[5] = HC
+			Tab[6] = HC^+
+			Tab[7] = Cumulant of order 5
+			Tab[8] = Cumulant of order 6
+			Tab[9] = Mean
+
+       If the keyword norm is set, the data are first normalized.
+
+ CALLING:
+
+		TabStat = get_stat( Data, HCIma=HCIma, TabStatName=TabStatName, norm=norm, qpplot=qpplot, verb=verb, zeromean=zeromean, TabCumulant=TabCumulant ) 
+       
+ INPUTS:
+		Data -- IDL array : Input data to analyze
+
+ INPUT KEYWORDS:
+		Norm : scalar -- if set, the input data are normalized and centered (i.e. Data = (Data-Mean)/Sigma)
+     qpplot : scalar -- if set, plot the qpplot of the data
+		verb : scalar -- if set, the calculated statists are printed on the screen
+	zeromean : scalar -- if set, the input data are supposed to have a zero mean and are not centered, it is ignored if keyword norm is set
+
+ OUTPUT KEYWORDS: 
+     TabStatName -- IDL table of string: TabStatName = [ "Sigma", "Skewness", "Kurtosis", "Min", "Max", "HC1", "HC2", "CUMULANT ORDER 5", "CUMULANT ORDER 6" ]
+     TabCumulant -- IDL double array [0:5]: 6 first cumulants of Data  ( TabCumulant[c] = cumulant of order c+1 )
+
+ EXAMPLE:
+       TabStat = get_stat(Data, /verb)
+
+ EXTERNAL CALLS:
+
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	September, 2005 File creation
+;-
+;+
+ NAME:
+        GMCA1D
+
+ PURPOSE:
+	 Blind source separation using the fast-GMCA algorithm
+
+ CALLING:
+     GMCA1D,  Data, NbrSources, Sources, MixMat, NbrIter=NbrIter,  COL_CMB=col_cmb,  NbrScale=NbrScale
+
+ INPUTS:
+    Data -- IDL array[*,*,0:Nx-1]  = multichannel data, Nx being the number of channels
+    NbrSources  -- int: Number of sources 
+ 
+ OUTPUTS:
+   Sources-- IDL array of healpix map [*,*,0:Ns-1]  = estimated sources
+   MixMat = Mixing matrix
+
+ KEYWORDS:
+        NBRSCALE  -- LONG: Number of scales of the wavelet transform. Default is 4.
+        NbrIter -- LONG: Number of iterations. Default is 40.
+ 
+ EXTERNAL CALLS:
+         bwt01_lift (written by N. Aghanim and O. Forni)
+
+ HISTORY:
+	Written: Jerome Bobin, 2008
+;-
+;+
+ NAME:
+        GMCA2D
+
+ PURPOSE:
+	 Blind source separation using the fast-GMCA algorithm
+
+ CALLING:
+     GMCA2D,  Data, NbrSources, Sources, MixMat, NbrIter=NbrIter,  COL_CMB=col_cmb,  NbrScale=NbrScale
+
+ INPUTS:
+    Data -- IDL array[*,*,0:Nx-1]  = multichannel data, Nx being the number of channels
+    NbrSources  -- int: Number of sources 
+ 
+ OUTPUTS:
+   Sources-- IDL array of healpix map [*,*,0:Ns-1]  = estimated sources
+   MixMat = Mixing matrix
+
+ KEYWORDS:
+        NBRSCALE  -- LONG: Number of scales of the wavelet transform. Default is 4.
+        NbrIter -- LONG: Number of iterations. Default is 40.
+        COL_CMB -- IDL array [0:Nx-1]: if set, the first column of the matrix is fixed, and is equal to COL_CMB
+ 
+ EXTERNAL CALLS:
+         bwt01_lift (written by N. Aghanim and O. Forni)
+
+ HISTORY:
+	Written: Jerome Bobin, 2008
+;-
+;+
+ NAME:
+	INVLINOGRAM
+	
+ PURPOSE:
+	transformee de radon inverse moyennee
+
+ CALLING SEQUENCE:
+	INVLINOGRAM, trans, recons, tab_indices = tab_indices
+
+ INPUTS:
+	trans -- 2D IDL array: input Radon transform	
+
+ INPUT KEYWORDS:
+		tab_indices -- array : if set, this is an index array to be used for the line extraction in the linogram 
+							if not set, then the array is computed using lino_grid.pro
+
+ OUTPUTS:
+	recons -- 2D IDL array: output reconstructed image
+
+ EXAMPLE:
+       linogram, data, trans
+	invlinogram, trans, recons
+
+ HISTORY:
+	Written:Ludovic POUPARD  & Yassir MOUDDEN, 2005.
+       May, 2005 File creation
+;-
+;+
+ NAME: 
+       INVRID2D
+
+ PURPOSE:
+        Reconstruct an image from its ridgelet transform.   
+
+ CALLING:
+     invrid2d, RidTrans, RecImage
+
+ INPUTS:
+     RidTrans -- IDL structures; Ridgelet transform structure (see RID2D)   
+     
+ OUTPUTS:
+     Imag -- IDL 2D array: reconstructed   image 
+
+ EXTERNAL CALLS
+           invlinogram, invpwt1d
+
+ EXAMPLE:
+    Apply the ridgelet transform and the inverse ridgelet transform
+     rid2d, ima, Rid
+     invrid2d, Rid, RecIma
+
+ HISTORY:
+       Written: Jean-Luc Starck & Yassir Moudden & Ludovic Poupard.
+       September, 2005 File creation
+;-
+;+
+ NAME:
+	jade
+	
+ PURPOSE:
+	Apply the Independant Componant Method to a set of vectors using
+       the JADE method.
+
+ EXPLANATION:
+	compute ICA
+
+ CALLING SEQUENCE:
+	jade, ObservSig, NbSource, DeMixingMat, Process $
+             DispDebug=DispDebug, FileDebug=FileDebug, $
+	      Verbose=Verbose
+ INPUTS:
+		ObservSig : mixing of input signal (ObservSig = A # input signals)
+                    ObservSig(i,*) = ith vector
+       NbSource  : number of sources in input signal
+
+ OPTIONAL INPUTS:
+	DispDebug : debug trace on screen
+	FileDebug : debug trace on file (Trace.dat in local directory)
+	Verbose	: verbose
+
+ KEYWORD PARAMETERS:
+
+ OUTPUTS:
+	DeMixingMat : demixing matrix 
+		Process : Reconstructed process = DeMixingMat # ObservSig
+                Process(i, *) = ith Process, with i = 0. NbSource - 1
+
+ DEPENDENCIES:
+
+ RESTRICTIONS:
+
+ PROCEDURES USED:
+	whitening_signal, estimation_cumulant, init_diagonalisation
+	contrast_optimisation, separating_matrix
+
+ EXAMPLE:
+	jade, ObservSig, NbSource, DeMixingMat
+
+ MODIFICATION HISTORY:
+   Philippe Querre, Yassir Moudden and Jean-Luc Starck , 2005
+;-
+;+
+ NAME:
+        survival
+
+ PURPOSE:
+	 Return the survival function relative to a given distribution:
+         if nu < 0,     S(nu) =  #nbr_de_coeff / x < nu  
+         if nu >= 0,    S(nu) =  #nbr_de_coeff / x >= nu
+       If the keyword norm is set, the data are first normalized by:
+             Data = (Data- mean(Data)) / sigma(data)
+       If the keyword SigmaNorm is set, the data are first normalized by:
+             Data = Data / SigmaNorm
+       The nu threshold varies between -nsig and +nsig, and nsig has the value 10
+       by default. The keyword Np fixes the number of threshold values.
+       The output is a 2D IDL array:
+           Out[*,0]  = Nu values
+           Out[*,1]  = Survival values
+
+ CALLING:
+
+      TabStat = survival( Data, norm=norm, SigmaNorm=SigmaNorm, Nsig=Nsig, Np=Np, plot=plot ) 
+       
+ INPUTS:
+     Data -- IDL 2D array: Input data to analyze
+
+ INPUT KEYWORDS:
+      Norm  : scalar -- if set, the input data are centered (i.e. Data = (Data-Mean)/Sigma)
+      SigmaNorm: scalar -- if set, the input data are normalized ((i.e. Data = Data/ SigmaNorm)
+      Nsig: float -- Maximum threshold value.
+      Np: int -- Number of thresholds
+      plot : scalar --  if set, plot  log( Out[*,1] + 1) versus Out[*,0]
+
+ OUTPUT KEYWORDS: 
+
+ EXAMPLE:
+       TabStat = survival(Data, /norm)
+
+ EXTERNAL CALLS:
+
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	October, 2005 File creation
+;-

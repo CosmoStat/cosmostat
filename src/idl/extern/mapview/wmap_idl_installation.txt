@@ -1,0 +1,58 @@
+                      WMAP IDL Data Analysis Software V2.0
+
+The WMAP IDL Data Analysis Software is distributed as a gzipped tar file 
+wmap_IDL_v20.tar.gz or as a ZIP file wmap_IDL_v20.zip.  Once expanded, the
+contents will occupy approximately 340 MB.  The size of the actual code is
+small; most of this size is due to a number of reference data files used by the
+code for reprojection functions.
+
+Users who already have a previos version of the distribution can download the
+much smaller file wmap_IDLpro_v20.tar which contains only the IDL procedures
+plus any updated reference files.   The file news.txt gives a list of changes
+since the original V1.0 release. 
+
+This package of IDL routines provides some limited manipulation of the MAP
+time-ordered data and HEALPix maps. See the list_of_routines file in this
+directory for some capabilities of the package.  Use of the WMAP software,
+especially for the time-ordered data, requires familiarity with material in 
+the WMAP explanatory supplement at
+http://lambda.gsfc.nasa.gov/product/map/m_docs.html
+
+The following steps are needed to install the WMAP IDL package:
+
+1. You must have purchased an IDL license ( http://www.rsinc.com/ ).   If you
+   do not have an IDL license, then you may use the procedures as metacode and
+   convert them to your favorite language.    (The MAPVIEW image display widget
+   is available to users without an IDL license using the IDL virtual machine.) 
+   The programs should run on IDL V5.3 or later, and have been tested on 
+   V5.6 - V6.0(linux) and V5.5 (Solaris and  Windows).
+
+2.  You must have the following two IDL software packages installed: 
+
+    (1) The IDL Astronomy Library (http://idlastro.gsfc.nasa.gov/homepage.html)
+        using a version later than June 2003. 
+    (2) The HEALPix Library (http://www.eso.org/science/healpix/) using 
+         version 1.1 or later.
+
+3. You must add the procedures in the /pro subdirectory to your !PATH.  For
+   example, if the current (Unix) directory is /home/user/wmap then the
+   following  can be placed in your IDL startup file.
+
+    !PATH = '/home/user/wmap/pro:' + !PATH
+
+   Alternatively, the IDL_PATH environment variable can be set prior to 
+   entering IDL, e.g., 
+   
+   setenv IDL_PATH "/home/user/wmap/pro:${IDL_PATH}"
+
+4. The /ref subdirectory must be defined as MAP_REF.  For example, if the 
+   current directory is /home/user/wmap , then MAP_REF can be defined as 
+   follows: 
+    
+      setenv MAP_REF  /home/user/wmap/ref
+      
+   Users on WINDOWS machines should set  this environment variable  
+   by going to the Control Panel --> System Properties -- Advanced.   
+
+For installation problems please contact the LAMBDA suggestion page
+http://lambda.gsfc.nasa.gov/contact/contact.cfm

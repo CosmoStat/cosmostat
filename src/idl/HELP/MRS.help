@@ -1,0 +1,3603 @@
+%VERSION:2
+75
+808
+0:MRS_GETWTLOCALVARIANCE
+1258:MRS_ALLSTAT
+6608:MRS_ALM2SPEC
+7293:MRS_ALM_INPAINTING
+8855:MRS_ALMREC
+10439:MRS_ALMTRANS
+13563:MRS_ATWT
+15344:MRS_CBFILTER
+17514:MRS_CROSSPOWSPEC
+18628:MRS_CURFILTER
+21654:MRS_CURGET
+22891:MRS_CURPUT
+23681:MRS_CURREC
+24401:MRS_CURSTAT
+26799:MRS_CURTRANS
+29791:MRS_DCTREC
+30984:MRS_DCTTRANS
+32059:MRS_DECONV_POWSPEC
+33461:MRS_DILATION
+34221:MRS_EROSION
+34965:MRS_FASTICA
+37570:MRS_GLESP
+38479:MRS_INIT
+46297:MRS_INVSPLIT
+47591:MRS_ITWIENER
+49648:MRS_JADE
+52360:MRS_LAT_INDEX
+53220:MRS_MASTER_POWSPEC
+54112:MRS_MATMASK
+54661:MRS_MCA
+58728:MRS_MEDIAN
+59461:MRS_MMT
+60653:MRS_NEEDLET_FILTERS
+61898:MRS_OWTGET
+63083:MRS_OWTPUT
+64019:MRS_OWTREC
+64703:MRS_OWTSTAT
+67277:MRS_OWTTRANS
+68791:MRS_PHT
+70255:MRS_PMT
+71723:MRS_POWSPEC
+74022:MRS_PWTREC
+76560:MRS_PWTTRANS
+79351:MRS_READ
+80222:MRS_REC
+80859:MRS_RESIZE
+82719:MRS_RIDGET
+83918:MRS_RIDPUT
+84659:MRS_RIDREC
+85303:MRS_RIDSTAT
+87839:MRS_RIDTRANS
+90408:MRS_SPLIT
+92255:MRS_TV
+94310:MRS_UHT
+95500:MRS_WHITENING
+96837:MRS_WIENER
+99976:MRS_WPTRANS
+101678:MRS_WRITE
+102485:MRS_WT1D1DREC
+103127:MRS_WT1D1DTRANS
+105433:MRS_WT_CORRELATE
+107642:MRS_WT_POWSPEC
+109228:MRS_WTFILTER
+113542:MRS_WTGENUS
+114743:MRS_WTGET
+115489:MRS_WTMEXHAT
+116202:MRS_WTPUT
+116942:MRS_WTREC
+119311:MRS_WTSTAT
+123075:MRS_WTTRANS
+127503:MRS_WTTV
+129012:TT
+132776:TTA
+135900:TTI
+143718:~MRS_ALMTRANS
+;+
+ NAME:
+        mrs_GetWTLocalVariance
+
+ PURPOSE:
+       Compute the local variance for each position and for each wavelet scale. of a given map.
+       if the keyword Cl is set (Cl is assumed to a power spectrum), then the variance relative to CL
+       at a given wavelet scale is added to output.
+
+ CALLING:
+     WTLV = mrs_GetWTLocalVariance(InputMap, NbrScale=NbrScale, BS=BS, Cl=Cl, WTTrans=WTTrans)
+
+ INPUTS:
+     InputMap -- Healpix Map = Input Map    
+    
+ OUTPUTS:
+     WTLM -- 2D IDL array = Variance per spatial position and per scale. WTLV
+
+ INPUT KEYWORD: 
+     NbrScale: int = Number of scales to use in the Wavelet Transform. Default is 5.
+     BS: int = block size at the finest scale to compute the local variance. Default is 16.
+     Cl: IDL 1D array = Power Spectrum to be added to the calculated variance. 
+
+ OUTPUT KEYWORD: 
+    WTTrans: wavelet transform of the input map
+
+ EXTERNAL CALL:
+  mrs_almtrans         in mrs_almtrans.pro
+  mrs_bandpass_sigma   in mrs_init.pro
+
+ EXAMPLE:
+       Compute the local RMS at each scale of a given pyramidal wavelet transform: 
+               mrs_pwttrans, Imag, Trans
+               mrs_wt_local_rms, Trans, RMSTrans
+         
+ HISTORY:
+       Written: Jerome Bobin & Jean-Luc Starck, 2012
+;-
+;+
+ NAME:
+        mrs_allstat
+
+ PURPOSE:
+        Return statistical information relative to several multiscales transforms 
+        of a given data set. The six used multiscale transforms are: the pyramidal 
+        wavelet transform, the isotropic undecimated wavelet transform, the ridgelet 
+		 transform with a block size equals to 8, the ridgelet transform with a block
+		 size equals to 16, the ridgelet transform with a block size equals to 32 and
+		 the pyramidal curvelet transform.
+
+		 All statistical informations are computed with the survival option.
+
+        The return value is a IDL structure with several fields for six transforms statistics: 
+
+        Each of the statistics fields is a 2D IDL array of 9 elements times Number of scales and 
+        For each scale j, we have:
+			Tab[0,j] = standard deviation
+			Tab[1,j] = skewness
+			Tab[2,j] = Kurtosis
+			Tab[3,j] = Min
+			Tab[4,j] = Max 
+			Tab[5,j] = HC
+			Tab[6,j] = HC^+
+			Tab[7,j] = Cumulant of order 5
+			Tab[8,j] = Cumulant of order 6
+
+			If TabFile is set, then the statistic is computed on a set of images. Tab[*,*,f] will be the statistic related to the file TabFile[f]
+	CALLING:
+
+		StatData = mrs_allstat( Imag, TabFile=TabFile, NbrScale2D=NbrScale2D, TabStatName=TabStatName, verb=verb, 
+								normMad=normMad, iwt=iwt, owt=owt, rid8=rid8, rid16=rid16, rid32=rid32, cur=cur, 
+								all=all, save=save, TabTransformName=TabTransformName )
+
+	RETURN VALUE
+		StatData -- IDL structure with the following fields:
+				OWT : IDL float array [ 9, NbrScale ], statistics of the Orthogonal Wavelet Transform.
+				OWTSurv : TabSurvStat parameter for Orthogonal Wavelet Transform.
+				OWTSurvNu : TabSurvNu parameter for Orthogonal Wavelet Transform.
+				IWT : IDL float array [ 9, NbrScale ], statistics of the Isotropic Undecimated Wavelet Transform.
+				IWTSurv : TabSurvStat parameter for Isotropic Undecimated Wavelet Transform.
+				IWTSurvNu : TabSurvNu parameter for Isotropic Undecimated Wavelet Transform.
+				Rid8 : IDL float array [ 9, NbrScale ], statistics of the Ridgelet Transform (Length=8).
+				Rid8Surv : TabSurvStat parameter for Ridgelet Transform (Length=8).
+				Rid8SurvNu : TabSurvNu parameter for Ridgelet Transform (Length=8).
+				Rid16 : IDL float array [ 9, NbrScale ], statistics of the Ridgelet Transform (Length=16).
+				Rid16Surv : TabSurvStat parameter for Ridgelet Transform (Length=16).
+				Rid16SurvNu : TabSurvNu parameter for Ridgelet Transform (Length=16).
+				Rid32 : IDL float array [ 9, NbrScale ], statistics of the Ridgelet Transform (Length=32).
+				Rid32Surv : TabSurvStat parameter for Ridgelet Transform (Length=32).
+				Rid32SurvNu : TabSurvNu parameter for Ridgelet Transform (Length=32).
+				Cur : IDL float array [ 9, NbrScale ], statistics of the Curvelet Transform.
+				CurSurv : TabSurvStat parameter for Curvelet Transform.
+				CurSurvNu : TabSurvNu parameter for Curvelet Transform.
+				TabStatName : IDL table of string: TabStatName = [ "Sigma", "Skewness", "Kurtosis", "Min", "Max", "HC1", "HC2", "CUMULANT ORDER 5", "CUMULANT ORDER 6" ]
+				TabTransformName : IDL table of string: TabTransformName=[ 'Orthogonal Wavelet', 'Isotropic Undecimated Wavelet', 'Ridgelet Transform (Length=8)', 
+																			'Ridgelet Transform (Length=16)', 'Ridgelet Transform (Length=32)', 'Curvelet' ]
+
+				If a transform is not chosen, the three corresponding parameters fields are set to 0.
+       
+ INPUTS:
+     Data -- IDL array of healpix map: Input data to analyze
+
+ INPUT KEYWORDS:
+		verb: scalar -- if set, the calculated statistics are printed on the screen
+		NbrScale2D  -- int: number of scales. Default is 4
+		NormMad -- scalar, if set, a normalization is applied to the ridgelet and curvelet coefficients.
+		iwt -- if set, the statistics of the Isotropic Undecimated Wavelet Transform are computed
+		owt -- if set, the statistics of the Orthogonal Wavelet Transform are computed
+		rid8 -- if set, the statistics of the Ridgelet Transform (Length=8) are computed
+		rid16 -- if set, the statistics of the Ridgelet Transform (Length=16) are computed
+		rid32 -- if set, the statistics of the Ridgelet Transform (Length=32) are computed
+		cur -- if set, the statistics of the Curvelet Transform are computed
+		all -- if set, the statistics of all the 6 transforms are computed
+		save -- if set, the results are saved in separate files
+		TabFile -- IDL table of string, list of file where the function read the maps to be analized, in that case, on output, 
+					Imag is the last map that had been proceed and the fields in the return value structure are 3D arrays
+
+ OUTPUT KEYWORDS: 
+		TabStatName -- IDL table of string: TabStatName = [ "Sigma", "Skewness", "Kurtosis", "Min", "Max", "HC1", "HC2", "CUMULANT ORDER 5", "CUMULANT ORDER 6" ]
+		TabTransformName -- IDL table of string: TabTransformName=[ 'Orthogonal Wavelet', 'Isotropic Undecimated Wavelet', 'Ridgelet Transform (Length=8)', 
+																	'Ridgelet Transform (Length=16)', 'Ridgelet Transform (Length=32)', 'Curvelet' ]
+
+ EXAMPLE:
+
+       TabStat = mrs_allstat( Data, NbrScale2D=4, /verb, /all)
+		Compute the six transforms with 4 scales and compute statistical information relative to each scale and transform.
+
+ EXTERNAL CALLS:
+       mrs_ridstat, mrs_curstat, mrs_wtstat
+
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	September, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_alm2spec
+
+ PURPOSE:
+
+   Compute the power spectrum C(l) from the A_{l,m} coefficients.
+              C(l) = 1/(2l+1)  sum_{m=-l}^{m=l} | A_{l,m} |^2   
+
+ CALLING:
+     P = mrs_alm2spec(ALM, StdPS=StdPS)
+
+ INPUTS:
+     ALM -- IDL  structure: Alm coefficient (see mrs_almtransform.pro). 
+    
+ OUTPUTS:
+     P -- 1D IDL fltarr: Power Spectrum (C(l)).
+
+ OUTPUT KEYWORDS:
+    StdPS  -- 1D IDL fltarr:standard deviation of Cl:   StdPS[l] = stddev( PowSpecIma[l, -l:l ]
+
+ EXTERNAL CALLS:
+
+ EXAMPLE:
+       Compute the power spectrum of an image. 
+               P = mrs_powspec(Imag) 
+         
+ HISTORY:
+	Written: Jean-Luc Starck, 2006
+	January, 2006 File creation
+;-
+;+
+ NAME: 
+       MRS_ALM_INPAINTING
+
+ PURPOSE:
+        Apply an inpainting to a spherical map based on a sparse regularization of the spherical harmonics coefficients.
+        The iterative hard thresholding algorithm is used.
+        If a mask is not provided, all pixels with a zero value are considered as missing pixels.
+        A c++ program ($MRS/cxx/mrs_alm_inpainting) is called.
+       If file names are given for the input image and mask, these two images are not loaded into IDL.
+
+ CALLING:
+     InpaintMap = mrs_alm_inpainting(Imag, Mask=Mask, Niter=Niter, OutPowSpec=OutPowSpec, lmax=lmax, gauss=gauss)
+
+ INPUTS:
+     Imag -- IDL 1D array: Input Healpix image to be inpainted 
+     
+ OUTPUTS:
+     InpaintMap -- IDL 1D array: Output inpainted Healpix image   
+          
+ INPUT KEYWORDS:
+      niter: int: number of iterations used in the reconstruction
+      Lmax      : Number of spherical harmonics computed in the decomposition
+                                       (default is 3*nside, should be between 2*nside and 4*nside)
+      FNin: Filename containing the input image. The input image won't be read.
+      FNMask: Filename containing the mask. The mask won't be read.
+      FNOut: Filename containing the results. By default, nothing is written on the disk.
+      FNPS: Filename containing the mask. The mask won't be read.
+
+ OUTPUT KEYWORDS:
+     OutPowSpec: IDL 1D array: Cl of the inpainted map. 
+       
+ EXTERNAL CALLS:
+       mrs_alm_inpainting (C++ program)
+
+ EXAMPLE:
+      
+ HISTORY:
+       Written : Jean-Luc Starck   2009.
+;-
+;+
+ NAME:
+        mrs_almrec
+
+ PURPOSE:
+   Computes the inverse spherical harmonic transform, 
+   using the HEALPix representation (nested data
+   representation by default) or the GLESP representation. 
+
+ CALLING:
+     mrs_almrec, Trans, imag, to_healpix=to_healpix, to_glesp=to_glesp, pin=pin, nx=nx, np=np, pixel_window=pixel_window
+
+ INTPUTS:
+     Trans -- IDL structures of the ALM transform (see mrs_almrec.pro).
+
+ OUTPUTS:
+     Imag -- IDL array of healpix map or GLESP structure: Input image to be transformed 
+
+ KEYWORDS:
+      to_healpix -- scalar: if true, force the output to be in Healpix format
+      to_glesp   -- scalar: if true, force the output to be in GLESP format
+      nx -- int: number of rings in GLESP (should be equal to 4nside)
+                 nx must b larger than 2* lmax
+      np -- int: number of pixels for the central ring in GLESP (should be equal to 8nside)
+                 np must b larger than 4 * lmax
+      pin : -1 equal aera   (default)
+	      0 isa lat/lon  (Theta-Phi image)
+	      1 triangular...etc..
+
+     ! warning : nx must >= 2 * nside !
+                 np must >= 4 * nside !
+
+     pixel_window -- scalar: if set, the image is convolved by the healpix pixel window (only for Healpix map)
+
+ EXTERNAL CALLS:
+       anafast (healpix software)
+       cl2map (glesp software)
+       alm2map_cxx (healpix C++ software)
+
+ EXAMPLE:
+       Compute the inverse spherical harmonix transform  
+               mrs_almrec, AlmTrans, ImagRec 
+         
+ HISTORY:
+	Written: Pierrick Abrial & Jean-Luc Starck, 2005
+	December, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_almtrans
+
+ PURPOSE:
+   Computes the spherical harmonic transform, 
+   using the HEALPix representation (nested data
+   representation by default) or the GLESP representation. 
+
+ CALLING:
+     mrs_almtrans, Imag, Trans, lmax=lmax, complex=complex, ring=ring, psp=psp, norm=norm, tab=tab
+
+ INPUTS:
+     Imag -- IDL array of healpix map or GLESP structure: Input image to be transformed 
+    
+ OUTPUTS:
+     Trans -- IDL structures with the following fields: 
+                      ALM: fltarray[*,2] = real and imaginary part of the ALM
+                           or  cfarr[*] = complex alm values if the keyword complex is set
+                           or  fltarray[NbrMaxM, NbrMaxL, 2] if the keyword tab is set
+                           or cfarr[NbrMaxM, NbrMaxL] of both keyword complex and tab are set.
+                      COMPLEX_ALM = 0 (default) ==> ALM contains the real and imaginary parts
+                                  = 1           ==> ALM contain an IDL complex array
+                                  = 2           ==> ALM contains the power spectrum and the phase
+                      PixelType: int = 0 for Healpix and 1 for GLESP
+                      tab: int = 0 for default ALM representation (i.e. 1D IDL array)
+                               = 1 for 2D representation (i.e. l for the first dimension and m for the second)
+                      nside : int = Healpix nside parameter, only used in Healpix representation
+                      lmax : int = maximum l value in the Spherical Harmonic Space.
+                      npix : int = Number of pixels of the input image (12*nside*nside for Healpix)
+                      complex_alm: int = 1 if the ALM values are in complex format
+                                         2 if the ALM values are in power spectrum and phase
+                      TabNbrM: IDL int array: set only of the /tab keyword is set.
+                      index: IDL int array: ALM pixel indices.
+
+ KEYWORDS:
+      psp       : if set Trans.alm will contain the power spectrum and the phase instead of the real and imaginary parts 
+      complex   : if set Trans.alm will contain complex values instead of the real and imaginary parts 
+      Tab       : if set, ALM coefficients in Trans.alm are stored in a 2D array:
+                           Trans.alm[m,l]  where m = 0.. Trans.TabNbrM[l]-1  and l = 0..lmax-1
+      Lmax      : Number of spherical harmonics computed in the decomposition
+					(HEALPIX==> default is 3*nside, should be between 2*nside and 4*nside)
+					(GLESP==> default is: min([Imag.nx/2, Imag.np/4]
+      ring      : if set, the input data are in Heapix ring representation.
+      psp       : if set, the 
+      norm      : if set, a normalization is performed to the alm coefficient.
+
+
+ EXTERNAL CALLS:
+       anafast (healpix software)
+       cl2map (glesp software)
+
+ EXAMPLE:
+       Compute the spherical harmonix transform of an image. 
+        The result is stored in Output
+               mrs_trans, Imag, Output 
+         
+ HISTORY:
+	Written: Pierrick Abrial & Jean-Luc Starck, 2005
+	December, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_attrans
+
+ PURPOSE:
+		Compute the isotropic wavelet transform on the sphere, using the healPix pixel 
+		representation (NESTED data representation) and using the "A TROU" algorithm. 
+       The wavelet transform is applied successively on the  12 faces of the Healpix image.
+       The output is a IDL structure.
+
+ CALLING:
+     mrs_attrans, Imag, Trans, NbrScale=NbrScale, Opt=Opt, modif=modif, healpix=healpix
+
+ INPUTS:
+     Imag -- IDL array of healpix map: Input image be transformed 
+    
+ OUTPUTS:
+     ATTrans -- IDL structures with the following fields:  
+         NBRSCALE  -- LONG: Number of scales of the wavelet transform
+          COEF      -- 4D IDL array [*,*,*,12] : Wavelet coefficients
+                        cube  containing all wavelet coefficients
+                        COEF[x,y, j, f] = wavelet coeff at face f (f=0..11),
+                                          position x,y and scale j
+	   Nx -- number of pixels on the side of the Healpix patch, nside
+	   Ny -- same as Nx			
+
+ KEYWORDS:
+			NBRSCALE  -- LONG: Number of scales of the wavelet transform, default is 4
+			Opt -- string: if package MR1 is installed, extra keyword used by mr_transform.pro
+			modif: if set, add extra smoothing with spline filtering
+			healpix: if set, change ATTrans.coef to a 2D array [ c, j ] by reordering wavelet coefficients at scale j as a Healpix NESTED map.
+
+ EXTERNAL CALLS:
+
+ EXAMPLE:
+       Compute the orthogonal wavelet transform of an image I with five scales
+       The result is stored in Output
+               mrs_attrans, Imag, WT, NbrScale=5
+               tvscl, WT.coef[*,*,0,f] ; plot the fth face of the first scale of the wavelet transform  
+         
+ HISTORY:
+	Written:  Jean-Luc Starck, 2006
+	October, 2006 File creation
+;-
+;+
+ NAME:
+        mrs_cbfilter
+
+ PURPOSE:
+	Combined filtering using Wavelet and Curvelet of an image on the sphere (Healpix pixel representation).
+       By default Gaussian noise is considered. If the keyword SigmaNoise is not 
+       set, then the noise standard deviation is automatically estimated.
+       If the keyword MAD is set, then a correlated Gaussian noise is considered,
+       and the noise level at each scale is derived from the Median Absolution Deviation (MAD)
+       method. If the keyword KillLastScale is set, the coarsest resolution is set to zero.
+       If the "undec" keyword is used, then a undecimated decomposition is used instead of the
+       pyramidal WT.
+
+ CALLING:
+
+     mrs_cbfilter, Image, Filter, NbrScale=NbrScale, NSigma=NSigma, SigmaNoise=SigmaNoise, 
+                   mad=mad, KillLastScale=KillLastScale, Undec=Undec, FirstBlockSize=FirstBlockSize,
+                   niter=niter, pos=pos, FirstScale=FirstScale       
+    
+ INPUT:
+     Imag -- IDL array of healpix map: Input image be filtered 
+
+ OUTPUT:
+     Filter -- IDL array of healpix map: reconstructed image from the thresholded wavelet coefficients   
+
+ INPUT KEYWORDS:
+      NbrScale : int = Number of scales (default is 4)
+      NSigma: float = Level of thresholding (default is 3)
+      SigmaNoise: float = Noise standard deviation. Default is automatically estimated
+      MAD: int: if set, then the noise level is derive at each scale using the MAD of the
+                        wavelet coefficient. MAD = median ( ABS( WaveletScale) ) / 0.6745
+      KillLastScale: if set, the last scale is set to zero
+      FirstScale: int: Consider only scales larger than FirstScale. Default is 1 (i.e. all scales are used).
+      niter: int = number of iterations. Default is 10.
+      pos: scalar = if set, a positivity constraint is added
+
+
+ OUTPUT KEYWORDS:
+
+ EXTERNAL CALLS:
+       mrs_curtrans
+   	mrs_wcurrec
+       mrs_curget  
+   	mrs_curput
+
+ EXAMPLE:
+       Filter an image with 5 scales. The result is stored in Filter 
+               mrs_cbfilter, Data, Filter, NbrScale=5 
+         
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	February, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_crosspowspec
+
+ PURPOSE:
+   Computes the cross power spectrum of two maps,  using the HEALPix representation (NESTED data
+   representation by default). 
+
+ CALLING:
+     P = mrs_crosspowspec(Map1, Map2, a1=a1, a2=a2, StdPS=StdPS, lmax=lmax)
+
+ INPUTS:
+     Map1 -- IDL array of healpix map: First Input image  
+     Map2 -- IDL array of healpix map: Second Input image 
+    
+ OUTPUTS:
+     P -- 1D IDL fltarr: Cross Power Spectrum. P[k] = Mean(  Alm[Map1] Alm*[Map2]  )
+
+ INPUT/OUTPUT KEYWORDS:
+		a1  -- IDL Alm structure (see mrs_almtrans):  Alm of the image Map1. If this keyword is set, then Map1 is not used.
+		a2  -- IDL Alm structure(see mrs_almtrans):  Alm of the image Map2. If this keyword is set, then Map2 is not used.
+
+ OUTPUT KEYWORDS:
+		StdPS -- 1D IDL float array: contains the estimated standard deviation on the compute cross power spectrum.
+
+ EXTERNAL CALLS:
+       mrs_almtrans.pro
+
+ EXAMPLE:
+       Compute the cross power spectrum of two images. 
+               P = mrs_crosspowspec( Imag ) 
+         
+ HISTORY:
+	Written: Jean-Luc Starck, 2010
+	June, 2010 File creation
+;-
+;+
+ NAME:
+        mrs_curfilter
+
+ PURPOSE:
+	Curvelet denoising of an image on the sphere (Healpix pixel representation).
+       By default Gaussian noise is considered. If the keyword SigmaNoise is not 
+       set, then the noise standard deviation is automatically estimated.
+       If the keyword MAD is set, then a correlated Gaussian noise is considered,
+       and the noise level at each scale is derived from the Median Absolution Deviation (MAD)
+       method. If the keyword KillLastScale the coarsest resolution is set to zero.
+       If the UNDEC keyword is used, then a undecimated decomposition is used instead of the
+       pyramidal WT. If the keyword CYCLE is set, the denoising is performed three times,
+       by shifting the data by PI/4 and -PI/4, denoising the shifted version, and averaging
+       the unshifted denoising maps. This procedure also us to remove the block effect
+       which may appear on the border of the Healpix faces.
+       The threshold curvelet coefficient can be obtained using the keyword Trans.
+  
+       If the input keyword NITER is set, then an iterative algorithm is applied and
+       if the POS keyword is also set, then a positivity constraint is added.
+   
+
+ CALLING:
+
+     mrs_curfilter, Image, Filter, NbrScale=NbrScale, NSigma=NSigma, SigmaNoise=SigmaNoise, 
+                   mad=mad, KillLastScale=KillLastScale, Trans=Trans, Undec=Undec, 
+                   FirstBlockSize=FirstBlockSize, niter=niter, pos=pos, cycle=cycle, FirstScale=FirstScale  
+    
+ INPUT:
+     Imag -- IDL array of healpix map: Input image be filtered 
+
+ OUTPUT:
+     Filter -- IDL array of healpix map: reconstructed image from the thresholded wavelet coefficients   
+
+ INPUT KEYWORDS:
+		NbrScale : int = Number of scales (default is 4)
+		NSigma: float = Level of thresholding (default is 3)
+		SigmaNoise: float = Noise standard deviation. Default is automatically estimated
+		MAD: int: if set, then the noise level is derive at each scale using the MAD of the
+                        wavelet coefficient. MAD = median ( ABS( WaveletScale) ) / 0.6745
+		KillLastScale: if set, the last scale is set to zero
+		Undec: if set, an undecimated WT is used instead of the the pyramidal WT
+		niter: int: number of iterations. By default, there is no iterations
+		pos: int: if set and if niter, then a positivity constaint is added.
+		cycle: int: if set, then a cycle spanning is applied.
+		FirstScale: int: Consider only scales larger than FirstScale. Default is 1 (i.e. all scales are used).
+		FirstBlockSize: int, Block size in the ridgelet transform at the finest scale (default is 16)
+
+ OUTPUT KEYWORDS:
+		Trans -- IDL structure: Thresholded curvelet decomposition of the input image
+
+ EXTERNAL CALLS:
+       mrs_curtrans
+   	mrs_currec
+       mrs_curget  
+   	mrs_curput
+
+ EXAMPLE:
+       Filter an image with 5 scales. The result is stored in Filter 
+               mrs_curfilter, Data, Filter, NbrScale=5 
+         
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	September, 2005 File creation
+;-
+;+
+ NAME: 
+       MRS_CURGET
+
+ PURPOSE: 
+        Extract a curvelet band from the curvelet transform (see mrs_curtrans).   
+        If the keyword NormMad is set, a normalization is applied to all coefficients.   
+
+ CALLING:
+       result = MRS_CURGET( Cur_Struct, ScaleWT2D, ScaleRid, NormMad=NormMad, ImaMean=ImaMean, ImaMad=ImaMad )
+
+ INPUT:
+       Cur_Struct -- IDL structure: Curvelet transform structure (see MRS_CURTRANS) 
+       ScaleWT2D -- int:  Scale of the 2D WT
+       ScaleRid  -- int:  Ridgelet band number
+       NormMad -- scalar: if set, normalized the coefficients by the Median Absolution Deviation
+                          of all coefficients at a give position in the block.
+       ImaMad  -- 2D fltarr: Image containing the normalization parameter
+       ImaMean -- 2D fltarr: Image containing  the mean value for all coefficients at a given position.
+
+ OUTPUTS:
+      Result -- 4D IDL float array[*,*,*,12]: Curvelet band
+             
+ EXTERNAL CALLS
+           mrs_ridget
+
+ EXAMPLE:
+   mrs_curtrans, Imag, Cur 
+   Band = mrs_curget(Cur, 1,2)
+       Extract the the third ridgelet scale inside the second 2D wavelet scale
+
+ HISTORY:
+       Written: Jean-Luc Starck 2005.
+       September, 2005 File creation
+;-
+;+
+ NAME: 
+       MRS_CURPUT
+
+ PURPOSE: 
+        Insert a band in the curvelet transform (see mrs_curtrans).   
+
+ CALLING:
+       MRS_CURPUT, Cur_Struct, Band, ScaleWT2D, ScaleRid
+
+ INPUT:
+       Cur_Struct -- IDL structure: Curvelet transform structure (see MRS_CURTRANS)
+       Band      -- 4D IDL float array[*,*,*,12]: Curvelet band   
+       ScaleWT2D -- int:  Scale of the 2D WT
+       ScaleRid  -- int:  Ridgelet band number
+
+ OUTPUTS:
+      Cur_Struct --  IDL structure: Curvelet transform structure (see MRS_CURTRANS)
+             
+ EXAMPLE:
+   mrs_curtrans, Imag, Cur 
+   Band = mrs_curget(Cur,1,2)
+   mrs_curput, Cur, Band, 1,2
+       Extract and reinsert a band in the curvelet transform  
+
+ HISTORY:
+       Written: Jean-Luc Starck 2005.
+       February, 2005 File creation
+;-
+;+
+ NAME: 
+       MRS_CURREC
+
+ PURPOSE: 
+        Reconstruct an image on the Sphere from its curvelet transform (see mrs_curtrans).   
+
+ CALLING:
+       MRS_CURREC, Cur_Struct, result
+
+ INPUT:
+       Cur_Struct -- IDL structure: Curvelet transform structure (see MRS_CURTRANS) 
+          
+ OUTPUTS:
+      Result --  1D IDL array: Healpix image (nested format)
+             
+ EXTERNAL CALLS
+           mrs_ridrec (IDL prog)
+           mrs_wtput (IDL prog)
+           mrs_curput (IDL prog)
+           mrs_curget (IDL prog)
+
+ EXAMPLE:
+   mrs_curtrans, Imag, Cur 
+   mrs_currec, Cur, RecIma
+       Curvelet transform and reconstruction
+
+ HISTORY:
+       Written: Jean-Luc Starck 2005.
+       February, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_curstat
+
+ PURPOSE:
+	 Return statistical information relative to the curvelet transform of a given data set.
+        The return value is a 2D IDL array of 9 elements x Number of scales.
+        For each scale j, we have:
+			Tab[0,j] = standard deviation
+			Tab[1,j] = skewness
+			Tab[2,j] = Kurtosis
+			Tab[3,j] = Min
+			Tab[4,j] = Max 
+			Tab[5,j] = HC
+			Tab[6,j] = HC^+
+			Tab[7,j] = Cumulant of order 5
+			Tab[8,j] = Cumulant of order 6
+
+			If TabFile is set, then the statistic is computed on a set of images. Tab[*,*,f] will be the statistic related to the file TabFile[f]
+			If the keyword normmad is set, the curvelet coefficients are first normalized.
+
+ CALLING:
+
+      TabStat = mrs_curstat( Data, TabFile=TabFile, TabStatName=TabStatName, Firstblocksize=Firstblocksize, NbrScale=NbrScale,  normMad=normMad, verb=verb, 
+								survival=survival, TabFile=TabFile, TabSurvStat=TabSurvStat, TabAllSurvStat=TabAllSurvStat, TabSurvNu=TabSurvNu ) 
+       
+ INPUTS:
+     Data -- IDL array of healpix map: Input data to analyze
+
+ INPUT KEYWORDS:
+		NbrScale -- int: Number of scales. Default is 4.
+		verb: scalar -- if set, the calculated statists are printed on the screen
+		TabFile -- IDL table of string, list of file where the function read the maps to be analized, in that case, on output, Imag is the last map that had been proceed and the return value is a 3D array:
+			Tab[i,j,f]	statistic i for scale j and map TabFile[f]
+		Firstblocksize -- int: First block size used in the curvelet transform
+		NormMad -- int: if set, a normalization is applied to the curvelet coefficient.
+		survival: if set, use the survival function and activate the keywords parameters TabSurvStat, TabAllSurvStat and TabSurvNu for the results
+
+ OUTPUT KEYWORDS: 
+		TabStatName -- IDL table of string: TabStatName = ["Sigma", "Skewness", "Kurtosis", "Min", "Max", "HC1", "HC2", "CUMULANT ORDER 5", "CUMULANT ORDER 6"]
+		TabSurvStat -- 2D float array [*,j] survival value at scale j
+		TabAllSurvStat -- 3D double array, use together with TabFile keyword, TabAllSurvStat[*,*,f] is TabSurvStat parameter for map TabFile[f]
+		TabSurvNu -- 2D float array [*,j] nu survival value at scale j
+
+ EXAMPLE:
+     Compute the pyramidal wavelet transform with 5 scales
+       TabStat = get_stat(Data, 5, /verb)
+
+ EXTERNAL CALLS:
+
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	September, 2005 File creation
+;-
+;+
+ NAME:
+        MRS_CURTRANS
+
+ PURPOSE:
+	Compute the curvelet transform on the sphere, using the healPix pixel representation (NESTED data
+       representation). A band of the curvelet transform is defined by two number, the 
+       2D WT scale number and the ridgelet scale number.
+       The output is a IDL structure.
+       A band at wavelet scale j (j=0..NBRSCALE-1) and ridglet scale j1 can be extracted using the  
+       function mrs_curget(Curtrans, j, j1) (ex: Scale2_1 = mrs_curget(CurTrans, 2, 1))
+       and a band can be inserted in the transformation using the routine  mrs_curput
+       (ex:  mrs_curput, CurTrans, Scale2_1, 2, 1).
+       By default, the pyramidal curvelet is applied. If the keyword undec is set, then 
+       the standard undecimated curvelet transform is applied.
+
+ CALLING:
+
+		mrs_curtrans, Imag, CurTrans, Opt=Opt, lmax=lmax, NbrScale=NbrScale, Overlap=Overlap, Undec=Undec, FirstBlockSize=FirstBlockSize, Silent=Silent
+
+ INPUTS:
+     Imag -- IDL array of healpix map: Input image be transformed 
+    
+ OUTPUTS:
+     CurTrans -- IDL structures with the following fields:  
+    NBRSCALE      --   INT: Nbr of the scale in the 2D WT
+    TABBLOCKSIZE  --   INT: TABBLOCKSIZE[j], Block size in the ridgelet transform at scale j  
+                                             j = [0..NBRSCALE-1]
+    TABNBRSCALERID --  INT:  TABNBRSCALERID[j], number of ridgelet band at scale j 
+    TABNORM       --   2D IDL ARRAY: Normalization array
+    RIDSCALE1     --   IDL STRUCT: ridgelet transform of the first wavelet scale
+                                   (see mrs_ridtrans.pro for details)
+      ...
+    RIDSCALEj     --   IDL STRUCT : ridgelet transform of the jth wavelet scale
+                                    j = 1..NBRSCALE-1
+    LASTSCALE     --   IDL 1D array: Healpix image of the coarsest scale
+    WT            --   IDL STRUCT: Wavelet structure (for internal use only)
+    PYRTRANS      --   INT: equal to 1 for a pyramidal curvelet transform and 0 otherwise 
+
+ KEYWORDS:
+		NbrScale -- int: Number of scales. Default is   log(nside)) / log(2) 
+		Undec -- INT: if set, an undecimated curvelet transform is used instead of the pyramidal
+                    curvelet transform
+		FirstBlockSize -- INT: Block size in the ridgelet transform at the finest scale (default is 16)
+		Lmax      : Number of used spherical harmoniques used in the wavelet transform
+                 (defaut = 3*nside, should be between 2*nside and 4*nside)
+		Overlap   -- int, if set blocks in the internal ridgelet transform are overlapping
+		Opt	-- string: optionnal parameters used by mrs_ridtrans (see mrs_ridtrans.pro)
+		Silent : if set, verbose mode disabled
+
+ EXTERNAL CALLS:
+        mrs_ridtrans (IDL) program
+
+ EXAMPLE:
+
+       Compute the curvelet transform of an image I with default options
+        The result is stored in Output
+               mrs_curtrans, Imag, Output 
+         
+ HISTORY:
+	Written:  Jean-Luc Starck, 2005
+	September, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_dctrec
+
+ PURPOSE:
+	Compute the inverse Discrete Cosite Transform (DCT) ) on the sphere, 
+       using the healPix pixel representation (NESTED data representation). 
+       The inverse DCT is applied successively on the 12 faces of the Healpix image.
+       The input is an IDL cube [0:nside-1, 0:Nside-1, 0:11] or an healpix image is the healpix keyword is set.
+       The output is an healpix image
+
+ CALLING:
+     mrs_dctrec, TransDct,  RecIma, healppix= healppix
+
+ INPUTS:
+     TransDct -- IDL 3D array [0:nside-1, 0:Nside-1, 0:11]  --    TransDct[*,*,i] is the DCT the ith face of the input map.
+
+ OUTPUTS:
+     RecIma -- IDL array of healpix map: Input image be transformed 
+
+ KEYWORDS:
+         healpix -- Scalar: if set, the input is a healpix image instead of a cube
+
+ EXTERNAL CALLS:
+          im_dct.pro  -- MR1 IDL program
+
+ EXAMPLE:
+       Compute the DCT transform of an image I.
+       The result is stored in DCT
+               mrs_dcttrans, Imag, DCT
+               tvscl, DCT[*,*,f] ; plot the fth face wavelet transform (f = 0..11) 
+      Reconstruction
+              mrs_dctrec, DCT, RecIma
+         
+ HISTORY:
+	Written:  Jean-Luc Starck, May 2010
+;-
+;+
+ NAME:
+        mrs_dcttrans
+
+ PURPOSE:
+	Compute the Discrete Cosite Transform (DCT) )on the sphere, 
+       using the healPix pixel representation (NESTED data representation). 
+       The DCT is applied successively on the 12 faces of the Healpix image.
+       The output is an IDL cube [0:nside-1, 0:Nside-1, 0:11].
+       If the keyword HEALPIX is set, then the ouput is an healpix image.
+
+ CALLING:
+     mrs_dcttrans, Imag, TransDct, healpix=healpix
+
+ INPUTS:
+     Imag -- IDL array of healpix map: Input image be transformed 
+    
+ OUTPUTS:
+     TransDct -- IDL 3D array [0:nside-1, 0:Nside-1, 0:11]  --    TransDct[*,*,i] is the DCT the ith face of the input map.
+
+ KEYWORDS:
+         healpix -- Scalar: if set, the output is a healpix image instead of a cube
+
+ EXTERNAL CALLS:
+          
+
+ EXAMPLE:
+       Compute the DCT transform of an image I.
+       The result is stored in DCT
+               mrs_dcttrans, Imag, DCT
+               tvscl, DCT[*,*,f] ; plot the fth face wavelet transform (f = 0..11) 
+         
+ HISTORY:
+	Written:  Jean-Luc Starck, May 2010
+;-
+;+
+ NAME:
+        mrs_deconv_powspec
+
+ PURPOSE:
+   Computes the power spectrum of a map with missing data, 
+   using the HEALPix representation (nested data
+   representation by default). The MASTER method is used, but using an iterative technique instead
+   of a brute force matrix inversion. If a noise power spectrum is given, it is removed from the solution.
+   The noise power spectrum is assumed to be unbiased, i.e. free of missing area.
+  
+ CALLING:
+     P = mrs_deconv_powspec( PowSpecMaskedData,  Mask,  MatMask=MatMask,  Niter=Niter,  NoisePS=NoisePS, lmax=lmax)
+
+ INPUTS:
+     PowSpecMaskedData -- IDL array : Power spectrum of the masked data   
+     Mask -- IDL array of healpix map: Input Mask of missing data (Mask[k] =0, if pixel k is missing) 
+     
+ OUTPUTS:
+     P -- 1D IDL fltarr:  Power Spectrum corrected from the mask,
+
+ OPTIONAL INPUT KEYWORDS:
+     PSCMB_Mask -- IDL array:   power  spectrum of the mask
+     Niter -- int: Number of iteration. Default is 20.
+     NoisePS -- IDL 1D array: Noise power spectrum. Default is none.
+
+ INPUT/OUTPUT KEYWORDS:
+      MatMask -- IDL 2D array: Master matrix related to the mask (see mrs_matmask.pro)
+     
+ EXTERNAL CALLS:
+       mrs_matmask.pro
+
+ EXAMPLE:
+       Compute the power spectrum of an image. 
+               P = mrs_master_powspec(Imag, Mask) 
+         
+ HISTORY:
+	Written: Jean-Luc Starck 
+	October, 2011 File creation
+;-
+;+
+ NAME:
+        mrs_dilation
+
+ PURPOSE:
+  Apply a mathematical morphological dilation on a healpix spherical image using a disk as structured element 
+
+ CALLING:
+     DilatIma = mrs_dilation(Imag, HalfSize=HalfSize)
+
+ INPUTS:
+     Imag -- IDL array of a healpix map: Input image to be dilated 
+    
+ OUTPUTS:
+     DilatIma -- IDL array of a healpix map.
+
+ KEYWORD: 
+     WindowSize: float = window size for dilation operator, default is 5.
+     HalfSize: float = halfsize of the disk in arcmin, by default HalfSize=pixel_size(nside) * WindowSize / 2.
+
+ EXAMPLE:
+       Apply a dilation to an image.  The result is stored in Output
+               Output = mrs_dilation(imag) 
+         
+ HISTORY:
+       Written:Francois Xavier Dupe & Jean-Luc Starck, 2011
+;-
+;+
+ NAME:
+        mrs_erosion
+
+ PURPOSE:
+  Apply a mathematical morphological erosion on a healpix spherical image disk as structured element 
+
+ CALLING:
+     ErodIma = mrs_erosion(Imag, HalfSize=HalfSize)
+
+ INPUTS:
+     Imag -- IDL array of a healpix map: Input image to be eroded 
+    
+ OUTPUTS:
+     ErodIma -- IDL array of a healpix map.
+
+ KEYWORD: 
+     WindowSize: float = window size for erosion operator, default is 5.
+     HalfSize: float = halfsize of the disk in arcmin, by default HalfSize=pixel_size(nside) * WindowSize / 2.
+
+ EXAMPLE:
+       Apply an erosion to an image.  The result is stored in Output
+               Output = mrs_erosion(imag) 
+         
+ HISTORY:
+       Written:Francois Xavier Dupe & Jean-Luc Starck, 2011
+;-
+;+
+ NAME:
+		mrs_fastica.pro
+	
+ PURPOSE:
+		Apply the ICA method FASTICA on data in different settings : 
+			- the multichannel data may consist of either 1D time series, 2D flat images or spherical maps  
+			- a mask can be specified to indicate missing or invalid pixels. 
+		
+		
+
+ EXPLANATION:
+   The components to be separated are all assumed to be iid in the specified representation;
+
+ CALLING SEQUENCE:
+	mrs_fastica, data, topology, nb_sources, sources, demixingmat, domain = domain, mask = mask, nb_scales=nb_scales
+
+ INPUTS:
+   data :  either an m*T array in the 1D case, 
+			or a tx*ty*m array in the flat 2D case,
+			or an array of strings giving the filenames of the m spherical data maps in Healpix NESTED format.
+
+   topology:   string specifying the topology of the maps in the multichannel data to be processed 
+				this should be either '1D' or '2D' or 'Sphere'
+				This is clearly redundant information but makes things simpler.
+				Any incoherence between the specified 'topology' and the structure of the input data leads to an error.
+
+
+   nb_sources: number of independent sources to be recovered from the data.
+
+
+ OPTIONAL INPUTS:
+	domain :	string specifying the representation in which the statistics should be computed
+				DEFAULT : domain = 'initial'
+
+	mask :  either a length T array in the 1D case, 
+			or a tx*ty array in the flat 2D case,
+			or a string giving the filename of a spherical map in Healpix format
+			The specified mask should be the same size as one of the data maps.
+			mask is an array of 0 and 1 where 0 indicates an invalid data sample, and 1 indicates a valid data sample.
+			IF A MASK IS SPECIFIED, THE DATA HAS TO BE MULTIPLIED BY THE MASK PRIOR TO CALLING THE MRS_FASTICA ROUTINE.
+ 
+   nb_scales : number of scales in the wavelet transform
+				default is nb_scales = 4 although there is no verification that this is a valid number of scales
+   
+ KEYWORD PARAMETERS:
+
+ OUTPUTS:
+
+   sources :   either an nb_sources*T array in the 1D case, 
+				or a tx*ty*nb_sources array in the flat 2D case,
+				or an array of strings giving the filenames of the nb_sources spherical reconstructed source maps in Healpix NESTED format.
+   demixingmat : an nb_sources * m matrix used to estimate the source processes somewhat according to 'sources = demixingmat#data'.
+
+ DEPENDENCIES:
+
+ RESTRICTIONS:
+
+ PROCEDURES USED:
+		the mrs package is used
+		the healpix package is used
+
+ EXAMPLE:
+
+   mrs_fastica, data, topology, nb_sources, sources, demixingmat, domain = domain, mask = mask, nb_scales=nb_scales
+   
+ MODIFICATION HISTORY:
+	Jerome Bobin and Yassir Moudden , 2005
+;-
+;+
+ NAME:
+        mrs_glesp
+
+ PURPOSE:
+	The MultiResolution on the Sphere (MRS) IDL code can work only if the file mrs_init
+       has been compile (.r mrs_glesp). All the MRS routine work with nested online HEALPIX
+       maps.
+
+       This file contains several routines
+
+    
+    function healpix2glesp, HMap,alm=alm,optNx= optNx,optNp = optnp
+     function h2g, h
+    function glesp2healpix, GMap,direct_map = direct_map,alm=alm
+ 
+    read_glesp, file, data
+    
+    tvs, Data, graticule=graticule, png=png, TITLEPLOT=TITLEPLOT, COLT=COLT, NOBAR=NOBAR
+    view_glesp,g_in
+    view_glesp_rot,g_in,theta = theta , phi = phi
+    glesp_interpol,t_sky,out
+    glesp_desinterpol,g_in,out
+
+    write_glesp, filename, data
+    write_glesp2, filename, imag
+    write_glesp3, filename, imag
+    function diff( g1, g2)
+
+; HISTORY:
+	Written: Jean-Luc Starck and Pierrick Abrial, 2005
+	February, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_init
+
+ PURPOSE:
+	The MultiResolution on the Sphere (MRS) IDL code can work only if the file mrs_init
+       has been compile (.r mrs_init). All the MRS routine work with NESTED online HEALPIX
+       maps.
+
+       This file contains several routines
+
+			function getbeam, Fwhm=Fwhm, lmax=lmax -- Return a gaussian beam of size lmax+1 (lmax=400 by default) and Fwhm arc min (Fwhm=10 arc min by default).
+
+			function getidealbeam, beamdata, lmin=lmin, lmax=lmax, tozero=tozero -- From a beam beamdata, creates and retrun an ideal beam of same size, defined by lmin, lmax and option tozero.
+
+			function pixel_size, nside -- Return the pixel size in arc minutes of a healpix map with parameter nside.
+
+			function l2amin, l -- Convert a l parameter into an arc minute value.
+			function amin2l, a -- Convert an arc minute value into a l parameter.
+
+			function gettmpfilename -- Generates a random fits file name.
+
+			function get_dircontent, Dir, suffix=suffix -- Get the contents of directory Dir and return the results in a string table (Unix command ls -l).
+
+			function wts, Imag, keywords... -- Call mrs_wttrans, Imag, trans or mrs_pwttrans, Imag, trans and return the output structure trans.
+			function iwts, Trans, NbrScale=NbrScale, filter=filter -- Call inverse transform and return the reconstructed image.
+			function wtsf, Imag, keywords... -- Call mrs_wtfilter, Imag, Filter and return the filtered image Filter.
+
+			pro plotcl, Cl, tit=tit, indl=indl, xrange=xrange, yrange=yrange, line=line, thick=thick, nonorm=nonorm, lnorm=lnorm, color=color, background=background, err=err, xlog=xlog, nodata=nodata
+					-- Plot in a multipole l*(l+1) scheme
+			pro oplotcl, Cl,  indl=indl, line=line, thick=thick, nonorm=nonorm, lnorm=lnorm, color=color -- Overplot function
+
+			pro plotAm, a, l, log=log -- Plot the alm coefficients for a given l value. a is a structure, see mrs_almtrans.pro
+
+			pro tab2nest, nside, in, out
+
+			pro put_all_faces, CubeFace, HealpixIma -- Put the 12 faces CubeFace[*,*,12] into a healpix NESTED map
+			function f2h, CubeFace
+			pro get_all_faces, Imag, CubeFace -- Extract the 12 faces from an heapix NESTED map and put them in CubeFace[*,*,12]
+			function h2f, Imag
+			function get_one_face, Imag, NumFace -- Extract one of the 12 faces from an healpix NESTED map
+			pro put_one_face, Imag, Face, NumFace -- Put one of the 12 faces into a healpix NESTED map
+
+			pro softthreshold, Data, Lambda -- Aply a soft thesholding to the floatarray Data with threshold level Lambda  
+
+			pro tvso, Data -- Run the visualization orthview command for a healpix NESTED map
+
+			pro spline, size, tab
+			pro spline2, size, l, lc, tab
+
+			pro sym, tab, tab_sym -- From an array tab of size n, create an array tab_sym of size 2*n+1 and symmetric structure.
+
+			pro compute_h, size, lc, h
+			pro compute_htilde, nlmax, ech, htilde
+			pro compute_g, size, lc, g
+			pro compute_gtilde, nlmax, ech, gtilde
+
+			pro alm_product2, alm1, al0, result -- Compute product of alm floatarray with al0
+
+			function fctlow, npix
+
+			pro hgmey, npix1, scale, h, g, dif=dif
+
+			pro rotate_map_nest, in, a1, a2, a3, out
+
+			pro text2map, in, out
+
+			pro mak_map, n, out2, t_interpol = t_interpol
+
+			pro index2lm2, index, l, m -- From an index in a ALM list array, get the corresponding l and m values.
+			pro lm2index2, l, m, index -- From l and m value, get the index in ALM list array
+
+			pro tab2alm, res, alm, complex=complex -- Convert ALM coefficients sorted in table form into coefficients sorted in list array form with real and immaginary part as components. 
+			pro tab2alm_pola, res, alm, complex=complex -- Same but for polarized ALM T, E and B
+			pro alm2tab, lm, res, complex=complex, TabNbrM=TabNbrM, NbrL=NbrL -- Convert ALM coefficients sorted in list array form with real and immaginary part as components into coefficients sorted in table form.
+			pro alm2tab_complex_in, lm, res, complex=complex, TabNbrM=TabNbrM, NbrL=NbrL -- Convert ALM coefficients sorted in list array form with complex values into coefficients sorted in table form.
+			pro alm_pola2tab, lm, res, complex=complex, TabNbrM=TabNbrM, NbrL=NbrL -- Same but for polarized ALM T, E and B
+			pro alm_pola2tab_complex_in, lm, res, complex=complex, TabNbrM=TabNbrM, NbrL=NbrL -- Same but for polarized ALM T, E and B
+
+			pro ismr1 -- Check if MR1 package is installed.
+
+			function mrs_variance_stabilization, PowSpec, mu=mu, psi1=psi1, FirstL=FirstL -- Variance stabilisation of a power spectrum
+			function mrs_variance_l1_stabilization, PowSpec, mu, psi1
+			function mrs_inv_variance_stabilization, StabPowSpec, mu, psi1 -- Inverse variance stabilisation
+			function mrs_inv_variance_l1_stabilization, StabPowSpec, mu, psi1
+
+			pro reim2mp, re, im, m, p -- Real part, immaginary part -> modulus, phasis
+			pro reim2pp, re, im, m, p -- Real part, immaginary part -> squared modulus, phasis
+			pro mp2reim, m, p, re, im -- Modulus, phasis -> real part, immaginary part
+			pro pp2reim, m, p, re, im -- Squared modulus, phasis -> real part, immaginary part
+
+			pro pnside, data -- Print the nside value of the healpix map data.
+			function gnside, data -- Return the nside value of the healpix map data.
+
+			pro mrs_info, data, mes=mes -- Print statistics of the map data.
+			function mrs_sigma, data -- Return the standard deviation of the map data.
+			function mrs_max, data -- Return the maximum of the map data.
+			function mrs_absmax, data -- Return the maximum of the absolute value of the map data.
+			function mrs_min, data -- Return the minimum of the map data.
+			function mrs_mean, data -- Return the mean of the map data.
+			pro mrs_set, data, Value -- Set the whole map data to the constant value.
+			function mrs_diff, d1, d2 -- Return the difference between the two maps d1 and d2, pixel by pixel.
+			function mrs_mult, d1, d2 -- Return the product between the two maps d1 and d2, pixel by pixel.
+			function mrs_add, d1, d2 -- Return the sum between the two maps d1 and d2, pixel by pixel.
+			function mrs_getpix, Ima -- Return the full data array of Ima.
+			pro mrs_putpix, Ima, pix -- Copy the full data array pix into Ima.
+			function mrs_mad, Ima -- Return the median of the absolute value of the map.
+
+			function mrs_absthreshold, Ima, T, soft=soft, l2=l2 -- Return the result of a hard or soft thresholding of the image.
+
+			pro mrs_pos, Ima, T=T -- In the image Ima, set pixel lower than T to zero, T >= 0 default is T = 0
+
+			pro pixf2pix, nside, x, y, face, ipix -- Convert pixel position in a face into pixel index in Healpix list. 
+			pro pix2pixf, nside, ipix, x, y, face -- Convert pixel index in Healpix list into pixel position in a face and face number.
+			pro pixf2ang, nside, x, y, face, theta, phi -- Convert pixel position in a face into spherical coordinates in radian.
+			pro ang2pix, nside, theta, phi, x, y, face -- Convert spherical coordinates in radian into pixel position in a face and face number.
+			pro ang2lb, theta, phi, l, b -- Convert spherical coordinates in radian into latitude and longitude coordinates in degree.
+			pro lb2ang, l, b, theta, phi -- Convert latitude and longitude coordinates in degree into spherical coordinates in radian.
+			pro pix2lb, nside, ipix, l, b -- Convert pixel index in Healpix list into latitude and longitude coordinates in degree.
+			pro lb2pix, nside, l, b, ipix -- Convert latitude and longitude coordinates in degree into pixel index in Healpix list.
+			pro ang2radec, theta, phi, ra, dec, year=year, degree=degree -- Convert spherical coordinates in radian into galactical coordinates.
+			pro radec2ang, ra, dec, theta, phi, year=year, degree=degree -- Convert galactical coordinates into spherical coordinates in radian.
+
+
+ HISTORY:
+	Written: Jean-Luc Starck and Pierrick Abrial, 2005
+	February, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_split
+
+ PURPOSE:
+       Reconstruct a healpix map (NESTED format) from a cube of small patches obtained by the routine mrs_split.
+
+ CALLING:
+
+     Map = mrs_invsplit(PatchTrans)
+
+ INPUT:
+     PatchTrans -- IDL structures with the following fields:  
+                     NMaps : long = number of patches 
+                     map_hd: string = header of a small patch
+                     Nx,Ny : long = size of each patch
+                     Lon : flarr[NMaps] = Longitude of each patches if the position (Nx/2.,Ny/2.) is the center of the patches.
+                     Lat : flarr[NMaps] = Latitude of each patches if the position (Nx/2.,Ny/2.) is the center of the patches.
+                     Map : fltarr[Nx,Nx,NMaps] =  patches cube
+                     PixelSize: float = Pixel size in arc minute
+                     MapSize: float = Map size in arcmin
+                     Frac: float = overlapping factor between patches
+					  Nside: long = nside parameter of the input imag
+ OUTPUT:
+     Imag -- IDL array of healpix map: output image reconstructed from the patches 
+    
+
+ KEYWORDS:
+
+ EXTERNAL CALLS:
+
+ EXAMPLE:
+       Reconstruct an image from patches  
+;             map = mrs_invsplit(Patch)
+         
+ HISTORY:
+	Written:  Jean-Luc Starck, August 2007
+;-
+;+
+ NAME:
+        mrs_ItWiener
+
+ PURPOSE:
+	Iterative Wiener or Cole filtering of an image on the sphere (Healpix pixel NESTED representation)
+
+ CALLING:
+
+	mrs_ItWiener,Imag,Powspec,fImag,Noise=Noise,fNoise = fNoise,niter=niter,cole=cole,StartWiener=StartWiener,Filter=Filter,VarNoise=VarNoise,NbrScale=NbrScale,BS=BS,Frg=Frg,RMSmoothing = RMSmoothing,tol = tol,verbose=verbose
+    
+ INPUT:
+     	Imag -- IDL array of healpix map: Input image be filtered 
+	  	Powspec -- theoretical power spectrum of the image
+
+ OUTPUT:
+     	fImag -- filtered image
+
+ INPUT KEYWORDS:
+		Imag -- IDL array of healpix map: Input image be filtered
+	    Noise -- IDL -- array of healpix map: Noise realization from which the noise statistics are measured
+		niter -- scalar: number of iterations - default is 100
+		cole -- if set, applies a Cole filter instead of the Wiener filter - default is no
+		StartWiener -- if set, the algorithm is initialized with the global Wiener filter (i.e. in the spherical harmonics)
+		NbrScale -- scalar: number of wavelet scales used for analysis - default is 4
+		BS -- scalar: minimal patch size used to compute the noise variance - default is 16
+		Frg -- if set, also estimates the contribution coming from extra foreground residuals - default is no
+		RMSmoothing --- if set, applies a smoothing of the estimated noise variance maps - default is no
+		tol -- convergence precision - default is 1e-6
+		verbose -- scalar, verbose mode - default is no 
+
+ INPUT/OUTPUT:
+  		filter - Wiener filter
+       VarNoise -- IDL array of healpix map per wavelet scale - Noise variance per wavelet scale - if not set, it is estimated from the noise realization Noise
+		lmax : int = maximum l value in the Spherical Harmonic Space (Healpix)
+
+ OUTPUT KEYWORDS:
+		fNoise -- IDL array of healpix map: filtered noise realization
+
+ EXAMPLE:
+       Filter an image with 5 scales. The result is stored in fImag
+               mrs_ItWiener,Imag,Powspec,fImag,Noise=Noise,NbrScale=5
+         
+ HISTORY:
+	Written: Jérôme Bobin, 2012
+	February, 2012 File creation
+
+;-
+;+
+ NAME:
+		mrs_jade.pro
+	
+ PURPOSE:
+		Apply the ICA method JADE on data in different settings : 
+			- the multichannel data may consist of either 1D time series, 2D flat images or spherical maps  
+			- a mask can be specified to specify missing or invalid pixels. 
+			- the separation may be performed either in the initial representation or 
+			in the wavelet (or spherical wavelet) representation
+		
+
+ EXPLANATION:
+   The components to be separated are all assumed to be iid in the specified representation;
+
+ CALLING SEQUENCE:
+	mrs_jade, data, topology, nb_sources, sources, demixingmat, domain = domain, mask = mask, nb_scales=nb_scales
+
+ INPUTS:
+   data :  either an m*T array in the 1D case, 
+			or a tx*ty*m array in the flat 2D case,
+			or an array of strings giving the filenames of the m spherical data maps in Healpix NESTED format.
+
+   topology:   string specifying the topology of the maps in the multichannel data to be processed 
+				this should be either '1D' or '2D' or 'Sphere'
+				This is clearly redundant information but makes things simpler.
+				Any incoherence between the specified 'topology' and the structure of the input data leads to an error.
+
+
+   nb_sources: number of independent sources to be recovered from the data.
+
+
+ OPTIONAL INPUTS:
+	domain :	string specifying the representation in which the statistics should be computed
+				DEFAULT : domain = 'initial'	
+
+
+	mask :  either a length T array in the 1D case, 
+			or a tx*ty array in the flat 2D case,
+			or a string giving the filename of a spherical map in Healpix NESTED format
+			The specified mask should be the same size as one of the data maps.
+			mask is an array of 0 and 1 where 0 indicates an invalid data sample, and 1 indicates a valid data sample.
+			IF A MASK IS SPECIFIED, THE DATA HAS TO BE MULTIPLIED BY THE MASK PRIOR TO CALLING THE MRS_JADE ROUTINE.
+ 
+   nb_scales : number of scales in the wavelet transform
+				default is nb_scales = 4 although there is no verification that this is a valid number of scales
+   
+ KEYWORD PARAMETERS:
+
+ OUTPUTS:
+
+   sources :   either an nb_sources*T array in the 1D case, 
+				or a tx*ty*nb_sources array in the flat 2D case,
+				or an array of strings giving the filenames of the nb_sources spherical reconstructed source maps in Healpix NESTED format.
+   demixingmat : an nb_sources * m matrix used to estimate the source processes somewhat according to 'sources = demixingmat#data'.
+
+ DEPENDENCIES:
+
+ RESTRICTIONS:
+
+ PROCEDURES USED:
+		the mrs package is used
+		the healpix package is used
+
+ EXAMPLE:
+
+   mrs_jade, data, topology, nb_sources, sources, demixingmat, domain = domain, mask = mask, nb_scales=nb_scales
+   
+ MODIFICATION HISTORY:
+	Yassir Moudden , 2005
+;-
+;+
+ NAME:
+        mrs_lat_index
+
+ PURPOSE:
+	 Return the pixel indices of all pixels in a latitude band. The default number of band is 25.
+
+ CALLING:
+      LatInd = mrs_lat_index(Nside, Lat, NbrLat=NbrLat, Mask=Mask,  TabBLat=TabBLat)
+       
+ INPUTS:
+		Nside -- int:  Healpix nside number 
+		Lat -- scalar: Latitude band number. 
+
+ INPUT KEYWORDS:
+		NbrLat -- int: Number  of latitude bands.   
+
+ OUTPUT KEYWORDS: 
+     Mask -- Healpix image:   Mask[LatInd] 1 and other pixels are set to zero.
+	  TabBLat -- 1D float array [0: NbrLat-1]: B latitude for each latitude band
+    
+ EXAMPLE:
+     Compute the standard deviation in each latitude band:
+     for l=0,24 do begin  LatInd = mrs_lat_index(Nside, l,  TabBLat=TabBLat) & print, 'Lat ', TabBLat[l], ', Sigma = ', sigma( Ima[LatInd] ) & end
+
+ HISTORY:
+	Written: Jean-Luc Starck & Jerome Bobin, April 2011
+;-
+;+
+ NAME:
+        mrs_master_powspec
+
+ PURPOSE:
+   Computes the power spectrum of a map with missing data, 
+   using the HEALPix representation (nested data
+   representation by default). The MASTER method is used.
+  
+
+ CALLING:
+     P = mrs_master_powspec( Imag, Mask,  PSCMB_Mask=PSCMB_Mask)
+
+ INPUTS:
+     Imag -- IDL array of healpix map: Input image to be transformed 
+     Mask -- IDL array of healpix map: Input Mask of missing data (Mask[k] =0, if pixel k is missing) 
+    
+ OUTPUTS:
+     P -- 1D IDL fltarr: Power Spectrum. P[k] = Mean(  POWSPECTRUM[*,l]  )
+
+ OPTIONAL INPUT KEYWORDS:
+     PSCMB_Mask -- IDL array:   power  spectrum of the mask
+
+
+ EXTERNAL CALLS:
+       mrs_almtrans.pro
+
+ EXAMPLE:
+       Compute the power spectrum of an image. 
+               P = mrs_master_powspec(Imag, Mask) 
+         
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	December, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_matmask
+
+ PURPOSE:
+   Return the matrix Mat related to a mask.
+   For a given mask M, the power spectrum of an image I is equal to:
+         Mat # PowSpec(I) = PowSpec ( M . I ) 
+
+ CALLING:
+     Mat = mrs_matmask(Mask)
+
+ INPUTS:
+     Mask -- IDL array of healpix map: Input mask 
+    
+ OUTPUTS:
+     Mat -- 2D IDL fltarr: Matrix related to the mask.
+
+ EXAMPLE:
+       Compute the power spectrum of an image. 
+               Mat = matmask(mask) 
+         
+ HISTORY:
+	Written: Jean-Luc Starck, 2009
+	March, 2009 File creation
+;-
+;+
+ NAME:
+      mrs_mca
+	
+ PURPOSE:
+	Apply the sparse component analysis method called Morphological Component Analysis, including 
+	a hard thresholding with linear decreasing threhold, on a spherical map in Healpix representation 
+	(NESTED format) using several basis decompositions and there transforms on the sphere selected 
+	in the following list:
+
+		1: Isotropic Undecimated Wavelet
+		2: Pyramidal Wavelet
+		3: Othogonal Wavelet Transform (on each face)
+		4: ALM
+		5: Dirac
+		6: Curvelet
+		7: DCT (on each face)
+		8: A Trou Wavelet (on each face)
+		Default transforms are Pyramidal Wavelet and ALM
+
+	With the selection of only one transform and the use of a mask, MCA will make an inpainting of the input data.
+		
+ CALLING:
+		mrs_mca, data_in, data_out, Bounded=Bounded, residual=residual, CstSigma=CstSigma, SelectTrans=SelectTrans, Positivity=Positivity, niter=niter, 
+				mad=mad, mom=mom, expo=expo, LastThreshold=LastThreshold, FirstThreshold=FirstThreshold, SigmaNoise=SigmaNoise, NbrScale=NbrScale, lmax=lmax, 
+				Mask=Mask, tabNameTrans=tabNameTrans, FirstWTDetectScale=FirstWTDetectScale, soft=soft, DCTblocksize=DCTblocksize, fit=fit, nomean=nomean
+
+ INPUTS:
+		data_in : Input 1D IDL array of a Healpix map, image to be analysed.
+
+ OUTPUTS:
+		data_out : Output 2D IDL array[*, NbTrans] of Healpix maps, components estimated from data_in. NbTrans is the number 
+					of selected transforms (via SelectTrans keyword), by default there are 2 transforms.
+         
+ INPUT KEYWORDS:
+		SelectTrans : 1D int array with the code number of the selected transforms. SelectTrans[i] must be >=1 and <=9. Default value: SelectTrans = [2,4]
+		niter : int, iteration number of the MCA algorithm. Default value is 10.
+		Mask : 1D IDL array of Healpix map, mask applied to data_in. Inpainting on the masked areas.
+		expo : scalar, if set use an exponential decreasing thresholding instead of linear decreasing thresholding.
+		mom : scalar, if set use a linear decreasing thresholding with MOM as a first threshold.
+		mad : scalar, if set use a linear decreasing thresholding with MAD as a first threshold.
+		fit : scalar, if set fit the threshold levels to ALM decomposition of data_in.
+		soft : scalar, if set use soft thresholding instead of hard thresholding.
+		SigmaNoise : float, standard deviation of the noise, assumed gaussian. Default value is 1.
+		NbrScale : int, number of scale decompositions for wavelet transfroms. Default value is 5.
+		lmax : int, maximum l number of spherical harmonics. Default value is 3*nside, max value is 3000.
+		Bounded : scalar, if set constraints the reconstructed components of data_out to be bounded by the min and max of data_in.
+		Positivity : scalar, if set constraints the reconstructed components of data_out to be positive.
+		CstSigma : scalar, if set and if a mask is applied, constraints the decompositions coefficients to have the same standard deviation inside and outside the masked area.
+		nomean : scalar, if set remove the mean of the reconstructed components of data_out. Work only with keywords mask and CstSigma.
+		DCTblocksize : int, size of the blocks for DCT transform (if selected). Default value is the nside parameter of data_in.
+		FirstWTDetectScale : int, for isotropic wavelet only, set all wavelet coefficients from Scale < FirstWTDetectScale to 0.
+
+ INPUT/OUTPUT KEYWORDS:
+		LastThreshold : float, last threshold level. Default value is 0.
+		FirstThreshold : float, first threshold level. Default is automatically estimated.
+
+ OUTPUT KEYWORDS:
+		residual : 1D IDL array of a Healpix map, final residual.
+		tabNameTrans : string array, list of the possible transforms. 
+						tabNameTrans = ['Unknown', 'Isotropic Undecimated Wavelet', 'Pyramidal Wavelet', 'Orthogonal Wavelet Transform', 'ALM', 'DIRAC', 'Curvelet', 'DCT', 'a trous WT']
+
+ EXAMPLE:
+       Compute the MCA on a Healpix image data, considering 4 components: Curvelet, ALM, Pyramidal Wavelet and Dirac
+          mrs_mca, Data, Components, SelectTrans=[2,4,5,6]
+         
+ HISTORY:
+	Written: Jerome Bobin, 2005
+	2005 File creation
+;-
+;+
+ NAME:
+        mrs_median
+
+ PURPOSE:
+  Apply a median transform on a healpix spherical image using a disk as structured element 
+
+ CALLING:
+     MedIma = mrs_median(Imag, HalfSize=HalfSize)
+
+ INPUTS:
+     Imag -- IDL array of a healpix map: Input image to be transformed 
+    
+ OUTPUTS:
+     MedIma -- IDL array of a healpix map.
+
+ KEYWORD: 
+     WindowSize: float = window size for median operator, default is 5.
+     HalfSize: float = halfsize of the disk in arcmin, by default HalfSize=pixel_size(nside) * WindowSize / 2.
+
+ EXAMPLE:
+       Apply an erosion to an image.  The result is stored in Output
+               Output = mrs_median(imag) 
+         
+ HISTORY:
+       Written:Francois Xavier Dupe & Jean-Luc Starck, 2011
+;-
+;+
+ NAME:
+        mrs_mmt
+
+ PURPOSE:
+	Computes the multiscale median transform of an Healpix spherical image. 
+
+ CALLING:
+
+     mrs_mmt, Imag, Trans, NbrScale=NbrScale
+
+ INPUTS:
+     Imag -- IDL array of healpix image: Input image to be transformed
+
+ INPUT/OUTPUT:
+    
+ OUTPUTS:
+     Trans -- IDL structures with the following fields:  
+                  NbrScale : int = number of scales 
+                     nside : int = Healpix nside parameter (0 for a Glesp image)
+                      npix : long = Number of pixels of the input image (12*nside*nside)
+                      Coef : fltarr[npix,NbrScale] = wavelet transform of the data
+                             Coef[*,0] = wavelet coefficients of the finest scale (highest frequencies).
+                             Coef[*,NbrScale-1] = coarsest scale (lowest frequencies). 
+
+ KEYWORDS:
+      NbrScale  : Number of scales (default is 4). If it is set to -1, then the number scales is:  log(lmax) / log(2)  - 2
+
+ EXAMPLE:
+
+       Compute the multiscale median transform of an image I  
+        The result is stored in Output
+               mrs_mmt, Imag, Output, NbrScale=5
+         
+ HISTORY:
+	Written:   Jean-Luc Starck, 2011
+;-
+;+
+ NAME:
+        mrs_needlet_filters
+
+ PURPOSE:
+	Calculate the needlet filter, which can be used in an undecimated wavelet transform on the sphere (see mrs_wttrans.pro).
+
+ CALLING:
+      Filter = mrs_needlet_filters(Lmax, B=B, Nscale=Nscale, plot=plot, tabphi=tabphi, tabpsi=tabpsi, TabFilterH=TabFilterH, TabFilterG= TabFilterG)
+       
+ INPUTS:
+     Lmax -- int: maximum value of l in the spherical harmonic decomposition.
+
+ INPUT KEYWORDS:
+      B -- float :  needlet parameter. Default is 2.
+      plot -- scalar: if set, the filters are plotted in a window
+
+ INPUT/OUTPUT KEYWORDS:
+      Nscale -- int: Number of bands in the decomposition. By default is automatically calculated:
+                         Nscale = log(lmax)/ log(B)
+
+ OUTPUT KEYWORDS:
+       Tabphi -- IDL array[0:lmax, Nscale-1]  = Scaling function  at resolution level
+       Tabpsi -- IDL array[0:lmax, Nscale-1]   = Wavelet function  at resolution level
+       TabFilterH -- IDL array[0:lmax, Nscale-1] = filter H allowing to go from a resolution to the next one
+       TabFilterG -- IDL array[0:lmax, Nscale-1] = filter G allowing to compute the wavelet coeff from the previous resolution level
+
+ HISTORY:
+	Written: Jeremy Schmitt, Florent Sureau, JL Starck, 2010
+;-
+;+
+ NAME:
+        mrs_owtget
+
+ PURPOSE:
+		Return in a 2D [*,*] array a scale coefficients of the wavelet transform obtained by the command mrs_owttrans.pro, i.e. (bi-) orthogonal wavelet transform on the sphere
+
+ CALLING:
+		Scale = mrs_owtget( W, ScaleNumber, DirectNumber=DirectNumber, BorderSize=BorderSize, Isotrop=Isotrop )
+
+ INPUTS:
+		W -- IDL structure: wavelet coefficients of an image, see mrs_owttrans.pro for more details.
+		ScaleNumber -- int: Scale number, The scale number must be 
+							between 0 and W.NbrScale-1
+    
+
+ KEYWORDS:
+		DirectNumber -- int: Select the direction of the band, 0 for horizontal band, 1 for vertical band and 2 for diagonal band. Default value is 0.
+		BorderSize -- int: Parameter used for ignoring borders of bands, default value 0.
+		Isotropic -- scalar: If set, ignore the keyword DirectNumber and gets the three bands in a 3D [*,*,3] array
+
+ EXAMPLE:
+       Compute the orthogonal wavelet transform of an image with five scales and then extract the second scale
+               mrs_owttrans, Imag, WT, NbrScale=5
+               scale_2 = mrs_owtget( WT, 1 )
+         
+ HISTORY:
+	Written:  Olivier Fourt, 2009
+	October, 2009 File creation
+;-
+;+
+ NAME:
+        mrs_owtput
+
+ PURPOSE:
+		Put a scale, 2D [*,*] array of coefficients, in the wavelet transform obtained by the command mrs_owttrans.pro, i.e. (bi-) orthogonal wavelet transform on the sphere
+
+ CALLING:
+
+		mrs_owtput, W, Scale, ScaleNumber, DirectNumber=DirectNumber, BorderSize=BorderSize  
+       
+ INPUTS:
+		W -- IDL structure: wavelet coefficients of an image, see mrs_owttrans.pro for more details.
+		Scale -- IDL 2D array: wavelet scale coefficients we want use in the decomposition. 
+		ScaleNumber -- int: Scale number, The scale number must be 
+							between 0 and W.NbrScale-1
+
+ KEYWORDS:
+		DirectNumber -- int: Select the direction of the band, 0 for horizontal band, 1 for vertical band and 2 for diagonal band. Default value is 0.
+		BorderSize -- int: Parameter used for ignoring borders of bands, default value 0.
+
+ EXTERNAL CALLS:
+
+ HISTORY:
+	Written: Olivier Fourt, 2009
+	October, 2009 File creation
+
+;-
+;+
+ NAME: 
+       MRS_OWTREC
+
+ PURPOSE: 
+        Reconstruct an image on the Sphere from its (bi-) orthogoanl wavelet 
+        transform (see mrs_owttrans).   
+
+ CALLING:
+       MRS_OWTREC, WT_Struct, result
+
+ INPUT:
+       WT_Struct : IDL structure; Wavelet transform structure (see MRS_OWTTRANS) 
+          
+ OUTPUTS:
+      Result:  1D array of an Healpix image (NESTED format)
+             
+ EXTERNAL CALLS
+            bwt01_lift written by Olivier Forni and Nabila Aghanim
+
+ EXAMPLE:
+   mrs_owttrans, Imag, WT, NbrScale=5
+   mrs_owtrec, WT, RecIma
+       Wavelet transform and reconstruction
+
+ HISTORY:
+       Written: Jean-Luc Starck 2005.
+       February, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_owtstat
+
+ PURPOSE:
+	 Return statistical information relative to the bi-orthogonal wavelet transform of a given data set.
+        The return value is a 2D IDL array of 9 elements x (Number of scales-1)*(d+1) with d=0, 1, 2 for the 3 directions
+        or only d=0 if the keyword isotropic is set. The coarserst scale is not used.
+        For each scale j, we have:
+			Tab[0,j*(d+1)] = standard deviation		d = 0 : horizontal band, d = 1 : vertical band, d = 2 : diagonal band
+			Tab[1,j*(d+1)] = skewness
+			Tab[2,j*(d+1)] = Kurtosis
+			Tab[3,j*(d+1)] = Min
+			Tab[4,j*(d+1)] = Max 
+			Tab[5,j*(d+1)] = HC
+			Tab[6,j*(d+1)] = HC^+
+			Tab[7,j*(d+1)] = Cumulant order 5
+			Tab[8,j*(d+1)] = Cumulant order 6
+
+        If TabFile is set, then the statistic is computed on a set of images. Tab[*,*,f] will be the statistic related to the file TabFile[f]
+
+ CALLING:
+
+      TabStat = mrs_owtstat( Data, TabStatName=TabStatName, NbrScale=NbrScale, verb=verb, TabFile=TabFile, isotropic=isotropic, 
+								survival=survival, TabSurvStat=TabSurvStat, TabAllSurvStat=TabAllSurvStat, TabSurvNu=TabSurvNu ) 
+       
+ INPUTS:
+     Data -- IDL array of healpix map: Input data to analyze
+     NbrScale -- int: Number of scales. Default is 4.
+
+ INPUT KEYWORDS:
+		verb: scalar -- if set, the calculated statists are printed on the screen
+		Isotropic: -- scalar, if set, directional information is not taken into account
+		TabFile -- IDL table of string, list of file where the function read the maps to be analized, in that case, on output, Imag is the last map that had been proceed and the return value is a 3D array:
+			Tab[i,j,f]	statistic i for scale j and map TabFile[f]
+		Survival -- scalar: if set, the survival function is computed instead of the different statistics
+
+ OUTPUT KEYWORDS: 
+		TabStatName -- IDL table of string: TabStatName = [ "Sigma", "Skewness", "Kurtosis", "Min", "Max", "HC1", "HC2", "CUMULANT Order 5", "CUMULANT Order 6" ]
+		TabSurvStat -- 2D float array [*,j*(d+1)] survival value at scale j
+		TabAllSurvStat -- 3D double array, use together with TabFile keyword, TabAllSurvStat[*,*,f] is TabSurvStat parameter for map TabFile[f]
+		TabSurvNu -- 2D float array [*,j*(d+1)] nu survival value at scale j
+
+ EXAMPLE:
+     Compute the pyramidal wavelet transform with 5 scales
+       TabStat = mrs_owtstat( Data, NbrScale=5 )
+
+       TabFile = ['File1.fits', 'File2.fits']
+       TabStat = mrs_owtstat( NbrScale=5,TabFile=TabFile )
+
+ EXTERNAL CALLS:
+
+ HISTORY:
+	Written: Jean-Luc Starck and Olivier Forni, 2005
+	September, 2005 File creation
+
+;-
+;+
+ NAME:
+        mrs_owttrans
+
+ PURPOSE:
+	Compute the (bi-) orthogonal wavelet transform on the sphere, 
+       using the healPix pixel representation (NESTED data representation). 
+       The wavelet transform is applied successively on the 12 faces of the
+       Healpix image.
+       The output is a IDL structure.
+
+ CALLING:
+     mrs_owttrans, Imag, OWTTrans, NbrScale=NbrScale, Opt=Opt
+
+ INPUTS:
+     Imag -- IDL array of healpix map: Input image be transformed 
+    
+ OUTPUTS:
+     OWTTrans -- IDL structures with the following fields:  
+         NBRSCALE  -- LONG: Number of scales of the wavelet transform
+          COEF      -- 3D IDL array [*,*,12] : Wavelet coefficients
+                        cube  containing all wavelet coefficients
+                        COEF[*,*, f] = wavelet transform of face f (f=0..11).
+	   Nx -- number of pixels on the side of the Healpix patch, nside
+	   Ny -- same as Nx			
+
+ KEYWORDS:
+         NBRSCALE  -- LONG: Number of scales of the wavelet transform
+		  Opt -- string: if package MR1 is installed, extra keyword used by mr_transform.pro
+
+ EXTERNAL CALLS:
+         bwt01_lift (written by N. Aghanim and O. Forni)
+
+ EXAMPLE:
+       Compute the orthogonal wavelet transform of an image I with five scales
+       The result is stored in Output
+               mrs_owttrans, Imag, WT, NbrScale=5
+               tvscl, WT.coef[*,*,f] ; plot the fth face wavelet transform (f = 0..11) 
+         
+ HISTORY:
+	Written:  Jean-Luc Starck, 2005
+	February, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_pht
+
+ PURPOSE:
+	Computes the pyramidal haar transform of an Healpix spherical image. 
+
+ CALLING:
+
+     mrs_pht, Imag, Trans, NbrScale=NbrScale
+
+ INPUTS:
+     Imag -- IDL array of healpix image: Input image to be transformed
+
+ INPUT/OUTPUT:
+    
+ OUTPUTS:
+     Trans -- IDL structures with the following fields:  
+                  NbrScale : int = number of scales 
+                     nside : int = Healpix nside parameter (0 for a Glesp image)
+                      npix : long = Number of pixels of the input image (12*nside*nside)
+                      Scale1 : finest scale (highest frequencies). A IDL array of healpix map or IDL structure of a Glesp map
+                      Scale2 : Second scale    
+                      Scalej : j th scale
+                        ...
+                      ScaleJ : with J = NbrScale, coarsest resolution
+	                   Tab_nside[NbrScale] : int array Tab_nside[j] = nside parameter of the scale j+1, j=0..NbrScale-1 (Healpix input map)
+														 nx number of rings, Glesp parameter of the scale j+1, j=0..NbrScale-1 (Glesp input map)
+
+ KEYWORDS:
+      NbrScale  : Number of scales (default is 4). If it is set to -1, then the number scales is:  log(lmax) / log(2)  - 2
+
+ EXAMPLE:
+
+       Compute the pyramidal haar transform of an image I  
+        The result is stored in Output
+               mrs_pht, Imag, Output, NbrScale=5
+         
+ HISTORY:
+	Written:   Jean-Luc Starck, 2011
+;-
+;+
+ NAME:
+        mrs_pmt
+
+ PURPOSE:
+	Computes the pyramidal median transform of an Healpix spherical image. 
+
+ CALLING:
+
+     mrs_pmt, Imag, Trans, NbrScale=NbrScale
+
+ INPUTS:
+     Imag -- IDL array of healpix image: Input image to be transformed
+
+ INPUT/OUTPUT:
+    
+ OUTPUTS:
+     Trans -- IDL structures with the following fields:  
+                  NbrScale : int = number of scales 
+                     nside : int = Healpix nside parameter (0 for a Glesp image)
+                      npix : long = Number of pixels of the input image (12*nside*nside)
+                      Scale1 : finest scale (highest frequencies). A IDL array of healpix map or IDL structure of a Glesp map
+                      Scale2 : Second scale    
+                      Scalej : j th scale
+                        ...
+                      ScaleJ : with J = NbrScale, coarsest resolution
+	                   Tab_nside[NbrScale] : int array Tab_nside[j] = nside parameter of the scale j+1, j=0..NbrScale-1 (Healpix input map)
+														 nx number of rings, Glesp parameter of the scale j+1, j=0..NbrScale-1 (Glesp input map)
+
+ KEYWORDS:
+      NbrScale  : Number of scales (default is 4). If it is set to -1, then the number scales is:  log(lmax) / log(2)  - 2
+
+ EXAMPLE:
+
+       Compute the pyramidal median transform of an image I  
+        The result is stored in Output
+               mrs_pmt, Imag, Output, NbrScale=5
+         
+ HISTORY:
+	Written:   Jean-Luc Starck, 2011
+;-
+;+
+ NAME:
+        mrs_powspec
+
+ PURPOSE:
+   Computes the power spectrum of a map,  using the HEALPix representation (NESTED data
+   representation by default) or the GLESP representation. 
+   If the keyword log is set, it is the log-power spectrum which  is returned. 
+
+  If the global variable DEF_NORM_POWSPEC is equal to 1 or if the keyword /Normalisation is set, 
+  then a normalization is performed, so that a Gaussian randomn noise with variance equal to 1 
+  has a power spectrum equal to 1. 
+
+ CALLING:
+     P = mrs_powspec( Imag, plot=plot, lplot=lplot, log=log, IndL=IndL, PowSpecIma=PowSpecIma, StdPS=StdPS, Normalisation=Normalisation, nonorm=nonorm, NormVal=NormVal, alm=alm, lmax=lmax )
+
+ INPUTS:
+     Imag -- IDL array of healpix map or GLESP structure: Input image to be transformed 
+    
+ OUTPUTS:
+     P -- 1D IDL fltarr: Power Spectrum. P[k] = Mean(  POWSPECTRUM[*,l]  )
+
+ INPUT KEYWORDS:
+		plot  -- int: if set, the power spectrum is plotted.
+		lplot -- int: if set, the power spectrum multiplied by l(l+1) is plotted.
+		log   -- int: if set, the log power spectrum is calculated instead of the power  spectrum
+		Lmax  -- int: Number of spherical harmonics computed in the decomposition and size of the computed spectrum (Lmax+1)
+					  (HEALPIX==> default is 3*nside, should be between 2*nside and 4*nside)
+					  (GLESP==> default is: min([Imag.nx/2, Imag.np/4]) )
+      Normalisation: if set, a l2 normalization if perform, so a Gaussian randomn noise with variance equal to 1 will have a power spectrum equal to 1. 
+	   nonorm: If set, no normalisation is performed on the alm computed.
+
+ OUTPUT KEYWORDS:
+		IndL -- 1D IDL array: array contains the l(l+1) values.
+		PowSpecIma -- 2D IDL fltarr: Power spectrum of the input data
+		NormVal -- float: Normalisation value applied on the ALM (unless keyword nonorm set).
+		StdPS -- 1D IDL float array: contains the estimated standard deviation on the power spectrum computed.
+		alm -- IDL structure: result of the alm transform of the input image (see mrs_almtrans) with options lmax, /tab, /psp, norm=?
+
+ EXTERNAL CALLS:
+       mrs_almtrans.pro
+
+ EXAMPLE:
+       Compute the power spectrum of an image. 
+               P = mrs_powspec( Imag ) 
+         
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	December, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_pwtrec
+
+ PURPOSE:
+	Compute the inverse pyramidal wavelet transform on the sphere.
+
+ CALLING:
+
+     mrs_pwtrec, Trans, Rec, filter=filter        
+    
+ INPUT:
+     Trans -- IDL structures with the following fields:  
+                    NbrScale : int = number of scales 
+                       nside : int = Healpix nside parameter, only present with healpix input image
+                        npix : long = Number of pixels
+                      Scale1 : finest scale (highest frequencies). A IDL array of healpix map or IDL structure of a Glesp map
+                      Scale2 : Second scale    
+                      Scalej : j th scale
+                        ...
+                      ScaleJ : with J = NbrScale, coarsest resolution
+                       lmax  : int = nlmax parameter at the first scale
+		   Tab_lmax[NbrScale] : int array Tab_lmax[j] = lmax at scale j+1, j=0...NbrScale-1
+		  Tab_nside[NbrScale] : int array Tab_nside[j] = nside parameter of the scale j+1, j=0..NbrScale-1 (Healpix input map)
+														 nx number of rings, Glesp parameter of the scale j+1, j=0..NbrScale-1 (Glesp input map)
+					 UseGLESP : int = 1 if the input image was in Glesp format or keyword Healpix_with_Glesp used, otherwise 0
+				    MeyerWave : int = 1 if the keyword MeyerWave used, otherwise 0
+					  DifInSH : int = 1 if the keyword DifInSH used, otherwise 0
+					  	   nx : int = number of rings at the first scale, Glesp parameter, only present with glesp input image
+						   np : int = max number of pixel on a ring at the first scale, Glesp parameter, only present with glesp input image
+
+ OUTPUT:
+     Imag -- IDL array of healpix map or IDL structure of a Glesp map: reconstructed image from the wavelet coefficients   
+
+ KEYWORDS:
+      filter : Use filters for the reconstructions. If this keyword is not set, the reconstructed image
+               is obtained by a simple addition of all wavelet scales. When computing direct transform
+				(mrs_pwttrans function), if the keywords DifInSH or MeyerWave were setted, filter is 
+				automatically used.
+
+ EXTERNAL CALLS:
+       anafast (healpix software)
+   	synfast (healpix software)
+   	alm_product2 (idl)
+   	compute_g (idl)
+   	compute_h (idl)
+   	compute_gtilde (idl)
+   	compute_htilde (idl)
+
+ EXAMPLE:
+       Compute the inverse pyramidal wavelet transform:
+        The result is stored in Imag 
+               mrs_pwtrec, Trans, Imag 
+         
+ HISTORY:
+	Written: Pierrick Abrial & Jean-Luc Starck, 2005
+	February, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_pwttrans
+
+ PURPOSE:
+	Computes the pyramidal wavelet transform on the sphere, using the HEALPix representation (NESTED data
+   representation) or Glesp Data representation. The wavelet function is zonal and its spherical harmonics 
+	coefficients a_l0 follow a cubic box-spline profile.
+
+
+ CALLING:
+
+     mrs_pwttrans, Imag, Trans, NbrScale=NbrScale, lmax=lmax, DifInSH=DifInSH, MeyerWave=MeyerWave
+       
+ INPUTS:
+     Imag -- IDL array of healpix map or IDL structure of a Glesp map: Input image be transformed 
+    
+ OUTPUTS:
+     Trans -- IDL structures with the following fields:  
+                    NbrScale : int = number of scales 
+                       nside : int = Healpix nside parameter, only present with healpix input image
+                        npix : long = Number of pixels
+                      Scale1 : finest scale (highest frequencies). A IDL array of healpix map or IDL structure of a Glesp map
+                      Scale2 : Second scale    
+                      Scalej : j th scale
+                        ...
+                      ScaleJ : with J = NbrScale, coarsest resolution
+                       lmax  : int = nlmax parameter at the first scale
+		   Tab_lmax[NbrScale] : int array Tab_lmax[j] = lmax at scale j+1, j=0...NbrScale-1
+		  Tab_nside[NbrScale] : int array Tab_nside[j] = nside parameter of the scale j+1, j=0..NbrScale-1 (Healpix input map)
+														 nx number of rings, Glesp parameter of the scale j+1, j=0..NbrScale-1 (Glesp input map)
+					 UseGLESP : int = 1 if the input image was in Glesp format or keyword Healpix_with_Glesp used, otherwise 0
+				    MeyerWave : int = 1 if the keyword MeyerWave used, otherwise 0
+					  DifInSH : int = 1 if the keyword DifInSH used, otherwise 0
+					  	   nx : int = number of rings at the first scale, Glesp parameter, only present with glesp input image
+						   np : int = max number of pixel on a ring at the first scale, Glesp parameter, only present with glesp input image
+
+ KEYWORDS:
+		NbrScale -- int: Number of scale (defaut 4)
+		Lmax     -- int: Number of used spherical harmonics (defaut 3*nside, should be between 2*nside and 4*nside)
+		DifInSH		   : If set, compute be difference between two resolution in the spherical harmonic space instead of the direct space.
+		MeyerWave	   : If set, use Meyer wavelets and set the keyword DifInSH
+
+ EXTERNAL CALLS:
+       anafast (healpix software)
+   	synfast (healpix software)
+   	alm_product2 (idl)
+   	compute_g (idl)
+   	compute_h (idl)
+
+ EXAMPLE:
+
+       Compute the multiresolution of an image I with default options
+        The result is stored in Output
+               mrs_pwttrans, Imag, Output, NbrScale=5
+         
+ HISTORY:
+	Written: Pierrick Abrial & Jean-Luc Starck, 2005
+	December, 2004 File creation
+;-
+;+
+ NAME:
+        mrs_read
+
+ PURPOSE:
+	
+   Read a spherical map, either in healpix or glesp format
+
+
+ CALLING:
+
+     map = mrs_read(file)
+       
+ INPUTS:
+    file : file to be read 
+    
+ OUTPUTS:
+     
+    either healpix map or glesp structure. For a Healpix map, the map is setted to the NESTED format after reading.
+
+ KEYWORDS:
+    none
+
+ EXTERNAL CALLS:
+       g_read_fits_map (glesp)
+   	read_fits_map (healpix)
+
+ EXAMPLE:
+
+    healmap = mrs_read( 'my_file_healpix.fits' )
+         
+ HISTORY:
+	Written: Pierrick Abrial & Jean-Luc Starck, 2006
+	February 2006
+
+
+		map = mrsp_read( FileName, noverb=noverb )	Read a HealPIX (no glesp) POLARIZED map, the map is setted to the NESTED format with the same calling as mrs_read.
+													The option /noverb prevent the printing on the screen of the format (RING or NESTED) of the read map and the number of pixels.
+
+
+;-
+;+
+ NAME:
+        MRS_REC
+
+ PURPOSE:
+	Reconstruct an image from its decomposition.
+
+ CALLING:
+      MRS_REC, Trans, Rec
+
+ INPUTS:
+       Trans : IDL structure; Transform structure (see MRS_TRANS) ;     
+    
+ OUTPUTS:
+      Rec -- IDL array of a  healpix  image : Output image be reconstructed 
+
+ EXTERNAL CALLS:
+
+ EXAMPLE:
+       Compute the undecimated wavelet transform of an image,  with five scales and reconstrcution
+               mrs_trans, Imag, WT,  /UWT, NbrScale=5
+               mrs_rec, WT, RecIma
+               tvscl, RecIma  ; plot the  reconstructed image   
+         
+ HISTORY:
+	Written:  Jean-Luc Starck, May 2008
+;-
+;+
+ NAME:
+        mrs_resize
+
+ PURPOSE:
+   Resize map either in healpix or glesp representation. If BandLimited is set, a Low-Pass filter is applied to the map. 
+   The low-pass filter is equal to 1 from l=0 to LmaxAnalysis,  and LmaxAnalysis is equal by default to 2*final_nside,
+   and then decrease to 0, at Lmax value, with Lmax = MIN( [3*final_side, 3* LmaxAnalysis]).
+   If a lowpass filtering is given via the keyword  LowPassFilter=LowPassFilter, then the filter is used for the low pass filtering step.
+
+ CALLING:
+     NewMap =  mrs_resize,Imag, nside=nside, nx=nx, np=np, ViaAlm=ViaAlm, BandLimited=BandLimited, LmaxAnalysis=LmaxAnalysis, LowPassFilter=LowPassFilter)
+
+ INPUTS:
+     Imag -- IDL array of healpix map or GLESP structure: Input image to be transformed 
+    
+ OUTPUTS:
+     Trans -- IDL array of healpix map or GLESP structure.
+
+ INPUT KEYWORDS:
+      nside     : the nside of the healpix output map
+      nx        : the latitude partition of glesp map
+      np        : the longitude partition of glesp map
+    BandLimited:  if set a low pass filtering is applied
+    LmaxAnalysis: Values until  LmaxAnalysis  are equal to 1 in the low pass filtering, i.e.  LowPassFilter[0: LmaxAnalysis] = 1 
+
+ INPUT/OUTPUT KEYWORD:
+     LowPassFilter: fltarr(0:Lmax) -- low pass filtering used in the filtering
+
+ EXTERNAL CALLS:
+       anafast (healpix software)
+       cl2map (glesp software)
+       reorder (healpix software)
+
+ EXAMPLE:
+       resize an healpix map
+
+               map2 = mrs_resize(map,nside = 256)
+               map3 = mrs_resize(map, nside=16, LmaxAnalysis=5, LowPassFilter=LPout)
+
+       resize an GLESP map
+
+               map2 = mrs_resize(map,nx = 512,np = 1024)
+         
+ HISTORY:
+	Written:  Jean-Luc Starck & Pierrick Abrial , 2006
+	February, 2006 File creation
+   Sept 2012, Florent Sureau, add pass band filtering
+;-
+;+
+ NAME: 
+       MRS_RIDGET
+
+ PURPOSE: 
+        Extract a ridgelet band from the ridgelet transform (see mrs_ridtrans).
+        If the keyword NormMad is set, a normalization is applied to all coefficients.   
+
+ CALLING:
+       result = MRS_RIDGET( Rid_Struct, ScaleRid, NormMad=NormMad, ImaMean=ImaMean, ImaMad=ImaMad )
+
+ INPUT:
+       Rid_Struct -- IDL structure: Ridgelet transform structure (see MRS_RIDTRANS) 
+       ScaleRid  -- int:  Ridgelet band number (must be between 0 and Rid_Struct.NBRSCALE-1)
+       NormMad -- scalar: if set, normalize the coefficients by the Median Absolution Deviation
+                          of all coefficients at a given position in the block.
+       ImaMad  -- 2D fltarr: Image containing the normalization parameter
+       ImaMean -- 2D fltarr: Image containing  the mean value for all coefficients at a given position.
+           
+
+ OUTPUTS:
+      Result -- 4D IDL float array[*,*,*,12]: Ridgelet band
+             
+ EXTERNAL CALLS
+           mrs_ridget
+
+ EXAMPLE:
+   mrs_ridtrans, Imag, Rid 
+   Band = mrs_ridget(Rid, 1)
+       Extract the  second ridgelet scale  
+
+ HISTORY:
+       Written: Jean-Luc Starck 2005.
+       September, 2005 File creation
+;-
+;+
+ NAME: 
+       MRS_RIDPUT
+
+ PURPOSE: 
+        Insert a band in the ridgelet transform (see mrs_ridtrans).   
+
+ CALLING:
+       MRS_RIDPUT, Rid_Struct, Band, ScaleRid
+
+ INPUT:
+       Rid_Struct -- IDL structure: Ridgelet transform structure (see MRS_RIDTRANS)
+		Band -- 4D IDL float array[*,*,*,12]: Ridgelet coefficients band to insert.
+       ScaleRid  -- int: Ridgelet band number
+
+ OUTPUTS:
+       Rid_Struct -- IDL structure: Ridgelet transform structure (see MRS_RIDTRANS) 
+             
+ EXAMPLE:
+   mrs_ridtrans, Imag, Rid 
+   Band = mrs_ridget(Rid,1)
+   mrs_ridput, Rid, Band, 1
+       Extract and reinsert a band in the ridgelet transform  
+
+ HISTORY:
+       Written: Jean-Luc Starck 2005.
+       February, 2005 File creation
+;-
+;+
+ NAME: 
+       MRS_RIDREC
+
+ PURPOSE: 
+        Reconstruct an image on the Sphere from its ridgelet transform (see mrs_ridtrans).   
+
+ CALLING:
+       MRS_RIDREC, Rid_Struct, result
+
+ INPUT:
+       Rid_Struct : IDL structure; Ridgelet transform structure (see MRS_RIDTRANS) 
+          
+ OUTPUTS:
+      Result:  1D array of an Healpix image (NESTED format)
+             
+ EXTERNAL CALLS
+           invrid2d
+
+ EXAMPLE:
+   mrs_ridtrans, Imag, Rid 
+   mrs_ridrec, Rid, RecIma
+       Ridgelet transform and reconstruction
+
+ HISTORY:
+       Written:  Jean-Luc Starck & Yassir Moudden & Ludovic Poupard, 2005.
+       February, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_ridstat
+
+ PURPOSE:
+	 Return statistical information relative to the ridgelet transform of a given data set.
+        The return value is a 2D IDL array of 9 elements x Number of scales.
+        For each scale j, we have:
+			Tab[0,j] = standard deviation
+			Tab[1,j] = skewness
+			Tab[2,j] = Kurtosis
+			Tab[3,j] = Min
+			Tab[4,j] = Max 
+			Tab[5,j] = HC
+			Tab[6,j] = HC^+
+			Tab[7,j] = Cumulant of order 5
+			Tab[8,j] = Cumulant of order 6
+
+			If TabFile is set, then the statistic is computed on a set of images. Tab[*,*,f] will be the statistic related to the file TabFile[f]
+			If the keyword normmad is set, the ridgelet coefficients are first normalized.
+
+ CALLING:
+
+	TabStat = mrs_ridstat( Data, TabStatName=TabStatName, NbrScale=NbrScale, BlockSize=BlockSize, NormMad=NormMad, verb=verb, 
+							Ridtrans=Ridtrans, survival=survival, TabFile=TabFile, TabSurvStat=TabSurvStat, TabAllSurvStat=TabAllSurvStat, TabSurvNu=TabSurvNu ) 
+       
+ INPUTS:
+     Data -- IDL array of healpix map: Input data to analyze
+
+ INPUT KEYWORDS:
+		verb: scalar -- if set, the calculated statists are printed on the screen.
+		BlockSize     --  LONG: Block size used in the ridgelet transform.
+		NbrScale  -- int: number of scales. By default, it is automatically estimated.
+		NormMad -- int: if set, a normalization is applied to the ridgelet coefficient.
+		TabFile -- IDL table of string, list of file where the function read the maps to be analized, in that case, on output, Imag is the last map that had been proceed and the return value is a 3D array:
+			Tab[i,j,f]	statistic i for scale j and map TabFile[f]
+		survival: if set, use the survival function and activate the keywords parameters TabSurvStat, TabAllSurvStat and TabSurvNu for the results
+
+ OUTPUT KEYWORDS: 
+		TabStatName -- IDL table of string: TabStatName = ["Sigma", "Skewness", "Kurtosis", "Min", "Max", "HC1", "HC2", "CUMULANT ORDER 5", "CUMULANT ORDER 6"]
+		Ridtrans: -- IDL structure containing the ridgelet transform of Data.
+		TabSurvStat -- 2D float array [*,j] survival value at scale j
+		TabAllSurvStat -- 3D double array, use together with TabFile keyword, TabAllSurvStat[*,*,f] is TabSurvStat parameter for map TabFile[f]
+		TabSurvNu -- 2D float array [*,j] nu survival value at scale j
+
+ EXAMPLE:
+     Compute the pyramidal wavelet transform with 4 scales
+       TabStat = mrs_ridstat(Data, NbrScale=4, /verb)
+
+ EXTERNAL CALLS:
+       mrs_ridtrans, mrs_ridget, get_stat
+
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	September, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_ridtrans
+
+ PURPOSE:
+		Computes the local ridgelet transform on the sphere, using the healPix pixel representation (NESTED data
+       representation). The standard ridgelet transform is applied on the 12 faces of the Healpix image. Each
+		face is an nside * nside quadrilateral image where nside is a power of two.
+
+       The output is an IDL structure.
+       A band at scale j (j=0..NBRSCALE-1) can be extracted using the function
+       function mrs_ridget(Rid, j) (ex: Scale2 = mrs_ridget(RidTrans, 2))
+       and a band can be inserted in the transformation using the routine  mrs_ridput
+       (ex:  mrs_ridput, RidTrans, Scale2, 2).
+
+ CALLING:
+
+     mrs_ridtrans, Imag, RidTrans, NbrScale=NbrScale, overlap=overlap, blocksize=blocksize, Opt=Opt
+
+ INPUTS:
+     Imag -- IDL array of healpix map: Input image be transformed 
+    
+ OUTPUTS:
+     RidTrans -- IDL structures with the following fields:  
+         NBRSCALE  -- LONG: Number of scales of the ridgelet transform
+         COEF      --  Table of Ridgelet coefficients
+         BSIZE     --  LONG: Block size used in the ridgelet transform
+         NXB       -- LONG: Number of blocks in the x-axis direction
+         NYB       -- LONG: Number of blocks in the y-axis direction
+         OVERLAP   -- LONG: is equal to 1 if blocks are overlapping
+         TABNORM   -- FLOAT Array[0:NBRSCALE-1]: Normalization value for each scale
+
+ KEYWORDS and optional inputs:
+     NbrScale : number of scales in the ridgelet decomposition. By default it is automatically estimated
+		
+	overlap : if this keyword is set, the blocks in the local ridgelet transform overlap by half there size.
+			  if not set, then the blocks do not overlap.
+
+   blocksize : long, this is the size of the square blocks on which the local ridgelet transform is computed.
+				if not set, then the blocksize is taken to be half the size of the individaul faces ie blocksize = nside/2
+				N.B. Blocksize is required to be a power of two smaller than nside which is also a power of two. 
+				There is no testing of this requirement.
+					
+   opt : string, sets options to used if the mre package is available. If mre is not available, then opt is useless, 
+		 and only procedures in mrs are used.
+
+
+ EXTERNAL CALLS:
+        rid2d,  lino_grid
+
+ EXAMPLE:
+       Compute the ridgelet transform of an image I with default options
+        The result is stored in Output
+               mrs_ridtrans, Imag, Output 
+         
+ HISTORY:
+	Written:  Jean-Luc Starck & Yassir Moudden & Ludovic Poupard
+	September, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_split
+
+ PURPOSE:
+       Decompose an healpix map (NESTED format) into a cube of small patches.
+
+ CALLING:
+
+     PatchTrans = mrs_split( Imag, frac=frac, nx=nx, SizePatchDegrees=SizePatchDegrees, exrec=exrec, PixelSizeParam=PixelSizeParam )
+
+ INPUTS:
+     Imag -- IDL array of healpix map: Input image to be decomposed into patches 
+    
+ OUTPUTS:
+     PatchTrans -- IDL structures with the following fields:  
+                     NMaps : long = number of patches 
+                     map_hd: string = header of a small patch
+                     Nx,Ny : long = size of each patch
+                     Lon : flarr[NMaps] = Longitude of each patches if the position (Nx/2.,Ny/2.) is the center of the patches.
+                     Lat : flarr[NMaps] = Latitude of each patches if the position (Nx/2.,Ny/2.) is the center of the patches.
+                     Map : fltarr[Nx,Nx,NMaps] =  patches cube
+                     PixelSize: float = Pixel size in arc minute
+                     MapSize: float = Map size in arcmin
+                     Frac: float = overlapping factor between patches
+					  Nside: long = nside parameter of the input imag
+
+ KEYWORDS:
+		Frac : overlapping factor  between patches. Default is 0.05
+		Nx : Number of pixels per patch along both x and y axis. Default is automatically estimated.
+		SizePatchDegrees: Size (in degrees) of each patch. Default is 10 degrees.
+		exrec: if set, the pixel size is smaller in order to have an exact reconstruction using mrs_invsplit
+		PixelSizeParam: if exrec, the pixel size is multiplied by a factor (< 1) in order to smaller pixel for exact reconstruction.
+
+ EXTERNAL CALLS:
+     SPH_DIVIDE
+
+ EXAMPLE:
+       Decompose an image into patches with default options
+;             Patch = mrs_split(map)
+         
+ HISTORY:
+	Written:  Jean-Luc Starck, June 2007
+;-
+;+
+ NAME:
+        mrs_tv
+
+ PURPOSE:
+	Visualization  of a HEALPix image (NESTED data representation) or a GLESP image.
+
+ CALLING:
+
+     mrs_tv, Data, graticule=graticule, gif=gif, png=png, TITLE=TITLE, COLT=COLT, NOBAR=NOBAR, Healpix=Healpix, PS=PS, log=log, min=min, max=max, pxsize=pxsize, big=big, x=x, pol=pol, UNITS=UNITS
+       
+ INPUTS:
+     Data -- IDL array of healpix map or GLESP structure: Input image to be visualized 
+
+ KEYWORDS:
+		min: float -- Data image is visualized with the new min set.
+		max: float -- Data image is visualized with the new max set.
+		log: if set, plot the image in log scale, Data must be positive.
+		graticule: int -- Mollview Healpix command graticule keyword.
+		png: string -- If set, write to the disk a PNG file with the filename given by the png keyword. 
+		gif: string -- If set, write to the disk a GIF file with the filename given by the gif keyword.
+		PS: string -- If set, write to the disk a Postcript file with the filename given by the ps keyword.
+		TITLE: IDL string -- Title of the plot in the Healpix  representation.
+		UNIT: string -- name of the image's unit to be plotted with the LUT in the Healpix representation
+		COLT: int --  IDL Color table.
+		NOBAR: int -- Do not plot the LUT in the Healpix representation
+		Healpix: scalar -- if set, then convert the GLESP image into a Healpix one, and use
+                          the Healpix representation for visualization.
+                          This keyword is not active for maps already in Healpix representation
+		pxsize: int set the number of horizontal pixel on the plot (it will be the same in vertical), default value is 800
+		big: set pxsize to 1500
+		pol: int -- for plotting polarized map T,Q,U default is 0 (no polarized map), see mollview help for more details.
+
+		x: if set, start interactive plot with the mapview prog, nside max=1024, data will be resized if greater
+
+ EXTERNAL CALLS:
+      mollview - Healpix command
+      f2fig  -- GLESP C binary
+      
+ HISTORY:
+	Written: Jean-Luc Starck, 2006
+	January, 2006 File creation
+;-
+;+
+ NAME:
+        mrs_uht
+
+ PURPOSE:
+	Computes the undecimated  haar transform of an Healpix spherical image. 
+
+ CALLING:
+
+     mrs_uht, Imag, Trans, NbrScale=NbrScale
+
+ INPUTS:
+     Imag -- IDL array of healpix image: Input image to be transformed
+
+ INPUT/OUTPUT:
+    
+ OUTPUTS:
+     Trans -- IDL structures with the following fields:  
+                  NbrScale : int = number of scales 
+                     nside : int = Healpix nside parameter (0 for a Glesp image)
+                      npix : long = Number of pixels of the input image (12*nside*nside)
+                      Coef : fltarr[npix,NbrScale] = wavelet transform of the data
+                             Coef[*,0] = wavelet coefficients of the finest scale (highest frequencies).
+                             Coef[*,NbrScale-1] = coarsest scale (lowest frequencies). 
+
+ KEYWORDS:
+      NbrScale  : Number of scales (default is 4). If it is set to -1, then the number scales is:  log(lmax) / log(2)  - 2
+
+ EXAMPLE:
+
+       Compute the undecimated  haar transform  of an image.
+        The result is stored in Output
+               mrs_uht, Imag, Output, NbrScale=5
+         
+ HISTORY:
+	Written:   Jean-Luc Starck, 2011
+;-
+;+
+ NAME:
+        mrs_whitening
+
+ PURPOSE:
+     Apply a whitening to a in image, i.e. it divides its spherical harmonics coefficients 
+     by the sqrt root of its power spectrum:
+          Alm = Alm / sqrt( Cl)
+     If the power spectrum is not given, it is computed on the map.
+  
+     If the keyword INV is set and the power spectrum Cl is given, then the routine performs
+     the inverse whitening transform:
+            Alm = Alm * sqrt( Cl)
+
+ CALLING:
+     W_Ima = mrs_whitening(Imag,  Cl=Cl, inv=inv, ALM=ALM, lmax=lmax)
+
+ INPUTS:
+     Imag -- IDL array of healpix map: Input image to be whitened 
+    
+ OUTPUTS:
+     W_Ima -- IDL array of healpix map: Output whitened image
+
+ INPUT KEYWORDS:
+     Cl -- 1D IDL fltarr: Power Spectrum. P[k] = Mean(  POWSPECTRUM[*,l]  )
+     ALM -- ALM structure (see mrs_almtrans.pro): if set, the spherical harmonic are not computed, 
+                           and the input variable Imag is not used.
+     lmax -- int: maximum multipole used in the spherical harmonic decomposition
+     inv -- scalar: if set, apply the inverse whitening.
+
+ OUTPUT KEYWORDS:
+
+ EXTERNAL CALLS:
+       mrs_almtrans.pro,  mrs_alm2spec.pro
+
+ EXAMPLE:
+       Apply the whitening to an image. 
+               P = mrs_whitening(Imag) 
+         
+ HISTORY:
+	Written: Jean-Luc Starck, 2009
+	April, 2009 File creation
+;-
+;+
+ NAME:
+        mrs_wiener.
+
+ PURPOSE:
+    Perform wiener filtering in the spherical harmonic space.
+       and Alm_output = Alm_input * WienerFilter
+          where  WienerFilter =  P^* S / [ | P P^* |^2 S + N ]
+                 P = instrumental beam (i.e. PSF, by default P = 1)
+                 S = A priori Signal Power Spectrum (default, power spectrum of the data)
+                 N = Noise power spectrum
+   If the keyword ALM is set (it should be a structure (see mrs_almtrans) containg the ALM coeff of the data, 
+   then the first parameter is not used and the alm are not calculated in this routine 
+   The Wiener is optimal in the sens of the Least mean square error of the reconstructed map. 
+   the power spectrum of the reconstructed map is biased (i.e. PowSpectrum(WienerMap) = PowSpectrum(RealMap) / (1 + N / (P^2S) ))
+     
+   If the Cole keyword is set, then the Wiener filtering is replaced by the Cole filtering and the power spectrum of 
+   the reconstructed map is unbiased, but the estimation is not optimal anymore for the east mean square error criterion.
+   The Cole filter is:
+             ColeFilter =  [ S / [ | P P^* |^2 S + N ] ]^0.5
+
+   If the keyword DataPrior is set, then the vector given by SignalPrior corresponds to an a priori on the power spectrum of the signal multiplied by P^2
+
+ CALLING:
+     mrs_wiener, Imag, NoiseSpectrum, Recons, SignalPrior=SignalPrior, alm=alm, Spec1D=Spec1D, WienerFilter=WienerFilter, lmax=lmax, Psf=Psf, Cole=Cole, bias=bias
+
+ INPUTS:
+     Imag -- IDL array of healpix map or GLESP structure: Input image to be denoised 
+     NoiseSpectrum, -- float or IDL 1D array: variance or power spectrum of the noise
+
+ OUTPUTS:
+     Recons -- IDL array of healpix map or GLESP structure: Output denoised  image 
+
+ KEYWORDS:
+     SignalPrior -- input IDL 1D array: 1D power spectrum of the expected power spectrum
+                                  By default, it is estimated from the data 
+     DataPrior -- -- scalar: if set, then the vector given by SignalPrior corresponds to an a priori on the power spectrum of the signal multiplied by Psf^2
+     Psf  -- input IDL 1D array: Instrumental beam (i.e. PSF[l] = Spherical Harmonics a_{l,0} = ... = a_{l,l+1} of the 
+                                 intrumental beam (i.e. Point Spread Funciton).
+  
+     alm -- input/output ALM structure: IF this keyword is set, the input image is not used, and the ALM given by this
+                                 keyword are used. The denoised ALM are stored in the structure
+     Spec1D -- output IDL 1D array: Estimated power spectrum from the denoised ALM
+     WienerFilter -- output IDL 1D array: Wiener or Cole filter window
+     lmax -- Maximum l used in the calculation of the ALM. This kewyord is not used if the keyword ALM is set.
+     Cole -- scalar: if set, then the window filter is not the Wiener filter, but the Cole filter which
+     bias -- output scalar or IDL 1D array: Estimated power spectrum bias
+
+ EXTERNAL CALLS:
+       mrs_alm2spec, mrs_almrec,mrs_almtrans
+
+ EXAMPLE:
+       
+         
+ HISTORY:
+	Written:  Jean-Luc Starck, 2011
+	December, 2011 File creation
+;-
+;+
+ NAME:
+        mrs_wptrans
+
+ PURPOSE:
+   Computes the undecimated isotropic wavelet PACKET transform on the sphere with meyer wavelets, 
+   using the HEALPix representation (NESTED data representation) or the GLESP representation
+
+ CALLING:
+     mrs_wptrans, Imag, Trans, NbrScale=NbrScale
+
+ INPUTS:
+     Imag -- IDL array of healpix map or GLESP IDL structure: Input image to be transformed 
+ 
+ OUTPUTS:
+     Trans -- IDL structures with the following fields: 
+                     UseGLESP : int = 1 if we use the GLESP pixelisation 
+                  NbrScale : int = number of wavelet packet scales 
+                     nside : int = Healpix nside parameter
+                        nx : int: number of rings in GLESP representation
+                        np : int: number of pixels on the central ring
+                       npix : int: total number of pixels in the original image
+                       Coef : fltarr[npix,NbrScale] = wavelet transform of the data 
+                      lmax: int= lmax parameter at the finest scale
+                       x_sky: float array: ring position in cos(theta) ( in [-1,1]
+                       y_sky: number of pixels per ring
+
+
+ OUTPUT KEYWORDS:
+		NbrScale : int = number of scales used in the decomposition
+
+ EXTERNAL CALLS:
+       mrs_almtrans  
+   	mrs_almrec
+
+ EXAMPLE:
+
+       Compute the wavelet packet of an image I with default options
+        The result is stored in Trans
+              
+       mrs_wptrans, Imag, Trans
+
+
+	IMAGE RECONSTRUCTION:
+
+		The image reconstruction is done by using the procedure mrs_wtrec, see mrs_wtrec.pro
+         
+ HISTORY:
+	Written: Pierrick Abrial & Jean-Luc Starck, 2007
+	December, 2006 File creation
+;-
+;+
+ NAME:
+        mrs_write
+
+ PURPOSE:
+	
+   write, spherical map, either in healpix or glesp format
+
+
+ CALLING:
+
+      mrs_write, file, data, ring=ring
+       
+ INPUTS:
+    file : file to be writen
+   data : healpix tab or glesp struct to be writen for Healpix map the map is in NESTED format
+    
+ OUTPUTS:
+     
+    none
+ KEYWORDS:
+    ring: convert Healpix map data to RING format for writing
+
+ EXTERNAL CALLS:
+       write_glesp (glesp)
+   	write_fits_map (healpix)
+
+ EXAMPLE:
+
+   mrs_write,"my_file_healpix.fits",healpixdata
+   mrs_write,"my_file_glesp.fits",glespdata
+         
+ HISTORY:
+	Written: Pierrick Abrial & Jean-Luc Starck, 2006
+	February 2005
+
+
+		mrsp_write, file, data, ring=ring	Write a HealPIX (no glesp) POLARIZED map in NESTED format with the same options and calling as mrs_write
+
+
+;-
+;+
+ NAME:
+       MRS_WT1D1DREC
+
+ PURPOSE:
+       Apply a 1D-1D wavelet recpnstruction. GLESP package must be installed.
+
+ CALLING SEQUENCE:
+        mrs_wt1d1drec,  WT1D1D,  RecData
+
+ INPUT:
+       WT1D1D = input IDL structure obtained from the routine mrs_wt1d1dtrans.pro
+
+ OUTPUT:
+     RecData -- IDL 1D array: Healpix reconstructed map (nested)  
+
+ EXAMPLES:
+    Compute the wavelet transform 1D-1D, and its reconstruction
+         ISAP> mrs_wt1d1dtrans, map_in, outWT
+         ISAP> mrs_wt1d1drec,  outWT, RecIma
+
+ EXTERNAL CALLS:
+         Call glesp routine glesp2healpix.
+
+ HISTORY:
+    File create date: April 2013,  Jean-Luc Starck
+;-
+;+
+ NAME:
+       MRS_WT1D1DTRANS
+
+ PURPOSE:
+       Apply a 1D-1D wavelet transform on a healpix image. An undecimated 1D wavelet transform is first applied along the longitude for each 
+       wavelet band, and then another undecimated 1D wavelet transform is applied along the latitude for each longitude.
+        The output is therefore a four dimension array (x,y,sx,sy), i.e. position in the image (x,y). scale sx on the longitude, and scale sy on the latitude.
+        If the keyword ecliptic is set, the coordinate are first transform from galactic to ecliptic before the transform is applied.
+        The GLESP package MUST be installed in order to have this routine working.
+
+ CALLING SEQUENCE:
+        mrs_wt1d1dtrans, map_in, outWT,  ecliptic=ecliptic, NbrScaleX=NbrScaleX, NbrScaleY=NbrScaleY, healpix=healpix, HWT=HWT, gen2=gen2
+
+ INPUT:
+       map_in = input HEALPix map (nested format)
+
+ OUTPUT:
+      outWT: IDL structure  with the following fields:  
+                  coef:  4D IDL array -- [*,*, 0:NbrScaleX-1,  0: NbrScaleY-1] is the wavelet image at scale sx along longitude and scale sy along latitude.
+                  ecliptic: scalar: if set, an ecliptic to galactic coordinate conversion  is applied before transform.
+                  NbrScaleX: scalar -- number of scales along the longitude
+                  NbrScaleY: scalar -- number of scales along the latiude
+
+ INPUT KEYWORDS:
+       gen2:  scalar -- if set, the second starlet generation algorithm (i.e. with positive filters for the reconstruction) is applied.
+       healpix: scalar -- if set, convert also each wavelet scale in healpix format. 
+
+ OUTPUT KEYWORDS:
+       HWT -- IDL 3D array -- Conversion of the coef array into healpix maps:  [*,0:NbrScaleX-1,  0: NbrScaleY-1] 
+
+ EXAMPLES:
+    Compute the wavelet transform 1D-1D, and visualisation of the wavelet band 2-3  (scale 2 along longitude and 3 along latitude) 
+         ISAP> mrs_wt1d1dtrans, map_in, outWT
+         ISAP> tvscl, outWT[*,*,2,3]  
+
+    Same transformation, but convert also all wavelet bands into healpix format.
+         ISAP> mrs_wt1d1dtrans, map_in, outWT, /healpix, HWT=HWT
+         ISAP> mrs_tv, HWT[*,2,3]  
+
+ EXTERNAL CALLS:
+         Call glesp routine healpix2glesp.
+
+ HISTORY:
+    File create date: April 2013,  Jean-Luc Starck
+;-
+;+
+ NAME:
+        mrs_wt_correlate
+
+ PURPOSE:
+	 Return the correlation per wavelet scale of of two images.  If a mask is given, it calculates also the correlation in the mask only.
+
+ CALLING:
+        WT_Correl= mrs_wt_correlate(Imag_1, Imag_2, WT1=WT1, WT2=WT2,  NbrScale=NbrScale, Mask=Mask,  NbrLat= NbrLat) 
+       
+ OPTIONAL INPUTS:
+     Imag_1 -- IDL array of healpix map. If WT1 is set, Imag_1 is not used.
+     Imag_2 -- IDL array of healpix map.  If WT2 is set, Imag_2 is not used.
+
+ INPUT KEYWORDS:
+		NbrScale -- int: Number of scales. Default is   log(nside)) / log(2) 
+
+ INPUT/OUTPUT  KEYWORDS:
+      WT1 -- IDL structure: Wavelet transform of Imag_1
+      WT2 -- IDL structure: Wavelet transform of Imag_2
+	   NbrLat -- int: Number  of latitude bands.   
+
+ RETURN: 
+   CorrelWT: IDL Stucture = {TabCorrel -- IDL array [0: NbrScale-1] :   TabCorrel[j] is the correlation between the two wavelets scale WT1.coef[*,j] and  WT2.coef[*,j] 
+                                            NbrScale -- int: Number of scales. 
+                                            TabMaskCorrel -- IDL array [0: NbrScale-1] :   TabMaskCorrel[j] is the correlation between the two wavelets scale WT1.coef[IndMask,j] and  WT2.coef[IndMask,j] 
+                                                                        where IndMask = where(Mask EQ 1)
+                                            TabLatCorrel -- IDL array [0: NbrScale-1, 0:NbrLat-1].   TabCorrel[j, l] is the correlation between the two wavelets scale WT1.coef[*,j] and  WT2.coef[*,j]  at a given 
+ 								                                        latitute band
+											TabMaskLatCorrel -- IDL array [0: NbrScale-1, 0:NbrLat-1].    TabCorrel[j, l] is the correlation between the two wavelets scale WT1.coef[IndMask,j] and 
+																	    WT2.coef[IndMask,j]  at a given  latitute band
+																		TabBLat-- 1D float array [0: NbrLat-1]: B latitude for each latitude band }
+ EXAMPLE:
+     Compute the multiscale correlation function with 5 scales
+       WT_Correl= mrs_wt_correlate(Imag_1, Imag_2, NbrScale=5, NbrLat= NbrLat) 
+
+ EXTERNAL CALLS:
+            mrs_wttrans.pro,  mrs_lat_index.pro
+
+ HISTORY:
+	Written: Jean-Luc Starck, April 2011
+;-
+;+
+ NAME:
+        mrs_wt_powspec
+
+ PURPOSE:
+        Computes the wavelet binned power spectrum, corresponding to 
+        the power spectrum integrated over filters of a wavelet decomposition.
+
+ CALLING:
+     wtps  =  mrs_wt_powspec(Map,  filters=filters, Mask=Mask, Nscale=Nscale, Firstl=Firstl, lmax=lmax, filtWidth= filtWidth)
+
+ INPUTS:
+     Map        -- Healpix map: Input CMB image to compute the
+                   compressed measurements from.
+    
+ OUTPUTS:
+     wtps     -- IDL dblarr(Nscale, 3) = binned Cl 
+                   									wtps[i,0] = beginning of the band
+                                                       wtps[i,1] = end of the band
+                                                       wtps[i,2] = binned Cl value in the bad
+
+ INPUT/OUTPUT KEYWORD: 
+     filters     : array of size lmax+1 by Nscale = wavelet filters
+                   in the multipole domain to be used to compute the
+                   compressed measurements.
+     Mask        : Healpix map = mask applied to the input Map.
+     Nscale      : int = number of scales used in the wavelet
+                   decomposition = number of binned measurements.
+     Firstl      : int = initial multipole value to be reconstructed in Cl.
+     filtWidth   : int = minimum width of the wavelet filters in the
+                   multipole domain.
+     lmax        : int = final multipole value to be reconstructed in Cl.
+
+ EXAMPLE:
+      Estimate the binned power spectrum from a CMB map  :
+      wtps  =  mrs_wt_powspec(Map)
+
+ HISTORY:
+       Written:  Aurele Balavoine & J.L. Starck , 2012
+;-
+;+
+ NAME:
+        mrs_wtfilter
+
+ PURPOSE:
+	Wavelet denoising of an image on the sphere (Healpix pixel NESTED representation) or Glesp Data representation.
+       By default Gaussian noise is considered. If the keyword SigmaNoise is not 
+       set, then the noise standard deviation is automatically estimated.
+       If the keyword MAD is set, then a correlated Gaussian noise is considered,
+       and the noise level at each scale is derived from the Median Absolution Deviation (MAD)
+       method. If the keyword KillLastScale is set, the coarsest resolution is set to zero.
+       If the "Pyr" keyword is used, then the pyramidal WT is used instead of the undecimated WT.
+		If the "atrou" keyword is used, then the "a trou" WT is used instead of the undecimated WT.
+		If the keyword CYCLE is set, the denoising is performed three times,
+       by shifting the data by PI/4 and -PI/4, denoising the shifted version, and averaging
+       the unshifted denoising maps. This procedure also us to remove the block effect
+       which may appear on the border of the Healpix faces.
+       The thresholded wavelet coefficients can be obtained using the keyword Trans.
+       If the input keyword NITER is set, then an iterative algorithm is applied and
+       if the POS keyword is also set, then a positivity constraint is added.
+
+ CALLING:
+
+	mrs_wtfilter, Imag, Filter, NbrScale=NbrScale, NSigma=NSigma, SigmaNoise=SigmaNoise, lmax=lmax, TabNSigma=TabNSigma,
+				  mad=mad, localmad=localmad, WinMinSize=WinMinSize, KillLastScale=KillLastScale, Trans=Trans, Pyr=Pyr,
+				  niter=niter, pos=pos, cycle=cycle, FirstScale=FirstScale, Soft=Soft, fdr=fdr, Use_FdrAll=Use_FdrAll,
+				  FilterLast=FilterLast, mask=mask, atrou=atrou, OutMask=OutMask
+    
+ INPUT:
+     Imag -- IDL array of healpix map or Glesp image IDL structure: Input image be filtered 
+
+ OUTPUT:
+     Filter -- IDL array of healpix map or Glesp image IDL structure: reconstructed image from the thresholded wavelet coefficients   
+
+ INPUT KEYWORDS:
+		NbrScale: int = Number of scales (default is 4)
+		NSigma: float = Level of thresholding (default is 3)
+		SigmaNoise: float = Noise standard deviation. Default is automatically estimated
+		TabNSigma: float array = Level of thresholding at each scale
+		MAD: int if set, then the noise level is derive at each scale using the MAD of the
+                        wavelet coefficient. MAD = median ( ABS( WaveletScale) ) / 0.6745
+		localmad: int if set, similar to keyword MAD but with one value for each patch of the
+						image and each instead of one value for the full image at each scale
+						DO NOT WORK WITH GLESP
+
+		WinMinSize: int minimal size of patches (default is 8)
+		KillLastScale: if set, the last scale is set to zero
+		niter: int: number of iterations used in the reconstruction
+		pos: if set, the solution is assumed to be positive
+		Pyr: if set, a pyramidal WT is used instead of the the undecimated WT
+		cycle: int if set, then a cycle spanning is applied.
+						DO NOT WORK WITH GLESP
+
+		FirstScale: int Consider only scales larger than FirstScale. Default is 1 (i.e. all scales are used).
+		Soft: if set, use soft thresholding instead of hard thresholding
+		fdr: float between 0 (default) and 1 (max, if greater or equal to 1, set to 0.05),
+						used to estimate a threshold level instead of a NSigma threshold,
+						threshold is applied from scale j=FirstScale to the last.
+		Use_FdrAll: same as fdr but applied to all scales.
+		FilterLast: if set, the last scale is filtered.
+		mask: IDL array of healpix map, input mask applied.
+		atrou: if set, a "a trou" WT is used instead of the the undecimated WT
+						DO NOT WORK WITH GLESP
+
+ INPUT/OUTPUT:
+		lmax : int = maximum l value in the Spherical Harmonic Space (Healpix)
+
+ OUTPUT KEYWORDS:
+		Trans -- IDL structure: Thresholded wavelet decomposition of the input image
+		OutMask: IDL array of healpix map, part of Imag that were set to 0 via the filtering, including keyword mask if used.
+
+ EXTERNAL CALLS:
+       mrs_wttrans
+   	mrs_wtrec
+       mrs_pwttrans
+   	mrs_pwtrec
+       mrs_wtget
+   	mrs_wtput
+
+ EXAMPLE:
+       Filter an image with 5 scales. The result is stored in Filter 
+               mrs_wtfilter, Data, Filter, NbrScale=5 
+         
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	February, 2005 File creation
+
+;-
+;+
+ NAME:
+        mrs_wtgenus
+
+ PURPOSE:
+	 Computes the Genus curve for each scale of the Wavelet Transform.
+
+ CALLING:
+
+     mrs_wtgenus, Image, Genus, NbrScale=NbrScale, Pyr=Pyr, Trans=Trans, MFSTEP=MFSTEP        
+    
+ INPUT:
+     Imag -- IDL array of healpix map: Input image be filtered 
+
+ OUTPUT:
+     Genus -- 3D IDL array [*,2,NbrScale-1]: Genus curve at each scale
+                            Genus[*,0,j] = Nu value of the Genus curve at scale j
+                            Genus[*,1,j] = Genus values at scale j   
+
+ INPUT KEYWORDS:
+      NbrScale -- int: Number of scales (default is 4)
+      Pyr      -- int: if set, use of the pyramidal WT instead of the undecimated one.
+      MFSTEP   -- float: step parameter for the evaluation of the Genus. Default is 0.005
+
+ OUTPUT KEYWORDS:
+      Trans -- IDL structure: Wavelet transform of the data
+
+ EXTERNAL CALLS:
+       mrs_wttrans
+       mrs_pwttrans
+
+ EXAMPLE:
+     npix = 196608l
+     n = randomn(seed, npix)
+     mrs_wtgenus, n, Genus, NbrScale=5, /pyr 
+     ; Plot the genus curve at each scale j
+     for j=0, 3 do plot, Genus[*,0,j], Genus[*,1,j]  
+         
+ HISTORY:
+	Written: Jean-Luc Starck, 2004
+	February, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_wtget 
+
+ PURPOSE:
+	Return a scale of the wavelet transform obtained by the command mrs_wttrans or by the command mrs_pwttrans.
+
+ CALLING:
+
+     Scale = mrs_wtget( Trans, ScaleNumber, Face=Face, NormVal=NormVal )  
+       
+ INPUTS:
+     Trans -- Trans: IDL structures containing the wavelet transform 
+     ScaleNumber -- int: Scale number, The scale number must be 
+                     between 0 and Trans.NbrScale-1
+
+ KEYWORDS:
+      Face -- int : If set, the routines retuns a Cube[*,*,0:11] containg
+                    the twelve faces of the Healpix representation
+      NormVal -- float: Normalization value of the band. 
+
+ EXTERNAL CALLS:
+
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	February, 2005 File creation
+
+;-
+;+
+ NAME:
+        mrs_wtmexhat
+
+ PURPOSE:
+	Convolution with the mexican hat wavelet function
+
+ CALLING:
+
+     Scale = mrs_wtmexhat( Image, ScaleParameter )    
+    
+ INPUT:
+     Imag -- IDL array of healpix map in RING format: Input image to be convolved with the wavelet function
+     ScaleParameter -- float:  Scale parameter in arc minute. 
+
+ OUTPUT:
+     map_out  -- IDL array of healpix map: wavelet coefficients  
+
+ EXAMPLE:
+       Compute a  wavelet scale (here, the mexican hat wavelet will have an angular spread of about pi/6) 
+               coef = mrs_wtmexhat(Image, sqrt(3.)/3.)    
+         
+ HISTORY:
+	Written: Pierrick Abrial & Jean-Luc Starck & Patricio Vielva
+	September, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_wtput
+
+ PURPOSE:
+	Put a scale in the wavelet transform obtained by the command mrs_wttrans or by the command mrs_pwttrans.
+
+ CALLING:
+
+     mrs_wtput, Trans, Scale, ScaleNumber, Face=Face   
+       
+ INPUTS:
+     Trans -- IDL structure: IDL structures containing the wavelet transform 
+     Scale -- IDL array: wavelet scale we want use in the decomposition. 
+     ScaleNumber -- int: Scale number, The scale number must be 
+                     between 0 and Trans.NbrScale-1
+
+ KEYWORDS:
+      Face -- int : If set, the Scale is a Cube[*,*,0:11] containg
+                    the twelve faces of the Healpix representation
+
+ EXTERNAL CALLS:
+
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	February, 2005 File creation
+
+;-
+;+
+ NAME:
+        mrs_wtrec
+
+ PURPOSE:
+	Compute the inverse wavelet transform on the sphere.
+
+
+ CALLING:
+
+     mrs_wtrec, Trans, Rec, filter=filter        
+    
+ INPUT:
+     Trans -- IDL structures with the following fields:  
+                  NbrScale : int = number of scales 
+                     nside : int = Healpix nside parameter (0 for a Glesp image)
+                      lmax : int = maximum l value in the Spherical Harmonic Space (Healpix)
+                      npix : long = Number of pixels of the input image (12*nside*nside)
+                      Coef : fltarr[npix,NbrScale] = wavelet transform of the data
+                             Coef[*,0] = wavelet coefficients of the finest scale (highest frequencies).
+                             Coef[*,NbrScale-1] = coarsest scale (lowest frequencies). 
+                      lmax : int = lmax parameter at the first scale
+		 Healpix_with_Glesp : int = 1 if the keyword Healpix_with_Glesp used, otherwise 0
+				   UseGLESP : int = 1 if the input image was in Glesp format, otherwise 0
+				  MeyerWave : int = 1 if the keyword MeyerWave used, otherwise 0
+					DifInSH : int = 1 if the keyword DifInSH used, otherwise 0
+						 nx : int = number of rings (Glesp parameter), otherwise, 0
+						 np : int = max number of pixel on a ring (Glesp parameter), otherwise, 0
+					  x_sky : fltarray with COS( THETA ) for each ring (Glesp parameter), otherwise, 0
+					  y_sky : long 1D array number of pixels/ring (Glesp parameter), otherwise, 0
+
+ OUTPUT:
+		Imag -- IDL array of healpix map: reconstructed image from the wavelet coefficients or Glesp image IDL structure if UseGlesp=1
+
+ KEYWORDS:
+      filter : Use filters for the reconstructions. If this keyword is not set, the reconstructed image
+               is obtained by a simple addition of all wavelet scales. Automaticaly applied if keyword 
+				MeyerWave, NeedletWave or DifInSH were set at the wavelet decomposition.
+
+ EXTERNAL CALLS:
+       anafast (healpix software)
+   	synfast (healpix software)
+   	alm_product2 (idl)
+   	compute_g (idl)
+   	compute_h (idl)
+   	compute_gtilde (idl)
+   	compute_htilde (idl)
+
+ EXAMPLE:
+       Compute the inverse wavelet transform:
+        The result is stored in Imag 
+               mrs_wtrec, Trans, Imag 
+         
+ HISTORY:
+	Written: Pierrick Abrial & Jean-Luc Starck, 2004
+	December, 2004 File creation
+;-
+;+
+ NAME:
+        mrs_wtstat
+
+ PURPOSE:
+	 Return statistical information relative to the isotropic  wavelet transform of a given data set.
+        The return value is a 2D IDL array of 9 elements x Number of scales.
+        For each scale j, we have:
+			Tab[0,j] = standard deviation
+			Tab[1,j] = skewness
+			Tab[2,j] = Kurtosis
+			Tab[3,j] = Min
+			Tab[4,j] = Max 
+			Tab[5,j] = HC
+			Tab[6,j] = HC^+
+			Tab[7,j] = Cumulant of order 5
+			Tab[8,j] = Cumulant of order 6
+
+		If TabFile is set, then the statistic is computed on a set of images. Tab[*,*,f] will be the statistic related to the file TabFile[f]
+       If a Mask is given, statisics from wavelet coefficients inside the mask is also calculated and store in the IDL structure StatWT.
+       If the keyword survival is set, then the survival function is also calculated and store in the structure StatWT.
+
+ CALLING:
+
+      TabStat = mrs_wtstat( Imag, TabStatName=TabStatName, NbrScale=NbrScale,  verb=verb, Mask=Mask
+							wt=wt, survival=survival, TabFile=TabFile,  StatWT=StatWT) 
+       
+ INPUTS:
+     Imag -- IDL array of healpix map: Input data to analyze
+
+ INPUT KEYWORDS:
+		NbrScale -- int: Number of scales. Default is   log(nside)) / log(2) 
+;		verb -- scalar, if set, the calculated statistics are printed on the screen
+		TabFile -- IDL table of string, list of file where the function read the maps to be analized, in that case, on output, Imag is the last map that had been proceed and the return value is a 3D array:
+	    Tab[i,j,f]	statistic i for scale j and map TabFile[f]
+		survival: if set, use the survival function and activate the keywords parameters TabSurvStat, TabAllSurvStat and TabSurvNu for the results
+
+ OUTPUT KEYWORDS: 
+     TabStatName -- IDL table of string: TabStatName = ["Sigma", "Skewness", "Kurtosis", "Min", "Max", "HC1", "HC2", "CUMULANT ORDER 5", "CUMULANT ORDER 6"]
+      wt -- IDL structure, wavelet transform of the data (see mrs_wttrans), if TabFile keyword is used, the last map proceed
+      StatWT -- IDL structure, = { TabStat -- IDL array [0:8, 0:NbrScale-2, 0:NbrFiles-1]  :  computed statistics.
+                                                 TabSurvStat  -- float array [*,j, 0:NbrFiles-1] survival value at scale j
+	                                              TabSurvNu --   float array [*,j, 0:NbrFiles-1] nu survival value at scale j
+                                                 TabStatName -- IDL table of string: TabStatName = ["Sigma", "Skewness", "Kurtosis", "Min", "Max", "HC1", "HC2", "CUMULANT ORDER 5", "CUMULANT ORDER 6"]
+									  		   	TabFile -- IDL table of string, list of file where the function read the maps to be analized, in that case, on output, Imag is the last map that had been proceed and the return value is a 3D array:
+												NbrScale -- int: Number of scales. 
+												NbrFiles : --int : number of files.
+                                               TabMaskSurvStat -- same as TabSurvStat, but statistics computed only in the mask.
+                                               TabMaskStat  -- same TabStat, but statistics computed only in the mask.
+                                               TabLatStat -- IDL array [0:8, 0:NbrScale-2, 0:NbrLat-1, 0:NbrFiles-1],  statistics per scale  and per latitude band
+												TabMaskLatStat:  IDL array [0:8, 0:NbrScale-2, 0:NbrLat-1, 0:NbrFiles-1],  statistics per scale  and per latitude band, but only in the mask.
+												TabBLat: -- 1D float array [0: NbrLat-1]: B latitude for each latitude band} 
+    
+ EXAMPLE:
+     Compute the statistics of  wavelet transform with 5 scales
+       TabStat = mrs_wtstat(Data, NbrScale=5, /verb,  StatWT=StatWT)
+
+ EXTERNAL CALLS:
+
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	September, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_wttrans
+
+ PURPOSE:
+	Computes the undecimated isotropic wavelet transform on the sphere, 
+   using the HEALPix representation (NESTED DATA REPRESENTATION) or Glesp Data representation.
+	The wavelet function is zonal and its spherical harmonics coefficients a_l0 follow 
+   a cubic box-spline profile. If DifInSH is set, wavelet coefficients are derived in the Spherical
+   Harmonic Space, otherwise (default) they are derived in the direct space.
+
+   If the keyword MeyerWave then the Meyer wavelet function is used instead of the Cubic spline.
+   If the keyword NeedletWave then the Needlet wavelet function is used instead of the Cubic spline, and 
+   the B-needlet parameter of the wavelet functuion can be modified using the keyword B_NeedletParam.
+
+
+ CALLING:
+
+     mrs_wttrans, Imag, Trans, NbrScale=NbrScale, lmax=lmax, DifInSH=DifInSH, MeyerWave=MeyerWave, NeedletWave=NeedletWave, Healpix_with_Glesp=Healpix_with_Glesp, B_NeedletParam=B_NeedletParam
+       
+
+ INPUTS:
+     Imag -- IDL array of healpix map or Glesp image IDL structure: Input image to be transformed
+
+ INPUT/OUTPUT:
+	  lmax : int = maximum l value in the Spherical Harmonic Space (Healpix)
+    
+ OUTPUTS:
+     Trans -- IDL structures with the following fields:  
+                  NbrScale : int = number of scales 
+                     nside : int = Healpix nside parameter (0 for a Glesp image)
+                      lmax : int = maximum l value in the Spherical Harmonic Space (Healpix)
+                      npix : long = Number of pixels of the input image (12*nside*nside)
+                      Coef : fltarr[npix,NbrScale] = wavelet transform of the data
+                             Coef[*,0] = wavelet coefficients of the finest scale (highest frequencies).
+                             Coef[*,NbrScale-1] = coarsest scale (lowest frequencies). 
+                      lmax : int = lmax parameter at the first scale
+		           Healpix_with_Glesp : int = 1 if the keyword Healpix_with_Glesp used, otherwise 0
+				   UseGLESP : int = 1 if the input image was in Glesp format, otherwise 0
+				  MeyerWave : int = 1 if the keyword MeyerWave is used, otherwise 0
+                 NeedletWave: int = 1 if the  keyword  NeedletWave  is used, otherwise 0
+                 B_NeedletParam: int = B_NeedletParam (default is 2)
+   		    tabphi -- IDL array[0:lmax, Nscale-1]  = Scaling function  at resolution level
+   		    tabpsi -- IDL array[0:lmax, Nscale-1]   = Wavelet function  at resolution level
+   		   TabFilterH --IDL array[0:lmax, Nscale-1] = filter H allowing to go from a resolution to the next one
+    		   TabFilterG -- IDL array[0:lmax, Nscale-1] = filter G allowing to compute the wavelet coeff from the previous resolution level
+					DifInSH : int = 1 if the keyword DifInSH is used, otherwise 0
+						 nx : int = number of rings (Glesp parameter), otherwise, 0
+						 np : int = max number of pixel on a ring (Glesp parameter), otherwise, 0
+					  x_sky : fltarray with COS( THETA ) for each ring (Glesp parameter), otherwise, 0
+					  y_sky : long 1D array number of pixels/ring (Glesp parameter), otherwise, 0
+
+ KEYWORDS:
+      NbrScale  : Number of scales (default is 4). If it is set to -1, then the number scales is:  log(lmax) / log(2)  - 2
+      Lmax      : Number of spherical harmonics computed in the decomposition
+					(default is 3*nside, should be between 2*nside and 4*nside)
+      DifInSH   : If set, compute the wavelet coefficients as the
+					difference between two resolution in the spherical harmonics representation.
+					Otherwise, the wavelet coefficients are computed as the difference between two resolutions
+					in the initial representation.
+	   MeyerWave : If set, use Meyer wavelets and set the keyword DifInSH
+	   Healpix_with_Glesp : If set, a copy of Imag is done in Glesp format in order to compute the wavelet transform
+      NeedletWave:  If set, use  Needlet wavelet instead of Cubic spline
+      B_NeedletParam: float: needlet parameter. Default is 2.
+
+ EXTERNAL CALLS:
+       anafast (healpix software)
+   	synfast (healpix software)
+   	alm_product2 (idl)
+   	compute_g (idl)
+   	compute_h (idl)
+
+ EXAMPLE:
+
+       Compute the multiresolution of an image I with default options
+        The result is stored in Output
+               mrs_wttrans, Imag, Output, NbrScale=5
+         
+ HISTORY:
+	Written: Pierrick Abrial & Jean-Luc Starck, 2004
+	December, 2004 File creation
+;-
+;+
+ NAME:
+        mrs_wttv
+
+ PURPOSE:
+		Visualization of the wavelet transform obtained by the command mrs_wttrans or
+       mrs_pwttrans. If the keyword WRITE is set to a string, then all the scales
+       are written on the disk as PNG files, and the string is used as
+       a prefix for the file name of the different scales.
+          FILENAME = WRITE + ' scale_ ' + ScaleNumber + '.png'
+
+ CALLING:
+
+     mrs_wttv,  Trans, Tit=Tit, write=write, graticule=graticule, min=min, max=max, big=big 
+       
+ INPUTS:
+     Trans -- Trans -- IDL structures containing the wavelet transform 
+
+ KEYWORDS:
+      Tit  : string -- Title of the plot
+      Write : string -- Prefix filename. If set, write to disk each scale of the wavelet transform in PNG format
+      graticule: int -- Mollview Healpix command graticule keyword
+	   min max : float Mollview Healpix command min or max keyword, new min or max value to be used for the display
+	   big : bool if set, Mollview Healpix keyword pxsize is set to 1500
+      mad: bool. If set, visualize with a dynamic range between [Mean - Kmad*MAD, Mean+ Kmad*MAD],  where 
+                      mean is the mean of the data, MAD is the median absolute deviation and Kmad a parameter with default value=3
+      kmad: float -- default value is 3. If set, visualize with a dynamic range between [Mean - Kmad*MAD, Mean+ Kmad*MAD]
+
+ EXTERNAL CALLS:
+       mrs_wtget
+       mollview (healpix software)
+
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	February, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_wtstat
+
+ PURPOSE:
+	 Return statistical information relative to the isotropic  wavelet transform of a given data set.
+        The return value is a 2D IDL array of 9 elements x Number of scales.
+        For each scale j, we have:
+			Tab[0,j] = standard deviation
+			Tab[1,j] = skewness
+			Tab[2,j] = Kurtosis
+			Tab[3,j] = Min
+			Tab[4,j] = Max 
+			Tab[5,j] = HC
+			Tab[6,j] = HC^+
+			Tab[7,j] = Cumulant of order 5
+			Tab[8,j] = Cumulant of order 6
+
+		If TabFile is set, then the statistic is computed on a set of images. Tab[*,*,f] will be the statistic related to the file TabFile[f]
+       If a Mask is given, statisics from wavelet coefficients inside the mask is also calculated and store in the IDL structure StatWT.
+       If the keyword survival is set, then the survival function is also calculated and store in the structure StatWT.
+
+ CALLING:
+
+      TabStat = mrs_wtstat( Imag, TabStatName=TabStatName, NbrScale=NbrScale,  verb=verb, Mask=Mask
+							wt=wt, survival=survival, TabFile=TabFile,  StatWT=StatWT) 
+       
+ INPUTS:
+     Imag -- IDL array of healpix map: Input data to analyze
+
+ INPUT KEYWORDS:
+		NbrScale -- int: Number of scales. Default is   log(nside)) / log(2) 
+;		verb -- scalar, if set, the calculated statistics are printed on the screen
+		TabFile -- IDL table of string, list of file where the function read the maps to be analized, in that case, on output, Imag is the last map that had been proceed and the return value is a 3D array:
+	    Tab[i,j,f]	statistic i for scale j and map TabFile[f]
+		survival: if set, use the survival function and activate the keywords parameters TabSurvStat, TabAllSurvStat and TabSurvNu for the results
+
+ OUTPUT KEYWORDS: 
+     TabStatName -- IDL table of string: TabStatName = ["Sigma", "Skewness", "Kurtosis", "Min", "Max", "HC1", "HC2", "CUMULANT ORDER 5", "CUMULANT ORDER 6"]
+      wt -- IDL structure, wavelet transform of the data (see mrs_wttrans), if TabFile keyword is used, the last map proceed
+      StatWT -- IDL structure, = { TabStat -- IDL array [0:8, 0:NbrScale-2, 0:NbrFiles-1]  :  computed statistics.
+                                                 TabSurvStat  -- float array [*,j, 0:NbrFiles-1] survival value at scale j
+	                                              TabSurvNu --   float array [*,j, 0:NbrFiles-1] nu survival value at scale j
+                                                 TabStatName -- IDL table of string: TabStatName = ["Sigma", "Skewness", "Kurtosis", "Min", "Max", "HC1", "HC2", "CUMULANT ORDER 5", "CUMULANT ORDER 6"]
+									  		   	TabFile -- IDL table of string, list of file where the function read the maps to be analized, in that case, on output, Imag is the last map that had been proceed and the return value is a 3D array:
+												NbrScale -- int: Number of scales. 
+												NbrFiles : --int : number of files.
+                                               TabMaskSurvStat -- same as TabSurvStat, but statistics computed only in the mask.
+                                               TabMaskStat  -- same TabStat, but statistics computed only in the mask.
+                                               TabLatStat -- IDL array [0:8, 0:NbrScale-2, 0:NbrLat-1, 0:NbrFiles-1],  statistics per scale  and per latitude band
+												TabMaskLatStat:  IDL array [0:8, 0:NbrScale-2, 0:NbrLat-1, 0:NbrFiles-1],  statistics per scale  and per latitude band, but only in the mask.
+												TabBLat: -- 1D float array [0: NbrLat-1]: B latitude for each latitude band} 
+    
+ EXAMPLE:
+     Compute the statistics of  wavelet transform with 5 scales
+       TabStat = mrs_wtstat(Data, NbrScale=5, /verb,  StatWT=StatWT)
+
+ EXTERNAL CALLS:
+
+ HISTORY:
+	Written: Jean-Luc Starck, 2005
+	September, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_almtrans
+
+ PURPOSE:
+   Computes the spherical harmonic transform, 
+   using the HEALPix representation (nested data
+   representation by default) or the GLESP representation. 
+
+ CALLING:
+     mrs_almtrans, Imag, Trans, lmax=lmax, complex=complex, ring=ring, psp=psp, norm=norm, tab=tab
+
+ INPUTS:
+     Imag -- IDL array of healpix map or GLESP structure: Input image to be transformed 
+    
+ OUTPUTS:
+     Trans -- IDL structures with the following fields: 
+                      ALM: fltarray[*,2] = real and imaginary part of the ALM
+                           or  cfarr[*] = complex alm values if the keyword complex is set
+                           or  fltarray[NbrMaxM, NbrMaxL, 2] if the keyword tab is set
+                           or cfarr[NbrMaxM, NbrMaxL] of both keyword complex and tab are set.
+                      COMPLEX_ALM = 0 (default) ==> ALM contains the real and imaginary parts
+                                  = 1           ==> ALM contain an IDL complex array
+                                  = 2           ==> ALM contains the power spectrum and the phase
+                      PixelType: int = 0 for Healpix and 1 for GLESP
+                      tab: int = 0 for default ALM representation (i.e. 1D IDL array)
+                               = 1 for 2D representation (i.e. l for the first dimension and m for the second)
+                      nside : int = Healpix nside parameter, only used in Healpix representation
+                      lmax : int = maximum l value in the Spherical Harmonic Space.
+                      npix : int = Number of pixels of the input image (12*nside*nside for Healpix)
+                      complex_alm: int = 1 if the ALM values are in complex format
+                                         2 if the ALM values are in power spectrum and phase
+                      TabNbrM: IDL int array: set only of the /tab keyword is set.
+                      index: IDL int array: ALM pixel indices.
+
+ KEYWORDS:
+      psp       : if set Trans.alm will contain the power spectrum and the phase instead of the real and imaginary parts 
+      complex   : if set Trans.alm will contain complex values instead of the real and imaginary parts 
+      Tab       : if set, ALM coefficients in Trans.alm are stored in a 2D array:
+                           Trans.alm[m,l]  where m = 0.. Trans.TabNbrM[l]-1  and l = 0..lmax-1
+      Lmax      : Number of spherical harmonics computed in the decomposition
+					(HEALPIX==> default is 3*nside, should be between 2*nside and 4*nside)
+					(GLESP==> default is: min([Imag.nx/2, Imag.np/4]
+      ring      : if set, the input data are in Heapix ring representation.
+      psp       : if set, the 
+      norm      : if set, a normalization is performed to the alm coefficient.
+
+
+ EXTERNAL CALLS:
+       anafast (healpix software)
+       cl2map (glesp software)
+
+ EXAMPLE:
+       Compute the spherical harmonix transform of an image. 
+        The result is stored in Output
+               mrs_trans, Imag, Output 
+         
+ HISTORY:
+	Written: Pierrick Abrial & Jean-Luc Starck, 2005
+	December, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_init
+
+ PURPOSE:
+	The MultiResolution on the Sphere (MRS) IDL code can work only if the file mrs_init
+       has been compile (.r mrs_init). All the MRS routine work with NESTED online HEALPIX
+       maps.
+
+       This file contains several routines
+
+			function getbeam, Fwhm=Fwhm, lmax=lmax -- Return a gaussian beam of size lmax+1 (lmax=400 by default) and Fwhm arc min (Fwhm=10 arc min by default).
+
+			function getidealbeam, beamdata, lmin=lmin, lmax=lmax, tozero=tozero -- From a beam beamdata, creates and retrun an ideal beam of same size, defined by lmin, lmax and option tozero.
+
+			function pixel_size, nside -- Return the pixel size in arc minutes of a healpix map with parameter nside.
+
+			function l2amin, l -- Convert a l parameter into an arc minute value.
+			function amin2l, a -- Convert an arc minute value into a l parameter.
+
+			function gettmpfilename -- Generates a random fits file name.
+
+			function get_dircontent, Dir, suffix=suffix -- Get the contents of directory Dir and return the results in a string table (Unix command ls -l).
+
+			function wts, Imag, keywords... -- Call mrs_wttrans, Imag, trans or mrs_pwttrans, Imag, trans and return the output structure trans.
+			function iwts, Trans, NbrScale=NbrScale, filter=filter -- Call inverse transform and return the reconstructed image.
+			function wtsf, Imag, keywords... -- Call mrs_wtfilter, Imag, Filter and return the filtered image Filter.
+
+			pro plotcl, Cl, tit=tit, indl=indl, xrange=xrange, yrange=yrange, line=line, thick=thick, nonorm=nonorm, lnorm=lnorm, color=color, background=background, err=err, xlog=xlog, nodata=nodata
+					-- Plot in a multipole l*(l+1) scheme
+			pro oplotcl, Cl,  indl=indl, line=line, thick=thick, nonorm=nonorm, lnorm=lnorm, color=color -- Overplot function
+
+			pro plotAm, a, l, log=log -- Plot the alm coefficients for a given l value. a is a structure, see mrs_almtrans.pro
+
+			pro tab2nest, nside, in, out
+
+			pro put_all_faces, CubeFace, HealpixIma -- Put the 12 faces CubeFace[*,*,12] into a healpix NESTED map
+			function f2h, CubeFace
+			pro get_all_faces, Imag, CubeFace -- Extract the 12 faces from an heapix NESTED map and put them in CubeFace[*,*,12]
+			function h2f, Imag
+			function get_one_face, Imag, NumFace -- Extract one of the 12 faces from an healpix NESTED map
+			pro put_one_face, Imag, Face, NumFace -- Put one of the 12 faces into a healpix NESTED map
+
+			pro softthreshold, Data, Lambda -- Aply a soft thesholding to the floatarray Data with threshold level Lambda  
+
+			pro tvso, Data -- Run the visualization orthview command for a healpix NESTED map
+
+			pro spline, size, tab
+			pro spline2, size, l, lc, tab
+
+			pro sym, tab, tab_sym -- From an array tab of size n, create an array tab_sym of size 2*n+1 and symmetric structure.
+
+			pro compute_h, size, lc, h
+			pro compute_htilde, nlmax, ech, htilde
+			pro compute_g, size, lc, g
+			pro compute_gtilde, nlmax, ech, gtilde
+
+			pro alm_product2, alm1, al0, result -- Compute product of alm floatarray with al0
+
+			function fctlow, npix
+
+			pro hgmey, npix1, scale, h, g, dif=dif
+
+			pro rotate_map_nest, in, a1, a2, a3, out
+
+			pro text2map, in, out
+
+			pro mak_map, n, out2, t_interpol = t_interpol
+
+			pro index2lm2, index, l, m -- From an index in a ALM list array, get the corresponding l and m values.
+			pro lm2index2, l, m, index -- From l and m value, get the index in ALM list array
+
+			pro tab2alm, res, alm, complex=complex -- Convert ALM coefficients sorted in table form into coefficients sorted in list array form with real and immaginary part as components. 
+			pro tab2alm_pola, res, alm, complex=complex -- Same but for polarized ALM T, E and B
+			pro alm2tab, lm, res, complex=complex, TabNbrM=TabNbrM, NbrL=NbrL -- Convert ALM coefficients sorted in list array form with real and immaginary part as components into coefficients sorted in table form.
+			pro alm2tab_complex_in, lm, res, complex=complex, TabNbrM=TabNbrM, NbrL=NbrL -- Convert ALM coefficients sorted in list array form with complex values into coefficients sorted in table form.
+			pro alm_pola2tab, lm, res, complex=complex, TabNbrM=TabNbrM, NbrL=NbrL -- Same but for polarized ALM T, E and B
+			pro alm_pola2tab_complex_in, lm, res, complex=complex, TabNbrM=TabNbrM, NbrL=NbrL -- Same but for polarized ALM T, E and B
+
+			pro ismr1 -- Check if MR1 package is installed.
+
+			function mrs_variance_stabilization, PowSpec, mu=mu, psi1=psi1, FirstL=FirstL -- Variance stabilisation of a power spectrum
+			function mrs_variance_l1_stabilization, PowSpec, mu, psi1
+			function mrs_inv_variance_stabilization, StabPowSpec, mu, psi1 -- Inverse variance stabilisation
+			function mrs_inv_variance_l1_stabilization, StabPowSpec, mu, psi1
+
+			pro reim2mp, re, im, m, p -- Real part, immaginary part -> modulus, phasis
+			pro reim2pp, re, im, m, p -- Real part, immaginary part -> squared modulus, phasis
+			pro mp2reim, m, p, re, im -- Modulus, phasis -> real part, immaginary part
+			pro pp2reim, m, p, re, im -- Squared modulus, phasis -> real part, immaginary part
+
+			pro pnside, data -- Print the nside value of the healpix map data.
+			function gnside, data -- Return the nside value of the healpix map data.
+
+			pro mrs_info, data, mes=mes -- Print statistics of the map data.
+			function mrs_sigma, data -- Return the standard deviation of the map data.
+			function mrs_max, data -- Return the maximum of the map data.
+			function mrs_absmax, data -- Return the maximum of the absolute value of the map data.
+			function mrs_min, data -- Return the minimum of the map data.
+			function mrs_mean, data -- Return the mean of the map data.
+			pro mrs_set, data, Value -- Set the whole map data to the constant value.
+			function mrs_diff, d1, d2 -- Return the difference between the two maps d1 and d2, pixel by pixel.
+			function mrs_mult, d1, d2 -- Return the product between the two maps d1 and d2, pixel by pixel.
+			function mrs_add, d1, d2 -- Return the sum between the two maps d1 and d2, pixel by pixel.
+			function mrs_getpix, Ima -- Return the full data array of Ima.
+			pro mrs_putpix, Ima, pix -- Copy the full data array pix into Ima.
+			function mrs_mad, Ima -- Return the median of the absolute value of the map.
+
+			function mrs_absthreshold, Ima, T, soft=soft, l2=l2 -- Return the result of a hard or soft thresholding of the image.
+
+			pro mrs_pos, Ima, T=T -- In the image Ima, set pixel lower than T to zero, T >= 0 default is T = 0
+
+			pro pixf2pix, nside, x, y, face, ipix -- Convert pixel position in a face into pixel index in Healpix list. 
+			pro pix2pixf, nside, ipix, x, y, face -- Convert pixel index in Healpix list into pixel position in a face and face number.
+			pro pixf2ang, nside, x, y, face, theta, phi -- Convert pixel position in a face into spherical coordinates in radian.
+			pro ang2pix, nside, theta, phi, x, y, face -- Convert spherical coordinates in radian into pixel position in a face and face number.
+			pro ang2lb, theta, phi, l, b -- Convert spherical coordinates in radian into latitude and longitude coordinates in degree.
+			pro lb2ang, l, b, theta, phi -- Convert latitude and longitude coordinates in degree into spherical coordinates in radian.
+			pro pix2lb, nside, ipix, l, b -- Convert pixel index in Healpix list into latitude and longitude coordinates in degree.
+			pro lb2pix, nside, l, b, ipix -- Convert latitude and longitude coordinates in degree into pixel index in Healpix list.
+			pro ang2radec, theta, phi, ra, dec, year=year, degree=degree -- Convert spherical coordinates in radian into galactical coordinates.
+			pro radec2ang, ra, dec, theta, phi, year=year, degree=degree -- Convert galactical coordinates into spherical coordinates in radian.
+
+
+ HISTORY:
+	Written: Jean-Luc Starck and Pierrick Abrial, 2005
+	February, 2005 File creation
+;-
+;+
+ NAME:
+        mrs_almtrans
+
+ PURPOSE:
+   Computes the spherical harmonic transform, 
+   using the HEALPix representation (nested data
+   representation by default) or the GLESP representation. 
+
+ CALLING:
+     mrs_almtrans, Imag, Trans, lmax=lmax, complex=complex, ring=ring, psp=psp, norm=norm, tab=tab
+
+ INPUTS:
+     Imag -- IDL array of healpix map or GLESP structure: Input image to be transformed 
+    
+ OUTPUTS:
+     Trans -- IDL structures with the following fields: 
+                      ALM: fltarray[*,2] = real and imaginary part of the ALM
+                           or  cfarr[*] = complex alm values if the keyword complex is set
+                           or  fltarray[NbrMaxM, NbrMaxL, 2] if the keyword tab is set
+                           or cfarr[NbrMaxM, NbrMaxL] of both keyword complex and tab are set.
+                      COMPLEX_ALM = 0 (default) ==> ALM contains the real and imaginary parts
+                                  = 1           ==> ALM contain an IDL complex array
+                                  = 2           ==> ALM contains the power spectrum and the phase
+                      PixelType: int = 0 for Healpix and 1 for GLESP
+                      tab: int = 0 for default ALM representation (i.e. 1D IDL array)
+                               = 1 for 2D representation (i.e. l for the first dimension and m for the second)
+                      nside : int = Healpix nside parameter, only used in Healpix representation
+                      lmax : int = maximum l value in the Spherical Harmonic Space.
+                      npix : int = Number of pixels of the input image (12*nside*nside for Healpix)
+                      complex_alm: int = 1 if the ALM values are in complex format
+                                         2 if the ALM values are in power spectrum and phase
+                      TabNbrM: IDL int array: set only of the /tab keyword is set.
+                      index: IDL int array: ALM pixel indices.
+
+ KEYWORDS:
+      psp       : if set Trans.alm will contain the power spectrum and the phase instead of the real and imaginary parts 
+      complex   : if set Trans.alm will contain complex values instead of the real and imaginary parts 
+      Tab       : if set, ALM coefficients in Trans.alm are stored in a 2D array:
+                           Trans.alm[m,l]  where m = 0.. Trans.TabNbrM[l]-1  and l = 0..lmax-1
+      Lmax      : Number of spherical harmonics computed in the decomposition
+					(HEALPIX==> default is 3*nside, should be between 2*nside and 4*nside)
+					(GLESP==> default is: min([Imag.nx/2, Imag.np/4]
+      ring      : if set, the input data are in Heapix ring representation.
+      psp       : if set, the 
+      norm      : if set, a normalization is performed to the alm coefficient.
+
+
+ EXTERNAL CALLS:
+       anafast (healpix software)
+       cl2map (glesp software)
+
+ EXAMPLE:
+       Compute the spherical harmonix transform of an image. 
+        The result is stored in Output
+               mrs_trans, Imag, Output 
+         
+ HISTORY:
+	Written: Pierrick Abrial & Jean-Luc Starck, 2005
+	December, 2005 File creation
+;-

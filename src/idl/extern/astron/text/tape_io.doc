@@ -1,0 +1,54 @@
+/tape_io directory                                       December 1994
+
+The procedures in this directory fall into two classes:
+
+    (1) Unix procedures that emulate the intrinsic VMS IDL tape manipulation
+        commands (e.g. TAPRD, TAPWRT).    These procedures were written by
+        Bill Thompson for the SERTS (Solar EUV Rocket Telescope & Spectrograph)
+        and are detailed below.
+    (2) Procedures that use the VMS IDL tape commands to read, write and
+        manipulate a FITS tape.   By using the the procedures of class (1),
+        these FITS tape procedures can also be used on Unix machines
+
+
+
+			 CDS/SERTS Unix Tape Utilities
+
+The procedures in this directory are intended to emulate in Unix the intrinsic
+tape routines available in the VMS version of IDL.  The following routines are
+available:
+
+	REWIND		Rewinds the tape
+	SKIPF		Skips files or records
+	TAPRD		Reads tape blocks
+	TAPWRT		Writes tape blocks
+	WEOF		Writes an End-of-file mark
+
+In addition, there is the routine CHECK_TAPE_DRV which is an internal routine
+used by the other routines.
+
+Also, the routine DISMOUNT emulates the Unix command of that name.  Although
+this is not a standard IDL function, it is available as separate LINKIMAGE
+software for VMS.  The Unix equivalent closes the file unit open on the tape
+drive, and optionally unloads the tape.  Errors can result if the tape is
+unloaded manually instead of using DISMOUNT.
+
+These procedures are intended to emulate their VMS equivalents as closely as
+possible, so that software can be written which is portable between VMS and
+Unix platforms.  Towards that end, it was decided to reference tape drives by
+number as is done in VMS.
+
+In VMS, the tape drive numbers 0-9 translate into names "MT0", "MT1", etc.
+These can be associated with actual tape drives through the use of logical
+names, e.g.
+
+	$ DEFINE MT0 $1$MUA0
+
+In Unix, with this software, the same thing is done, except that environment
+variables are used in place of logical names, e.g.
+
+	> setenv MT0 /dev/nrst0
+
+As always in Unix, case is important.  Thus, if the above environment variable
+is set, then when the software refers to tape 0, the tape drive /dev/nrst0 is
+used.

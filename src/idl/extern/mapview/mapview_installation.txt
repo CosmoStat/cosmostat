@@ -1,0 +1,33 @@
+                                                           July 2004
+
+Included with the WMAP IDL distribution is the program MAPVIEW, which provides
+an interactive image display for viewing WMAP HealPix files.     In order for
+users without an IDL license to use this program, we also make it available for
+use with the IDL "Virtual Machine".      
+
+The use of MAPVIEW with the IDL virtual machine remains cumbersome because of
+large amount of disk space required for the IDL installation (~270 Mb) and the
+WMAP lookup tables (61 Mb).      In the future, we plan to have MAPVIEW-like
+capabilities available on the Web.    
+
+(1) Download the MAPVIEW virtual machine files from this page, as either a tar
+file or a zip file.    Included will be the mapview.sav binary file, as well as
+necessary HealPix lookup tables in a /ref subdirectory.
+
+(2) If you do not already have the IDL virtual machine, it must be downloaded 
+by following the links for your particular machine (Mac, Windows, PC-Unix or
+Unix) at http://www.rsinc.com/idlvm/
+
+(3) The /ref subdirectory containg the HealPix lookup tables must be defined as
+   MAP_REF.  For example, if the current directory is /home/user/wmap , then
+   MAP_REF can be defined as follows:
+
+      setenv MAP_REF  /home/user/wmap/ref
+       
+   Users on WINDOWS machines should set  this environment variable
+   by going to the Control Panel --> System Properties -- Advanced.
+
+
+(4) Start mapview.sav simply by double-clicking (on Windows machines), or from
+the Unix prompt by typing idl -mv=mapview.sav
+

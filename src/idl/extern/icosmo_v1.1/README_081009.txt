@@ -1,0 +1,61 @@
+README help file for iCosmo_v1.1 09/10/2008
+
+(This is the updated version of the code which is compatible with the call sequences shown in the iCosmo paper arXiv-0810.1285)
+
+iCosmo is a general cosmology calculation package that is designed to be interactive and easily extendable. This current version of iCosmo calculates a wide range of cosmological function from distance and dark matter powerspectra to observable correlation function and dark energy Fisher matrix prediction. For see some of the capabilities of this package please visit the website http://icosmo.org where the interactive sections of the website are powered by iCosmo. 
+
+The lensing sections of the iCosmo package have been regiously tested against a number of independent codes. These include codes written by: (i) Sarah Bridle, (ii) Tom Kitching, (iii) Filipe Abdalla, Jiayu Tang and Shaun Thomas and (iv) Peter Schneider, Martin Kilbinger, Jan Hartlap and Benjamin Joachimi.
+
+The iCosmo package and website have been created and are maintain by Adam Amara, Tom Kithing, Anais Rassay and Alex Refregier.
+
+------------
+
+Example of how to calculate lensing Cl:
+; (1) set fiducial parameters:
+fid=set_fiducial(cosmo_in={omega_m:.25d},calc_in={fit_tk:2},expt_in={sv1_n_zbin:2,sv1_zerror:0.02d}) 
+ 
+; (2) create a survey structure: 
+ sv=mk_survey(fid,'sv1')                   
+ 
+; (3) create cosmology parameters structure:
+cosmo=mk_cosmo(fid)              
+ 
+; (4) calculate lensing correlation functions:
+cl=mk_cl_tomo(fid,cosmo,sv)          
+ 
+For help please consult the routine icosmo_help, for example to get help with set_fiducial:
+
+IDL> icosmo_help,'set_fiducial'
+
+-----------------
+Other example call sequences:
+
+Call sequence 1: to get a lensing Fisher matrix in many steps:
+
+	fid=set_fiducial('generic')        	; set fiducial parameters
+	sv=mk_survey(fid,'sv1')			; create a survey structure
+	cosmo=mk_cosmo(fid) 	      	       	; calculate cosmology parameters  
+	cl=mk_cl_tomo(fid,cosmo,sv)      	; calculate lensing Cl
+	cl_cov=mk_cl_cov_tomo(fid,cl,sv) 	; calculate covariance errors
+	fisher=mk_fisher_lens(fid,sv,cosmo=cosmo,cl_lens=cl,cl_cov=cl_cov)  
+
+Call sequence 2: to get fast lensing Fisher matrix in minimal steps:
+
+	fid=set_fiducial('generic',calc={speed:1})
+	sv=mk_survey(fid,'sv1')
+ 	fisher=mk_fisher_lens(fid,sv)
+
+Call sequence 3: to get BAO Fisher matrix:
+	fid=set_fiducial('generic')        	; set fiducial parameters
+	sv=mk_survey(fid,'sv2')			; create a survey structure
+	cosmo=mk_cosmo(fid) 	      	       	; calculate cosmology parameters  
+	bao=mk_bao(cosmo,sv)      		; radial and tangential 
+	bao_cov=mk_bao_cov(cosmo,bao,sv)
+	fisher=mk_fisher_bao(fid,sv)  
+
+Call sequence 4: to get fast BAO Fisher matrix in minimal steps:
+	fid=set_fiducial('generic',calc={speed:1})   ; set fiducial parameters
+	sv=mk_survey(fid,'sv2')		             ; create a survey structure
+	fisher=mk_fisher_bao(fid,sv)  
+
+

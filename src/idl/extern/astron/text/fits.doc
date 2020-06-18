@@ -1,0 +1,358 @@
+/FITS directory                                                  12-Dec-2000
+
+FITS (Flexible Image Transport Sytem) is a standardized data format which
+is widely used in astronomy.   Information on the FITS format can be obtained 
+from the NRAO FITS archive http://fits.cv.nrao.edu or from the FITS support 
+office at Goddard at http://www.gsfc.nasa.gov/astro/fits/fits_home.html.   I 
+note here only that FITS is a binary format, and so the binary option should 
+be used when copying FITS files with FTP.
+
+The IDL Astronomy Library contains a variety of procedures for reading, 
+writing, and modifying FITS files.   Information on how to use these procedures
+is given in http://idlastro.gsfc.nasa.gov/fitsio.html and is also briefly 
+described here.    There are four main types of FITS I/O 
+procedures available in the Library:
+
+   (1) MRDFITS() will read all standard FITS data types into IDL arrays (for
+primary images and image extensions) or structures (for binary or ASCII tables).
+The procedure MWRFITS() will write an IDL structure to a FITS file, with many 
+options available (binary or ASCII table, default generation of column names).
+These procedures were written by Tom McGlynn (USRA/Goddard).   Further 
+information on MRDFITS is available in Appendix 2 below.   
+To compile MRDFITS and MWRIFTS the following procedures must be included in
+the !PATH
+	FXADDPAR, FXPAR(), FXPARPOS()             (in pro/fits_bintable)
+	IEEE_TO_HOST, IS_IEEE_BIG(), MRD_SKIP     (in pro/misc)
+        GETTOK(), VALID_NUM()
+	FXPOSIT, MRD_HREAD                        (in pro/fits)
+	MRD_STRUCT()                              (in pro/structure)
+
+
+   (2) The procedure READFITS can be used to read FITS headers and arrays into
+IDL variables.   Additional procedures in the pro/fits_table directory
+are then required to interpret binary and ASCII tables.   The FT* procedures in 
+the /fits_table directory are used to interpret a FITS ASCII table, and the
+TB* procedures are used interpret FITS Binary table.    The procedure WRITEFITS
+can be used to write a primary image, ASCII extension, or image extension
+(see Appendix 3).      The READFITS/WRITEFITS software currently cannot read 
+variable length binary tables, or write any type of binary table.    The
+READFITS/WRITEFITS software requires the following procedures from the /misc
+directory: GETTOK(), HOST_TO_IEEE, IEEE_TO_HOST, IS_IEEE_BIG(), STRN()
+STRNUMBER(), WHERENAN() and WHERE_NEGZERo().
+
+   (3) The directory pro/fits_bintable contains IDL procedures for 
+FITS I/O written by Bill Thompson (Goddard/ARC).    This software can be used 
+to read or write all types of FITS images and binary 
+tables.    The one limitation of these procedures is that they do not handle 
+ASCII tables.    Further information on these procedures is available in the 
+LaTeX file fits_bintable.tex in the /text directory.
+
+  (4) The five procedures FITS_CLOSE, FITS_HELP, FITS_OPEN, FITS_READ, and
+FITS_WRITE were written by D. Lindler (ACC/Goddard) and are used by the
+STIS/NICMOS instrument teams on the Hubble Space Telescope (HST).    
+These procedures are especially efficient for FITS files with many extensions,
+and they also recognize conventions used in HST FITS files that are not part
+of the standard FITS definition.   Like READFITS/WRITEFITS, these procedures
+require further processing of binary and ASCII table, by using procedures
+in the /fits_table directory.   In particular, the procedure FTAB_EXT uses 
+FITS_READ to provide a quick and easy extraction of FITS ASCII or Binary 
+tables into IDL vectors.
+    
+Besides the four main categories above, other FITS procedures are available to 
+read/write FITS files on tape, or to convert between FITS and the STSDAS 
+format (.hhh and .hhd files) used for HST data.  (See pro/sdas/README for info
+on the STSDAS format.)  This README file should be monitored for improvements 
+in the FITS I/O package.
+
+A FITS header is a string array with 80 characters per line.    Using the IDL
+PRINT command to display the header will result in a space between every
+line.   The HPRINT procedure in the /misc directory will display a FITS
+header without this extra space.
+
+The procedures FITS_INFO and FITSDIR use the non-standard system variables 
+!TEXTUNIT and !TEXTOUT.   These can be added to one's session using the 
+procedure ASTROLIB in the /misc directory.
+
+The available FITS I/O routines can be summarized as follows:          
+
+1.    Disk FITS  <====>   IDL variables 
+
+      The procedure MRDFITS is a very generalized FITS reader that can read
+      almost any type of FITS file, including random groups, and variable
+      length binary tables.   ASCII and binary columns are directly mapped
+      into the tags of an IDL structure.   MWRFITS() will write an IDL 
+      structure to a FITS file.   
+
+      READFITS() will read a disk FITS file into IDL data and header arrays. It
+      can handle REAL*4 and REAL*8 data and extensions but not random group
+      FITS.     READFITS() also has STARTROW and NUMROW keywords to read
+      selected rows from a primary image or extension.   Under Unix or IDL V5.3,
+      READFITS() can  directly read a gzip or Unix compress file.   ASCII and 
+      binary tables require further processing with the FT* and TB* procedures 
+      in the /fits_bintable directory.     In particular, FTAB_EXT can be used 
+      to extract IDL vectors from a FITS binary or ASCII table.  
+
+      WRITEFITS will write an IDL data and header array to a disk FITS file.   
+      It can handle all valid FITS formats except random groups.     Use the 
+      /APPEND keyword to WRITEFITS to add a FITS extension to an existing FITS
+       file (see Appendix 3).
+
+      The procedure HEADFITS() can be used to read just the FITS header.
+
+      The procedure FXREAD in /fits_bintable can be used as an alternative
+      to READFITS for reading a primary array.    It is a procedure rather
+      than a function and has the ability to read a subarray or every nth 
+      pixel from the primary FITS array.    The procedure FXWRITE in 
+      /fits_bintable  can be used as an alternative to WRITEFITS.
+
+      The procedure FITS_INFO displays info about FITS file(s) in a 
+      directory.  The info include the number of extensions, and the size
+      and type of each header or array.    The procedure FITSDIR displays
+      selected keywords from the primary headers in a set of FITS files.
+
+      The procedure RDFITS_STRUCT will read an entire FITS file into an IDL
+      structure.   Each header, image or spectra, or table is placed into a 
+      separate structure tag.
+
+
+3.  FITS Tape  <=====> Disk FITS          
+
+    The procedure FXTAPEWRITE will copy a disk FITS file to tape, and 
+    FXTAPEREAD will copy a FITS file from tape to disk.    These procedures
+    use the intrinsic IDL commands for handling tapes (e.g TAPWRT, TAPRD) that
+    are available for VMS only.   However, the /tape_io directory contains 
+    procedures written by Bill Thompson (ARC/Goddard) that emulate the
+    intrinsic IDL VMS tape I/O command by use of the IOCTL function.
+    
+     Alternatively, a Unix FITS tape file can be copied to disk using dd, 
+    (as in "dd if=/dev/tape of=file.fits bs=2880").
+
+
+*************************************************************************
+APPENDIX 1 - Summary of FITS I/O procedures
+
+Only procedures likely to be used at the IDL prompt level are listed
+
+in pro/fits
+
+CHECK_FITS - Check that the NAXISi and BITPIX keywords of a FITS header
+             agree with a supplied array
+FITS_CLOSE - Close a FITS file defined by a FITS Control Block (see FITS_OPEN)
+FITS_HELP - Summarize the primary data units and extensions in a FITS file
+FITS_OPEN - Open a FITS file and define a FITS Control Block (FCB)
+FITS_READ - Read a FITS file specified by name or FITS Control Block (FCB)
+FITS_WRITE - Write a FITS primary data unit or extension
+FITS_INFO - Display info about disk FITS file(s) at a terminal or in Common 
+FITSRGB_to_TIFF - Combine separate red, green, blue FITS files into TIFF format
+FXPOSIT() - Open a FITS file positioned to beginning of a specified extension
+HEADFITS() - Read a FITS header from a disk FITS file.
+MKHDR - Make a minimal FITS header for an image array.
+MODFITS - Modify the header or data in a FITS file (without changing the size)
+MRDFITS() - Read all standard FITS data types into IDL arrays or structures
+MRD_HREAD -  Like FXHREAD but can also read a FITS header from a Unix pipe
+MWRFITS - Write a FITS file from an IDL array or structure
+RDFITS_STRUCT - Read an entire disk FITS file into an IDL structure
+READFITS() - Read a disk FITS file into an IDL data and header array.
+SXADDHIST - Add history records to a FITS or STSDAS header
+SXADDPAR - Add a keyword and value to a FITS or STSDAS header
+SXDELPAR -  Delete a keyword from a FITS or STSDAS header
+SXPAR()  -   Obtain the value of a keyword in a FITS or STSDAS header
+WRITEFITS - Write IDL data and header array to a disk FITS file.
+
+in pro/fits_bintable
+
+FXADDPAR - Add a keyword and value to a FITS header
+FXPAR()  -   Obtain the value of a keyword in a FITS header
+FXREAD -  Read a primary array or subarray from a FITS file
+FXWRITE - Write primary FITS header and array to disk.
+
+This directory contains numerous other procedures for reading and writing
+FITS binary tables.    Note that FXADDPAR is essentially identical to SXADDPAR,
+and that FXPAR() is essentially identical with SXPAR().
+
+in pro/fits_table
+
+FTAB_DELROW - Delete specified rows in a FITS table extension
+FTAB_EXT - Extract specified columns of a FITS table extension into IDL vectors
+FTAB_HELP - Print info about the fields in a FITS table extension
+FTAB_PRINT - Print specified columns and rows of a FITS table extension
+
+in pro/tape_io     
+
+FITSLIST - List the headers on a FITS tape.   
+FXTAPEWRITE - Copy a disk FITS file to tape 
+FXTAPEREAD - Copy a FITS file from tape to disk 
+
+************************************************************
+Appendix 2:   MRDFITS - A multiple format FITS reader.   V2.4
+Also see http://idlastro.gsfc.nasa.gov/mrdfits.html
+Last updated: 12-Dec-2000
+
+The MRDFITS utility is intended to be a general purpose function allowing
+users to quickly read FITS files in all standard formats.  MRDFITS
+returns an array or structure containing the data from the specified
+FITS extension.  Header information may optionally be returned as a
+string array.  MRDFITS currently supports the following FITS data types:
+
+	Primary simple images
+	The IMAGE extension
+	Group data in both primary images and IMAGE extensions.
+	ASCII tables
+	BINARY tables including the suggested convention for
+	  variable length records.
+
+MRDFITS uses the dynamic structure definition capabilities
+of IDL to generate a structure matching the characteristics of the
+FITS data and then reads the data into the structure.  Some tailoring
+of the FITS data is possible:
+
+	- A specified range of data may be retrieved.
+	- The data may be scaled to FLOAT or DOUBLE values as controlled
+	  by the BSCALE (TSCALE) and BOFFSET (TZERO) keywords.
+	  Note that the default is no scaling.
+	- Only a subset of the columns may be retrieved for ASCII
+	  and binary tables.
+
+MRDFITS is called as a function similar to the old READFITS utility, e.g.,
+
+	str = mrdfits(file, exten_no, header)
+	
+where file is a file name, exten_no is the extension to be read (0 for the
+primary data array) and header is an optional variable in which the
+header information will be stored.  A number of optional keyword
+parameters are available.
+
+	/FSCALE and /DSCALE  cause scaling to single and double precision.
+	COLUMNS=  	     allows users to specify the columns desired.
+	RANGE=		     allows users to retrieve only some rows.
+	STRUCTYP=	     gives the structure type for the structure
+	TEMPDIR=	     gives the directory for temporary files
+	/SILENT		     suppresses informative messages
+	/USE_COLNUM          makes tag names of the form C#
+	/NO_TDIM             disable processing of TDIM keywords.
+	ERROR_ACTION=	     action specified in on_error
+	
+	
+MRDFITS uses the EXECUTE function where possible but creates temporary
+procedures when complex structures are needed.  The MRD_STRUCT
+function is used for the dynamic definition of structures.
+
+For calls from other programs, MRDFITS has an output STATUS keyword to indicate whether it was successful. A status of >=0 indicates a successful read. The returned status value has the
+following meanings: 
+
+      0 -> successful completion 
+     -1 -> error 
+     -2 -> end of file 
+
+
+MRDFITS is largely a standalone utility, but does use the parameter
+parsing of FXPAR to find elements in a header.  All I/O is done
+within MRDFITS.  The IEEE_TO_HOST routine is called for to convert
+data to the local representation.
+
+One known limitation of MRDFITS is that no special handling is done for NULL
+values. 
+
+	Note that MRDFITS is not a FITS checker.  It may read in
+	files that are not proper FITS since only a few FITS elements
+	needed by the reader are actually explicitly checked.  MRDFITS
+	should read in all correct FITS files and I would appreciate
+	copies of any correct FITS files that break the reader.
+	MRDFITS seems to be somewhat stricter about compliance to
+	FITS standards than some of the other IDL FITS readers.
+	This may be good or bad depending upon your needs.
+	
+Under IDL V5.3 or later, MRDFITS uses the /COMPRESS keyword to OPENR to allow
+it to read gzip'ed files on any machine architecture. Prior to IDL V5.3, this
+capability was limited to Unix systems, and decompression was done using a
+sub-process and pipes (so that no temporary file is created). MRDFITS can also
+read files compressed with `standard' Unix compress utility. MRDFITS assumes
+that files ending with .Z, .gz and .GZ are to be decompressed, but it also has
+the COMPRESS keyword so that the user can specify that any file is compressed. 
+
+Instead of a file name, MRDFITS() can be given the unit number of an already
+opened FITS file. In this case, the EXTEN_NO parameter gives the number of
+extensions to skip *from the current location in the FITS file*. The use of a
+unit number instead of a file name is more efficient when multiple extensions
+of a FITS file are to be read. For example, to process all extension in a FITS
+file starting with the third one, one might do the following: 
+
+   lun=fxposit(filename, 3)      ;Open a FITS file and move to extension 3
+   repeat begin
+          thisHDU = mrdfits(lun, 0, hdr, status=status)
+          ... process the HDU ...
+   endrep until status lt 0
+
+MRDFITS comprises several files.  he following procedures are included in the
+main file mrdfits.pro 
+
+     MRDFITS: The main function with some utilities. 
+     MRD_ASCII: Code to handle ASCII tables. 
+     MRD_TABLE: Code to handle BINARY tables. 
+     MRD_IMAGE: Code to handle simple images and group data. 
+     MRD_SCALE: Data scaling. 
+     MRD_COLUMNS: Column selection. 
+
+
+The following procedures are in separate files (because they are of general use) outside of MRDFITS.) 
+
+     MRD_STRUCT: Dynamic structure definition.  (in pro/structure)
+     FXMOVE: Skip a specified number of extensions in a FITS file. 
+     FXPOSIT: Find an extension in a FITS file. 
+     MRD_HREAD: Read a FITS header from an opened disk file or Unix pipe 
+     MRD_SKIP Skip a number of bytes from the current location in 
+             a file or pipe (in pro/misc) 
+
+
+On Unix systems MRDFITS can handle files compressed with either
+the `standard' Unix compress utility or with the Gnu gzip utility.
+It assumes that files ending with .Z, .gz and .GZ are to be
+decompressed.  Decompression is done using a sub-process and pipes
+so that no temporary file is created.  In the future I anticipate
+implementing decompression on other architectures but the process
+will likely involve temporary files.
+
+
+Please send comments and bug reports to:
+
+	Tom McGlynn
+	Compton Observatory Science Support Center
+        mcglynn@grossc.gsfc.nasa.gov
+	301-286-7743
+
+
+****************************************************************************
+Appendix 3:  Writing an IMAGE Extensions with  WRITEFITS
+
+The format of a FITS IMAGE extension duplicates that of a primary FITS array.  
+Thus, unlike binary or ASCII tables extensions, a FITS IMAGE extension does 
+not require any further interpretation after it has been read by READFITS with
+the EXTEN keyword.    A FITS extension can be added to an existing FITS file 
+by using WRITEFITS with the /APPEND keyword.     Users need to make sure that 
+(1) the primary FITS header includes an EXTEND keyword, and (2) the required 
+keywords of the IMAGE extension header match those described in the defining 
+document.   One way to make sure that these criteria are met is to use the 
+/EXTEND and /IMAGE keywords of the MKDHR procedure.
+
+	For example,  to create a FITS file with a dummy primary header (i.e.
+no primary array) and two IMAGE extensions containing the IDL arrays 
+"im1" and "im2"  to a file 'test.fits'
+
+        IDL> mkhdr,h,'',/EXTEN        ;Create a dummy header (NAXIS=0) and
+                                      ;include an EXTEND keyword
+
+	IDL> writefits,'test.fits','',h     ;Write the header to disk
+                                            ;Since there is no primary image 
+                                            ;it is set to ''
+
+	IDL> mkhdr,h1,im1,/IMAGE      ;Make a minimal IMAGE extension header h1 
+                                      ;appropriate to the array im1 using 
+                                      ;Additional header keywords can be added
+                                      ;using SXADDPAR
+
+                                     
+	IDL> writefits,'test.fits',im1,h1,/app  ;Append to existing FITS file
+
+        IDL> mkhdr,h2,im2,/IMAGE       ;Create IMAGE header for im2
+
+ 	IDL> writefits,'test.fits',im2,h2,/APPEND    ;Append second extension

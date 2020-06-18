@@ -1,0 +1,16 @@
+
++-------------+
+| syn_alm_cxx |
++-------------+
+
+Application was compiled with OpenMP support,
+running with up to 2 processes.
+
+Parser: double_precision = F
+Parser: nlmax = 768
+Parser: nmmax = 768 <default>
+Parser: infile = tmp_in_286186.fits
+Parser: outfile = !tmp_in_950539.fits
+Parser: rand_seed = 666
+Parser: fwhm_arcmin = 0
+Parser: polarisation = F

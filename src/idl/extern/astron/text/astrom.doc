@@ -1,0 +1,41 @@
+/astrom                                                  July 2000
+
+This directory contain IDL procedures for manipulating FITS or STSDAS images
+which include header keywords specifying the coordinate system.   The FITS or
+STSDAS header must follow the specification in the FITS draft proposal
+"Representations of Celestial Coordinates in FITS"  by Eric Greisen and Mark
+Calabretta.    Documentation for this proposal can be obtained 
+from http://fits.cv.nrao.edu/documents/wcs/wcs.html.    
+(Note that -- as of July 2000 -- the preferred notation for the coordinate
+description (CD) matrix in a FITS header is with and underscore, i.e., CDn_m.)
+
+Users should be aware that FITS defines the center of the first pixel in
+the array to have coordinates (1,1).    This differs from the IDL convention
+where the first pixel has coordinates (0,0).    Whenever an (X,Y) position
+is extracted or inserted into a FITS/STSDAS header then this difference
+must be accounted for.
+
+Special astrometry procedures are required for the Digitized Sky Survey Images
+which were released on CD-Rom in early 1994.    Information about the Guidestar
+images can be obtained from http://archive.stsci.edu/dss/
+and the Guidestar images can also be obtained from the SKYVIEW facility
+at http://skyview.gsfc.nasa.gov/skyview.html.  The Schmidt plates used in
+this survey have a highly nonlinear plate solution that is not covered
+by the Greisen & Calabretta conventions.     The procedures GSSSEXTAST, 
+GSSSXYAD and GSSSADXY are the Guidestar survey analogues of the procedures
+EXTAST, XY2AD, and ADXY for standard astrometry.     All the astrometry
+procedures in the library will test for a Guidestar image header (by looking
+for the 'PPO1' keyword) and call the appropriate procedures.    The procedure
+GSSS_STDAST will convert the astrometry in a guidestar image header to 
+an standard tangent projection with very slightly degraded accuracy.   
+
+The procedures in this directory will call the procedures wcssph2xy.pro
+and wcsxy2sph.pro in the /astro directory 
+
+A couple of procedures in other directories also use the FITS world coordinate
+system including
+  IMCONTOUR - (in /astro) Contour plots with astronomical labeling (either 
+               RA,Dec or arc distance from the image center
+  IMDBASE - (in /database) Find all catalog sources within the field of an 
+            image (given a FITS header with astrometry)
+

@@ -1,0 +1,405 @@
+;+
+; NAME:
+;        STAR2D_DECONV
+;
+; PURPOSE:
+;       Computes the starlet transform of an image (i.e. undecimated isotropic wavelet transform). 
+;       The output is a 3D IDL array. If the keyword Gen2 is set, then it is
+;       the 2nd generation starlet transform which is computed:  i.e. g = Id - h*h 
+;       instead of g = Id - h.
+;       
+; CALLING:
+;      DataTransf = STAR2D(Imag, Nscale=Nscale, Gen2=Gen2)
+;       
+; INPUTS:
+;     Imag -- 2D IDL array: image we want to transform
+;
+; OUTPUTS:
+;     DataTransf -- 3D IDL array: Wavelet Transform
+;                                 DataTransf(*,*,i) = ith band of the 
+;                                                    wavelet transform
+;  
+; KEYWORDS:
+;      Nscale -- int: Number of scales. Default is 4.
+;                     DataTransf is a cube of Nscale planes: 
+;                                      DataTransf(*,*,0: Nscale-1)
+;			There is no test of the validity of the number of scales with respect
+;			to the size of the input images. 
+; 
+; EXAMPLE:
+;       Compute the starlet transform of an image I with default options
+;       (i.e. a trou algorithm with 4 scales).  
+;               Output = STAR2D(I)
+;       Reconstruction can be done by simple co-addition of all frames:
+;               Rec = total(output, 3)
+;
+; REFERENCES:
+;    [1] J.L. Starck and F. Murtagh, 
+;    "Image Restoration with Noise Suppression 
+;    Using the Wavelet Transform",
+;    Astronomy and Astrophysics, 288, pp-343-348, 1994.
+;    
+;
+;    For the modified STARLET transform:
+;    [2] J.-L. Starck, J. Fadili and F. Murtagh, "The Undecimated Wavelet Decomposition 
+;        and its Reconstruction", IEEE Transaction on Image Processing,  16,  2, pp 297--309, 2007.
+; AUTHOR:
+;    J.L. Starck
+;    Service d'Astrophysique, Centre d'Etudes de SACLAY,
+;    Orme des Merisiers, 91191 GIF-Sur-YVETTE CEDEX, France 
+;    Email: jstarck@cea.fr        Tel:  +33 (0) 169 085 764
+;    http://jstarck.free.fr       Fax:  +33 (0) 169 086 577
+;-
+;-------------------------------------------------------------------------------
+
+
+function op1d_apply_H, X
+COMMON STAR2D_DECONV 
+	return,  reform(double(  dfti(  dft (reform(X,size(Huv,/dim))) * Huv) ),1,N_ELEMENTS(X))
+end
+
+function op1d_apply_Ht,  X
+COMMON STAR2D_DECONV
+	return,  reform(double(  dfti(  dft (reform(X,size(Htuv,/dim))) * Htuv) ),1,N_ELEMENTS(X))
+end
+
+function op1d_apply_WT, X
+COMMON STAR2D_DECONV 
+;help, X
+;;Help, Starlet_deconv_Nscale
+    w = star2d(reform(X, Starlet_deconv_Nx,Starlet_deconv_Ny), nscale= Starlet_deconv_Nscale, gen2=Starlet_deconv_Gen2)
+    W  = W[*,*,0:Starlet_deconv_Nscale-2]
+	return,  reform(double( W),1,N_ELEMENTS(W))
+end
+
+function op1d_apply_IWT,  X
+COMMON STAR2D_DECONV
+;    Help, X
+;    print, Starlet_deconv_Nx * Starlet_deconv_Ny * ( Starlet_deconv_Nscale-1)
+    X = reform(X, Starlet_deconv_Nx, Starlet_deconv_Ny, Starlet_deconv_Nscale-1)
+    X  = [ [[X]], [[fltarr(Starlet_deconv_Nx,Starlet_deconv_Ny)]]]
+     r = star2d_adjoint(X, Gen2=Starlet_deconv_Gen2)
+    ;help, X
+   ; r = istar2d(X, Gen2=Starlet_deconv_Gen2)
+	return,  reform(double(r) ,1,N_ELEMENTS(R))
+end
+
+pro testphi
+COMMON STAR2D_DECONV
+Nx = 32
+Ny = 32
+Nscale=5
+Gen2=1
+ Starlet_deconv_Nscale=Nscale
+ Starlet_deconv_Gen2 = Gen2
+ Starlet_deconv_Nx = Nx
+ Starlet_deconv_Ny = Ny
+ 
+ Y = dblarr(Nx,Ny)
+SizeSolution = N_ELEMENTS(Y)
+nit_max = 100L
+W = star2d(Y, Nscale=Nscale, Gen2=Gen2)
+SizeData  = N_ELEMENTS(W[*,*,0:Nscale-2])
+;Phinorm = check_linear_operator_norm("op1d_apply_WT","op1d_apply_IWT", SizeSolution,  SizeData, nit_max);
+;print, ' Phinorm = ', Phinorm
+
+x0 = double(randomn(seed, Nx,Ny))
+x=x0
+for i=0,500 do begin
+  w = star2d(X, nscale= Starlet_deconv_Nscale, gen2=Starlet_deconv_Gen2) 
+  w[*,*, Nscale-1] = 0
+  Nw = norm(w[*])
+  w  =w / Nw
+  r = star2d_adjoint(W, Gen2=Starlet_deconv_Gen2) 
+  x = r / norm(r)
+end
+print, Nw
+end
+
+
+function op_apply_H, X
+COMMON STAR2D_DECONV 
+	return,  double(  dfti(  dft (X) * Huv) )
+end
+
+function op_apply_Ht,  X
+COMMON STAR2D_DECONV
+	return,  double(  dfti(  dft (X) * Htuv) )
+end
+
+function op_get_resi,  Yuv, X,  backproj =backproj, resi=resi
+COMMON STAR2D_DECONV
+Z = dft (X) * Htuv
+ResiUV = Yuv - Z
+Resi = double( dfti(ResiUV))
+if keyword_set(backproj) then ResiUV = ResiUV * conj(Htuv)
+Rb = double(dfti( ResiUV) )
+ return, Rb
+end
+
+function star2d_tabnorm,  Nscale, Gen2=Gen2
+N = 2L^(Nscale+2)
+dirac = dblarr(N,N)
+dirac[N/2, N/2] = 1
+w  = star2d(dirac, Nscale=Nscale, Gen2=Gen2)
+TabNorm = dblarr(Nscale)
+for j=0, Nscale-1 do TabNorm[j] = sqrt( total(w[*,*,j]^2) )
+return, TabNorm
+end
+
+
+function star2d_noiselevel, Y, Nscale, MAD=MAD, SigmaNoise=SigmaNoise, Gen2=Gen2
+vs = size(Y)
+Nx =vs[1]
+Ny = vs[2]
+TabSigma = dblarr(Nscale)
+if not keyword_set(Mad) then begin
+   if not keyword_set(SigmaNoise) then SigmaNoise = get_noise(Y)
+    Noise = randomn(seed, Nx, Ny) * SigmaNoise
+    BackProjNoise = op_apply_Ht(Noise)
+    W  = star2d(BackProjNoise, Nscale=Nscale, Gen2=Gen2)
+    for j=0, Nscale-1 do TabSigma[j] = stddev(W[*,*,j])
+end else begin
+   W  = star2d(Y, Nscale=Nscale, Gen2=Gen2)     
+   for j=0, Nscale-1 do TabSigma[j] = MAD(W[*,*,j])
+end
+return,  TabSigma
+end
+
+;-------------------------------------------------------------------------------
+
+pro  decsoftth, Data, Lambda, hard=hard, step=step, SigmaNoise=SigmaNoise
+; 1 / (1 + exp(-x) )
+if not keyword_set(Step) then Step=0
+Debug =0
+if keyword_set(Debug) EQ 1 then begin
+   D = Data^2
+   KSize = 2*Step+1
+   KS2 = KSize/2
+   Kernel = dblarr(KSize)
+   Kernel[0] = 1.
+   Kernel[KSize-1] = 1.
+   Kernel[KS2]=1.
+   z = convol(D, Kernel, /EDGE_TRUNCATE, /CENTER) 
+   kernelY = transpose(Kernel)
+   V = convol(z, kernelY, /EDGE_TRUNCATE, /CENTER)
+   V= V/9.
+   RMS = sqrt(V)
+end
+ 
+if keyword_set(hard) then begin
+if keyword_set(Debug) EQ 1 then begin
+ ;  ind = where (  V LT Lambda, c)
+;   if c GT 0 then  Data[ind] = 0
+   w = V / (V + SigmaNoise^2)
+   Data = Data * w
+end else begin
+ind = where (    ABS(Data) LT Lambda, c)
+if c GT 0 then  Data[ind] = 0
+end
+
+end else begin
+softthreshold, Data, Lambda
+end
+end
+ 
+;=========================================
+
+function star2d_deconv,  Data, PSF,  Niter=Niter,  SigmaNoise=SigmaNoise,  Nsigma=Nsigma, pos=pos,   uv=uv, hard=hard, Nscale=Nscale, Resi=resi  , xIHT= xIHT, Hresi=Hresi, MAD=MAD, IHT=IHT, Sol=Sol, URes=URes, AlphaX=AlphaX
+COMMON STAR2D_DECONV 
+ 
+ if not keyword_set(Niter) then Niter = 40
+if not keyword_set(Nsigma) then Nsigma = 5.
+if not keyword_set(Nscale) then Nscale=5
+
+print, "IN"
+ Debug=0
+ if keyword_set(Debug) then begin
+ g = mygauss(64,64, 1.5)
+ g = g / total(g)
+ PSF = g
+ H = double(PSF)
+ Huv = dft(H)
+  Htuv = conj(Huv)
+  OrigSolution = g / max(g) * 100.
+ Data = OrigSolution
+ vs = size(Data)
+ Nx = vs[1]
+ Ny = vs[2] 
+ Dirac = Data*0.
+ Dirac[Nx/2,Ny/2] = total(Data)
+ print, max(Dirac)
+SigmaNoise = max(Data) / 10.
+Noise = randomn(seed, Nx, Ny) * SigmaNoise
+BackProjNoise = op_apply_Ht(Noise)
+Data = Data  + Noise
+print, "Simu SigmaNoise = ", SigmaNoise,  ", Estimated Noise = ", get_noise(Data)
+mr_deconv, Data, H, Res, opt='-i100 -v -d2' 
+    print, '       ErrSup = ', stddev(Dirac-Res), ', Max = ', max(Res), ', MaxDirac = ', max(Res)
+   load, alog(Res*1e4+1)
+wait, 5
+end
+ 
+ vs = size(Data)
+ Nx = vs[1]
+ Ny = vs[2] 
+ 
+if not keyword_set(uv) then begin
+   Y = double(Data)
+   Yuv = dft(Data)
+   H = double(PSF)
+   Huv = dft(H)
+end else begin
+   Huv = dcomplex(PSF)
+   Yuv = dcomplex(Data)
+   Y = dfti(Yuv)
+   H = dfti(Huv)
+ end
+ Htuv = conj(Huv)
+ help, htuv
+ 
+Gen2=1
+ExtragradientStep=1
+
+; if not keyword_set(SigmaNoise) then SigmaNoise =  get_noise(Y)
+
+TabNorm = star2d_tabnorm(Nscale, Gen2=Gen2)
+; if not keyword_set(SigmaNoise) then SigmaNoise=1.
+TabSigma0 =  star2d_noiselevel(Y, Nscale,  SigmaNoise=SigmaNoise, Gen2=Gen2)
+TabSigma = TabSigma0
+print, 'TabSigma = ', TabSigma
+
+ Starlet_deconv_Nscale=Nscale
+ Starlet_deconv_Gen2 = Gen2
+ Starlet_deconv_Nx = Nx
+ Starlet_deconv_Ny = Ny
+ 
+ 
+SizeSolution = N_ELEMENTS(Y)
+SizeData  = N_ELEMENTS(Y)
+nit_max = 100L
+; Hnorm = check_linear_operator_norm("op1d_apply_H","op1d_apply_Ht", SizeSolution,  SizeData, nit_max);
+Hnorm=1.
+print, ' Hnorm = ', Hnorm
+mu = 1d / Hnorm
+print, ' Mu = ', Mu
+
+W = star2d(Y, Nscale=Nscale, Gen2=Gen2)
+SizeData  = N_ELEMENTS(W[*,*,0:Nscale-2])
+print, 'SizeData = ', SizeData
+
+; Phinorm = check_linear_operator_norm("op1d_apply_WT","op1d_apply_IWT", SizeSolution,  SizeData, nit_max);
+Phinorm=1.
+print, ' Phinorm = ', Phinorm
+
+X=double(Y*0.)
+; goto, DONE
+
+W  = star2d(Y, Nscale=Nscale, Gen2=Gen2)
+U = W*0.
+Tau = 1.
+sigma = 0.4
+Lambda=Nsigma
+Mu = 1.
+UseAdjoint=1
+disp, win=0
+disp, win=1
+if keyword_set(IHT) then xIHT=X*0
+help, hard
+help, UseAdjoint
+help, Mad
+AlphaX = U*0.
+for i=0L, Niter-1 do begin
+  ; X variable
+   OldX = x
+   ; x1 = x + Tau * op_get_resi(Yuv,X, /backproj, resi=resi)  - tau *  istar2d(U, Gen2=Gen2)  
+   ResiBackProj = op_get_resi(Yuv,X, /backproj, resi=resi)
+   Alpha = star2d(Tau * ResiBackProj - tau *  star2d_adjoint(U, Gen2=Gen2), Nscale=Nscale, Gen2=Gen2)  
+   ; if not keyword_set(UseAdjoint) then x1 = x + Tau * ResiBackProj - tau *  istar2d(U, Gen2=Gen2)  $
+   ; else x1 = x + Tau * ResiBackProj - tau *  star2d_adjoint(U, Gen2=Gen2)  
+   ; x = x1 > 0
+  AlphaX = AlphaX + Alpha 
+  AlphaX =  AlphaX > 0
+  ; AlphaX[*,*, Nscale-1] = 0  ;   1.9293808
+   X =  istar2d(AlphaX, Gen2=Gen2)  
+
+    ; U variable
+    OldU = U
+   Xb = 2*x - OldX
+   PhitX = star2d(Xb, Nscale=Nscale, Gen2=Gen2)
+   U1 = U + sigma * PhitX
+   TU1 = U1
+   if keyword_set(Mad) then begin
+      W  = star2d(ResiBackProj, Nscale=Nscale, Gen2=Gen2)     
+     for j=0, Nscale-1 do TabSigma[j] = MAD(W[*,*,j])
+   end
+   L0 = (Niter-1-i) / double(Niter-1)
+   Step_trou = 1
+   for j=0, Nscale-2 do begin 
+      Scale = U1[*,*,j]
+     if keyword_set(Hard) then decsoftth, Scale, L0*TabSigma[j]  , Step= Step_trou
+     decsoftth, Scale,   Lambda  * TabSigma[j] , hard=hard , Step= Step_trou, SigmaNoise=TabSigma[j]
+      TU1[*,*,j] = Scale
+      if j NE Nscale-1 then Step_trou = Step_trou * 2
+   end
+   U = U1 - TU1
+   ; for j=0, Nscale-1 do  U[*,*,j] = U[*,*,j]  - mean(U[*,*,j])
+    
+   ; Extragradient step
+  if keyword_set(ExtragradientStep) then begin
+     x = mu * x + (1. - mu) *  OldX
+    U = mu * U + (1. - mu) * OldU
+  end
+; info, x
+; info, U
+ ; TEST IHT
+  if keyword_set(IHT) then begin
+  		 HTResiBackProj = op_get_resi(Yuv, xIHT, /backproj, resi=Hresi)
+  		 xIHT = xIHT + Tau * HTResiBackProj 
+ 		   if keyword_set(Mad) then begin
+ 			     W  = star2d(HTResiBackProj, Nscale=Nscale, Gen2=Gen2)     
+ 			     for j=0, Nscale-1 do TabSigma[j] = MAD(W[*,*,j])
+  		 end
+  		 w  = star2d(xIHT, Nscale=Nscale, Gen2=Gen2)
+	  	 for j=0, Nscale-2 do begin
+	          Scale = W[*,*,j]
+    	     decsoftth, Scale,  Lambda*TabSigma[j] , /hard
+    	      W[*,*,j] = Scale
+ 		 end
+  		if not keyword_set(UseAdjoint) then  xIHT = istar2d(W, Gen2=Gen2)   $
+ 		 else xIHT = star2d_adjoint(W, Gen2=Gen2)
+ 		  xIHT = xIHT > 0
+   END ; if IHT
+   
+
+  wset, 0
+   ; load, alog(x*1e4+1)
+   load, x
+   wset, 1
+   ; load, alog(xIHT*1e4+1)
+   if keyword_set(IHT) then  load, xIHT $
+   else load, Resi
+
+  if not keyword_set(Sol)  then print, i+1, ' : SigResi = ', stddev(resi) $
+  else print, i+1, ' : SigResi = ', stddev(resi) , ', Error  = ', stddev(Sol-x)
+    if keyword_set(Debug) then print, '       Err = ', stddev(Dirac-x), ', Max = ', max(x), ', MaxDirac = ', max(Dirac)
+    if keyword_set(IHT) then   if keyword_set(Debug) then print, '       Err = ', stddev(Dirac-xIHT), ', Max = ', max(xIHT), ', MaxDirac = ', max(Dirac)
+end
+info, x
+Ures= U
+DONE:
+
+return, X
+end
+; Nsigma=5
+; mu=1, no adjoint      Err =        19.535446, Max =        200.67203, MaxDirac =       1413.72
+; mu=1, sigma=0.5       Err =        19.145011, Max =        208.84498, MaxDirac =       1413.72
+; mu=0.5, sigma=0.5     Err =        19.746582, Max =        177.52796, MaxDirac =       1413.72
+; mu=1, sigma=0.2     Err =        18.997219, Max =        225.22882, MaxDirac =       1413.72
+; mu=1, sigma=0.1     Err =        19.194280, Max =        236.56100, MaxDirac =       1413.72
+; Hard, mu=1, sigma=0.2     Err =        19.398864, Max =        236.29659, MaxDirac =       1413.72;
+; mu=1, sigma=0.4    Err =        19.133644, Max =        250.36571, MaxDirac =       1413.72
+ ;============================================================
+
+ 
+  

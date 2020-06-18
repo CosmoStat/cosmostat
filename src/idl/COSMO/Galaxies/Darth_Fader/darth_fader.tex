@@ -1,0 +1,271 @@
+\documentclass[a4paper]{article}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{color}
+\usepackage[hmargin=2.0cm,vmargin=3cm,bindingoffset=0.5cm]{geometry}
+\usepackage{array}
+\usepackage{tabularx}
+\newcolumntype{L}{@{}>{}p{10em}<{}}% Item label
+\newcolumntype{I}{X@{}}% Item contents
+\newcolumntype{M}{@{}>{}p{13em}<{}}% Item label
+\newcommand{\lline}{\vspace{\baselineskip}\vspace{-\parskip}}
+\newcommand{\blanks}{ $^\prime\ ^\prime$}
+
+\begin{document}
+
+\title{Darth Fader}
+\author{Documentation written by Adrienne Leonard\footnote{adrienne.leonard@cea.fr}}
+\maketitle
+
+\section{Introduction}
+
+Darth Fader is a software package that computes the redshifts of a set of test galaxy spectra by cross-correlation with a set of template spectra. The methodology is described in detail in 
+
+\noindent{\color{blue} \href{http://arxiv.org/abs/1309.3579}{Machado et al., 2013, arXiv:1309.3579}}. The templates are generated from a training set of galaxy spectra at zero redshift (with or without noise). The continuum is subtracted from the training set spectra in an automated way, and eigentemplates computed from the continuum-free training spectra via Principal Component Analysis. The most significant eigentemplates are retained for cross-correlation in order to estimate the test galaxy redshifts. The test spectra undergo an identical continuum-subtraction procedure, and line features are then identified by denoising using filtering in wavelet space according to a set False Discovery Rate (FDR) threshold. Redshifts are then estimated by cross-correlation of the continuum-free and (optionally) denoised test spectra with the retained eigentemplates, with the redshift corresponding to the shift between the eigentemplate and test spectrum that minimises the $\chi^2$ distance between the two. The redshift catalogue is then cleaned by removing galaxies whose spectra return fewer than a user-specified number $N$ of line features (in Machado et al., 2013, this critical number was taken to be $N=6$). Tests have demonstrated that galaxies in this category are less likely to obtain a correct redshift estimate after cross-correlation with the eigentemplates. Their removal significantly increases the catastrophic failure rate after cleaning, as compared with the full redshift catalogue. 
+
+Please note the following:
+\begin{itemize}
+\item Please follow the {\bf full installation instructions on \url{http://cosmostat.org/darth_fader.html}} prior to running the software. 
+\item Darth Fader requires {\bf all} spectra to be pixellated {\bf logarithmically} with respect to wavelength. This affects the {\bf redshift estimation} portion of Darth Fader; the denoising and continuum estimation routines will still function regardless of whether the the spectra are binned linearly or logarithmically with respect to wavelength.
+\item Darth Fader assumes that all test spectra contain the same number of pixels, and have the same start and end wavelengths. Similarly, it assumes that the training set spectra contain the same number of pixels, and have the same start and end wavelengths. 
+\item The training set and the test data do not need to cover the same wavelength range; in fact, it is {\bf advantageous} to have training set spectra covering a {\bf larger} range of wavelength than the test data. {\em It is very important, however, that the training set and test data have the same logarithmic pixel scaling.}
+\item Both templates and test data must be {\bf continuum-free} before being passed to the redshift estimation routine. 
+\item The eigentemplates should be unit normalised.
+\item If using denoised data for the redshift estimation step, {\em df\_get\_redshift.pro} will return a very large value for $z_{est}$ for galaxies that return no features after denoising. 
+\item The Darth Fader software is modular. This means that there is a separate routine for each step in the Darth Fader process. Each of the routines called by {\em darth\_fader.pro} may be replaced by the user's own software designed for that purpose (e.g. one may replace our redshift estimation by cross-correlation with a different redshift estimation script, whilst retaining the remainder of the Darth Fader denoising/continuum-estimation/cleaning software). 
+\end{itemize}
+
+\section{The Software Package}
+
+Darth Fader consists of IDL routines, to be used in conjunction with the iSAP package\footnote{Software and documentation at \url{http://cosmostat.org/software.html}}. The IDL routines are described in detail below.
+
+\setcounter{subsection}{-1}
+\subsection{Main program: {\em darth\_fader.pro}}
+
+This is the main routine that runs the components of the Darth Fader software, described below. 
+
+\lline
+\noindent\begin{tabularx}{\textwidth}{LI}
+{\em Calling Sequence} & \texttt{darth\_fader, spectra\_components, templates, redshift\_estimates, clean\_catalogue, verbose = verbose, S\_TabPeaks = S\_TabPeaks, Data = Data, Training = Training, TnoBaseline = TnoBaseline}\\
+ & \\
+{\em Inputs} & All inputs are specified in {\em df\_input\_params.pro}\\
+ & \\
+{\em Calls} & {\em df\_input\_params.pro, df\_del\_baseline.pro, df\_get\_eigenvectors.pro, df\_get\_spectra\_components.pro, df\_get\_redshifts.pro, df\_peaks.pro} \\
+  & \\
+{\em Options} & \\
+verbose & If set, Darth Fader will update you on its progress as it processes your data. \\
+  & \\
+%\end{tabularx}
+%\noindent\begin{tabularx}{\textwidth}{LI}
+{\em Returns} & \\
+spectra\_components & A structure containing the continuum ({\em .baseline}), emission line ({\em .posline}), absorption line ({\em .negline}), and noise ({\em .noise}) spectra as well as continuum-subtracted, noisy data ({\em .data\_nobaseline}), and continuum-subtracted, denoised data ({\em .data\_clean}) \\
+templates & Array containing the user-specified number of eigentemplates \\
+redshift\_estimates & Array containing the redshift estimates for each galaxy \\
+clean\_catalogue & Structure listing the locations of spectra meeting the {\em N-}peak criterion ({\em .indices}) and the redshifts of those galaxies ({\em .redshifts}) \\
+ & \\
+{\em Keyword Returns} & \\
+S\_TabPeaks & Returns a structure containing the emission ({\em .empeaks}), absorption ({\em .abspeaks}), and total ({\em .allpeaks}) peak count for each galaxy spectrum \\
+Data & Returns the original input data \\
+Training & Returns the original training set \\
+TnoBaseline & Returns the continuum-subtracted training set 
+\end{tabularx}
+
+\subsection{Input parameters: {\em df\_input\_params.pro}}
+
+This is the most important routine for the user, as this is where the user is able to specify all the inputs to the Darth Fader main code. This code is a function, called via the calling sequence indicated below. It takes no command line inputs; all modifications must be done inside the body of the routine itself. This is the only Darth Fader routine that the user should need to modify, as it specifies all the options given tot he other Darth Fader routines. 
+
+\lline
+
+\noindent\begin{tabularx}{\textwidth}{LI}
+{\em Calling Sequence} & \texttt{inputs = df\_input\_params()} \\
+ & \\
+{\em User parameters} & \\
+INDIR & Directory where your input data are located. Note: Darth Fader assumes that all training, test and template spectra are located in the same directory \\
+incat & Name of the {\em .fits} or {\em .fits.gz} file containing the test data as a 2D array. Note, spectra must be log-binned with respect to wavelength \\
+trainingcat & Name of the {\em .fits} or {\em .fits.gz} file containing the training data as a 2D array. If eigenvectors have already been computed, the user may specify trainingcat =\blanks \\
+rmscurve & Name of the {\em .fits} or {\em .fits.gz} file containing the RMS noise curve associated with the data. This may be either a 1D array, if the same noise curve is to be used for all spectra, or a 2D array with a noise curve for each spectrum. Note the dimensions must match those of {\em incat}. In the case of white Gaussian noise, specify rmscurve = \blanks\\
+templatecat  & Name of the {\em .fits} or {\em .fits.gz} file containing the eigentemplates, if already computed. {\bf One of trainingcat and templatecat must be specified}\\
+%\end{tabularx}
+%\noindent\begin{tabularx}{\textwidth}{LI}
+lstep & Logarithmic pixel scale of the data $\delta$ such that $\lambda_i = \lambda_{min}10^{i\delta}$, where $\lambda$ is in angstroms\\
+training\_lmin; training\_lmax & Minimum and maximum wavelength of the training set in angstroms$^\ast$ \\
+data\_lmin; data\_lmax & Minimum and maximum wavelength of the data in angstroms$^\ast$\\
+ & $^\ast$These data are used to compute the pixel shift between the end of the test spectra and the end of the training set spectra. This can, alternatively, be hardwired by specifying {\em shiftpar}\\
+shiftpar & Pixel shift between the end of the test spectra and the end of the training set spectra 
+\end{tabularx}
+\noindent\begin{tabularx}{\textwidth}{MI}
+EstimRedshiftFromNoisyData & Boolean operator specifying whether the cross-correlation should be carried out using the denoised, continuum-free spectrum (recommended for wavelength-dependent noise) or the noisy, continuum-free spectrum (recommended for white Gaussian noise) \\
+ComputeEigentemplates & Boolean operator; set to 0 if you have already computed eigentemplates and specified {\em templatecat} 
+\end{tabularx}
+\noindent\begin{tabularx}{\textwidth}{LI}
+nscale & Number of scales to use in the multiscale transforms for denoising. Set to 0 to compute automatically from the data \\
+EnergPercent & Darth Fader will retain all eigentemplates such that the total eigenvalue weight of the retained templates is $\ge EnergPercent$ \\
+Ntemplates & Forces the specified number of templates to be retained if set greater than 0, overriding {\em EnergPercent} \\
+FDR & False discovery rate threshold to be used in the denoising steps, specified as $n$ where the FDR parameter $\alpha = 1 - {\rm erf}(n/\sqrt{2})$ is the probability outside the $n\sigma$ interval of the standard normal distribution\\
+NpeakCrit & Critical number of peaks required for cleaning \\
+NsigmaPeak & Detection level for peaks during peak counting \\
+CleanCatalogue & Boolean operator specifying whether to clean the catalogue using the $N$-peak criterion \\
+OUTDIR & Directory in which to place the outputs of the Darth Fader run \\
+OutputComponents, CompFileName & Boolean operator specifying whether to output the spectra components as a fits file {\em CompFileName} \\
+OutputTemplates, TempFileName & Boolean operator specifying whether to output the retained eigentemplates as a fits file {\em TempFileName} \\
+OutputAllEigen, AllEigenName & Boolean operator specifying whether to output all eigentemplates as a fits file {\em AllEigenName} \\
+OutputRedshifts, $\ \ \ $RedshiftFileName & Boolean operator specifying whether to output redshift estimates as a fits file {\em RedshiftFileName} \\
+\end{tabularx}
+\noindent\begin{tabularx}{\textwidth}{LI}
+OutputCleanCatalogue, CleanFileName & Boolean operator specifying whether to output the cleaned catalogue as a fits file {\em CleanFileName}
+\end{tabularx}
+
+\subsection{Continuum-subtraction: {\em df\_del\_baseline.pro}}
+
+This function takes a set of galaxy spectra and removes the continuum. This is called by {\em darth\_fader.pro}, or may be used independently, and may take as an argument a single spectrum as a 1D array or many galaxy spectra as a 2D array.
+
+\noindent\begin{tabularx}{\textwidth}{LI}
+{\em Calling Sequence} & \texttt{Spectra\_no\_baseline = df\_del\_baseline(spectra, nscale = nscale, rms = rms, baseline = baseline)}\\
+ & \\
+{\em Inputs} & \\
+spectra & 1D or 2D array containing the galaxy spectrum information\\
+ & \\
+{\em Keyword Inputs} & \\
+nscale & Number of scales for the multiscale transforms \\
+rms & RMS error curve for the data, either as a 1D array (if the same noise curve applies to all spectra) or a 2D array of the same dimensions as {\em spectra}. \\
+ & \\
+{\em Returns} & Continuum-subtracted spectra are returned in the named variable {\em Spectra\_no\_baseline} \\
+ & \\
+{\em Keyword Returns} & \\
+baseline & Returns the continuum estimate to the named variable {\em baseline}
+\end{tabularx}
+
+\subsection{Computation of eigentemplates: {\em df\_get\_eigenvector.pro}}
+
+\noindent\begin{tabularx}{\textwidth}{LI}
+{\em Calling sequence} & \texttt{Templates = df\_get\_eigenvector(Training, AllEigen=AllEigen, Denoising=Denoising, OptFil = OptFil, EnergPercent = EnergPercent, NTemp = NTemp)}\\
+ & \\
+{\em Inputs} & \\
+Training & 2D array containing the training spectra \\
+ & \\
+{\em Keyword Inputs} & \\
+Denoising & Set to 1 to denoise the training set before estimating the continuum \\
+OptDen & If {\em Denoising} is set, specify options if different from default \\
+EnergPercent & Eigenvector energy to be captured by the retained eigenvectors \\
+NTemp & Number of templates to be retained (overrides EnergPercent)\\
+ & \\
+{\em Returns} & Array of eigenvectors matching the {\em EnergPercent} or {\em NTemp} criteria specified returned in the named variable {\em Templates} \\
+& \\
+{\em Keyword Returns} & \\
+AllEigen & Returns the full eigenvector set in the named variable {\em AllEigen}
+\end{tabularx}
+
+\subsection{Decomposition of spectra: {\em df\_get\_spectra\_components.pro}}
+
+\noindent\begin{tabularx}{\textwidth}{LI}
+{\em Calling sequence} & \texttt{DecSpectra = df\_get\_spectra\_components(TabSpectra, RMS=RMS, nscale=nscale, nsigma=nsigma)}\\
+ & \\
+{\em Inputs} & \\
+Spectra & 1D or 2D array containing the test spectrum/spectra \\
+ & \\
+{\em Keyword Inputs} & \\
+RMS & Error curve(s) associated with the spectra \\
+nscale & Number of scales for the multiresolution denoising steps \\
+nsigma & FDR parameter expressed as $n$ where $\alpha$ is the probability external to the $n\sigma$ interval of the standard normal distribution \\
+ & \\
+{\em Returns} & Structure containing the continuum estimate ({\em .baseline}), emission line spectrum ({\em .posline}), absorption line spectrum ({\em .negline}), noise estimate ({\em .noise}), continuum-subtracted noisy data ({\em .data\_nobaseline}) and continuum-subtracted noise-free data ({\em .data\_clean})
+\end{tabularx}
+
+\subsection{Redshift estimation: {\em df\_get\_redshift.pro}}
+
+\noindent\begin{tabularx}{\textwidth}{LI}
+{\em Calling sequence} & \texttt{Redshifts = df\_get\_redshift(Spectra, TabTemplate,  lstep= lstep, shiftpar=shiftpar, InfoTemp=InfoTemp)}\\
+ & \\
+{\em Inputs} & \\
+Spectra & 1D or 2D array containing the continuum-subtracted (either noisy or denoised) spectrum/spectra \\
+TabTemplate & Template spectra for cross-correlation\\
+ & \\
+{\em Keyword Inputs} & \\
+lstep & Logarithmic pixel scale \\
+shiftpar & Pixel shift between the end of the template spectra and the end of the test spectra \\
+ & \\
+{\em Returns} & Array of redshift estimates for each spectrum passed to the routine in the named variable {\em Redshifts}. Note $df\_get\_redshift.pro$ returns a very large value for $z_{est}$ for spectra that return no features after denoising, when denoised data are used for redshift estimation \\
+ & \\
+{\em Keyword Returns} & \\
+InfoTemp & Retains key information about the size and contents of the test spectra. Useful if {\em df\_get\_redshift.pro} is called multiple times for spectra of the same dimensions and properties. 
+\end{tabularx}
+
+
+\subsection{Peak counting: {\em df\_peaks.pro}}
+
+\noindent\begin{tabularx}{\textwidth}{LI}
+{\em Calling sequence} & \texttt{TabPeak = df\_peaks(DecSpectra,    noise=noise, nsigma=nsigma)}\\
+ & \\
+{\em Inputs} & \\
+DecSpectra & Output of {\em df\_get\_spectra\_components.pro}: a structure containing the spectra components. \\
+ & \\
+{\em Keyword Inputs} & \\
+noise & RMS error curve for the spectra \\
+nsigma & Detection threshold for peaks \\
+ & \\
+{\em Returns} & Structure containing the number of emission line ({\em .empeaks}), absorption line ({\em .abspeaks}) and total ({\em .allpeaks}) peaks detected in each spectrum
+\end{tabularx}
+
+\section{Example}
+
+On the Darth Fader webpage, we provde example data to benchmark your installation of the software. We provide an example code {\em example\_darth\_fader.pro} which may be run in IDL to test the software. Before running this example code, please ensure that the specified file paths in {\em df\_input\_params.pro} are correct, but make no other modifications to the other codes. 
+
+\noindent\begin{tabularx}{\textwidth}{LI}
+{\em Calling sequence} & \texttt{example\_darth\_fader}\\
+ & \\
+{\em Returns} & Reading data...
+
+done!
+
+Computing eigentemplates from training data...
+
+Nbr of templates =           20, PercentEnergy =        99.927853
+
+done!
+
+Getting spectra components...
+
+done!
+
+Computing redshifts...
+
+done!
+
+Cleaning catalogue...
+
+done!
+
+\% of catastrophic failures before cleaning =        22.027972
+
+\% of galaxies retained after cleaning =        75.804196
+
+\% of catastrophic failures after cleaning =        4.2896679 
+\end{tabularx}
+
+\section{Contact}
+
+Please refer to the paper {\color{blue}
+  \href{http://arxiv.org/abs/1309.3579}{Machado et al., 2013,
+    arXiv:1309.3579}} for more detailed information about the method
+used in this software. If you have any queries regarding installation
+or utilisation of the Darth Fader software package, or of the methods
+described in Machado et al. (2013), please contact
+\href{mailto:adrienne.leonard@cea.fr}{Adrienne Leonard}. 
+
+\section{Copyright}
+
+If you find this software useful for your application, we'd appreciate
+it if you would drop us a quick
+\href{mailto:adrienne.leonard@cea.fr}{email} to tell us a bit about
+what your application!
+
+Users are free to modify and use the Darth Fader software in whatever
+way they see fit. However, any publications using this software should
+clearly cite {\color{blue}
+  \href{http://arxiv.org/abs/1309.3579}{Machado et al., 2013,
+    arXiv:1309.3579}} and the
+    
+{\color{blue}\noindent\href{http://cosmostat.org/software.html}{CosmoStat software
+  webpage}.} 
+
+\end{document}

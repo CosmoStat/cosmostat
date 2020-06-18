@@ -1,0 +1,152 @@
+%VERSION:2
+3
+30
+0:MSVST_2D1D
+1861:MSVST_IWT
+3387:MSVST_UWT2D
+;+
+ NAME: 
+       MSVST_2D1D
+
+ PURPOSE: 
+       filter  a data cube (two spatial dimensions + 1 temporal or energy dimension) using the 2D1D wavelet transform and 
+       the multiscale variance stabilization. If a model is given, the routine estimates the difference between the data and the model.
+       
+ CALLING:
+
+       msvst_2d1d, Data, Result, Model=Model, Opt=Opt
+
+ INPUTS:
+       Data: Data to filter
+
+ KEYWORDS:
+    Model -- IDL array: same size as input array. Contains a model of solution.
+
+      Opt: string which contains the differents options. Options are:
+    [-T] use g=Id-h*h as iteration band-pass filter
+    [-M value]
+         M = 0 : p-value threshold (default)
+         M = 1 : FDR threshold
+    [-E value] two sided Pr or FDR (default: Pr = 3.5*sigma or FDR = 0.1)
+    [-s value] Equivalent Gauss-detection level (default = 3.5*sigma)
+    [-c value] manual FDR setting, 0/1 = independence/dependence of coef. (default = 1)
+    [-n value] number of scalexy (default = 3)
+    [-N value] number of scalez (default = 5)
+    [-F value] first detection scalexy (default = 1)
+    [-f value] first detection scalez (default = 1)
+    [-K] ignore the last approximation band (used with iteration)
+    [-p] detect only the positive coefficients (used with iteration)
+    [-I value] iteration modes for M = 0,1
+                      I = 0 : Direct iterative mode
+                      I = 1 : L1-regularized iterative mode (default)
+    [-i value] number of iteration (default = 10)
+    [-Q value] write SNR file for every band
+    [-v] verbose mode
+
+ OUTPUTS:
+           Result: result of the Poisson denoising
+
+ EXTERNAL CALLS:
+           msvst_2d1d (C++ program)
+
+ EXAMPLE:
+           filter an image with all default options 
+                msvst_2d1d, Imag, Result
+
+ HISTORY:
+	Written: Jean-Luc Starck 2013.
+	November, 2013 File creation
+;-
+;+
+ NAME: 
+       MSVST_IWT
+
+ PURPOSE: 
+       filter  a signal or an image contaminated by a Poisson noise by using the MSVST method and the starlet transform (i.e. isotropic wavelet transform).
+       
+ CALLING:
+
+       msvst_iwt, Data, Result, , Opt=Opt
+
+ INPUTS:
+       Data: Data to filter
+
+ KEYWORDS:
+      Opt: string which contains the differents options. Options are:
+    [-T] use g=Id-h*h as iteration band-pass filter
+    [-M value]
+         M = 0 : p-value threshold (default)
+         M = 1 : FDR threshold
+    [-E value] two sided Pr or FDR (default: Pr = 3.5*sigma or FDR = 0.1)
+    [-s value] Equivalent Gauss-detection level (default = 3.5*sigma)
+    [-c value] manual FDR setting, 0/1 = independence/dependence of coef. (default = 1)
+    [-n value] number of scales (default = 5)
+    [-F value] first detection scale (default = 1)
+    [-K] ignore the last approximation band (used with iteration)
+    [-p] detect only the positive coefficients (used with iteration)
+    [-I value] iteration modes for M = 0,1
+                      I = 0 : Direct iterative mode
+                      I = 1 : L1-regularized iterative mode (default)
+    [-i value] number of iteration (default = 10)
+    [-v] verbose mode
+
+ OUTPUTS:
+           Result: result of the Poisson denoising
+
+ EXTERNAL CALLS:
+           msvst_iwt2d_coupled (C++ program)
+
+ EXAMPLE:
+           filter an image with all default options 
+                msvst_iwt, Imag, Result
+
+ HISTORY:
+	Written: Jean-Luc Starck 2013.
+	November, 2013 File creation
+;-
+;+
+ NAME: 
+       MSVST_UWT2D
+
+ PURPOSE: 
+       filter  an image contaminated by a Poisson noise by using the MSVST method and the bi-orthogonal undecimated wavelet  transform (i.e. 7/9 filter bank).
+       
+ CALLING:
+
+       msvst_uwt2d, Imag, Result, , Opt=Opt
+
+ INPUTS:
+       Imag: image to filter
+
+ KEYWORDS:
+      Opt: string which contains the differents options. Options are:
+    [-M value]
+         M = 0 : MS-VST (default)
+         M = 1 : Anscombe
+         M = 2 : Haar-Fisz
+    [-m] Use FDR thresholding
+    [-t value] max. cycle translation for Haar-Fisz (default = 0)
+    [-E value] two sided Pr or FDR (default: Pr = 3.5*sigma or FDR = 0.1)
+    [-s value] Equivalent Gauss-detection level (default = 3.5*sigma)
+    [-c value] manual FDR setting, 0/1 = independence/dependence of coef. (default = 1)
+    [-n value] number of scales (default = 5)
+    [-F value] first detection scale (default = 1)
+    [-K] ignore the last approximation band (used with iteration)
+    [-p] detect only the positive coefficients (used with iteration)
+    [-i value] number of iteration (default = 10)
+    [-v] verbose mode
+
+ OUTPUTS:
+           Result: result of the Poisson denoising
+
+ EXTERNAL CALLS:
+           msvst_uwt2d (C++ program)
+
+ EXAMPLE:
+           filter an image with all default options 
+                msvst_uwt2d, Imag, Result
+
+ HISTORY:
+	Written: Jean-Luc Starck 2013.
+	November, 2013 File creation
+;-

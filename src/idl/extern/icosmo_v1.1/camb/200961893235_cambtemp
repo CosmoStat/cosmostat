@@ -1,0 +1,382 @@
+#Parameters for CAMB
+
+
+#output_root is prefixed to output file names
+output_root = 
+#What to do
+get_scalar_cls = T
+get_vector_cls = F
+get_tensor_cls = F
+get_transfer = T
+
+#if do-lensing then scalar_outputfile contains additional columns of l^4C_l^{pp} and l^3C_l^{pT}
+#where p is the projected potential.  Output lensed CMB Cls (without tensors) are in lensed_output_file below.
+do_lensing = F
+# 0: linear, 1:non-linear matter power (HALOFIT), 2: non-linear CMB lensing (HALOFIT)
+do_nonlinear   = 0
+
+
+#Maximum multipole and k*eta. 
+#  Note that C_ls near l_max are inaccurate (about 5%), go to 50 more than you need
+#  Lensed power spectra are computed to l_max_scalar-250 where accurate at %-level
+#  For high accuracy lensed spectra set l_max_scalar = (l you need) + 500
+#  To get accurate lensed BB need to have l_max_scalar>2000, k_eta_max_scalar > 10000
+#  Otherwise k_eta_max_scalar=2*l_max_scalar usually suffices
+l_max_scalar      = 2000
+k_eta_max_scalar  = 4000
+
+#  Tensor settings should be less than or equal to the above
+l_max_tensor      = 1500
+k_eta_max_tensor  = 3000
+
+#Main cosmological parameters, neutrino masses are assumed degenerate
+# If use_phyical set phyiscal densities in baryone, CDM and neutrinos + Omega_k
+use_physical   = F
+hubble = 70.000000
+#effective equation of state parameter for dark energy, assumed constant
+w0 = -0.95000000
+wa = 0.0000000
+#constant comoving sound speed of the dark energy (1=quintessence)
+cs2_lam        = 1
+
+#if use_physical = F set parameters as here
+omega_baryon = 0.045000000
+omega_cdm = 0.20500000
+omega_lambda = 0.75000000
+omega_neutrino = 0.00000
+
+#massless_neutrinos is the effective number (for QED + non-instantaneous decoupling)
+temp_cmb           = 2.726
+helium_fraction    = 0.24
+massless_neutrinos = 3.04
+massive_neutrinos  = 0
+
+#Neutrino mass splittings
+nu_mass_eigenstates = 1
+#nu_mass_degeneracies = 0 sets nu_mass_degeneracies = massive_neutrinos
+#otherwise should be an array
+#e.g. for 3 neutrinos with 2 non-degenerate eigenstates, nu_mass_degeneracies = 2 1
+nu_mass_degeneracies = 0  
+#Fraction of total omega_nu h^2 accounted for by each eigenstate, eg. 0.5 0.5
+nu_mass_fractions = 1
+
+#Initial power spectrum, amplitude, spectral index and running. Pivot k in Mpc^{-1}.
+initial_power_num         = 1
+pivot_scalar              = 0.05
+pivot_tensor              = 0.05
+scalar_amp(1)             = 2.5e-9
+scalar_spectral_index(1) = 1.0000000
+scalar_nrun(1)            = 0
+tensor_spectral_index(1)  = 0
+#ratio is that of the initial tens/scal power spectrum amplitudes
+initial_ratio(1)          = 1
+#note vector modes use the scalar settings above
+
+
+#Reionization, ignored unless reionization = T, re_redshift measures where x_e=0.5
+reionization         = T
+
+re_use_optical_depth = T
+re_optical_depth     = 0.09
+#If re_use_optical_depth = F then use following, otherwise ignored
+re_redshift          = 12
+#width of reionization transition. CMBFAST model was similar to re_delta_redshift~0.5.
+re_delta_redshift    = 1.5
+#re_ionization_frac=-1 sets to become fully ionized using YHe to get helium contribution
+#Otherwise x_e varies from 0 to re_ionization_frac
+re_ionization_frac   = 1
+
+
+#RECFAST 1.4 recombination parameters
+RECFAST_fudge = 1.14
+RECFAST_fudge_He = 0.86
+RECFAST_Heswitch = 6
+
+#Initial scalar perturbation mode (adiabatic=1, CDM iso=2, Baryon iso=3, 
+# neutrino density iso =4, neutrino velocity iso = 5) 
+initial_condition   = 1
+#If above is zero, use modes in the following (totally correlated) proportions
+#Note: we assume all modes have the same initial power spectrum
+initial_vector = -1 0 0 0 0
+
+#For vector modes: 0 for regular (neutrino vorticity mode), 1 for magnetic
+vector_mode = 0
+
+#Normalization
+COBE_normalize = F
+##CMB_outputscale scales the output Cls
+#To get MuK^2 set realistic initial amplitude (e.g. scalar_amp(1) = 2.3e-9 above) and
+#otherwise for dimensionless transfer functions set scalar_amp(1)=1 and use
+#CMB_outputscale = 1
+CMB_outputscale = 7.4311e12
+
+sigma8 =       0.80000000
+#Transfer function settings, transfer_kmax=0.5 is enough for sigma_8
+#transfer_k_per_logint=0 sets sensible non-even sampling; 
+#transfer_k_per_logint=5 samples fixed spacing in log-k
+#transfer_interp_matterpower =T produces matter power in regular interpolated grid in log k; 
+# use transfer_interp_matterpower =F to output calculated values (e.g. for later interpolation)
+transfer_high_precision = F
+transfer_kmax           = 4.28571
+transfer_k_per_logint   = 0
+transfer_num_redshifts = 199
+transfer_interp_matterpower = T
+transfer_redshift(1)=1.98995
+transfer_redshift(2)=1.97990
+transfer_redshift(3)=1.96985
+transfer_redshift(4)=1.95980
+transfer_redshift(5)=1.94975
+transfer_redshift(6)=1.93970
+transfer_redshift(7)=1.92965
+transfer_redshift(8)=1.91960
+transfer_redshift(9)=1.90955
+transfer_redshift(10)=1.89950
+transfer_redshift(11)=1.88945
+transfer_redshift(12)=1.87940
+transfer_redshift(13)=1.86935
+transfer_redshift(14)=1.85930
+transfer_redshift(15)=1.84925
+transfer_redshift(16)=1.83920
+transfer_redshift(17)=1.82915
+transfer_redshift(18)=1.81910
+transfer_redshift(19)=1.80905
+transfer_redshift(20)=1.79900
+transfer_redshift(21)=1.78894
+transfer_redshift(22)=1.77889
+transfer_redshift(23)=1.76884
+transfer_redshift(24)=1.75879
+transfer_redshift(25)=1.74874
+transfer_redshift(26)=1.73869
+transfer_redshift(27)=1.72864
+transfer_redshift(28)=1.71859
+transfer_redshift(29)=1.70854
+transfer_redshift(30)=1.69849
+transfer_redshift(31)=1.68844
+transfer_redshift(32)=1.67839
+transfer_redshift(33)=1.66834
+transfer_redshift(34)=1.65829
+transfer_redshift(35)=1.64824
+transfer_redshift(36)=1.63819
+transfer_redshift(37)=1.62814
+transfer_redshift(38)=1.61809
+transfer_redshift(39)=1.60804
+transfer_redshift(40)=1.59799
+transfer_redshift(41)=1.58794
+transfer_redshift(42)=1.57789
+transfer_redshift(43)=1.56784
+transfer_redshift(44)=1.55779
+transfer_redshift(45)=1.54774
+transfer_redshift(46)=1.53769
+transfer_redshift(47)=1.52764
+transfer_redshift(48)=1.51759
+transfer_redshift(49)=1.50754
+transfer_redshift(50)=1.49749
+transfer_redshift(51)=1.48744
+transfer_redshift(52)=1.47739
+transfer_redshift(53)=1.46734
+transfer_redshift(54)=1.45729
+transfer_redshift(55)=1.44724
+transfer_redshift(56)=1.43719
+transfer_redshift(57)=1.42714
+transfer_redshift(58)=1.41709
+transfer_redshift(59)=1.40704
+transfer_redshift(60)=1.39698
+transfer_redshift(61)=1.38693
+transfer_redshift(62)=1.37688
+transfer_redshift(63)=1.36683
+transfer_redshift(64)=1.35678
+transfer_redshift(65)=1.34673
+transfer_redshift(66)=1.33668
+transfer_redshift(67)=1.32663
+transfer_redshift(68)=1.31658
+transfer_redshift(69)=1.30653
+transfer_redshift(70)=1.29648
+transfer_redshift(71)=1.28643
+transfer_redshift(72)=1.27638
+transfer_redshift(73)=1.26633
+transfer_redshift(74)=1.25628
+transfer_redshift(75)=1.24623
+transfer_redshift(76)=1.23618
+transfer_redshift(77)=1.22613
+transfer_redshift(78)=1.21608
+transfer_redshift(79)=1.20603
+transfer_redshift(80)=1.19598
+transfer_redshift(81)=1.18593
+transfer_redshift(82)=1.17588
+transfer_redshift(83)=1.16583
+transfer_redshift(84)=1.15578
+transfer_redshift(85)=1.14573
+transfer_redshift(86)=1.13568
+transfer_redshift(87)=1.12563
+transfer_redshift(88)=1.11558
+transfer_redshift(89)=1.10553
+transfer_redshift(90)=1.09548
+transfer_redshift(91)=1.08543
+transfer_redshift(92)=1.07538
+transfer_redshift(93)=1.06533
+transfer_redshift(94)=1.05528
+transfer_redshift(95)=1.04523
+transfer_redshift(96)=1.03518
+transfer_redshift(97)=1.02513
+transfer_redshift(98)=1.01508
+transfer_redshift(99)=1.00503
+transfer_redshift(100)=0.994975
+transfer_redshift(101)=0.984925
+transfer_redshift(102)=0.974874
+transfer_redshift(103)=0.964824
+transfer_redshift(104)=0.954774
+transfer_redshift(105)=0.944724
+transfer_redshift(106)=0.934673
+transfer_redshift(107)=0.924623
+transfer_redshift(108)=0.914573
+transfer_redshift(109)=0.904523
+transfer_redshift(110)=0.894472
+transfer_redshift(111)=0.884422
+transfer_redshift(112)=0.874372
+transfer_redshift(113)=0.864322
+transfer_redshift(114)=0.854271
+transfer_redshift(115)=0.844221
+transfer_redshift(116)=0.834171
+transfer_redshift(117)=0.824121
+transfer_redshift(118)=0.814070
+transfer_redshift(119)=0.804020
+transfer_redshift(120)=0.793970
+transfer_redshift(121)=0.783920
+transfer_redshift(122)=0.773869
+transfer_redshift(123)=0.763819
+transfer_redshift(124)=0.753769
+transfer_redshift(125)=0.743719
+transfer_redshift(126)=0.733668
+transfer_redshift(127)=0.723618
+transfer_redshift(128)=0.713568
+transfer_redshift(129)=0.703518
+transfer_redshift(130)=0.693467
+transfer_redshift(131)=0.683417
+transfer_redshift(132)=0.673367
+transfer_redshift(133)=0.663317
+transfer_redshift(134)=0.653266
+transfer_redshift(135)=0.643216
+transfer_redshift(136)=0.633166
+transfer_redshift(137)=0.623116
+transfer_redshift(138)=0.613065
+transfer_redshift(139)=0.603015
+transfer_redshift(140)=0.592965
+transfer_redshift(141)=0.582915
+transfer_redshift(142)=0.572864
+transfer_redshift(143)=0.562814
+transfer_redshift(144)=0.552764
+transfer_redshift(145)=0.542714
+transfer_redshift(146)=0.532663
+transfer_redshift(147)=0.522613
+transfer_redshift(148)=0.512563
+transfer_redshift(149)=0.502513
+transfer_redshift(150)=0.492462
+transfer_redshift(151)=0.482412
+transfer_redshift(152)=0.472362
+transfer_redshift(153)=0.462312
+transfer_redshift(154)=0.452261
+transfer_redshift(155)=0.442211
+transfer_redshift(156)=0.432161
+transfer_redshift(157)=0.422111
+transfer_redshift(158)=0.412060
+transfer_redshift(159)=0.402010
+transfer_redshift(160)=0.391960
+transfer_redshift(161)=0.381910
+transfer_redshift(162)=0.371859
+transfer_redshift(163)=0.361809
+transfer_redshift(164)=0.351759
+transfer_redshift(165)=0.341709
+transfer_redshift(166)=0.331658
+transfer_redshift(167)=0.321608
+transfer_redshift(168)=0.311558
+transfer_redshift(169)=0.301508
+transfer_redshift(170)=0.291457
+transfer_redshift(171)=0.281407
+transfer_redshift(172)=0.271357
+transfer_redshift(173)=0.261307
+transfer_redshift(174)=0.251256
+transfer_redshift(175)=0.241206
+transfer_redshift(176)=0.231156
+transfer_redshift(177)=0.221106
+transfer_redshift(178)=0.211055
+transfer_redshift(179)=0.201005
+transfer_redshift(180)=0.190955
+transfer_redshift(181)=0.180905
+transfer_redshift(182)=0.170854
+transfer_redshift(183)=0.160804
+transfer_redshift(184)=0.150754
+transfer_redshift(185)=0.140704
+transfer_redshift(186)=0.130653
+transfer_redshift(187)=0.120603
+transfer_redshift(188)=0.110553
+transfer_redshift(189)=0.100503
+transfer_redshift(190)=0.0904523
+transfer_redshift(191)=0.0804020
+transfer_redshift(192)=0.0703518
+transfer_redshift(193)=0.0603015
+transfer_redshift(194)=0.0502513
+transfer_redshift(195)=0.0402010
+transfer_redshift(196)=0.0301508
+transfer_redshift(197)=0.0201005
+transfer_redshift(198)=0.0100503
+transfer_redshift(199)=0.00000
+transfer_filename(1) = tk_200961893235_cambtemp.dat
+#Matter power spectrum output against k/h in units of h^{-3} Mpc^3
+transfer_matterpower(1) = pk_200961893235_cambtemp.dat
+
+#Output files not produced if blank. make camb_fits to use use the FITS setting.
+scalar_output_file = test
+vector_output_file = vecCls.dat
+tensor_output_file = tensCls.dat
+total_output_file  = totCls.dat
+lensed_output_file = lensedCls.dat
+lensed_total_output_file  =lensedtotCls.dat
+FITS_filename      = scalCls.fits
+
+##Optional parameters to control the computation speed,accuracy and feedback
+
+#If feedback_level > 0 print out useful information computed about the model
+feedback_level = 1
+
+# 1: curved correlation function, 2: flat correlation function, 3: inaccurate harmonic method
+lensing_method = 1
+accurate_BB = F
+
+#massive_nu_approx: 0 - integrate distribution function
+#                   1 - switch to series in velocity weight once non-relativistic
+#                   2 - use fast approximate scheme (CMB only- accurate for light neutrinos)
+#                   3 - intelligently use the best accurate method
+massive_nu_approx = 3
+
+#Whether you are bothered about polarization. 
+accurate_polarization   = T
+
+#Whether you are bothered about percent accuracy on EE from reionization
+accurate_reionization   = T
+
+#whether or not to include neutrinos in the tensor evolution equations
+do_tensor_neutrinos     = F
+
+#Whether to turn off small-scale late time radiation hierarchies (save time,v. accurate)
+do_late_rad_truncation   = T
+
+#Computation parameters
+#if number_of_threads=0 assigned automatically
+number_of_threads       = 0
+
+#Default scalar accuracy is about 0.3% (except lensed BB). 
+#For 0.1%-level try accuracy_boost=2, l_accuracy_boost=2.
+
+#Increase accuracy_boost to decrease time steps, use more k values,  etc.
+#Decrease to speed up at cost of worse accuracy. Suggest 0.8 to 3.
+accuracy_boost          = 1
+
+#Larger to keep more terms in the hierarchy evolution. 
+l_accuracy_boost        = 1
+
+#Increase to use more C_l values for interpolation.
+#Increasing a bit will improve the polarization accuracy at l up to 200 -
+#interpolation errors may be up to 3%
+#Decrease to speed up non-flat models a bit
+l_sample_boost          = 1
+
