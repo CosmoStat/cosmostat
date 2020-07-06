@@ -112,7 +112,8 @@ void  MRS::alloc(int Nside, int Nscale, int LmaxIn, int ALM_iter, bool Verb)
 {
     bool nested=false;
     float ZeroPadding=0.;
-    int Lmax = mrs_get_lmax (LmaxIn,  Nside, ZeroPadding);
+    int LM=LmaxIn;
+    int Lmax = mrs_get_lmax (LM,  Nside, ZeroPadding);
     WT.wt_alloc(Nside, Nscale, Lmax, nested);  //  DEF_MRS_ORDERING);
     WT.ALM_iter = ALM_iter;
     if (Verb) Verbose=Verb;
@@ -122,6 +123,8 @@ void  MRS::alloc(int Nside, int Nscale, int LmaxIn, int ALM_iter, bool Verb)
 // Transform method
 py::array_t<float>  MRS::uwt(py::array_t<float>& arr, int Ns)
 {
+    Verbose=True;
+    cout << "arr.ndim() = " << arr.ndim() << endl;
     if (arr.ndim() != 1)
         throw std::runtime_error("Input should be 1-D NumPy array");
     auto buffer = arr.request();
@@ -135,7 +138,9 @@ py::array_t<float>  MRS::uwt(py::array_t<float>& arr, int Ns)
     if ((!this->mr_initialized) || ((Ns>1) && (Ns != WT.nscale()))
             || (Nside != WT.nside()))
         alloc(Nside, Ns);
- 
+
+    cout << "alloc ok. Nside = " << Nside << " " << Ns << ", Npix = " << Npix << endl;
+
     // Copy the numpy array into a healpix map
     Hdmap Map;
     Map.alloc(Nside);
@@ -146,17 +151,21 @@ py::array_t<float>  MRS::uwt(py::array_t<float>& arr, int Ns)
  
     // Wavelet transform
     WT.transform(Map);
-    
+    cout << "transform ok. " << endl;
+
     // Recopy to numpy array
     auto arr1 = py::array_t<float>(Npix*WT.nscale());
     auto buf1 = arr1.request();
     pointer = (float *) buf1.ptr;
+    for(int s=0; s < WT.nscale(); s++)
     for (int i=0; i<Npix; i++)
     {
-        for(int s=0; s < WT.nscale(); s++)
-            pointer[i + s * Npix] = WT.WTTrans(i,s);
+        pointer[i + s * Npix] = WT.WTTrans(i,s);
     }
+    cout << "copy ok. Npix =" << Npix << endl;
+
     arr1.resize({WT.nscale(), Npix});
+    cout << "resize dim = " << arr1.ndim() << " " << arr1.shape(1)<< " " <<   arr1.shape(0) << endl;
     return arr1;
 }
 
