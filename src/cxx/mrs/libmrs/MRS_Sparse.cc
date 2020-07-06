@@ -392,7 +392,7 @@ void mrs_wt_trans(Hdmap & Map, dblarray & TabCoef, fltarray & TabFilter,  int Lm
     int Nside = Map.Nside();
     Hdmap Band,SmoothMap;
     
-    // cout << "mrs_wt_trans " << endl;
+    // cout << "mrs_wt_transL Lmax =  " << Lmax << ", Nside = "  << Nside << ", Nscale = " << NScale << endl;
     Band.SetNside ((int) Nside,  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
     SmoothMap.SetNside ((int) Nside,  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
     SmoothMap=Map;  
@@ -408,6 +408,7 @@ void mrs_wt_trans(Hdmap & Map, dblarray & TabCoef, fltarray & TabFilter,  int Lm
 
     int Nstep = NScale - 1;
     for (int p=0; p < Band.Npix(); p++)  Band[p] =  Map[p];
+    // cout << "ALM =  "<< endl;
     ALM.alm_trans(Map);
     // Map.info((char*) "Input MAP");
     // fits_write_fltarr("xxf3.fits", TabFilter);
@@ -415,8 +416,13 @@ void mrs_wt_trans(Hdmap & Map, dblarray & TabCoef, fltarray & TabFilter,  int Lm
     for (int b=0; b < Nstep; b++)
     {  
         CAlmR ALM_Band;
+        // cout << "AllocBand =  "<< b+1 << endl;
+
         ALM_Band.alloc(Nside, Lmax);
+        // cout << "BandAlloc ok  "<< b+1 << endl;
         ALM_Band.SetToZero();
+        // cout << "   SetToZero =  "<< b+1 << endl;
+
         ALM_Band.Norm = False;
         ALM_Band.UseBeamEff = False;
     	ALM_Band.set_beam_eff(Lmax, Lmax);  

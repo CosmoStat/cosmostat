@@ -186,8 +186,8 @@ int main(int argc, char *argv[])
 		Map.read(Name_Imag_In);   
    		Nside = Map.Nside();
     	// if(Lmax == 0) Lmax=min(2*Nside,ALM_MAX_L);//default value for Lmax
-       int Lmax = mrs_get_lmax (Lmax,  Nside, 0.0);
-
+        int LMAX = mrs_get_lmax (Lmax,  Nside, 0.0);
+        Lmax =LMAX;
   		if (UseMeyer == true)  WT.wp_alloc(Nside, Lmax, DEF_MRS_ORDERING);//Ring Format (quicker spherical harmonic transform)
         else WT.wt_alloc(Nside, NbrScale, Lmax, DEF_MRS_ORDERING);
 		if (Verbose == true){

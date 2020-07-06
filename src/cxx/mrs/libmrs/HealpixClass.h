@@ -101,14 +101,17 @@ template<typename T> class Hmap: public Healpix_Map<T>
 
 template<typename T> void Hmap<T>::alloc( int NsideIn, bool nested)
 {
+    // cout <<cout << "ALLOC IN " << endl;
 	if( nested == false )
 	{
+        // cout << "RING: " <<NsideIn << endl;
 		(*this).SetNside( NsideIn, DEF_MRS_ORDERING );
 	}
 	else
 	{
 		(*this).SetNside( NsideIn, NEST );
 	}
+    // cout << "END ALLOC" << endl;
 }
 // ===========================
 

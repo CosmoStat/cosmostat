@@ -8,6 +8,10 @@
 	
 ************************************************************************************/
 
+
+#ifndef _HP_POWSPEC_
+#define _HP_POWSPEC_
+
 #include "IM_IO.h"
 #include <cmath>
 #include "arr.h"
@@ -720,3 +724,4 @@ void mrsp_alloc_powspec(Healpix_PowSpec & PS, dblarray &Cl)
 */
 //===========================
 
+#endif
