@@ -36,9 +36,17 @@ def mrs_resize(mapin, nsideout):
     k = hp.ud_grade(mapin, nsideout)
     return k
 
-def tvs(mapin,min=None,max=None,title=None):
-    hp.mollview(mapin,max=max,min=min, title=title)
-    
+# smoothing with sigma in arcmin
+def smooth(map, sigma):
+    s= hp.smoothing(mapin, sigma=sigma/(360.*60.) * (np.pi*2),pol=False)
+
+def tvs(mapin,min=None,max=None,title=None,sigma=None):
+    if sigma is None:
+        hp.mollview(mapin,max=max,min=min, title=title)
+    else:
+       s= hp.smoothing(mapin, sigma=sigma/(360.*60.) * (np.pi*2),pol=False)
+       hp.mollview(s,max=max,min=min, title=title)
+
 def get_nside(Npix):
     return hp.npix2nside(Npix)
 
@@ -62,4 +70,34 @@ def amin2l(a):
     ar =  a / (180.* 60.) * np.pi
     l = 1. / ar
     return l
+
+def g2eb(g1,g2):
+    nside = gnside(g1)
+    (ae,ab) = hp.map2alm_spin((g1,g2), 2)
+    ke= hp.alm2map(ae, nside, pol=False)
+    kb= hp.alm2map(ab, nside, pol=False)
+    return ke,kb
+
+def g2k(g1,g2):
+    nside = gnside(g1)
+    (ae,ab) = hp.map2alm_spin((g1,g2), 2)
+    ke= hp.alm2map(ae, nside, pol=False)
+    return ke
+
+def k2g(ke):
+    nside = gnside(ke)
+    ae = hp.map2alm(ke, 1,pol=False)
+    ab = np.copy(ae) * 0.
+    (g1,g2) = hp.alm2map_spin((ae,ab), 2, lmax=lmax)
+    return g1,g2
+
+# it seems that hp.alm2map_spin crashes.
+def eb2g(ke,kb):
+    nside = gnside(ke)
+    lmax=nside*3 - 1
+    ae = hp.map2alm(ke, 1, pol=False)
+    ab = hp.map2alm(kb, 1, pol=False)
+    (g1,g2) = hp.alm2map_spin( (ae,ab), nside, 2, lmax)
+    return g1,g2
+
 
