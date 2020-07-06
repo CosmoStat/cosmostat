@@ -20,6 +20,7 @@ option(MRSP "Build MRS library" ON)
 enable_language (Fortran OPTIONAL)
 set(COMPILE_FORTRAN_BIN 1)
 set(COMPILE_BINDING 1)
+set(ASTROWL 1)
 
   # Set build type
   if(CMAKE_BUILD_TYPE STREQUAL "")
@@ -80,9 +81,11 @@ ${FFTW_FLAGS}")
 -Wno-write-strings ${FFTW_CXX_FLAGS}")
 
   else()
+    message(STATUS "  DEBUG MODE")
 
-    set(CMAKE_CXX_FLAGS_RELEASE "-DNO_DISP_IO -g0 -O2 -fPIC \
--fomit-frame-pointer ${OpenMP_CXX_FLAGS} -Wno-write-strings -DNDEBUG \
+#    set(CMAKE_CXX_FLAGS_RELEASE "-DNO_DISP_IO -g0 -O2 -fPIC -fomit-frame-pointer \
+    set(CMAKE_CXX_FLAGS_RELEASE "-DNO_DISP_IO -g  \
+ ${OpenMP_CXX_FLAGS} -Wno-write-strings -DNDEBUG \
 ${FFTW_FLAGS}"
     )
     set(CMAKE_CXX_FLAGS_DEBUG "-DNO_DISP_IO -g -fPIC ${OpenMP_CXX_FLAGS} \
@@ -117,8 +120,8 @@ endif(HEALPIX_FOUND)
 endif(MRS)
 
   # Build tools library
-  FILE(GLOB src_lib1  "${PROJECT_SOURCE_DIR}/lib/libtools/*.cc")
-  include_directories("${PROJECT_SOURCE_DIR}/lib/libtools")
+  FILE(GLOB src_lib1  "${PROJECT_SOURCE_DIR}/libsparse/libtools/*.cc")
+  include_directories("${PROJECT_SOURCE_DIR}/libsparse/libtools")
   add_library(tools STATIC ${src_lib1})
   target_link_libraries(tools ${CFITSIO_LIBRARIES} ${FFTW_LD_FLAGS})
   if(USE_FFTW)
@@ -126,8 +129,8 @@ endif(MRS)
   endif(USE_FFTW)
 
   # Build sparse1d library
-  FILE(GLOB src_lib2 "${PROJECT_SOURCE_DIR}/lib/libsparse1d/*.cc")
-  include_directories("${PROJECT_SOURCE_DIR}/lib/libsparse1d")
+  FILE(GLOB src_lib2 "${PROJECT_SOURCE_DIR}/libsparse/libsparse1d/*.cc")
+  include_directories("${PROJECT_SOURCE_DIR}/libsparse/libsparse1d")
   add_library(sparse1d STATIC ${src_lib2})
   target_link_libraries(sparse1d ${CFITSIO_LIBRARIES} ${FFTW_LD_FLAGS})
   if(USE_FFTW)
@@ -135,8 +138,8 @@ endif(MRS)
   endif(USE_FFTW)
 
   # Build sparse2d library
-  FILE(GLOB src_lib2 "${PROJECT_SOURCE_DIR}/lib/libsparse2d/*.cc")
-  include_directories("${PROJECT_SOURCE_DIR}/lib/libsparse2d")
+  FILE(GLOB src_lib2 "${PROJECT_SOURCE_DIR}/libsparse/libsparse2d/*.cc")
+  include_directories("${PROJECT_SOURCE_DIR}/libsparse/libsparse2d")
   add_library(sparse2d STATIC ${src_lib2})
   target_link_libraries(sparse2d ${CFITSIO_LIBRARIES} ${FFTW_LD_FLAGS})
   if(USE_FFTW)
@@ -145,8 +148,8 @@ endif(MRS)
 
   if(SPARSE3D)
     # Build sparse3d library
-    FILE(GLOB src_lib2 "${PROJECT_SOURCE_DIR}/lib/libsparse3d/*.cc")
-    include_directories("${PROJECT_SOURCE_DIR}/lib/libsparse3d")
+    FILE(GLOB src_lib2 "${PROJECT_SOURCE_DIR}/libsparse/libsparse3d/*.cc")
+    include_directories("${PROJECT_SOURCE_DIR}/libsparse/libsparse3d")
     add_library(sparse3d STATIC ${src_lib2})
     target_link_libraries(sparse3d ${CFITSIO_LIBRARIES} ${FFTW_LD_FLAGS})
     if(USE_FFTW)
@@ -156,8 +159,8 @@ endif(MRS)
   message(STATUS "Sparse3D Build: ${SPARSE3D}")
 
   # Build mga2d library
-  FILE(GLOB src_mgalib2 "${PROJECT_SOURCE_DIR}/lib/libmga2d/*.cc")
-  include_directories("${PROJECT_SOURCE_DIR}/lib/libmga2d")
+  FILE(GLOB src_mgalib2 "${PROJECT_SOURCE_DIR}/libsparse/libmga2d/*.cc")
+  include_directories("${PROJECT_SOURCE_DIR}/libsparse/libmga2d")
   add_library(mga2d STATIC ${src_mgalib2})
   target_link_libraries(mga2d ${CFITSIO_LIBRARIES} ${FFTW_LD_FLAGS})
   if(USE_FFTW)
@@ -270,6 +273,60 @@ set(MRSPBIN mrsp_almtrans mrsp_almrec mrsp_alm2spec mrsp_spec mrsp_teb2tqu mrsp_
    endforeach(program)
 endif(MRSP)
 
+################## Astro Weak Lensing ##################
+
+if(ASTROWL)
+     # Build mrs library
+  FILE(GLOB src_lib  "${PROJECT_SOURCE_DIR}/astro/weaklensing/libwl/*.cc")
+  include_directories("${PROJECT_SOURCE_DIR}/astro/weaklensing/libwl")
+  add_library(wl STATIC ${src_lib})
+  target_link_libraries(wl ${CFITSIO_LIBRARIES} ${FFTW_LD_FLAGS})
+  if(USE_FFTW)
+    add_dependencies(mrs fftw3)
+  endif(USE_FFTW)
+
+  set(WLBIN flexion_to_kappa inpainting_EB   gamma_flexion_to_kappa kappa_to_flexion wl_t2_filter gamma_to_kappa)
+
+ # Build and link the module
+  foreach(program ${WLBIN})
+    add_executable(${program} ${PROJECT_SOURCE_DIR}/astro/weaklensing/mainwl/${program}.cc)
+    target_link_libraries(${program} wl mga2d sparse2d sparse1d tools ${CFITSIO_LIBRARIES} )
+   endforeach(program)
+
+  set(WLBINHEL mr_helmholtz mr_ani_divcurl wtb1d_trans)
+
+  FILE(GLOB src_lib  "${PROJECT_SOURCE_DIR}/astro/weaklensing/libdivcurlwt/*.cc")
+  include_directories("${PROJECT_SOURCE_DIR}/astro/weaklensing/libdivcurlwt")
+  add_library(divcurl STATIC ${src_lib})
+  target_link_libraries(divcurl ${CFITSIO_LIBRARIES} ${FFTW_LD_FLAGS})
+
+  # Build and link the module
+  foreach(program ${WLBINHEL})
+    add_executable(${program} ${PROJECT_SOURCE_DIR}/astro/weaklensing/mainwl/${program}.cc)
+    target_link_libraries(${program} divcurl  wl mga2d sparse2d sparse1d tools ${CFITSIO_LIBRARIES} ${HEALPIX_LINK_LIBRARIES})
+   endforeach(program)
+
+
+  if(MRS)
+      FILE(GLOB src_lib  "${PROJECT_SOURCE_DIR}/astro/weaklensing/libwls/*.cc")
+    include_directories("${PROJECT_SOURCE_DIR}/astro/weaklensing/libwls")
+    add_library(wls STATIC ${src_lib})
+    target_link_libraries(wls ${CFITSIO_LIBRARIES} ${FFTW_LD_FLAGS})
+    if(USE_FFTW)
+      add_dependencies(mrs fftw3)
+    endif(USE_FFTW)
+
+  set(WLSPHERE wls_mcalens)
+  # Build and link the module
+  foreach(program ${WLSPHERE})
+    add_executable(${program} ${PROJECT_SOURCE_DIR}/astro/weaklensing/mainwls/${program}.cc)
+    target_link_libraries(${program} wls mrs wl mga2d sparse2d sparse1d tools ${CFITSIO_LIBRARIES} ${HEALPIX_LINK_LIBRARIES})
+   endforeach(program)
+  endif(MRS)
+
+
+endif(ASTROWL)
+
 ################## BINDING ##################
 
 if(COMPILE_BINDING MATCHES "1")
@@ -314,16 +371,16 @@ endif(COMPILE_BINDING MATCHES "1")
 # INSTALLATION
 
   ##### Install headers
-  FILE(GLOB inc_lib  "${PROJECT_SOURCE_DIR}/lib/libsparse1d/*.h")
+  FILE(GLOB inc_lib  "${PROJECT_SOURCE_DIR}/libsparse/libsparse1d/*.h")
   INSTALL(FILES ${inc_lib} DESTINATION include)
-  FILE(GLOB inc_lib  "${PROJECT_SOURCE_DIR}/lib/libsparse2d/*.h")
+  FILE(GLOB inc_lib  "${PROJECT_SOURCE_DIR}/libsparse/libsparse2d/*.h")
   INSTALL(FILES ${inc_lib} DESTINATION include)
-  FILE(GLOB inc_lib  "${PROJECT_SOURCE_DIR}/lib/libmga2d/*.h")
+  FILE(GLOB inc_lib  "${PROJECT_SOURCE_DIR}/libsparse/libmga2d/*.h")
   INSTALL(FILES ${inc_lib} DESTINATION include)
-  FILE(GLOB inc_lib  "${PROJECT_SOURCE_DIR}/lib/libtools/*.h")
+  FILE(GLOB inc_lib  "${PROJECT_SOURCE_DIR}/libsparse/libtools/*.h")
   INSTALL(FILES ${inc_lib} DESTINATION include)
   if(SPARSE3D)
-    FILE(GLOB inc_lib  "${PROJECT_SOURCE_DIR}/lib/libsparse3d/*.h")
+    FILE(GLOB inc_lib  "${PROJECT_SOURCE_DIR}/libsparse/libsparse3d/*.h")
     INSTALL(FILES ${inc_lib} DESTINATION include)
   endif(SPARSE3D)
 
