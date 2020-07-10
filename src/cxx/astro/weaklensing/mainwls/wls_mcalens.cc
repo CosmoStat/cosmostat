@@ -32,8 +32,13 @@ char Name_file_Map3[512];
 char Name_file_Map4[512];
 char SignalPowSpec_FileName [512];
 char Name_file_Noise_spec[512];
+char Name_file_NoiseCovMat[512];
+char Name_file_Mask[512];
+
 Bool OptS_PS = False;
-// Bool OptN_PS = False;
+Bool OptN_CovMat = False;
+Bool OptMask = False;
+Bool MethodOpt=False;
 
 bool input_spectrum = false;
 bool NormALM = false;
@@ -51,8 +56,40 @@ float SigmaNoise=0.;
 int NbrScale=0;
 int Lmax=0;
 int ALM_iter=0;
+int Niter=50;
 
 float NSigma=3.;
+
+#define NBR_MASS_MAPPING_METHOD 4
+enum type_massmapping {KAISER_SQUIRES, WIENER, SPARSE, MCAlens};
+type_massmapping MassMethod = KAISER_SQUIRES;
+
+const char * StringMassMethod (type_massmapping type)
+{
+    switch (type)
+    {
+        case  KAISER_SQUIRES:
+            return ("Spherical Kaiser-Squires");break;
+        case  WIENER:
+            return ("Proximal Wiener Filtering");break;
+        case  SPARSE:
+            return ("Sparse Recovery");break;
+        case MCAlens:
+            return ("Sparse-Wiener Reconstruction (MCAlens)");break;
+        default:
+            return ("Undefined method");
+            break;
+    }
+}
+
+inline void all_massmapping_usage(type_massmapping MassMethod)
+{
+     fprintf(OUTMAN, "        [-m mass_mapping_method]\n");
+     for (int i = 0; i < NBR_MASS_MAPPING_METHOD; i++)
+     fprintf(OUTMAN, "              %d: %s \n",i+1,
+                                             StringMassMethod((type_massmapping)i));
+     fprintf(OUTMAN, "             default is %s\n",  StringMassMethod((type_massmapping) MassMethod));
+}
 
 /***********************************************************************************************/
  
@@ -60,19 +97,25 @@ static void usage(char *argv[])
 {
     fprintf(OUTMAN, "Usage: %s options Map_G1_File_input Map_G2_File_input Map_File_output  \n\n", argv[0]);
     fprintf(OUTMAN, "   where options =  \n");
-
+    all_massmapping_usage(MassMethod);
     fprintf(OUTMAN, "         [-n Number_of_Scales]\n");
     fprintf(OUTMAN, "             Number of scales in the wavelet transform.  \n");
+    fprintf(OUTMAN, "         [-i Number_of_Iterations]\n");
+    fprintf(OUTMAN, "             Number of iterations (for iter algorithms). Default is %d.\n", Niter);
     fprintf(OUTMAN, "         [-a N_ITER_ALM]\n");
-    fprintf(OUTMAN, "             Number of iterations N_ITER_ALM for iterative
+    fprintf(OUTMAN, "             Number of iterations N_ITER_ALM for iterative spherical harmonics transform.  \n");
     fprintf(OUTMAN, "         [-l lmax]\n");
     fprintf(OUTMAN, "             Default is MIN(%d, 2*nside) \n",ALM_MAX_L);
+    fprintf(OUTMAN, "         [-g GaussianNoise]\n");
+    fprintf(OUTMAN, "             Noise Standard deviation.  \n");
     fprintf(OUTMAN, "         [-s Nsigma]\n");
     fprintf(OUTMAN, "             Nsigma Detection level.  \n");
     fprintf(OUTMAN, "         [-S Signal_PowSpec_FileName]\n");
     fprintf(OUTMAN, "             Input Signal Power Spectrum file name (for Wiener filtering). Default is automatically estimated. \n");
-            
-            
+    fprintf(OUTMAN, "         [-N Noise_Covariance_Matrix_FileName]\n");
+    fprintf(OUTMAN, "             Input Cov. Mat file name (for Wiener filtering).\n");
+    fprintf(OUTMAN, "         [-M Mask_FileName]\n");
+    fprintf(OUTMAN, "             Input Mask file name.\n");
   //  fprintf(OUTMAN, "         [-P]\n");
   //  fprintf(OUTMAN, "             Input signal spectrum. Default is no, spectrum estimated from image in spectrum and noise spectrum.\n");
 	fprintf(OUTMAN, "         [-v Verbose]\n");
@@ -84,18 +127,72 @@ static void usage(char *argv[])
 /* GET COMMAND LINE ARGUMENTS */
 static void sinit( int argc, char *argv[] )
 {
-    int c;
+    int c,m;
     // get options
-    while( (c = GetOpt( argc,argv,(char *) "S:n:s:i:l:fv" )) != -1 )
+     
+    while( (c = GetOpt( argc,argv,(char *) "i:m:g:M:N:a:S:n:s:i:l:fv" )) != -1 )
     {
 		switch (c) 
         {
+            case 'm':
+                 if (sscanf(OptArg,"%d",&m) != 1)
+                 {
+                     fprintf(OUTMAN, "Error, bad type of mass mapping method: %s\n", OptArg);
+                     exit(-1);
+                 }
+                if ((m > 0) && (m <= NBR_MASS_MAPPING_METHOD))
+                     MassMethod = (type_massmapping) (m-1);
+                 else
+                 {
+                     fprintf(OUTMAN, "Error: bad type of mass mapping method: %s\n", OptArg);
+                     exit(-1);
+                 } 
+                 MethodOpt = True;
+                 break;
+            case 'i':
+                if (sscanf(OptArg,"%d",&Niter) != 1)
+                {
+                    fprintf(OUTMAN, "Error: bad number of iterations: %s\n", OptArg);
+                    exit(-1);
+                }
+                break;
+            case 'g':
+                    if (sscanf(OptArg,"%f",&SigmaNoise) != 1)
+                    {
+                        fprintf(OUTMAN, "Error: bad number of scales value: %s\n", OptArg);
+                        exit(-1);
+                    }
+                    break;
+            case  'M':
+                     if (sscanf(OptArg,"%s", Name_file_Mask) != 1)
+                     {
+                       fprintf(OUTMAN, "Error: bad file name: %s\n", OptArg);
+                      exit(-1);
+                      }
+                   OptMask = True;
+                   break;
+            case  'N':
+                     if (sscanf(OptArg,"%s", Name_file_NoiseCovMat) != 1)
+                     {
+                       fprintf(OUTMAN, "Error: bad file name: %s\n", OptArg);
+                      exit(-1);
+                      }
+                   OptN_CovMat = True;
+                   break;
+            case 'a':
+                     if (sscanf(OptArg,"%d",&ALM_iter) != 1)
+                      {
+                          fprintf(OUTMAN, "Error: bad number of scales value: %s\n", OptArg);
+                           exit(-1);
+                           }
+                         break;
             case  'S':
                      if (sscanf(OptArg,"%s", SignalPowSpec_FileName) != 1)
                      {
                        fprintf(OUTMAN, "Error: bad file name: %s\n", OptArg);
                       exit(-1);
                       }
+                   input_spectrum = true;
                    OptS_PS = True;
                    break;
              case 'n':
@@ -112,14 +209,6 @@ static void sinit( int argc, char *argv[] )
                    exit(-1);
                }
                break;
-            case 'P':
-                    input_spectrum = true;
-                    if( sscanf(OptArg,"%s", Name_file_Signal_spec) != 1 )
-                    {
-                        fprintf(OUTMAN, "Error: bad file name: %s\n", OptArg);
-                        exit(-1);
-                    }
-                    break;
  		    case 'f':
 				OptInd--;
            		PolaFastALM = false;
@@ -191,8 +280,6 @@ static void sinit( int argc, char *argv[] )
   
 /*********************************************************************/
 
-
-
 /*********************************************************************/
 
 int main( int argc, char *argv[] )
@@ -213,14 +300,18 @@ int main( int argc, char *argv[] )
         cout << "# File Name in 2 = " << Name_file_Map2 << endl;
         cout << "# File Name Out 1 = " << Name_file_Map3 << endl;
         cout << "# File Name Out 2 = " << Name_file_Map4 << endl;
-        if (PolaFastALM == false )  cout << "# Do not use fast alm calculation. " <<  Lmax << endl;
+        if (OptN_CovMat == True)
+            cout << "# File Name Cov Mat = " << Name_file_NoiseCovMat << endl;
         if (Lmax > 0)  cout << "# Lmax = " <<  Lmax << endl;
         if (OptS_PS > 0)  cout << "# Signal power spectrum file name = " <<  SignalPowSpec_FileName << endl;
-
+        cout << "# MassMapping Method = " << StringMassMethod(MassMethod) << endl;
+        cout << "# Niter = " << Niter << endl;
+        if (SigmaNoise > 0) cout << "# SigmaNoise = " << SigmaNoise << endl;
+        cout << endl;
     }
             
 	Hdmap Map_G1, Map_G2, Map_E, Map_B;
-	
+    
 	Map_G1.read( Name_file_Map1 );
 	Map_G2.read( Name_file_Map2 );
 	
@@ -256,7 +347,16 @@ int main( int argc, char *argv[] )
         cout << " Error: a theoretical signal power spectrum is required. " << endl;
         exit(-1);
     }
-
+    Hdmap CovMat;
+    if (OptN_CovMat == True)
+    {
+        CovMat.read( Name_file_NoiseCovMat );
+    }
+    Hdmap Mask;
+    if (OptMask == True)
+    {
+        Mask.read( Name_file_Mask );
+    }
     
     /*
     if( input_spectrum == true )
@@ -266,20 +366,67 @@ int main( int argc, char *argv[] )
     noise_spec.read( Name_file_Noise_spec );
     */
     WLS_MassMapping MM;
-    WLS_Field Kappa, RecG;
+    WLS_Field Kappa, RecG,KappaSparse;
     MM.Verbose = Verbose;
-    MM.alloc(Map_G1, Map_G2, 0.1, NbrScale);
+    if (OptN_CovMat == False)
+    {
+        if (OptMask == True)
+            MM.alloc(Map_G1, Map_G2, SigmaNoise, Mask, NbrScale);
+        else
+            MM.alloc(Map_G1, Map_G2, SigmaNoise, NbrScale);
+    }
+    else
+    {
+        if (OptMask == True)
+            MM.alloc(Map_G1, Map_G2, CovMat, Mask,NbrScale);
+        else
+            MM.alloc(Map_G1, Map_G2, CovMat, NbrScale);
+    }
     if (ALM_iter > 0) MM.set_niter(ALM_iter);
     
+    int NiterWiener=Niter;
+    int NiterSparse=Niter;
+    int NiterMCAlens=Niter;
+
+    switch(MassMethod)
+    {
+        case KAISER_SQUIRES:
+             MM.sp_kaiser_squires(MM.GammaData, Kappa);
+             Kappa.map_G1.info("Kappa");
+             Kappa.map_G1.write( "xx_ks.fits" );// Write map E
+             Kappa.map_G2.write( "xx_ks_b.fits" );// Write map E
+            break;
+        case WIENER:
+            MM.iter_wiener(MM.GammaData, SigPowSpec, Kappa, NiterWiener);
+            Kappa.map_G1.write( "xx_wiener.fits" );// Write map E
+            Kappa.map_G2.write( "xx_wiener_b.fits" );// Write map E
+            break;
+        case SPARSE:
+            MM.sparse_reconstruction(MM.GammaData, Kappa, NSigma, NiterSparse);
+            Kappa.map_G1.write( "xx_wt5sig.fits" );// Write map E
+            Kappa.map_G2.write( "xx_wt5sig_b.fits" );// Write map E
+break;
+        case MCAlens:
+            MM.mcalens(MM.GammaData, SigPowSpec, Kappa,  KappaSparse, NSigma, NiterMCAlens);
+            Kappa.map_G1.write( "xx_mcalens.fits" );// Write map E
+            Kappa.map_G2.write( "xx_mcalens_b.fits" );// Write map E
+            KappaSparse.map_G1.write( "xx_mcalens_sparse.fits" );// Write map E
+            KappaSparse.map_G2.write( "xx_mcalens_sparse_b.fits" );// Write map E
+            fits_write_dblarr("xx_mcalens_activcoev_e.fits", MM.TabActivCoefE);
+            fits_write_dblarr("xx_mcalens_activcoev_b.fits", MM.TabActivCoefB);
+            break;
+        default:
+            break;
+    }
     // cout << "G2K" << endl;
     // MM.gamma2eb(MM.GammaData, Kappa);
-    MM.sp_kaiser_squires(MM.GammaData, Kappa);
-
-    Kappa.map_G1.info("Kappa");
-    Kappa.map_G1.write( "xx_ks.fits" );// Write map E
-    int NiterSparse=10;
+ 
+    /*
+     int NiterSparse=10;
     MM.sparse_reconstruction(MM.GammaData, Kappa, NSigma, NiterSparse);
     Kappa.map_G1.write( "xx_wt5sig.fits" );// Write map E
+    */
+
 
  /*
     Hdmap Map;
