@@ -125,9 +125,9 @@ class ShearAlm
         double NormVal; // Alm Nomalization value
                 
         arr<double> weight_T; // internal variable
-        fltarray WienerFilter_E;
-        fltarray WienerFilter_B;
     public:
+        dblarray WienerFilter_E;
+        dblarray WienerFilter_B;
         ShearAlm(){}
         inline int get_nside(){ return ShearNside; }
         inline int get_lmax(){ return Shear_Lmax; }
@@ -145,8 +145,8 @@ class ShearAlm
                     exit(EXIT_FAILURE);
             }
         }
-        fltarray get_WienerFilter_E(){ return WienerFilter_E; }
-        fltarray get_WienerFilter_B(){ return WienerFilter_B; }
+        dblarray get_WienerFilter_E(){ return WienerFilter_E; }
+        dblarray get_WienerFilter_B(){ return WienerFilter_B; }
         
         void set_niter( int nb_iter ){ niter = nb_iter; }
         void set_flag_NormALM( bool flag_norm );
@@ -211,9 +211,12 @@ enum wl_type_weight {NO_WEIGHT, SIGMA_WEIGHT, VAR_WEIGH};
     void get_residual_eb(WLS_Field & Kappa, WLS_Field & Resi_EB, wl_type_weight TypeWeight=NO_WEIGHT);
     WLS_Field FieldTemp;
     double MinCovMat;
-    dblarray TabActivCoefE;
-    dblarray TabActivCoefB;
+     void mult_sparse(WLS_Field & KappaSparse, bool NoSparseBMode);
+     void get_active_coef(WLS_Field & Kappa, float Nsigma, bool KillLastScale=false, bool OnlyPos=true, bool NoSparseMode=true);
+  
  public:
+     dblarray TabActivCoefE;
+     dblarray TabActivCoefB;
      bool Verbose;
      WLS_Field GammaData; // Shear field
      WLS_MassMapping(){Nside=0;NbrScale=0;Npix=0;Verbose=false;MinCovMat = WL_INFINITE_COV_VALUE;}
@@ -236,11 +239,7 @@ enum wl_type_weight {NO_WEIGHT, SIGMA_WEIGHT, VAR_WEIGH};
      
      void sparse_reconstruction(WLS_Field & Gamma, WLS_Field & Kappa, float NSigma, int NiterSparse=10);
 
-     void get_active_coef(WLS_Field & Kappa, float Nsigma, bool KillLastScale=false, bool OnlyPos=true, bool NoSparseMode=true);
-     
-     void mult_sparse(WLS_Field & KappaSparse, bool NoSparseBMode);
-
-     void mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field & Kappa, WLS_Field & KappaSparse, float NSigma, int NiterSparse=10);
+     void mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field & Kappa, WLS_Field & KappaSparse, float NSigma, int NiterSparse=10, bool SparsePositivityConstraint=true);
 };
 
 // ===========================

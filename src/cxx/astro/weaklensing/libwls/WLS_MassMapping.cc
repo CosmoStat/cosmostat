@@ -31,6 +31,9 @@ template<typename T> void SP_WL_Field<T>::alloc( int NsideIn, bool flag_eb, bool
     nested = flag_nested;
     map_G1.alloc( NsideIn, flag_nested );
     map_G2.alloc( NsideIn, flag_nested );
+    map_G1.fill(0.);
+    map_G2.fill(0.);
+
 }
 
 // ===========================
@@ -43,7 +46,9 @@ template<typename T> void SP_WL_Field<T>::alloc(Hmap<T> &MapG1, Hmap<T> &MapG2, 
     
     map_G1.alloc( MapG1.Nside(), flag_nested );
     map_G2.alloc( MapG2.Nside(), flag_nested );
-    cout << "SP_WL_Field alloc:nside " <<MapG2.nside() <<  MapG1.nside() << endl;
+    map_G1.fill(0.);
+    map_G2.fill(0.);
+    // cout << "SP_WL_Field alloc:nside " <<MapG2.nside() <<  MapG1.nside() << endl;
     if (MapG2.nside() == MapG1.nside())
     {
         Nside = MapG1.Nside();
@@ -54,7 +59,7 @@ template<typename T> void SP_WL_Field<T>::alloc(Hmap<T> &MapG1, Hmap<T> &MapG2, 
     }
     else printf(" Size of arrays are not compatible: %ld vs %ld\n. No Map allocated\n", MapG1.nside(), MapG2.nside());
     
-    cout << "SP_WL_Field alloc:nside " <<map_G1.nside() <<  map_G2.nside() << endl;
+    // cout << "SP_WL_Field alloc:nside " <<map_G1.nside() <<  map_G2.nside() << endl;
 
 }
 
@@ -728,6 +733,8 @@ void ShearAlm::shear_alm_trans( WLS_Field & SMap, bool UseSpin2)
             }
         }
     }
+    ALM_E(0,0)=xcomplex<REAL> ( 0.,0.);
+    ALM_B(0,0)=xcomplex<REAL> ( 0.,0.);
 }
 
 // ===========================
@@ -779,7 +786,8 @@ void ShearAlm::shear_alm_rec( WLS_Field & SMap, bool UseSpin2, bool KeepAlm, int
             }
         }
     }
-    
+    ALM_E(0,0)=xcomplex<REAL> ( 0.,0.);
+    ALM_B(0,0)=xcomplex<REAL> ( 0.,0.);
     if( UseSpin2 == true )
     {
         alm2map_spin(ALM_E,ALM_B,map_G1_temp,map_G2_temp,2);
@@ -937,11 +945,16 @@ void ShearAlm::convol( float Fwhm )
 
 void ShearAlm::set_wiener_filter( PowSpec & ps_noise, PowSpec & ps_signal )
 {
+    double PS,PN;
+    WienerFilter_E(0) = WienerFilter_E(1) = 1;
+    WienerFilter_B(0) = WienerFilter_B(1) = 1;
+    int NlPS =ps_signal.Lmax()+1;
+    int NlPN =ps_noise.Lmax()+1;
     for( int l=2; l <= Shear_Lmax; l++ )
     {
-        double PS = ps_signal.tt(l);
-        double PN = ps_noise.tt(l);
-        
+        PS = PN = 0;
+        if (l < NlPS) PS = ps_signal.tt(l);
+        if (l < NlPN) PN = ps_noise.tt(l);
         double Num = PS;
         double Den = PS + PN;
         double WienFilter = (Den <= 0) ? 0: Num / Den;
@@ -963,6 +976,8 @@ void ShearAlm::alm_mult_wiener()
         ALM_E(l,m) *= WienerFilter_E(l);
         ALM_B(l,m) *= WienerFilter_B(l);
     }
+    ALM_E(0,0)=xcomplex<REAL> ( 0.,0.);
+    ALM_B(0,0)=xcomplex<REAL> ( 0.,0.);
 }
 
 // ===========================
@@ -976,6 +991,8 @@ void ShearAlm::mult_wiener(WLS_Field & SMap, bool UseSpin2Trans, bool UseSpin2Re
         ALM_E(l,m) *= WienerFilter_E(l);
         ALM_B(l,m) *= WienerFilter_B(l);
     }
+    ALM_E(0,0)=xcomplex<REAL> ( 0.,0.);
+    ALM_B(0,0)=xcomplex<REAL> ( 0.,0.);
     shear_alm_rec(SMap, UseSpin2Rec); // Alm inverse transform
 }
 
@@ -1303,7 +1320,8 @@ void WLS_MassMapping::eb2gamma(WLS_Field & Kappa, WLS_Field & Gamma, bool KeepAl
     // cout << "Gamma nside = " <<Gamma.get_nside() << endl;
     if ((Gamma.get_nside() ==0) || (Kappa.get_nside() != Gamma.get_nside()))
             Gamma.alloc( Kappa.get_nside(), false, Kappa.flag_nested());
-
+    else Gamma.shear_fill(0);
+    
     CAlm.shear_alm_trans(Kappa, false);
     CAlm.shear_alm_rec(Gamma, true, KeepAlm);
     // Kappa = Gamma;
@@ -1317,6 +1335,8 @@ void WLS_MassMapping::sp_kaiser_squires(WLS_Field & Gamma, WLS_Field & Kappa, fl
     // cout << "Gamma nside = " <<Gamma.get_nside() << endl;
     if ((Kappa.get_nside() ==0) || (Kappa.get_nside() !=Gamma.get_nside()))
             Kappa.alloc( Gamma.get_nside(), false, Gamma.flag_nested());
+    else Kappa.shear_fill(0);
+
     CAlm.shear_alm_trans(Gamma, true);
     if (Fwhm > 0)
     {
@@ -1370,6 +1390,7 @@ void WLS_MassMapping::iter_wiener(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Fi
     WLS_Field Resi_EB;
     if ((Kappa.get_nside() ==0) || (Kappa.get_nside() !=Gamma.get_nside()))
             Kappa.alloc( Gamma.get_nside(), false, Gamma.flag_nested());
+
     Resi_EB.alloc( Gamma.get_nside(), false, Gamma.flag_nested());
     
     PowSpec ps_noise;
@@ -1380,8 +1401,15 @@ void WLS_MassMapping::iter_wiener(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Fi
     int lms = ps_signal.Lmax();
     
     CAlm.set_wiener_filter(ps_noise, ps_signal);
+    fits_write_dblarr( "xx_filter_wiener_E.fits", CAlm.WienerFilter_E );
+    fits_write_dblarr( "xx_filter_wiener_B.fits", CAlm.WienerFilter_E );
+
+    // Kappa.shear_fill(0);
     for (int i=0; i < NiterWiener; i++)
     {
+        Kappa.map_G1.info("  kappaG1");
+        Kappa.map_G2.info("  kappaG2");
+
         // enum wl_type_weight {NO_WEIGHT, SIGMA_WEIGHT, VAR_WEIGH};
         get_residual_eb(Kappa, Resi_EB, VAR_WEIGH);
         Kappa.map_G1 += Resi_EB.map_G1;
@@ -1392,6 +1420,12 @@ void WLS_MassMapping::iter_wiener(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Fi
         {
             cout << "Iter " << i+1 << ": SigmaResi = " << Resi_EB.map_G1.sigma()  << ", " <<  Resi_EB.map_G2.sigma() << endl;
         }
+    }
+    
+    if (Verbose)
+    {
+         Kappa.map_G1.info((char*) "Kappa E mode");
+         Kappa.map_G2.info((char*) "Kappa B mode");
     }
 }
 
@@ -1424,6 +1458,7 @@ void WLS_MassMapping::sparse_reconstruction(WLS_Field & Gamma, WLS_Field & Kappa
         }
     }
 }
+
 // ===========================
 
 void WLS_MassMapping::get_active_coef(WLS_Field & Kappa, float NSigma, bool KillLastScale, bool OnlyPos, bool NoSparseBMode)
@@ -1477,12 +1512,13 @@ void WLS_MassMapping::mult_sparse(WLS_Field & KappaSparse, bool NoSparseBMode)
             WT.WTTrans(i,b) *= TabActivCoefB(i,b);
         WT.recons(KappaSparse.map_G2);
     }
+    else KappaSparse.map_G2.fill(0);
 }
 
 
 // ===========================
 
-void WLS_MassMapping::mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field & Kappa, WLS_Field & KappaSparse, float NSigma, int NiterSparse)
+void WLS_MassMapping::mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field & Kappa, WLS_Field & KappaSparse, float NSigma, int NiterSparse, bool SparsePositivityConstraint)
 {
     float SigmaNoise = sqrt(MinCovMat);
     bool UseMad=false;
@@ -1490,6 +1526,11 @@ void WLS_MassMapping::mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field 
     bool OnlyPos = true;
     bool NoSparseBMode = true;
     
+    if (Verbose)
+    {
+        cout << "MCALens: Niter = " << NiterSparse << ", NSigma=" <<  NSigma  << ", SparsePos=" <<  SparsePositivityConstraint << ", NoSparseBMode = " << NoSparseBMode << endl;
+
+    }
     WLS_Field Resi_EB, KappaWiener;
     if ((Kappa.get_nside() ==0) || (Kappa.get_nside() !=Gamma.get_nside()))
             Kappa.alloc( Gamma.get_nside(), false, Gamma.flag_nested());
@@ -1504,6 +1545,9 @@ void WLS_MassMapping::mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field 
 
     int lms = ps_signal.Lmax();
     CAlm.set_wiener_filter(ps_noise, ps_signal);
+
+    fits_write_dblarr( "xx_filter_wiener_E.fits", CAlm.WienerFilter_E );
+    fits_write_dblarr( "xx_filter_wiener_B.fits", CAlm.WienerFilter_E );
     
     get_residual_eb(Kappa, Resi_EB, SIGMA_WEIGHT);
     get_active_coef(Resi_EB, NSigma, true);
@@ -1514,11 +1558,18 @@ void WLS_MassMapping::mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field 
         mult_sparse(Resi_EB, NoSparseBMode);
         KappaSparse.map_G1 += Resi_EB.map_G1;
         KappaSparse.map_G2 += Resi_EB.map_G2;
-
+            
         for (int i=0; i < Npix; i++)
         {
+            if (SparsePositivityConstraint)
+            {
+                if (KappaSparse.map_G1[i] < 0) KappaSparse.map_G1[i] = 0;
+                if (KappaSparse.map_G2[i] < 0) KappaSparse.map_G2[i] = 0;
+            }
             Kappa.map_G1[i] = KappaWiener.map_G1[i] + KappaSparse.map_G1[i];
-            Kappa.map_G2[i] = KappaWiener.map_G2[i] + KappaSparse.map_G2[i];
+            if (NoSparseBMode)
+                 Kappa.map_G2[i] = KappaSparse.map_G2[i] = 0;
+            else Kappa.map_G2[i] = KappaWiener.map_G2[i] + KappaSparse.map_G2[i];
         }
         get_residual_eb(Kappa, Resi_EB, VAR_WEIGH);
         KappaWiener.map_G1 += Resi_EB.map_G1;
@@ -1528,13 +1579,25 @@ void WLS_MassMapping::mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field 
         for (int i=0; i < Npix; i++)
         {
             Kappa.map_G1[i] = KappaWiener.map_G1[i] + KappaSparse.map_G1[i];
-            Kappa.map_G2[i] = KappaWiener.map_G2[i] + KappaSparse.map_G2[i];
+            if (NoSparseBMode)
+                Kappa.map_G2[i] = KappaWiener.map_G2[i] = 0;
+            else Kappa.map_G2[i] = KappaWiener.map_G2[i] + KappaSparse.map_G2[i];
         }
         
         if (Verbose)
         {
             cout << "Iter " << i+1 << ": SigmaResi = " << Resi_EB.map_G1.sigma()  << ", " <<  Resi_EB.map_G2.sigma() << endl;
         }
+    }
+    
+    if (Verbose)
+    {
+         KappaSparse.map_G1.info((char*) "Sparse E mode");
+         KappaWiener.map_G1.info((char*) "Wiener E mode");
+         Kappa.map_G1.info((char*) "Kappa E mode");
+         KappaSparse.map_G2.info((char*) "Sparse B mode");
+         KappaWiener.map_G2.info((char*) "Wiener B mode");
+         Kappa.map_G2.info((char*) "Kappa B mode");
     }
 }
 
