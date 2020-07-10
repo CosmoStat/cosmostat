@@ -11,6 +11,7 @@ from scipy.signal import savgol_filter
 from astropy.io import fits
 from importlib import reload
 from pycs.tools.cosmostat_init import *
+from pycs.tools.mr_prog import *
 
 def make_healpix_map(ra, dec, weights, nside):
     pixels= hp.ang2pix(nside,theta = 0.5*np.pi - np.deg2rad(dec), phi = np.deg2rad(ra))
@@ -40,12 +41,14 @@ def mrs_resize(mapin, nsideout):
 def smooth(map, sigma):
     s= hp.smoothing(mapin, sigma=sigma/(360.*60.) * (np.pi*2),pol=False)
 
-def tvs(mapin,min=None,max=None,title=None,sigma=None):
+#        lut='rainbow'  #  'inferno'   'gist_stern'
+def tvs(mapin,min=None,max=None,title=None,sigma=None,lut=None):
     if sigma is None:
-        hp.mollview(mapin,max=max,min=min, title=title)
+        hp.mollview(mapin,max=max,min=min, title=title,cmap=lut)
     else:
        s= hp.smoothing(mapin, sigma=sigma/(360.*60.) * (np.pi*2),pol=False)
-       hp.mollview(s,max=max,min=min, title=title)
+       hp.mollview(s,max=max,min=min, title=title,cmap=lut)
+       hp.mollview
 
 def get_nside(Npix):
     return hp.npix2nside(Npix)
@@ -100,4 +103,62 @@ def eb2g(ke,kb):
     (g1,g2) = hp.alm2map_spin( (ae,ab), nside, 2, lmax)
     return g1,g2
 
+
+def mrs_prog(data, prog="mrs_powspec", opt=None, path='./', remove_files=True, verbose=False, FileOut=None, OutputFormatisHealpix=True):
+
+    # Create a unique string using the current date and time.
+    # print('mr_filter ', opt)
+    unique_string = datetime.now().strftime('%Y.%m.%d_%H.%M.%S')
+    result=0
+    # Set the ouput file names.
+    file_name = path + 'mr_temp_' + unique_string
+    file_fits = file_name + '.fits'
+    if FileOut is not None:
+        file_out = FileOut
+    else:
+        file_out = file_name + '_out.fits'
+
+    # Write the input data to a fits file.
+    mrs_write(file_fits, data)
+
+    # print("PROG: ", prog)
+    cmd = prog
+
+    if isinstance(opt, type(None)):
+        optF=' '
+    else:
+        optF= opt
+    if verbose:
+        optF = optF + " -v "
+        
+    cmd = cmd + " " + optF + " "  + file_fits + " "   + file_out
+    if verbose:
+        print ('CMD = ', cmd)
+
+    args = shlex.split(cmd)
+    # print('args ', args)
+    call(args)
+
+    # Retrieve wavelet filtered data.
+    if OutputFormatisHealpix:
+        result = mrs_read(file_out)
+    else:
+        result = readfits(file_out)
+
+    # Return the mr_transform results (and the output file names).
+    if remove_files:
+        remove(file_fits)
+        remove(file_out)
+        return result
+    else:
+        return result
+
+
+def mrs_powspec(map, verbose=False):
+    p = mrs_prog(map, prog="mrs_powspec", verbose=verbose, OutputFormatisHealpix=False)
+    return p
+
+def mrs_smooth(map, opt=None, verbose=False):
+    p = mrs_prog(map, prog="mrs_smooth", verbose=verbose, opt=opt, OutputFormatisHealpix=True)
+    return p
 
