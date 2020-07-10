@@ -16,6 +16,9 @@ from subprocess import call
 from datetime import datetime
 from astropy.io import fits
 import shlex
+from pycs.tools.cosmostat_init import *
+from pycs.tools.cosmostat_init import writefits
+
 ##
 #  Function that calls mr_filter to perform a wavelet filtering on the
 #  input data.
@@ -29,7 +32,7 @@ import shlex
 #
 # %load_ext autoreload
 # %autoreload 2
-def mr_prog(data, prog="mr_filter", opt=None, path='./', remove_files=True):
+def mr_prog(data, prog="mr_filter", opt=None, path='./', remove_files=True, verbose=False, FileOut=None):
 
     # Create a unique string using the current date and time.
     # print('mr_filter ', opt)
@@ -38,10 +41,14 @@ def mr_prog(data, prog="mr_filter", opt=None, path='./', remove_files=True):
     # Set the ouput file names.
     file_name = path + 'mr_temp_' + unique_string
     file_fits = file_name + '.fits'
-    file_out = file_name + '_out.fits'
+    if FileOut is not None:
+        file_out = FileOut
+    else:
+        file_out = file_name + '_out.fits'
 
     # Write the input data to a fits file.
-    fits.writeto(file_fits, data)
+    writefits(file_fits, data)
+
     # print("PROG: ", prog)
     cmd = prog
 
@@ -49,15 +56,19 @@ def mr_prog(data, prog="mr_filter", opt=None, path='./', remove_files=True):
         optF=' '
     else:
         optF= opt
+    if verbose:
+        optF = optF + " -v "
+        
     cmd = cmd + " " + optF + " "  + file_fits + " "   + file_out
-    # print ('CMD = ', cmd)
-    
+    if verbose:
+        print ('CMD = ', cmd)
+
     args = shlex.split(cmd)
     # print('args ', args)
     call(args)
 
     # Retrieve wavelet filtered data.
-    result = fits.getdata(file_out)
+    result = readfits(file_out)
 
     # Return the mr_transform results (and the output file names).
     if remove_files:
