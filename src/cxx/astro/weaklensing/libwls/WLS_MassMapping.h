@@ -198,7 +198,6 @@ enum wl_type_weight {NO_WEIGHT, SIGMA_WEIGHT, VAR_WEIGH};
     int Nside;
     int Npix;
     int NbrScale;
-    ShearAlm CAlm;
     Hdmap WeightGamma_Wiener;
     Hdmap WeightGamma_Sparse;
     Hdmap Mask;
@@ -212,18 +211,19 @@ enum wl_type_weight {NO_WEIGHT, SIGMA_WEIGHT, VAR_WEIGH};
     WLS_Field FieldTemp;
     double MinCovMat;
      void mult_sparse(WLS_Field & KappaSparse, bool NoSparseBMode);
-     void get_active_coef(WLS_Field & Kappa, float Nsigma, bool KillLastScale=false, bool OnlyPos=true, bool NoSparseMode=true);
+     void get_active_coef(WLS_Field & Kappa, float Nsigma, bool KillLastScale=false, bool OnlyPos=true, bool NoSparseMode=true, int FirstDetectScale=0);
   
  public:
+     ShearAlm CAlm;
      dblarray TabActivCoefE;
      dblarray TabActivCoefB;
      bool Verbose;
      WLS_Field GammaData; // Shear field
      WLS_MassMapping(){Nside=0;NbrScale=0;Npix=0;Verbose=false;MinCovMat = WL_INFINITE_COV_VALUE;}
-     void alloc(Hdmap &G1, Hdmap &G2, Hdmap &CovMatrix, Hdmap &MaskData, int NbrScale=0);
-     void alloc(Hdmap &G1, Hdmap &G2, Hdmap &CovMatrix, int NbrScale=0);
-     void alloc(Hdmap &G1, Hdmap &G2, float SigmaNoise, Hdmap &MaskData, int NbrScale=0);
-     void alloc(Hdmap &G1, Hdmap &G2, float SigmaNoise, int NbrScale=0);
+     void alloc(Hdmap &G1, Hdmap &G2, Hdmap &CovMatrix, Hdmap &MaskData, int NbrScale=0, int lmax=0);
+     void alloc(Hdmap &G1, Hdmap &G2, Hdmap &CovMatrix, int NbrScale=0, int lmax=0);
+     void alloc(Hdmap &G1, Hdmap &G2, float SigmaNoise, Hdmap &MaskData, int NbrScale=0, int lmax=0);
+     void alloc(Hdmap &G1, Hdmap &G2, float SigmaNoise, int NbrScale=0, int lmax=0);
      void set_niter( int nb_iter ){ CAlm.set_niter(nb_iter); }
 
      void gamma2eb(WLS_Field & Gamma, WLS_Field & Kappa, bool KeepAlm=false);
@@ -237,9 +237,9 @@ enum wl_type_weight {NO_WEIGHT, SIGMA_WEIGHT, VAR_WEIGH};
 
      void iter_wiener(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field & Kappa, int NiterWiener=10);
      
-     void sparse_reconstruction(WLS_Field & Gamma, WLS_Field & Kappa, float NSigma, int NiterSparse=10);
+     void sparse_reconstruction(WLS_Field & Gamma, WLS_Field & Kappa, float NSigma, int NiterSparse=10, int FirstDetectScale=0);
 
-     void mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field & Kappa, WLS_Field & KappaSparse, float NSigma, int NiterSparse=10, bool SparsePositivityConstraint=true);
+     void mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field & Kappa, WLS_Field & KappaSparse, float NSigma, int NiterSparse=10, bool SparsePositivityConstraint=true, int FirstDetectScale=0);
 };
 
 // ===========================

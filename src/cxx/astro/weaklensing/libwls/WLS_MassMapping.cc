@@ -735,6 +735,10 @@ void ShearAlm::shear_alm_trans( WLS_Field & SMap, bool UseSpin2)
     }
     ALM_E(0,0)=xcomplex<REAL> ( 0.,0.);
     ALM_B(0,0)=xcomplex<REAL> ( 0.,0.);
+    ALM_E(1,0)=xcomplex<REAL> ( 0.,0.);
+    ALM_B(1,0)=xcomplex<REAL> ( 0.,0.);
+    ALM_E(1,1)=xcomplex<REAL> ( 0.,0.);
+    ALM_B(1,1)=xcomplex<REAL> ( 0.,0.);
 }
 
 // ===========================
@@ -788,6 +792,10 @@ void ShearAlm::shear_alm_rec( WLS_Field & SMap, bool UseSpin2, bool KeepAlm, int
     }
     ALM_E(0,0)=xcomplex<REAL> ( 0.,0.);
     ALM_B(0,0)=xcomplex<REAL> ( 0.,0.);
+    ALM_E(1,0)=xcomplex<REAL> ( 0.,0.);
+    ALM_B(1,0)=xcomplex<REAL> ( 0.,0.);
+    ALM_E(1,1)=xcomplex<REAL> ( 0.,0.);
+    ALM_B(1,1)=xcomplex<REAL> ( 0.,0.);
     if( UseSpin2 == true )
     {
         alm2map_spin(ALM_E,ALM_B,map_G1_temp,map_G2_temp,2);
@@ -1201,7 +1209,7 @@ int ShearAlm::soft_threshold(float lambda_e, float lambda_b, int & MaxNonZeroL_E
 
 // ===========================
 
-void WLS_MassMapping::alloc(Hdmap &G1, Hdmap &G2, Hdmap &CovMatrix, Hdmap &MaskData, int NScale)
+void WLS_MassMapping::alloc(Hdmap &G1, Hdmap &G2, Hdmap &CovMatrix, Hdmap &MaskData, int NScale, int lmax)
 {
     GammaData.alloc (G1,G2, false,false);
 
@@ -1252,7 +1260,7 @@ void WLS_MassMapping::alloc(Hdmap &G1, Hdmap &G2, Hdmap &CovMatrix, Hdmap &MaskD
         WeightGamma_Sparse[i] = sqrt(MinCovMat / CovMat[i]);
 
     bool fast=false;
-    CAlm.alloc(Nside, 0, fast);
+    CAlm.alloc(Nside, lmax, fast);
 
     // Wavelet initialization
     int NbrScale;
@@ -1270,33 +1278,33 @@ void WLS_MassMapping::alloc(Hdmap &G1, Hdmap &G2, Hdmap &CovMatrix, Hdmap &MaskD
 
 // ===========================
 
-void WLS_MassMapping::alloc(Hdmap &G1, Hdmap &G2, Hdmap &CovMatrix, int NbrScale)
+void WLS_MassMapping::alloc(Hdmap &G1, Hdmap &G2, Hdmap &CovMatrix, int NbrScale, int lmax)
 {
     Hdmap MaskData;
     MaskData.alloc(G1.nside(), DEF_MRS_ORDERING);
     MaskData.fill(1.);
-    alloc(G1, G2, CovMatrix, MaskData,  NbrScale);
+    alloc(G1, G2, CovMatrix, MaskData,  NbrScale, lmax);
 }
 
 // ===========================
 
-void WLS_MassMapping::alloc(Hdmap &G1, Hdmap &G2, float SigmaNoise, Hdmap &MaskData, int NbrScale)
+void WLS_MassMapping::alloc(Hdmap &G1, Hdmap &G2, float SigmaNoise, Hdmap &MaskData, int NbrScale, int lmax)
 {
     double Var =SigmaNoise*SigmaNoise;
     Hdmap CovMatrix;
     CovMatrix.alloc(G1.nside(), DEF_MRS_ORDERING);
     CovMatrix.fill(Var);
-    alloc(G1, G2, CovMatrix, MaskData,  NbrScale);
+    alloc(G1, G2, CovMatrix, MaskData,  NbrScale,  lmax);
 }
 
 // ===========================
 
-void WLS_MassMapping::alloc(Hdmap &G1, Hdmap &G2, float SigmaNoise, int NbrScale)
+void WLS_MassMapping::alloc(Hdmap &G1, Hdmap &G2, float SigmaNoise, int NbrScale, int lmax)
 {
     Hdmap MaskData;
     MaskData.alloc(G1.nside(), DEF_MRS_ORDERING);
     MaskData.fill(1.);
-    alloc(G1, G2, SigmaNoise, MaskData,  NbrScale);
+    alloc(G1, G2, SigmaNoise, MaskData,  NbrScale, lmax);
 }
 
 // ===========================
@@ -1401,15 +1409,12 @@ void WLS_MassMapping::iter_wiener(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Fi
     int lms = ps_signal.Lmax();
     
     CAlm.set_wiener_filter(ps_noise, ps_signal);
-    fits_write_dblarr( "xx_filter_wiener_E.fits", CAlm.WienerFilter_E );
-    fits_write_dblarr( "xx_filter_wiener_B.fits", CAlm.WienerFilter_E );
+    // fits_write_dblarr( "xx_filter_wiener_E.fits", CAlm.WienerFilter_E );
+    // fits_write_dblarr( "xx_filter_wiener_B.fits", CAlm.WienerFilter_E );
 
     // Kappa.shear_fill(0);
     for (int i=0; i < NiterWiener; i++)
     {
-        Kappa.map_G1.info("  kappaG1");
-        Kappa.map_G2.info("  kappaG2");
-
         // enum wl_type_weight {NO_WEIGHT, SIGMA_WEIGHT, VAR_WEIGH};
         get_residual_eb(Kappa, Resi_EB, VAR_WEIGH);
         Kappa.map_G1 += Resi_EB.map_G1;
@@ -1419,20 +1424,16 @@ void WLS_MassMapping::iter_wiener(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Fi
         if (Verbose)
         {
             cout << "Iter " << i+1 << ": SigmaResi = " << Resi_EB.map_G1.sigma()  << ", " <<  Resi_EB.map_G2.sigma() << endl;
+            Kappa.map_G1.info("  kappa-E");
+            Kappa.map_G2.info("  kappa-B");
         }
-    }
-    
-    if (Verbose)
-    {
-         Kappa.map_G1.info((char*) "Kappa E mode");
-         Kappa.map_G2.info((char*) "Kappa B mode");
     }
 }
 
 
 // ===========================
 
-void WLS_MassMapping::sparse_reconstruction(WLS_Field & Gamma, WLS_Field & Kappa, float NSigma, int NiterSparse)
+void WLS_MassMapping::sparse_reconstruction(WLS_Field & Gamma, WLS_Field & Kappa, float NSigma, int NiterSparse, int FirstDetectScale)
 {
     float SigmaNoise = sqrt(MinCovMat);
     bool UseMad=false;
@@ -1450,8 +1451,9 @@ void WLS_MassMapping::sparse_reconstruction(WLS_Field & Gamma, WLS_Field & Kappa
         get_residual_eb(Kappa, Resi_EB, SIGMA_WEIGHT);
         Kappa.map_G1 += Resi_EB.map_G1;
         Kappa.map_G2 += Resi_EB.map_G2;
-        WT.hard_thresholding(Kappa.map_G1, NSigma, SigmaNoise,UseMad, KillLastScale);
-        WT.hard_thresholding(Kappa.map_G2, NSigma, SigmaNoise,UseMad, KillLastScale);
+        WT.hard_thresholding(Kappa.map_G1, NSigma, SigmaNoise,UseMad, KillLastScale, FirstDetectScale);
+        WT.hard_thresholding(Kappa.map_G2, NSigma, SigmaNoise,UseMad, KillLastScale,FirstDetectScale);
+        
         if (Verbose)
         {
             cout << "Iter " << i+1 << ": SigmaResi = " << Resi_EB.map_G1.sigma()  << ", " <<  Resi_EB.map_G2.sigma() << endl;
@@ -1461,11 +1463,11 @@ void WLS_MassMapping::sparse_reconstruction(WLS_Field & Gamma, WLS_Field & Kappa
 
 // ===========================
 
-void WLS_MassMapping::get_active_coef(WLS_Field & Kappa, float NSigma, bool KillLastScale, bool OnlyPos, bool NoSparseBMode)
+void WLS_MassMapping::get_active_coef(WLS_Field & Kappa, float NSigma, bool KillLastScale, bool OnlyPos, bool NoSparseBMode, int FirstDetectScale)
 {
     float SigmaNoise = sqrt(MinCovMat);
     WT.transform(Kappa.map_G1);
-    for (int b=0; b < WT.nscale()-1; b++)
+    for (int b=FirstDetectScale; b < WT.nscale()-1; b++)
     {
         float Level = SigmaNoise * NSigma * WT.TabNorm(b);
         for (int i=0; i < WT.WTTrans.nx(); i++)
@@ -1477,7 +1479,7 @@ void WLS_MassMapping::get_active_coef(WLS_Field & Kappa, float NSigma, bool Kill
     if (NoSparseBMode == false)
     {
         WT.transform(Kappa.map_G2);
-        for (int b=0; b < WT.nscale()-1; b++)
+        for (int b=FirstDetectScale; b < WT.nscale()-1; b++)
         {
             float Level = SigmaNoise * NSigma * WT.TabNorm(b);
             for (int i=0; i < WT.WTTrans.nx(); i++)
@@ -1494,6 +1496,7 @@ void WLS_MassMapping::get_active_coef(WLS_Field & Kappa, float NSigma, bool Kill
         TabActivCoefE(i,b) = LastScaleVal;
         TabActivCoefB(i,b) = (NoSparseBMode == false) ? LastScaleVal: 0;
     }
+    
 }
 // ===========================
 
@@ -1518,7 +1521,7 @@ void WLS_MassMapping::mult_sparse(WLS_Field & KappaSparse, bool NoSparseBMode)
 
 // ===========================
 
-void WLS_MassMapping::mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field & Kappa, WLS_Field & KappaSparse, float NSigma, int NiterSparse, bool SparsePositivityConstraint)
+void WLS_MassMapping::mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field & Kappa, WLS_Field & KappaSparse, float NSigma, int NiterSparse, bool SparsePositivityConstraint, int FirstDetectScale)
 {
     float SigmaNoise = sqrt(MinCovMat);
     bool UseMad=false;
@@ -1528,7 +1531,7 @@ void WLS_MassMapping::mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field 
     
     if (Verbose)
     {
-        cout << "MCALens: Niter = " << NiterSparse << ", NSigma=" <<  NSigma  << ", SparsePos=" <<  SparsePositivityConstraint << ", NoSparseBMode = " << NoSparseBMode << endl;
+        cout << "MCALens: Niter = " << NiterSparse << ", NSigma=" <<  NSigma  << ", SparsePos=" <<  SparsePositivityConstraint << ", NoSparseBMode = " << NoSparseBMode << ", FirstDetectScale = " << FirstDetectScale+1 << endl;
 
     }
     WLS_Field Resi_EB, KappaWiener;
@@ -1546,11 +1549,8 @@ void WLS_MassMapping::mcalens(WLS_Field & Gamma, PowSpec & ps_signal, WLS_Field 
     int lms = ps_signal.Lmax();
     CAlm.set_wiener_filter(ps_noise, ps_signal);
 
-    fits_write_dblarr( "xx_filter_wiener_E.fits", CAlm.WienerFilter_E );
-    fits_write_dblarr( "xx_filter_wiener_B.fits", CAlm.WienerFilter_E );
-    
     get_residual_eb(Kappa, Resi_EB, SIGMA_WEIGHT);
-    get_active_coef(Resi_EB, NSigma, true);
+    get_active_coef(Resi_EB, NSigma, true, FirstDetectScale);
     
     for (int i=0; i < NiterSparse; i++)
     {

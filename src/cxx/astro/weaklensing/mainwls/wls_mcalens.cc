@@ -57,8 +57,9 @@ int NbrScale=0;
 int Lmax=0;
 int ALM_iter=0;
 int Niter=50;
-
 float NSigma=3.;
+int FirstDetectScale=0;
+bool SparsePositivityConstraint=true;
 
 #define NBR_MASS_MAPPING_METHOD 4
 enum type_massmapping {KAISER_SQUIRES, WIENER, SPARSE, MCAlens};
@@ -95,7 +96,7 @@ inline void all_massmapping_usage(type_massmapping MassMethod)
  
 static void usage(char *argv[])
 {
-    fprintf(OUTMAN, "Usage: %s options Map_G1_File_input Map_G2_File_input Map_File_output  \n\n", argv[0]);
+    fprintf(OUTMAN, "Usage: %s options Map_G1_File_input Map_G2_File_input Suffixe_File_output  \n\n", argv[0]);
     fprintf(OUTMAN, "   where options =  \n");
     all_massmapping_usage(MassMethod);
     fprintf(OUTMAN, "         [-n Number_of_Scales]\n");
@@ -110,12 +111,18 @@ static void usage(char *argv[])
     fprintf(OUTMAN, "             Noise Standard deviation.  \n");
     fprintf(OUTMAN, "         [-s Nsigma]\n");
     fprintf(OUTMAN, "             Nsigma Detection level.  \n");
+    fprintf(OUTMAN, "         [-F FirstDetectionScale]\n");
+    fprintf(OUTMAN, "             First detection scale.  \n");
     fprintf(OUTMAN, "         [-S Signal_PowSpec_FileName]\n");
     fprintf(OUTMAN, "             Input Signal Power Spectrum file name (for Wiener filtering). Default is automatically estimated. \n");
     fprintf(OUTMAN, "         [-N Noise_Covariance_Matrix_FileName]\n");
     fprintf(OUTMAN, "             Input Cov. Mat file name (for Wiener filtering).\n");
     fprintf(OUTMAN, "         [-M Mask_FileName]\n");
     fprintf(OUTMAN, "             Input Mask file name.\n");
+    fprintf(OUTMAN, "         [-p]\n");
+    fprintf(OUTMAN, "             Remove the positivy contraint in the MCAlens sparse component.\n");
+
+
   //  fprintf(OUTMAN, "         [-P]\n");
   //  fprintf(OUTMAN, "             Input signal spectrum. Default is no, spectrum estimated from image in spectrum and noise spectrum.\n");
 	fprintf(OUTMAN, "         [-v Verbose]\n");
@@ -130,10 +137,22 @@ static void sinit( int argc, char *argv[] )
     int c,m;
     // get options
      
-    while( (c = GetOpt( argc,argv,(char *) "i:m:g:M:N:a:S:n:s:i:l:fv" )) != -1 )
+    while( (c = GetOpt( argc,argv,(char *) "pF:i:m:g:M:N:a:S:n:s:i:l:fv" )) != -1 )
     {
 		switch (c) 
         {
+            case 'p':
+                SparsePositivityConstraint=false;
+                break;
+            case 'F':
+                if (sscanf(OptArg,"%d",&FirstDetectScale) != 1)
+                {
+                    fprintf(OUTMAN, "Error: bad first detection scale: %s\n", OptArg);
+                    exit(-1);
+                }
+                FirstDetectScale --;
+                if (FirstDetectScale < 0) FirstDetectScale=0;
+                break;
             case 'm':
                  if (sscanf(OptArg,"%d",&m) != 1)
                  {
@@ -221,7 +240,6 @@ static void sinit( int argc, char *argv[] )
                 }
                 break;
      	    case 'v': Verbose = True; break;
-		         	     	
  	     	default:
  	     		usage(argv);
  	     		break;
@@ -260,16 +278,6 @@ static void sinit( int argc, char *argv[] )
     	usage(argv);
     }
     
-    if( OptInd < argc )
-    {
-        strcpy( Name_file_Map4, argv[OptInd] );
-        OptInd++;
-    }
-    else
-    {
-        usage(argv);
-    }
-
 	// make sure there are not too many parameters
 	if( OptInd < argc )
     {
@@ -278,8 +286,6 @@ static void sinit( int argc, char *argv[] )
 	}
 }
   
-/*********************************************************************/
-
 /*********************************************************************/
 
 int main( int argc, char *argv[] )
@@ -307,6 +313,8 @@ int main( int argc, char *argv[] )
         cout << "# MassMapping Method = " << StringMassMethod(MassMethod) << endl;
         cout << "# Niter = " << Niter << endl;
         if (SigmaNoise > 0) cout << "# SigmaNoise = " << SigmaNoise << endl;
+        if (Lmax > 0) cout << "# Lmax = " << Lmax << endl;
+        if (FirstDetectScale > 0) cout << "# FirstDetectScale = " << FirstDetectScale+1 << endl;
         cout << endl;
     }
             
@@ -331,7 +339,6 @@ int main( int argc, char *argv[] )
 
 	int Nside = Map_G1.nside();
     int Lmax_Tot = mrs_get_lmax (Lmax,  Nside,   ZeroPadding);
- 	int Mmax = Lmax_Tot;
     // cout << " Lmax_Tot = " << Lmax_Tot << endl;
     
     Map_E.alloc(Nside);
@@ -371,16 +378,16 @@ int main( int argc, char *argv[] )
     if (OptN_CovMat == False)
     {
         if (OptMask == True)
-            MM.alloc(Map_G1, Map_G2, SigmaNoise, Mask, NbrScale);
+            MM.alloc(Map_G1, Map_G2, SigmaNoise, Mask, NbrScale, Lmax_Tot);
         else
-            MM.alloc(Map_G1, Map_G2, SigmaNoise, NbrScale);
+            MM.alloc(Map_G1, Map_G2, SigmaNoise, NbrScale, Lmax_Tot);
     }
     else
     {
         if (OptMask == True)
-            MM.alloc(Map_G1, Map_G2, CovMat, Mask,NbrScale);
+            MM.alloc(Map_G1, Map_G2, CovMat, Mask,NbrScale, Lmax_Tot);
         else
-            MM.alloc(Map_G1, Map_G2, CovMat, NbrScale);
+            MM.alloc(Map_G1, Map_G2, CovMat, NbrScale, Lmax_Tot);
     }
     if (ALM_iter > 0) MM.set_niter(ALM_iter);
     
@@ -392,43 +399,48 @@ int main( int argc, char *argv[] )
     {
         case KAISER_SQUIRES:
              MM.sp_kaiser_squires(MM.GammaData, Kappa);
-             Kappa.map_G1.info("Kappa");
-             Kappa.map_G1.write( "xx_ks.fits" );// Write map E
-             Kappa.map_G2.write( "xx_ks_b.fits" );// Write map E
             break;
         case WIENER:
             MM.iter_wiener(MM.GammaData, SigPowSpec, Kappa, NiterWiener);
-            Kappa.map_G1.write( "xx_wiener.fits" );// Write map E
-            Kappa.map_G2.write( "xx_wiener_b.fits" );// Write map E
             break;
         case SPARSE:
-            MM.sparse_reconstruction(MM.GammaData, Kappa, NSigma, NiterSparse);
-            Kappa.map_G1.write( "xx_wt5sig.fits" );// Write map E
-            Kappa.map_G2.write( "xx_wt5sig_b.fits" );// Write map E
-break;
+            MM.sparse_reconstruction(MM.GammaData, Kappa, NSigma, NiterSparse, FirstDetectScale);
+            break;
         case MCAlens:
-            MM.mcalens(MM.GammaData, SigPowSpec, Kappa,  KappaSparse, NSigma, NiterMCAlens);
-            Kappa.map_G1.write( "xx_mcalens.fits" );// Write map E
-            Kappa.map_G2.write( "xx_mcalens_b.fits" );// Write map E
-            KappaSparse.map_G1.write( "xx_mcalens_sparse.fits" );// Write map E
-            KappaSparse.map_G2.write( "xx_mcalens_sparse_b.fits" );// Write map E
-            fits_write_dblarr("xx_mcalens_activcoev_e.fits", MM.TabActivCoefE);
-            fits_write_dblarr("xx_mcalens_activcoev_b.fits", MM.TabActivCoefB);
+            MM.mcalens(MM.GammaData, SigPowSpec, Kappa,  KappaSparse, NSigma, NiterMCAlens, SparsePositivityConstraint, FirstDetectScale);
             break;
         default:
             break;
     }
-    // cout << "G2K" << endl;
-    // MM.gamma2eb(MM.GammaData, Kappa);
- 
-    /*
-     int NiterSparse=10;
-    MM.sparse_reconstruction(MM.GammaData, Kappa, NSigma, NiterSparse);
-    Kappa.map_G1.write( "xx_wt5sig.fits" );// Write map E
-    */
-
+    
+     char FN[512];
+     sprintf(FN, "%s_e.fits", Name_file_Map3);
+     // Kappa.map_G1.info("Kappa");
+     Kappa.map_G1.write(FN);// Write map E
+     sprintf(FN, "%s_b.fits", Name_file_Map3);
+     Kappa.map_G2.write(FN);// Write map E
+    if (MassMethod == MCAlens)
+    {
+        sprintf(FN, "%s_sparse_e.fits", Name_file_Map3);
+        KappaSparse.map_G1.write(FN);// Write map E
+        sprintf(FN, "%s_sparse_b.fits", Name_file_Map3);
+        KappaSparse.map_G2.write(FN);// Write map B
+        sprintf(FN, "%s_active_coef_e.fits", Name_file_Map3);
+        fits_write_dblarr(FN, MM.TabActivCoefE);
+        sprintf(FN, "%s_active_coef_b.fits", Name_file_Map3);
+        fits_write_dblarr(FN, MM.TabActivCoefB);
+    }
+    if ((MassMethod == MCAlens) || (MassMethod == WIENER))
+    {
+        sprintf(FN, "%s_filter_wiener_e.fits", Name_file_Map3);
+        fits_write_dblarr( FN, MM.CAlm.WienerFilter_E );
+        sprintf(FN, "%s_filter_wiener_b.fits", Name_file_Map3);
+        fits_write_dblarr( FN, MM.CAlm.WienerFilter_B );
+    }
 
  /*
+  int Mmax = Lmax_Tot;
+
     Hdmap Map;
     //  Map.read(Name_Imag_In);
     // Nside = Map.Nside();
