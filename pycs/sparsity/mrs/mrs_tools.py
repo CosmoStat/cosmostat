@@ -162,3 +162,11 @@ def mrs_smooth(map, opt=None, verbose=False):
     p = mrs_prog(map, prog="mrs_smooth", verbose=verbose, opt=opt, OutputFormatisHealpix=True)
     return p
 
+def mrs_almtrans(map, lmax=None, opt=None, verbose=False):
+    optParam = ' -T '
+    if opt is not None:
+        optParam = ' -T ' + optParam
+    if lmax is not None:
+        optParam = ' -l ' + str(lmax) + optParam
+    p = mrs_prog(map, prog="mrs_almtrans", verbose=verbose, opt=optParam, OutputFormatisHealpix=False)
+    return p
