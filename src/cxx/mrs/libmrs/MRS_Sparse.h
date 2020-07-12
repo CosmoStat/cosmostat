@@ -178,7 +178,7 @@ public:
     void recons(Hmap<REAL> & DataOut);
     void set_band(int b, float Value=0.);
     void hard_thresholding(int b, float NSigma, float & SimgaNoise, bool UseMad=false);
-    void hard_thresholding(Hmap<REAL> & DataIn, float NSigma, float & SigmaNoise, bool UseMad=false, bool KillLastScale=false);
+    void hard_thresholding(Hmap<REAL> & DataIn, float NSigma, float & SigmaNoise, bool UseMad=false, bool KillLastScale=false, int FirstDetectScale=0);
 };
 
 

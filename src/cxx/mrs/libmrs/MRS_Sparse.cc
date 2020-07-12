@@ -524,11 +524,12 @@ void C_UWT::set_band(int b, float Value)
 
 /****************************************************************************/
 
-void C_UWT::hard_thresholding(Hmap<REAL> & DataIn, float NSigma, float & SigmaNoise, bool UseMad, bool KillLastScale)
+void C_UWT::hard_thresholding(Hmap<REAL> & DataIn, float NSigma, float & SigmaNoise, bool UseMad, bool KillLastScale, int FirstDetectScale)
 {
     transform(DataIn);
     for (int b=0; b < NbrScale-1; b++) hard_thresholding(b,  NSigma,  SigmaNoise,  UseMad);
     if (KillLastScale == true) set_band(NbrScale-1, 0.);
+    for (int b=0; b < FirstDetectScale; b++) set_band(b, 0.);
     // fits_write_dblarr("xx_wt.fits", WTTrans );
     recons(DataIn);
 }
