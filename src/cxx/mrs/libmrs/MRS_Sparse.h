@@ -139,6 +139,7 @@ void mrs_wt_trans(Hdmap & Map, dblarray & TabCoef, fltarray & WP_H,  int Lmax, i
 
 class C_UWT {
     bool nest;
+    bool TightFrame;
     int Nside;
     int NbrScale;
     int NpixPerBand;
@@ -150,7 +151,7 @@ public:
     fltarray WP_WPFilter;
     int Lmax;
     int ALM_iter;
-
+    bool Verbose;
 
     dblarray TabNorm;
     fltarray TabMad;
@@ -161,11 +162,11 @@ public:
     int nside() { return Nside; }
     void set_alm_iter(int ALM_IT) { ALM_iter=ALM_IT; }
      C_UWT() {NbrScale=0;T_Fil=F_ALM_MEYER;Nside=0;nest=false;All_WP_Band=false;
-              Lmax=0;ALM_iter=0;}
+         Lmax=0;ALM_iter=0;Verbose=false;}
     ~C_UWT(){}
     dblarray WTTrans;
     int n_elements(){return NpixPerBand*NbrScale;}
-    void wt_alloc(int NsideIn, int NScale, int LM, bool nested=false);
+    void wt_alloc(int NsideIn, int NScale, int LM, bool nested=false, bool Tight_Frame=false);
     void wp_alloc(int NsideIn, int LM, bool nested=false);
     REAL * buffer () { return WTTrans.buffer();}
     REAL & operator()(int i) { return  WTTrans(i % NpixPerBand, i / NpixPerBand);} 
@@ -193,7 +194,7 @@ void get_wp_meyer_filter(int nside, fltarray &TabH, fltarray &TabG, fltarray &Wi
 void get_planck_wp_meyer_filter(fltarray &TabH, fltarray &TabG, fltarray &Win, fltarray & WP_WPFilter, int Lmax, int LmaxT);
 // Compute the filter bands for the wavelet packet decomposition
 
-void get_wt_bspline_filter(int nside, fltarray &TabH, fltarray &TabG, fltarray &Win, fltarray & WP_WPFilter, int  Lmax, int NbrScale);
+void get_wt_bspline_filter(int nside, fltarray &TabH, fltarray &TabG, fltarray &Win, fltarray & WP_WPFilter, int  Lmax, int NbrScale, bool TightFrame=false);
 
 /*
 class MRS_GMCA: public C_OWT, public GMCA 

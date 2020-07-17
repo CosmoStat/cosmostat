@@ -328,9 +328,10 @@ inline void wp_trans(Hdmap & Map, dblarray **TabCoef,intarray &NsideBand, fltarr
 /****************************************************************************/
 
 
-void get_wt_bspline_filter(int nside, fltarray &TabH, fltarray &TabG, fltarray &Win, fltarray & WP_WPFilter, int  Lmax, int NbrBand)
+void get_wt_bspline_filter(int nside, fltarray &TabH, fltarray &TabG, fltarray &Win, fltarray & WP_WPFilter, int  Lmax, int NbrBand, bool TightFrame)
 {
    WT1D_FFT W;
+   WT1D_FFT WTight(WT_PYR_FFT_DIFF_SQUARE);
    //  enum type_wt_filter {WT_PHI,WT_PSI,WT_H,WT_H_TILDE,WT_G,WT_G_TILDE};
 
    type_wt_filter Filter;
@@ -350,8 +351,16 @@ void get_wt_bspline_filter(int nside, fltarray &TabH, fltarray &TabG, fltarray &
         // cout << Np << endl;
         for (p=0; p < LM; p++)  
         {
-           TabH(p, Nstep-1-b) = W.filter(WT_H, p, Np);
-           TabG(p, Nstep-1-b) = W.filter(WT_G, p, Np);
+            if (TightFrame)
+            {
+                TabH(p, Nstep-1-b) = WTight.filter(WT_H, p, Np);
+                TabG(p, Nstep-1-b) = WTight.filter(WT_G, p, Np);
+            }
+            else
+            {
+                TabH(p, Nstep-1-b) = W.filter(WT_H, p, Np);
+                TabG(p, Nstep-1-b) = W.filter(WT_G, p, Np);
+            }
            if (b > 0) TabHH(p, b) =  TabH(p, Nstep-1-b) * TabHH(p,b-1);
            else TabHH(p, 0) =  TabH(p, Nstep-1-b) ;
         }
@@ -366,28 +375,33 @@ void get_wt_bspline_filter(int nside, fltarray &TabH, fltarray &TabG, fltarray &
         Np /= 2;
     }
 
-    for (int l=0; l < LM; l++) WP_WPFilter(l,0) = 1. - TabH(l,NbrBand-2);
+    if (TightFrame)
+    {
+        cout << " TightFrame " << endl;
+        for (int l=0; l < LM; l++) WP_WPFilter(l,0) = TabG(l,Nstep-b-1);
+    }
+    else
+        for (int l=0; l < LM; l++) WP_WPFilter(l,0) = 1. - TabH(l,NbrBand-2);
+    
     for (int b=1; b < Nstep; b++)
     for (int l=0; l < LM; l++)  WP_WPFilter(l,b) = TabHH(l,b-1) * TabG(l,Nstep-b-1);
     b = Nstep;
     for (int l=0; l < LM; l++)  WP_WPFilter(l,b) = TabHH(l,b-1);
 
-/*
-    fits_write_fltarr("xxhh2.fits", TabHH);
+
+    fits_write_fltarr("xx_hh.fits", TabHH);
     cout << " Win = " << Lmax << " " << NbrBand << endl;
-    fits_write_fltarr("xxh2.fits", TabH);
-    fits_write_fltarr("xxg2.fits", TabG);
-    fits_write_fltarr("xxw2.fits", Win);
-    fits_write_fltarr("xxf2.fits", WP_WPFilter);/*
+    fits_write_fltarr("xx_h.fits", TabH);
+    fits_write_fltarr("xx_g.fits", TabG);
+    fits_write_fltarr("xx_w2.fits", Win);
+    fits_write_fltarr("xx_filters.fits", WP_WPFilter);
      // exit(-1);
-     */
-    
 }
 
 /****************************************************************************/
 
 
-void mrs_wt_trans(Hdmap & Map, dblarray & TabCoef, fltarray & TabFilter,  int Lmax, int NScale, int ALM_iter)   
+void mrs_wt_trans(Hdmap & Map, dblarray & TabCoef, fltarray & TabFilter,  int Lmax, int NScale, int ALM_iter)
 {
     int Nside = Map.Nside();
     Hdmap Band,SmoothMap;
@@ -450,15 +464,19 @@ void mrs_wt_trans(Hdmap & Map, dblarray & TabCoef, fltarray & TabFilter,  int Lm
      
     // fits_write_fltarr("xxcoef.fits", TabCoef);
 }
+/****************************************************************************/
 
 
+    // fits_write_fltarr("xxcoef.fits", TabCoef);
 /****************************************************************************/
 //Undecimated class
-void C_UWT::wt_alloc(int NsideIn, int NScale, int LM, bool nested)
+void C_UWT::wt_alloc(int NsideIn, int NScale, int LM, bool nested, bool TFrame)
 {
+    cout << "wt_alloc " << endl;
     nest = nested;
     Nside = NsideIn;
     Lmax=LM;
+    TightFrame=TFrame;
     
     T_Fil = F_ALM_SPLINE;
     MeyerWT = false;
@@ -475,7 +493,7 @@ void C_UWT::wt_alloc(int NsideIn, int NScale, int LM, bool nested)
          // for (int b=0; b < NbrScale; b++) (WTTrans[b].alloc)(NsideIn, nested);
         WTTrans.alloc(NpixPerBand, NbrScale);
         
-        get_wt_bspline_filter(Nside, WP_H, WP_G, WP_W, WP_WPFilter, Lmax, NbrScale);
+        get_wt_bspline_filter(Nside, WP_H, WP_G, WP_W, WP_WPFilter, Lmax, NbrScale,TightFrame);
         
         double EnerBand;
         TabNorm.alloc(NbrScale);
@@ -485,10 +503,11 @@ void C_UWT::wt_alloc(int NsideIn, int NScale, int LM, bool nested)
             EnerBand = 0.;
             for (int l=0; l <= MIN(Lmax, WP_WPFilter.nx()-1); l++) 
             {
-                EnerBand += (2.*l+1)*  WP_WPFilter(l, b)* WP_WPFilter(l, b);
+                if (TightFrame == false) EnerBand += (2.*l+1)*  WP_WPFilter(l, b)* WP_WPFilter(l, b);
+                else  EnerBand += (2.*l+1)*  WP_WPFilter(l, b);
             }
             TabNorm(b)  = sqrt( EnerBand  /  (double) NpixPerBand);
-            // cout << "Band " << b+1 << ", Norm = " << TabNorm(b) << endl;
+            if (Verbose) cout << "Band " << b+1 << ", Norm = " << TabNorm(b) << endl;
         }
     }
 }
@@ -577,12 +596,64 @@ void C_UWT::transform(Hmap<REAL> & DataIn)
     if (MeyerWT == false) mrs_wt_trans(DataIn, WTTrans, WP_H, Lmax, NbrScale, ALM_iter);
     else wp_trans(DataIn, WTTrans, WP_W, WP_H,  NbrScale, Lmax);
 }
+
+
 /****************************************************************************/
 
 void C_UWT::transform(Hmap<REAL> & DataIn, bool BandLimit, bool SqrtFilter, int NScale)
 {
-    // cout << "TRANS" << WP_W.nx() << " " << WP_H.nx() << endl;
-    if (MeyerWT == false) mrs_wt_trans(DataIn, WTTrans, WP_H, Lmax, NbrScale, ALM_iter);
+    if (MeyerWT == false)
+    {
+        if (TightFrame == false) mrs_wt_trans(DataIn, WTTrans, WP_H, Lmax, NbrScale, ALM_iter);
+        else
+        {
+            cout << "TRANS TIGHT" << WP_W.nx() << " " << WP_H.nx() << " Lmax = " << Lmax << endl;
+            Hdmap Band,Result;
+            Band.SetNside ((int) Nside,  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
+            Result.SetNside ((int) Nside,  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
+            if(BandLimit==false) Result=DataIn;
+            CAlmR  ALM,ALM_Band_H, ALM_Band_G;
+            ALM.alloc(Nside, Lmax);
+            ALM_Band_H.alloc(Nside, Lmax);
+            ALM_Band_G.alloc(Nside, Lmax);
+            ALM.Norm = ALM_Band_H.Norm = ALM_Band_G.Norm= False;
+            ALM.UseBeamEff = ALM_Band_H.UseBeamEff = ALM_Band_G.UseBeamEff =False;
+            ALM.set_beam_eff(Lmax, Lmax);
+            ALM_Band_H.set_beam_eff(Lmax, Lmax);
+            ALM_Band_G.set_beam_eff(Lmax, Lmax);
+
+            WTTrans.resize(DataIn.Npix(),NbrScale);
+            ALM.Niter= ALM_Band_H.Niter = ALM_Band_G.Niter= ALM_iter; //Nb iterations in ALM transform
+            ALM.alm_trans(DataIn);
+            
+            int LMax=Lmax;
+            int Nstep=NbrScale-1;
+            for (int b=0; b < NbrScale-2; b++)
+            {
+                 if (Verbose == True)
+                   cout << "        WT:Band " << b+1 << ",  Lmax = " << LMax << endl;
+                
+                 ALM_Band_H.Set(LMax,  LMax);
+                 ALM_Band_H.SetToZero();
+                 ALM_Band_G.Set(LMax,  LMax);
+                 ALM_Band_G.SetToZero();
+                // Compute the solution at a given resolution (convolution with H)
+                int FL = MIN(ALM_Band_H.Lmax(),WP_H.nx()-1);
+                if (FL > ALM.Lmax()) FL = ALM.Lmax();
+                for (int l=0; l <= FL; l++)
+                for (int m=0; m <= l; m++)
+                {
+                    ALM_Band_G(l,m) = ALM(l,m) * (REAL) WP_G(l,Nstep-1-b);
+                    ALM_Band_H(l,m) = ALM(l,m) * (REAL) WP_H(l,Nstep-1-b);
+                    ALM(l,m) = ALM_Band_H(l,m);
+                }
+                ALM_Band_G.alm_rec(Band);
+                for (int p=0; p < Band.Npix(); p++) WTTrans(p, b) = Band[p];
+            }
+            ALM_Band_H.alm_rec(Band);
+            for (int p=0; p < Band.Npix(); p++) WTTrans(p, NbrScale-1) = Band[p];
+        }
+    }
     else wp_trans(DataIn, WTTrans, WP_W, WP_H,  NbrScale, Lmax,BandLimit,SqrtFilter,NScale,ALM_iter);
 }
 

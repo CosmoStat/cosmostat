@@ -45,6 +45,7 @@ bool InverseFlag=false;
 bool PlanckFlag=false;
 bool BandLimit=false;
 bool SqrtFilters=false;
+bool TightFrame=false;
 bool UseMeyer=false;
 float SigmaNoise=0.;
  
@@ -66,9 +67,9 @@ static void usage(char *argv[])
     fprintf(OUTMAN, "         [-M\n");
     fprintf(OUTMAN, "             Use Meyer wavelets instead of Spline wavevelets.  \n");
     fprintf(OUTMAN, "             Default is automatically estimated according to Nside parameter.  \n");
-    fprintf(OUTMAN, "         [-s Square_root_filter]\n");
+    fprintf(OUTMAN, "         [-s]\n");
     fprintf(OUTMAN, "             Use square root filters which ensure having a tight frame (better for inverse problems).  \n");
-    fprintf(OUTMAN, "             Default is taking instead full filters, i.e. only summing wavelet coefficients for reconstruction (advantage: 1 spherical harmonic transform against 2 for sqrt filters.  \n");
+    fprintf(OUTMAN, "             Default is taking instead full filters, i.e. only summing wavelet coefficients for reconstruction.  \n");
     fprintf(OUTMAN, "         [-b]\n");
     fprintf(OUTMAN, "             Enforce band limiting of the signal to Lmax (finest scale).  \n");
     fprintf(OUTMAN, "             Do not consider signal at multipoles > Maximal_multipole (option -l).  \n");
@@ -122,7 +123,7 @@ static void sinit(int argc, char *argv[])
  	      BandLimit=true;
  		  break;
  		case 's':
- 	      SqrtFilters=true;
+            SqrtFilters=true;TightFrame=true;
  		  break;
  		case 'p':
  	     	  PlanckFlag=true;
@@ -173,7 +174,7 @@ int main(int argc, char *argv[])
         cout << "# File Name in = " << Name_Imag_In << endl;
         cout << "# File Name Out = " << Name_Imag_Out << endl;   
         if (NbrScale > 0)  cout << "# NbrScale = " <<  NbrScale << endl;
-        if(SqrtFilters==true) cout << "Use Sqrt Filters" << endl;
+        if (TightFrame==true) cout << "Use Sqrt Filters (Tight Frame)" << endl;
      }
 
    int Nside;
@@ -188,8 +189,9 @@ int main(int argc, char *argv[])
     	// if(Lmax == 0) Lmax=min(2*Nside,ALM_MAX_L);//default value for Lmax
         int LMAX = mrs_get_lmax (Lmax,  Nside, 0.0);
         Lmax =LMAX;
+       WT.Verbose = Verbose;
   		if (UseMeyer == true)  WT.wp_alloc(Nside, Lmax, DEF_MRS_ORDERING);//Ring Format (quicker spherical harmonic transform)
-        else WT.wt_alloc(Nside, NbrScale, Lmax, DEF_MRS_ORDERING);
+        else WT.wt_alloc(Nside, NbrScale, Lmax, DEF_MRS_ORDERING, TightFrame);
 		if (Verbose == true){
 		   cout << "Forward Transform" << endl;
    		   Map.minmax(Min,Max);
