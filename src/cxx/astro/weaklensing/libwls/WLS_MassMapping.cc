@@ -1267,7 +1267,8 @@ void WLS_MassMapping::alloc(Hdmap &G1, Hdmap &G2, Hdmap &CovMatrix, Hdmap &MaskD
     if (NScale >= 2) NbrScale=NScale;
     else  NbrScale = (int) (log((double) Nside) / log(2.)-2);
     WT.set_alm_iter(CAlm.get_niter());
-    WT.wt_alloc(Nside, NbrScale, CAlm.get_lmax(), DEF_MRS_ORDERING);
+    bool Tight_Frame=true;
+    WT.wt_alloc(Nside, NbrScale, CAlm.get_lmax(), DEF_MRS_ORDERING, Tight_Frame);
     TabActivCoefE.alloc(Npix, NbrScale);
     TabActivCoefB.alloc(Npix, NbrScale);
     if (Verbose)
@@ -1466,7 +1467,7 @@ void WLS_MassMapping::sparse_reconstruction(WLS_Field & Gamma, WLS_Field & Kappa
 void WLS_MassMapping::get_active_coef(WLS_Field & Kappa, float NSigma, bool KillLastScale, bool OnlyPos, bool NoSparseBMode, int FirstDetectScale)
 {
     float SigmaNoise = sqrt(MinCovMat);
-    WT.transform(Kappa.map_G1);
+    WT.transform(Kappa.map_G1,WT_BandLimit);
     for (int b=FirstDetectScale; b < WT.nscale()-1; b++)
     {
         float Level = SigmaNoise * NSigma * WT.TabNorm(b);
@@ -1478,7 +1479,7 @@ void WLS_MassMapping::get_active_coef(WLS_Field & Kappa, float NSigma, bool Kill
     }
     if (NoSparseBMode == false)
     {
-        WT.transform(Kappa.map_G2);
+        WT.transform(Kappa.map_G2, WT_BandLimit);
         for (int b=FirstDetectScale; b < WT.nscale()-1; b++)
         {
             float Level = SigmaNoise * NSigma * WT.TabNorm(b);
@@ -1502,18 +1503,18 @@ void WLS_MassMapping::get_active_coef(WLS_Field & Kappa, float NSigma, bool Kill
 
 void WLS_MassMapping::mult_sparse(WLS_Field & KappaSparse, bool NoSparseBMode)
 {
-    WT.transform(KappaSparse.map_G1);
+    WT.transform(KappaSparse.map_G1, WT_BandLimit);
     for (int b=0; b < WT.nscale(); b++)
     for (int i=0; i < WT.WTTrans.nx(); i++)
         WT.WTTrans(i,b) *= TabActivCoefE(i,b);
-    WT.recons(KappaSparse.map_G1);
+    WT.recons(KappaSparse.map_G1, WT_BandLimit);
     if (NoSparseBMode == false)
     {
-        WT.transform(KappaSparse.map_G2);
+        WT.transform(KappaSparse.map_G2, WT_BandLimit);
         for (int b=0; b < WT.nscale(); b++)
         for (int i=0; i < WT.WTTrans.nx(); i++)
             WT.WTTrans(i,b) *= TabActivCoefB(i,b);
-        WT.recons(KappaSparse.map_G2);
+        WT.recons(KappaSparse.map_G2, WT_BandLimit);
     }
     else KappaSparse.map_G2.fill(0);
 }

@@ -214,12 +214,13 @@ enum wl_type_weight {NO_WEIGHT, SIGMA_WEIGHT, VAR_WEIGH};
      void get_active_coef(WLS_Field & Kappa, float Nsigma, bool KillLastScale=false, bool OnlyPos=true, bool NoSparseMode=true, int FirstDetectScale=0);
   
  public:
+     bool WT_BandLimit;
      ShearAlm CAlm;
      dblarray TabActivCoefE;
      dblarray TabActivCoefB;
      bool Verbose;
      WLS_Field GammaData; // Shear field
-     WLS_MassMapping(){Nside=0;NbrScale=0;Npix=0;Verbose=false;MinCovMat = WL_INFINITE_COV_VALUE;}
+     WLS_MassMapping(){WT_BandLimit=true;Nside=0;NbrScale=0;Npix=0;Verbose=false;MinCovMat = WL_INFINITE_COV_VALUE;}
      void alloc(Hdmap &G1, Hdmap &G2, Hdmap &CovMatrix, Hdmap &MaskData, int NbrScale=0, int lmax=0);
      void alloc(Hdmap &G1, Hdmap &G2, Hdmap &CovMatrix, int NbrScale=0, int lmax=0);
      void alloc(Hdmap &G1, Hdmap &G2, float SigmaNoise, Hdmap &MaskData, int NbrScale=0, int lmax=0);
