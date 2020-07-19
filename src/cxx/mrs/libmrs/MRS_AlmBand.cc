@@ -283,9 +283,9 @@ void get_wp_meyer_filter(int nside, fltarray &TabH, fltarray &TabG, fltarray &Wi
     }
     
     // cout << " Win = " << Lmax << " " << NbrBand << endl;
-     fits_write_fltarr("xxh1.fits", TabH);
-     fits_write_fltarr("xxg1.fits", TabG);
-     fits_write_fltarr("xxw1.fits", Win);
+    // fits_write_fltarr("xxh1.fits", TabH);
+    // fits_write_fltarr("xxg1.fits", TabG);
+    // fits_write_fltarr("xxw1.fits", Win);
     //  exit(-1);
 }
 

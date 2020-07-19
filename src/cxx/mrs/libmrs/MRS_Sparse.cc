@@ -136,16 +136,103 @@ void C_OWT::recons(Hmap<REAL> & DataOut)
     }
 }
 
+
+
+
+//FCS ADDED: Pyramidal wavelet transform
+void wp_trans(Hdmap & Map, dblarray **TabCoef,intarray &NsideBand, fltarray & WP_W, fltarray & WP_H,  int NbrWP_Band, int Lmax,bool BandLimit, bool SqrtFilter, int NScale, int ALM_iter) //FCS Added
+{
+    int Nside = Map.Nside();
+    long Npix;
+    Hdmap Band,Result;
+    
+    if(BandLimit==false) Result=Map; //FCS Added First wavelet scale: difference between input image and first approximation scale
+    CAlmR  ALM;
+    ALM.alloc(Nside, Lmax);
+    ALM.Norm = False;
+    ALM.UseBeamEff = False;
+    ALM.set_beam_eff(Lmax, Lmax);
+    if((NScale==0)||(NScale>NbrWP_Band))  NScale=NbrWP_Band;
+    *TabCoef=new dblarray[NScale+1];
+    ALM.Niter=ALM_iter;//Nb iterations in ALM transform
+    ALM.alm_trans(Map);
+    for (int b=0; b <= NScale; b++) {
+        printf("Process band %d\n",b);
+        // int LMin = (b != NbrWP_Band) ? WP_W(NbrWP_Band-1-b,0): WP_W(0,0);
+        CAlmR ALM_Band;
+        int LMax;
+        if (b == NScale) LMax=(int)WP_W(NbrWP_Band-b,1);
+        else if (b ==0) LMax=Lmax;
+        else LMax=(int)WP_W(NbrWP_Band-b,1);
+        Npix=(unsigned long) NsideBand(b) * NsideBand(b) * 12ul;
+        (*TabCoef)[b].alloc(Npix);
+        ALM_Band.alloc(NsideBand(b), LMax);//Beware, using ring weighting implies that the ALM are correctly initialized
+        ALM_Band.SetToZero();
+        ALM_Band.Norm = False;
+        ALM_Band.UseBeamEff = False;
+        ALM_Band.set_beam_eff(LMax, LMax);
+        // Compute the solution at a given resolution (convolution with H)
+        int FL = MIN(ALM_Band.Lmax(),WP_H.nx()-1);
+        if (FL > ALM.Lmax()) FL = ALM.Lmax();
+        if (SqrtFilter == false)
+        {
+            if((b==0)&&(BandLimit==false))
+            {
+                  Result.SetNside ((int) NsideBand(b),  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
+                ALM.alm_rec(Result,true,NsideBand(b));
+            }
+            //Modified such that we can use pyramidal transform : substraction in ALM SPACE
+            //Note that using filter banks results in lower precision for coarsest (and more energetic) scales
+            if(b == NScale)
+            {
+                for (int l=0; l <= FL; l++)
+                       for (int m=0; m <= l; m++)
+                           ALM_Band(l,m) = ALM(l,m) * (REAL) WP_H(l, NbrWP_Band-NScale);
+             } else if (b==0) {
+                   for (int l=0; l <= FL; l++)
+                       for (int m=0; m <= l; m++)
+                           ALM_Band(l,m) = ALM(l,m) * (REAL) (1L - (double) WP_H(l, NbrWP_Band-1));
+             } else {
+                 for (int l=0; l <= FL; l++)
+                       for (int m=0; m <= l; m++)
+                           ALM_Band(l,m) = ALM(l,m) * (REAL) (WP_H(l, NbrWP_Band-b)-WP_H(l, NbrWP_Band-1-b));
+             }
+             ALM_Band.alm_rec(Band,false,NsideBand(b));
+             if((b==0)&&(BandLimit==false)) for (int p=0; p < Band.Npix(); p++) Band[p]+=Map[p]-Result[p];//FCS Modified: First band is now difference between band-limited Image at Lmax and Lowpass
+         } else { //FCS Added: Sqrt filters
+             if(b == NScale) {
+                 for (int l=0; l <= FL; l++)
+                       for (int m=0; m <= l; m++) ALM_Band(l,m) = ALM(l,m) * (REAL) sqrt(WP_H(l,NbrWP_Band-NScale));
+             } else if (b == 0) {
+                    for (int l=0; l <= FL; l++)
+                       for (int m=0; m <= l; m++) ALM_Band(l,m) = ALM(l,m) * (REAL)  sqrt(1.-WP_H(l, NbrWP_Band-1));
+             } else {
+                   for (int l=0; l <= FL; l++)
+                       for (int m=0; m <= l; m++) ALM_Band(l,m) = ALM(l,m) * (REAL)  sqrt(WP_H(l, NbrWP_Band-b)-WP_H(l, NbrWP_Band-1-b));
+             }
+             ALM_Band.alm_rec(Band,false,NsideBand(b));
+             if((b==0)&&(BandLimit==false)) {//FCS Modified: add Info at multipoles > lmax
+                 Result.SetNside ((int) NsideBand(b),  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
+                   ALM.alm_rec(Result,true);
+                for (int p=0; p < Band.Npix(); p++){
+                     Result[p]=Map[p]-Result[p];
+                     Band[p]+= Result[p];
+                }
+             }
+        } // endelse if (b == NbrWP_Band)
+        for (int p=0; p < Band.Npix(); p++) ((*TabCoef)[b])(p) = Band[p];
+    }
+    // fits_write_fltarr("xxcoef.fits", TabCoef);
+
+}
+
+
+
 /*ooooooooooooooooooooooooooooooooooooooooOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOoooooooooooooooooooooooooooooooooooooooo*/
 //Undecimated transforms
 /****************************************************************************/
 
 //General functions
-
-
-
-
-
 
 void wp_trans(Hdmap & Map, dblarray & TabCoef, fltarray & WP_W, fltarray & WP_H, int NbrWP_Band, int Lmax,bool BandLimit, bool SqrtFilter, int NScale, int ALM_iter) //FCS Added 
 {
@@ -236,91 +323,6 @@ void wp_trans(Hdmap & Map, dblarray & TabCoef, fltarray & WP_W, fltarray & WP_H,
     // fits_write_fltarr("xxcoef.fits", TabCoef);
 }
 
-//FCS ADDED: Pyramidal wavelet transform
-void wp_trans(Hdmap & Map, dblarray **TabCoef,intarray &NsideBand, fltarray & WP_W, fltarray & WP_H,  int NbrWP_Band, int Lmax,bool BandLimit, bool SqrtFilter, int NScale, int ALM_iter) //FCS Added 
-{
-    int Nside = Map.Nside();
-    long Npix;
-    Hdmap Band,Result;
-    
-    if(BandLimit==false) Result=Map; //FCS Added First wavelet scale: difference between input image and first approximation scale
-    CAlmR  ALM; 
-    ALM.alloc(Nside, Lmax);
-    ALM.Norm = False;
-    ALM.UseBeamEff = False;
-    ALM.set_beam_eff(Lmax, Lmax);
-    if((NScale==0)||(NScale>NbrWP_Band))  NScale=NbrWP_Band;
-    *TabCoef=new dblarray[NScale+1];
-    ALM.Niter=ALM_iter;//Nb iterations in ALM transform
-    ALM.alm_trans(Map);
-    for (int b=0; b <= NScale; b++) {  
-        printf("Process band %d\n",b);
-        // int LMin = (b != NbrWP_Band) ? WP_W(NbrWP_Band-1-b,0): WP_W(0,0);
-        CAlmR ALM_Band;
-        int LMax;
-        if (b == NScale) LMax=(int)WP_W(NbrWP_Band-b,1);
-        else if (b ==0) LMax=Lmax;
-        else LMax=(int)WP_W(NbrWP_Band-b,1);
-        Npix=(unsigned long) NsideBand(b) * NsideBand(b) * 12ul;
-        (*TabCoef)[b].alloc(Npix);
-    	ALM_Band.alloc(NsideBand(b), LMax);//Beware, using ring weighting implies that the ALM are correctly initialized 
-        ALM_Band.SetToZero();
-        ALM_Band.Norm = False;
-        ALM_Band.UseBeamEff = False;
-    	ALM_Band.set_beam_eff(LMax, LMax);        
-        // Compute the solution at a given resolution (convolution with H)
-        int FL = MIN(ALM_Band.Lmax(),WP_H.nx()-1);
-        if (FL > ALM.Lmax()) FL = ALM.Lmax();
-        if (SqrtFilter == false) {            	
-            if((b==0)&&(BandLimit==false)) {
-              	Result.SetNside ((int) NsideBand(b),  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
-				ALM.alm_rec(Result,true,NsideBand(b));
-			}
-            //Modified such that we can use pyramidal transform : substraction in ALM SPACE
-			//Note that using filter banks results in lower precision for coarsest (and more energetic) scales
-			if(b == NScale) {
-				for (int l=0; l <= FL; l++) 
-               		for (int m=0; m <= l; m++)  
-               			ALM_Band(l,m) = ALM(l,m) * (REAL) WP_H(l, NbrWP_Band-NScale);
-    	     } else if (b==0) {
-    	       	for (int l=0; l <= FL; l++) 
-               		for (int m=0; m <= l; m++) 
-               			ALM_Band(l,m) = ALM(l,m) * (REAL) (1L - (double) WP_H(l, NbrWP_Band-1));
-    	     } else {
-             	for (int l=0; l <= FL; l++) 
-               		for (int m=0; m <= l; m++)  
-               			ALM_Band(l,m) = ALM(l,m) * (REAL) (WP_H(l, NbrWP_Band-b)-WP_H(l, NbrWP_Band-1-b));
-    	     }
-             ALM_Band.alm_rec(Band,false,NsideBand(b));
-             if((b==0)&&(BandLimit==false)) for (int p=0; p < Band.Npix(); p++) Band[p]+=Map[p]-Result[p];//FCS Modified: First band is now difference between band-limited Image at Lmax and Lowpass
-         } else { //FCS Added: Sqrt filters 
-             if(b == NScale) {
-             	for (int l=0; l <= FL; l++) 
-               		for (int m=0; m <= l; m++) ALM_Band(l,m) = ALM(l,m) * (REAL) sqrt(WP_H(l,NbrWP_Band-NScale));
-             } else if (b == 0) {
-               	 for (int l=0; l <= FL; l++) 
-               		for (int m=0; m <= l; m++) ALM_Band(l,m) = ALM(l,m) * (REAL)  sqrt(1.-WP_H(l, NbrWP_Band-1));
-             } else {
-               	for (int l=0; l <= FL; l++) 
-               		for (int m=0; m <= l; m++) ALM_Band(l,m) = ALM(l,m) * (REAL)  sqrt(WP_H(l, NbrWP_Band-b)-WP_H(l, NbrWP_Band-1-b));
-             }                	
-             ALM_Band.alm_rec(Band,false,NsideBand(b));
-             if((b==0)&&(BandLimit==false)) {//FCS Modified: add Info at multipoles > lmax
-     			Result.SetNside ((int) NsideBand(b),  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
-               	ALM.alm_rec(Result,true);
-                for (int p=0; p < Band.Npix(); p++){
-                	 Result[p]=Map[p]-Result[p];
-                	 Band[p]+= Result[p];
-                }
-             }
-        } // endelse if (b == NbrWP_Band)
-        for (int p=0; p < Band.Npix(); p++) ((*TabCoef)[b])(p) = Band[p];
-    }
-    // fits_write_fltarr("xxcoef.fits", TabCoef);
-
-}
-
-
 inline void wp_trans(Hdmap & Map, dblarray & TabCoef, fltarray & WP_W, fltarray & WP_H, int NbrWP_Band, int Lmax){wp_trans(Map,TabCoef,WP_W,WP_H,NbrWP_Band,Lmax,false,false,0,0);} //FCS Added
 inline void wp_trans(Hdmap & Map, dblarray **TabCoef,intarray &NsideBand, fltarray & WP_W, fltarray & WP_H, int NbrWP_Band, int Lmax){wp_trans(Map,TabCoef,NsideBand,WP_W,WP_H,NbrWP_Band,Lmax,false,false,0,0);} //FCS Added
 
@@ -377,8 +379,8 @@ void get_wt_bspline_filter(int nside, fltarray &TabH, fltarray &TabG, fltarray &
 
     if (TightFrame)
     {
-        cout << " TightFrame " << endl;
-        for (int l=0; l < LM; l++) WP_WPFilter(l,0) = TabG(l,Nstep-b-1);
+        // cout << " TightFrame " << endl;
+        for (int l=0; l < LM; l++) WP_WPFilter(l,0) = TabG(l,NbrBand-2);
     }
     else
         for (int l=0; l < LM; l++) WP_WPFilter(l,0) = 1. - TabH(l,NbrBand-2);
@@ -388,18 +390,18 @@ void get_wt_bspline_filter(int nside, fltarray &TabH, fltarray &TabG, fltarray &
     b = Nstep;
     for (int l=0; l < LM; l++)  WP_WPFilter(l,b) = TabHH(l,b-1);
 
-
+/*
     fits_write_fltarr("xx_hh.fits", TabHH);
     cout << " Win = " << Lmax << " " << NbrBand << endl;
     fits_write_fltarr("xx_h.fits", TabH);
     fits_write_fltarr("xx_g.fits", TabG);
     fits_write_fltarr("xx_w2.fits", Win);
     fits_write_fltarr("xx_filters.fits", WP_WPFilter);
+*/
      // exit(-1);
 }
 
 /****************************************************************************/
-
 
 void mrs_wt_trans(Hdmap & Map, dblarray & TabCoef, fltarray & TabFilter,  int Lmax, int NScale, int ALM_iter)
 {
@@ -472,7 +474,6 @@ void mrs_wt_trans(Hdmap & Map, dblarray & TabCoef, fltarray & TabFilter,  int Lm
 //Undecimated class
 void C_UWT::wt_alloc(int NsideIn, int NScale, int LM, bool nested, bool TFrame)
 {
-    cout << "wt_alloc " << endl;
     nest = nested;
     Nside = NsideIn;
     Lmax=LM;
@@ -489,6 +490,7 @@ void C_UWT::wt_alloc(int NsideIn, int NScale, int LM, bool nested, bool TFrame)
         if (NScale >= 2) NbrScale=NScale;
         else  NbrScale = (int) (log((double) NsideIn) / log(2.)-1);
         NpixPerBand = NsideIn*NsideIn*12;
+
         // WTTrans = new Hmap<REAL> [NbrScale];
          // for (int b=0; b < NbrScale; b++) (WTTrans[b].alloc)(NsideIn, nested);
         WTTrans.alloc(NpixPerBand, NbrScale);
@@ -503,8 +505,7 @@ void C_UWT::wt_alloc(int NsideIn, int NScale, int LM, bool nested, bool TFrame)
             EnerBand = 0.;
             for (int l=0; l <= MIN(Lmax, WP_WPFilter.nx()-1); l++) 
             {
-                if (TightFrame == false) EnerBand += (2.*l+1)*  WP_WPFilter(l, b)* WP_WPFilter(l, b);
-                else  EnerBand += (2.*l+1)*  WP_WPFilter(l, b);
+                EnerBand += (2.*l+1)*  WP_WPFilter(l, b)* WP_WPFilter(l, b);
             }
             TabNorm(b)  = sqrt( EnerBand  /  (double) NpixPerBand);
             if (Verbose) cout << "Band " << b+1 << ", Norm = " << TabNorm(b) << endl;
@@ -513,48 +514,6 @@ void C_UWT::wt_alloc(int NsideIn, int NScale, int LM, bool nested, bool TFrame)
 }
 
 /****************************************************************************/
-
-void C_UWT::hard_thresholding(int b, float NSigma, float & SigmaNoise, bool UseMad)
-{
-    float Level = SigmaNoise * NSigma;
-    if (UseMad == true)
-    {
-       fltarray Tab;
-       Tab.alloc(WTTrans.nx());
-       for (int i=0; i < Tab.nx(); i++) Tab(i) = WTTrans(i,b);
-       SigmaNoise = get_sigma_mad(Tab.buffer(), Tab.n_elem() );
-       Level = SigmaNoise * NSigma;
-       TabMad(b) = SigmaNoise;
-    }
-    else Level = SigmaNoise * NSigma * TabNorm(b);
-     
-    for (int i=0; i < WTTrans.nx(); i++) 
-    {
-       if (ABS(WTTrans(i,b)) < Level) WTTrans(i,b) = 0;
-    }
-}
-
-/****************************************************************************/
-
-void C_UWT::set_band(int b, float Value)
-{
-    for (int i=0; i < WTTrans.nx(); i++) WTTrans(i,b) = Value;
-}
-
-/****************************************************************************/
-
-void C_UWT::hard_thresholding(Hmap<REAL> & DataIn, float NSigma, float & SigmaNoise, bool UseMad, bool KillLastScale, int FirstDetectScale)
-{
-    transform(DataIn);
-    for (int b=0; b < NbrScale-1; b++) hard_thresholding(b,  NSigma,  SigmaNoise,  UseMad);
-    if (KillLastScale == true) set_band(NbrScale-1, 0.);
-    for (int b=0; b < FirstDetectScale; b++) set_band(b, 0.);
-    // fits_write_dblarr("xx_wt.fits", WTTrans );
-    recons(DataIn);
-}
-
-/****************************************************************************/
-
 
 void C_UWT::wp_alloc(int NsideIn, int LM, bool nested)
 {
@@ -565,7 +524,11 @@ void C_UWT::wp_alloc(int NsideIn, int LM, bool nested)
     MeyerWT = true;
     if (All_WP_Band == False) get_wp_meyer_filter(Nside, WP_H, WP_G, WP_W, WP_WPFilter, Lmax);
     else get_planck_wp_meyer_filter(WP_H, WP_G, WP_W, WP_WPFilter, Lmax, Lmax);
-
+    
+        fits_write_fltarr("xx_h.fits", WP_H);
+        fits_write_fltarr("xx_g.fits", WP_G);
+        fits_write_fltarr("xx_filters.fits", WP_WPFilter);
+    
     NbrScale = WP_H.ny();
     // cout << " NN = " << NbrScale << " Lmax = " << Lmax << ", WP_WPFilter:  " << WP_WPFilter.nx() << " " <<  WP_WPFilter.ny() << endl;
     NpixPerBand = NsideIn*NsideIn*12;
@@ -591,10 +554,12 @@ void C_UWT::wp_alloc(int NsideIn, int LM, bool nested)
  
 /****************************************************************************/
 
-void C_UWT::transform(Hmap<REAL> & DataIn)
+void C_UWT::transform(Hmap<REAL> & DataIn, bool BandLimit)
 {
-    if (MeyerWT == false) mrs_wt_trans(DataIn, WTTrans, WP_H, Lmax, NbrScale, ALM_iter);
-    else wp_trans(DataIn, WTTrans, WP_W, WP_H,  NbrScale, Lmax);
+    if ((MeyerWT == false) && (TightFrame == false))
+            mrs_wt_trans(DataIn, WTTrans, WP_H, Lmax, NbrScale, ALM_iter);
+    else transform(DataIn, BandLimit, TightFrame, NbrScale);
+        // wp_trans(DataIn, WTTrans, WP_W, WP_H,  NbrScale, Lmax);
 }
 
 
@@ -607,7 +572,7 @@ void C_UWT::transform(Hmap<REAL> & DataIn, bool BandLimit, bool SqrtFilter, int 
         if (TightFrame == false) mrs_wt_trans(DataIn, WTTrans, WP_H, Lmax, NbrScale, ALM_iter);
         else
         {
-            cout << "TRANS TIGHT" << WP_W.nx() << " " << WP_H.nx() << " Lmax = " << Lmax << endl;
+            // cout << "TRANS TIGHT: " << WP_W.nx() << " " << WP_H.nx() << " Lmax = " << Lmax << endl;
             Hdmap Band,Result;
             Band.SetNside ((int) Nside,  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
             Result.SetNside ((int) Nside,  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
@@ -628,7 +593,15 @@ void C_UWT::transform(Hmap<REAL> & DataIn, bool BandLimit, bool SqrtFilter, int 
             
             int LMax=Lmax;
             int Nstep=NbrScale-1;
-            for (int b=0; b < NbrScale-2; b++)
+            
+            if (BandLimit==false)
+            {// Keep Info at multipoles > lmax
+                ALM.alm_rec(Result,true);
+                for (int p=0; p < Band.Npix(); p++)
+                      Result[p]=DataIn[p]-Result[p];
+            }
+            
+            for (int b=0; b < Nstep; b++)
             {
                  if (Verbose == True)
                    cout << "        WT:Band " << b+1 << ",  Lmax = " << LMax << endl;
@@ -652,6 +625,12 @@ void C_UWT::transform(Hmap<REAL> & DataIn, bool BandLimit, bool SqrtFilter, int 
             }
             ALM_Band_H.alm_rec(Band);
             for (int p=0; p < Band.Npix(); p++) WTTrans(p, NbrScale-1) = Band[p];
+            
+            if (BandLimit==false)
+            {// add Info at multipoles > lmax
+                 for (int p=0; p < Band.Npix(); p++)
+                      WTTrans(p, 0) += Result[p];
+            }
         }
     }
     else wp_trans(DataIn, WTTrans, WP_W, WP_H,  NbrScale, Lmax,BandLimit,SqrtFilter,NScale,ALM_iter);
@@ -659,13 +638,115 @@ void C_UWT::transform(Hmap<REAL> & DataIn, bool BandLimit, bool SqrtFilter, int 
 
 /****************************************************************************/
 
-void C_UWT::recons(Hmap<REAL> & DataOut) {
+void C_UWT::recons(Hmap<REAL> & DataOut, bool BandLimit) {
 	// for (int b=0; b <  NbrScale; b++)
 	
-    DataOut.fill(0.);
-	NbrScale=WTTrans.ny();//FCS added
-    for (int b=0; b <  NbrScale; b++) 
-    	for (int p=0; p < NpixPerBand; p++) DataOut[p] += WTTrans(p, b); 
+	NbrScale=WTTrans.ny();
+    
+    if (TightFrame == false)
+    {
+        DataOut.fill(0.);
+        for (int b=0; b <  NbrScale; b++)
+            for (int p=0; p < NpixPerBand; p++) DataOut[p] += WTTrans(p, b);
+    }
+    else
+    {
+        // cout << "Tight Frame WT reconstruction" << endl;
+        int NScale=WTTrans.ny()-1;
+        int NS = sqrt(WTTrans.nx()/12l);
+        if (NS != Nside)
+        {
+            cout << "Error: nside = " << NS << ", expected nside = " <<Nside << endl;
+        }
+        unsigned long Npix=WTTrans.nx();
+        Hdmap Band,Rec;
+        Band.SetNside ((int) Nside,  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
+        DataOut.SetNside ((int) Nside,  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
+        Rec.SetNside ((int) Nside,  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
+        DataOut.fill(0.);
+        CAlmR  ALM,ALM_Band;
+        ALM.alloc(Nside, Lmax);
+        ALM_Band.alloc(Nside, Lmax);
+        ALM.Norm = ALM_Band.Norm = False;
+        ALM.UseBeamEff = ALM_Band.UseBeamEff = False;
+        ALM.SetToZero();
+        ALM_Band.set_beam_eff(Lmax, Lmax);
+        ALM_Band.Set(Lmax,  Lmax);
+        ALM_Band.SetToZero();
+        
+        // Coarsest scale
+        int LM = WP_W(0,1);
+        // cout << "Coarse : Tight Frame WT reconstruction: lmax = " << LM << endl;
+        ALM_Band.alloc(Nside, LM);
+        ALM_Band.set_beam_eff(LM, LM);
+        ALM_Band.SetToZero();
+        ALM_Band.Niter=ALM_iter;//Nb iterations in ALM transform
+        int b=NScale;
+        for(unsigned long p=0;p<Npix;p++) Band[p]=WTTrans(p,b);
+        // cout << "ALMtrans"<< endl;
+        ALM_Band.alm_trans(Band);
+        for (int l=0; l <= LM; l++)
+        for (int m=0; m <= l; m++) ALM (l,m) = ALM_Band(l,m);
+        // cout << "loop"<< WP_W.nx() << " " <<   WP_W.ny() << endl;
+        // fits_write_fltarr("xxw.fits",WP_W);
+        for (int i=0; i < NScale; i++)
+        {
+            b=NScale-i-1;
+            LM = WP_W(i,1);
+            // cout << i << ": Band " << b+1 << ": Tight Frame WT reconstruction: lmax = " << LM << endl;
+            ALM_Band.alloc(Nside, LM);
+            ALM_Band.set_beam_eff(LM, LM);
+            ALM_Band.SetToZero();
+            ALM_Band.Niter=ALM_iter;//Nb iterations in ALM transform
+            for(unsigned long p=0;p<Npix;p++) Band[p]=WTTrans(p,b);
+            ALM_Band.alm_trans(Band);
+            for (int l=0; l <= LM; l++)
+            for (int m=0; m <= l; m++)
+                   ALM(l,m) =  (ALM(l,m) * (REAL) WP_H(l,NbrScale-NScale)) + (ALM_Band(l,m) * (REAL) WP_G(l,NbrScale-NScale));
+        }
+        ALM.alm_rec(DataOut);
+        if(BandLimit==false)
+        {
+            ALM_Band.alm_rec(Rec);
+            for (int p=0; p < Band.Npix(); p++) Rec[p]= Band[p] - Rec[p];
+            for (int p=0; p < DataOut.Npix(); p++) DataOut[p]+=Rec[p];
+        }
+    }
+
+        
+//        for (int b=0; b <= NScale; b++)
+//        {//NbrWP_Band
+//            cout << "band " << b << endl;
+//
+//            for(unsigned long p=0;p<Npix;p++) Band[p]=WTTrans(p,b);
+//            int LMax;
+//            if(b==NScale) LMax=(int) WP_W(NbrScale-NScale,1);
+//            else if (b==0) LMax=Lmax;
+//            else LMax=(int) WP_W(NbrScale-b,1);
+//            ALM.alloc(Nside, LMax);
+//            ALM.set_beam_eff(LMax, LMax);
+//            ALM.SetToZero();
+//            ALM.Niter=ALM_iter;//Nb iterations in ALM transform
+//            ALM.alm_trans(Band);
+//            int FL = MIN(ALM.Lmax(),WP_H.nx()-1);
+//            if (FL > ALM.Lmax()) FL = ALM.Lmax();
+//            if(b==NScale)
+//            {//Low pass filter
+//                for (int l=0; l <= FL; l++)
+//                    for (int m=0; m <= l; m++) ALM_Band(l,m) +=  (ALM(l,m) * (REAL) WP_H(l,NbrScale-NScale));
+//            } else {
+//                for (int l=0; l <= FL; l++)
+//                    for (int m=0; m <= l; m++) ALM_Band(l,m) +=  (ALM(l,m) * (REAL) WP_WPFilter(l,b));
+//            }
+//
+//            if((b==0)&&(BandLimit==false)) {//FCS Modified: add Info at multipoles > lmax
+//                ALM.alm_rec(Rec);
+//                for (int p=0; p < Band.Npix(); p++) Rec[p]= Band[p] - Rec[p];
+//            }
+//        }
+//        ALM_Band.alm_rec(DataOut);
+//        if(BandLimit==false) for (int p=0; p < DataOut.Npix(); p++) DataOut[p]+=Rec[p];
+//    }
 }
 
 /****************************************************************************/
@@ -721,6 +802,47 @@ void C_UWT::recons(Hmap<REAL> & DataOut, bool BandLimit, bool SqrtFilter, int NS
     // fits_write_fltarr("xxcoef.fits", TabCoef);
 } 
 
+/****************************************************************************/
+
+void C_UWT::hard_thresholding(int b, float NSigma, float & SigmaNoise, bool UseMad)
+{
+    float Level = SigmaNoise * NSigma;
+    if (UseMad == true)
+    {
+       fltarray Tab;
+       Tab.alloc(WTTrans.nx());
+       for (int i=0; i < Tab.nx(); i++) Tab(i) = WTTrans(i,b);
+       SigmaNoise = get_sigma_mad(Tab.buffer(), Tab.n_elem() );
+       Level = SigmaNoise * NSigma;
+       TabMad(b) = SigmaNoise;
+    }
+    else Level = SigmaNoise * NSigma * TabNorm(b);
+     
+    for (int i=0; i < WTTrans.nx(); i++)
+    {
+       if (ABS(WTTrans(i,b)) < Level) WTTrans(i,b) = 0;
+    }
+}
+
+/****************************************************************************/
+
+void C_UWT::set_band(int b, float Value)
+{
+    for (int i=0; i < WTTrans.nx(); i++) WTTrans(i,b) = Value;
+}
+
+/****************************************************************************/
+
+void C_UWT::hard_thresholding(Hmap<REAL> & DataIn, float NSigma, float & SigmaNoise, bool UseMad, bool KillLastScale, int FirstDetectScale)
+{
+    transform(DataIn);
+    for (int b=0; b < NbrScale-1; b++) hard_thresholding(b,  NSigma,  SigmaNoise,  UseMad);
+    if (KillLastScale == true) set_band(NbrScale-1, 0.);
+    for (int b=0; b < FirstDetectScale; b++) set_band(b, 0.);
+    // fits_write_dblarr("xx_wt.fits", WTTrans );
+    recons(DataIn);
+}
+
 
 /*ooooooooooooooooooooooooooooooooooooooooOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOoooooooooooooooooooooooooooooooooooooooo*/
 //Pyramidal transforms
@@ -772,7 +894,8 @@ void C_PWT::recons(Hmap<REAL> & DataOut, bool BandLimit, bool SqrtFilter, int NS
    	ALM_Band.set_beam_eff(Lmax, Lmax); 
     ALM_Band.Set(Lmax,  Lmax);
     ALM_Band.SetToZero();
-   	for (int b=0; b <= NScale; b++) {//NbrWP_Band
+   	for (int b=0; b <= NScale; b++)
+    {//NbrWP_Band
    	    Band.SetNside ((int) NsidePerBand(b),  (Healpix_Ordering_Scheme) DEF_MRS_ORDERING);
    		for(long p=0;p<Band.Npix();p++) Band[p]=(PWTTrans[b])(p);
    		int LMax;

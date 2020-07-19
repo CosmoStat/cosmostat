@@ -173,10 +173,10 @@ public:
     REAL & operator()(int b, int i) { return WTTrans(i,b);} 
     void read(char * Name, bool set_ring=true) {}   // read a Healpix map
     void write(char *Name){}  // write a Healpix map 
-    void transform(Hmap<REAL> & DataIn);
+    void transform(Hmap<REAL> & DataIn, bool BandLimit=false);
     void transform(Hmap<REAL> & DataIn, bool BandLimit, bool SqrtFilter, int NScale); //FCS Added
     void recons(Hmap<REAL> & DataOut, bool BandLimit, bool SqrtFilter, int NScale);//FCS Added
-    void recons(Hmap<REAL> & DataOut);
+    void recons(Hmap<REAL> & DataOut, bool BandLimit=false);
     void set_band(int b, float Value=0.);
     void hard_thresholding(int b, float NSigma, float & SimgaNoise, bool UseMad=false);
     void hard_thresholding(Hmap<REAL> & DataIn, float NSigma, float & SigmaNoise, bool UseMad=false, bool KillLastScale=false, int FirstDetectScale=0);
