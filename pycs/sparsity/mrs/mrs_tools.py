@@ -104,7 +104,7 @@ def eb2g(ke,kb):
     return g1,g2
 
 
-def mrs_prog(data, prog="mrs_powspec", opt=None, path='./', remove_files=True, verbose=False, FileOut=None, OutputFormatisHealpix=True):
+def mrs_prog(data, prog="mrs_powspec", opt=None, path='./', remove_files=True, verbose=False, FileOut=None, InputFormatisHealpix=True, OutputFormatisHealpix=True):
 
     # Create a unique string using the current date and time.
     # print('mr_filter ', opt)
@@ -119,8 +119,12 @@ def mrs_prog(data, prog="mrs_powspec", opt=None, path='./', remove_files=True, v
         file_out = file_name + '_out.fits'
 
     # Write the input data to a fits file.
-    mrs_write(file_fits, data)
-
+    if InputFormatisHealpix:
+        mrs_write(file_fits, data)
+    else:
+        writefits(file_fits, data)
+        
+        
     # print("PROG: ", prog)
     cmd = prog
 
@@ -165,8 +169,34 @@ def mrs_smooth(map, opt=None, verbose=False):
 def mrs_almtrans(map, lmax=None, opt=None, verbose=False):
     optParam = ' -T '
     if opt is not None:
-        optParam = ' -T ' + optParam
+        optParam = ' -T ' + opt
     if lmax is not None:
         optParam = ' -l ' + str(lmax) + optParam
     p = mrs_prog(map, prog="mrs_almtrans", verbose=verbose, opt=optParam, OutputFormatisHealpix=False)
+    return p
+
+def mrs_uwttrans(map, lmax=None, opt=None, verbose=False, path='./',progpath=None):
+    optParam = ' '
+    if opt is not None:
+        optParam = ' ' + opt
+    if lmax is not None:
+        optParam = ' -l ' + str(lmax) + optParam
+    if progpath is None:
+        prog="mrs_uwttrans"
+    else:
+        prog=progpath+"mrs_uwttrans"
+    p = mrs_prog(map, prog=prog, verbose=verbose, opt=optParam, OutputFormatisHealpix=False,path=path)
+    return p
+
+def mrs_uwtrecons(Tmap, lmax=None, opt=None, verbose=False, path='./',progpath=None):
+    optParam = ' '
+    if opt is not None:
+        optParam = ' ' + opt
+    if lmax is not None:
+        optParam = ' -l ' + str(lmax) + optParam
+    if progpath is None:
+        prog="mrs_uwttrans"
+    else:
+        prog=progpath+"mrs_uwttrans -r "
+    p = mrs_prog(Tmap, prog=prog, verbose=verbose, opt=optParam, InputFormatisHealpix=False, OutputFormatisHealpix=True,path=path)
     return p
