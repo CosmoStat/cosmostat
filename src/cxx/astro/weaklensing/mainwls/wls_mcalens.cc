@@ -304,8 +304,7 @@ int main( int argc, char *argv[] )
         if (NbrScale > 0)  cout << "# NbrScale = " <<  NbrScale << endl;
         cout << "# File Name in 1 = " << Name_file_Map1 << endl;
         cout << "# File Name in 2 = " << Name_file_Map2 << endl;
-        cout << "# File Name Out 1 = " << Name_file_Map3 << endl;
-        cout << "# File Name Out 2 = " << Name_file_Map4 << endl;
+        cout << "# Prefix File Name Out = " << Name_file_Map3 << endl;
         if (OptN_CovMat == True)
             cout << "# File Name Cov Mat = " << Name_file_NoiseCovMat << endl;
         if (Lmax > 0)  cout << "# Lmax = " <<  Lmax << endl;
@@ -351,8 +350,11 @@ int main( int argc, char *argv[] )
     }
     else
     {
-        cout << " Error: a theoretical signal power spectrum is required. " << endl;
-        exit(-1);
+        if  ((MassMethod == MCAlens) || (MassMethod == WIENER))
+        {
+           cout << " Error: a theoretical signal power spectrum is required. " << endl;
+           exit(-1);
+        }
     }
     Hdmap CovMat;
     if (OptN_CovMat == True)
