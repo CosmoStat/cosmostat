@@ -175,6 +175,24 @@ def mrs_almtrans(map, lmax=None, opt=None, verbose=False):
     p = mrs_prog(map, prog="mrs_almtrans", verbose=verbose, opt=optParam, OutputFormatisHealpix=False)
     return p
 
+def mrs_almrec(map, opt=None, verbose=False,nside=None):
+    optParam = ' -T '
+    if opt is not None:
+        optParam = ' -T ' + opt
+    if nside is not None:
+        optParam = ' -n ' + str(nside) + optParam
+    p = mrs_prog(map, prog="mrs_almrec", verbose=verbose, opt=optParam, InputFormatisHealpix=False, OutputFormatisHealpix=True)
+    return p
+
+def tol(map,lmax_amin,amin=False):
+    ns= gnside(map)
+    lmax=lmax_amin
+    if amin is True:
+        lmax=amin2l(lmax_amin)
+    a = mrs_almtrans(map, lmax=lmax)
+    b = mrs_almrec(a, nside=ns)
+    return  b
+    
 def mrs_uwttrans(map, lmax=None, opt=None, verbose=False, path='./',progpath=None):
     optParam = ' '
     if opt is not None:
