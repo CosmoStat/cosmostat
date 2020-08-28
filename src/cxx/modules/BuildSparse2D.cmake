@@ -8,7 +8,7 @@ set(Sparse2DVersion v2.1.5_beta)
 message(STATUS ${SPARSE2D_SOURCE})
 
 # Download and build Sparse2D
-ExternalProject_Add(sparse2d
+ExternalProject_Add(sparse2d-git
   GIT_REPOSITORY https://github.com/sfarrens/Sparse2D.git
   GIT_TAG ${Sparse2DVersion}
   PREFIX sparse2d

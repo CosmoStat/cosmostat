@@ -51,6 +51,10 @@ set(SPARSE2D_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/sparse2d_src/)
 # Build Sparse2D
 include(BuildSparse2D)
 
+include_directories(/usr/local/include/sparse2d)
+include(/usr/local/lib/cmake/sparse2d_libs.cmake)
+set(sparse2d_libs mga2d sparse3d sparse2d sparse1d tools)
+
 # -------- #
 # Astro WL #
 # -------- #
@@ -66,7 +70,7 @@ endforeach()
 # Find all astro wl targets
 find_targets(astro_wl_targets ${astro_wl_path}/mainwl cc)
 
-# Build binaries
+# # Build binaries
 foreach(program ${astro_wl_targets})
   build_bin(${program} "${astro_wl_libs}" ${astro_wl_path}/mainwl cc)
 endforeach(program)
