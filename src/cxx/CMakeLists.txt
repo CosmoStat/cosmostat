@@ -35,25 +35,30 @@ endif()
 # Locate CFITSIO
 find_cfitsio()
 
+
+# Set Sparse2D source dir
+set(SPARSE2D_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/sparse2d/src)
+
+# Build Sparse2D
+include(BuildSparse2D)
+
+message(STATUS "sparse2d_libs = ${sparse2d_libs}")
+
+set(FFTW_CXX_FLAGS "-DUSE_FFTW")
+
 # Set compilation flags
 set(CMAKE_CXX_FLAGS
   "${CMAKE_CXX_FLAGS} -DNO_DISP_IO -fPIC -Wno-write-strings\
-  ${OpenMP_CXX_FLAGS} ${BigMac_NOWARN}"
+  ${OpenMP_CXX_FLAGS} ${BigMac_NOWARN} ${FFTW_CXX_FLAGS}"
 )
 set(CMAKE_CXX_FLAGS_RELEASE
   "${CMAKE_CXX_FLAGS_RELEASE} -g0 -fomit-frame-pointer"
 )
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
-# Set Sparse2D source dir
-set(SPARSE2D_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/sparse2d_src/)
-
-# Build Sparse2D
-include(BuildSparse2D)
-
-include_directories(/usr/local/include/sparse2d)
-include(/usr/local/lib/cmake/sparse2d_libs.cmake)
-set(sparse2d_libs mga2d sparse3d sparse2d sparse1d tools)
+# include_directories(/usr/local/include/sparse2d)
+# include(/usr/local/lib/cmake/sparse2d_libs.cmake)
+# set(sparse2d_libs mga2d sparse3d sparse2d sparse1d tools)
 
 # -------- #
 # Astro WL #
