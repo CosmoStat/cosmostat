@@ -3,9 +3,7 @@
 #=================#
 
 # Set Sparse2D Version
-set(Sparse2DVersion v2.1.5_beta)
-
-message(STATUS "SPARSE2D_SOURCE: ${SPARSE2D_SOURCE}")
+set(Sparse2DVersion v2.1.5_beta2)
 
 # Download and build Sparse2D
 ExternalProject_Add(sparse2d-git
@@ -13,16 +11,30 @@ ExternalProject_Add(sparse2d-git
   GIT_TAG ${Sparse2DVersion}
   PREFIX sparse2d
   CMAKE_ARGS ${CMAKE_ARGS} -DBUILD_MSVST=ON -DUSE_FFTW=ON -DBUILD_NFFT=OFF
-  # INSTALL_COMMAND make install
+-DCMAKE_INSTALL_PREFIX:PATH=${SPARSE2D_SOURCE}
 )
 
-set(FFTW_LD_FLAGS "-L ${SPARSE2D_SOURCE}/sparse2d-git-build/module_build/fftw/lib -lfftw3f_omp -lfftw3_omp \
--lfftw3f -lfftw3 -lm")
+# Extract FFTW libraries from Sparse2D build
+ExternalProject_Add_Step(sparse2d-git fftw
+  DEPENDEES install
+  COMMAND cp -r ${SPARSE2D_SOURCE}/src/sparse2d-git-build/module_build/lib/. ${SPARSE2D_SOURCE}/lib
+  COMMAND cp -r ${SPARSE2D_SOURCE}/src/sparse2d-git-build/module_build/include/. ${SPARSE2D_SOURCE}/include/sparse2d
+  COMMENT "Extracting FFTW build"
+)
 
-set(sparse2d_lib_names mga2d sparse3d sparse2d sparse1d tools)
-set(sparse2d_libs "")
-foreach(library ${sparse2d_lib_names})
-  include_directories(${SPARSE2D_SOURCE}/sparse2d-git/src/lib${library})
-  find_library(${library} NAMES ${library} PATHS ${SPARSE2D_SOURCE}/sparse2d-git-build)
-  list(APPEND sparse2d_libs ${${library}})
+# List Sparse2D libs
+set(sparse2d_libs mga2d sparse3d sparse2d sparse1d tools)
+
+# List FFTW libs
+set(fftw_libs fftw3f_omp fftw3_omp fftw3f fftw3)
+
+# Include external headers
+include_directories(${SPARSE2D_SOURCE}/include/sparse2d)
+
+# Add external libraries
+set(external_libs ${sparse2d_libs} ${fftw_libs})
+foreach(library ${external_libs})
+  add_library(${library} STATIC IMPORTED)
+  set_property(TARGET ${library} PROPERTY IMPORTED_LOCATION ${SPARSE2D_SOURCE}/lib/lib${library}.a)
+  add_dependencies(${library} sparse2d-git)
 endforeach()
