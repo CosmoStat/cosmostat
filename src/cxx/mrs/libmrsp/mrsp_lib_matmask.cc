@@ -13,7 +13,7 @@ extern "C"  {
 //
 // output:
 //    mll matrices in RowMajorOrder, 5 matrices of size (lmax+1,lmax+1)
-//    mll = [mll_TT_TT, mll_EE_EE, mll_EE_BB, mll_TE_TE, mll_EB_EB 
+//    mll = [mll_TT_TT, mll_EE_EE, mll_EE_BB, mll_TE_TE, mll_EB_EB
 //
 // dependancy:
 //    Need FORTRAN routine wig3j_f.f to compute 3j-wigner
@@ -30,7 +30,7 @@ extern "C"  {
 //                              clean memory in wig3j
 //=========================================================================
 
-#ifdef _OPENMP    
+#ifdef _OPENMP
      extern int inner_loop_threads;
       extern int outer_loop_threads;
 #endif
@@ -39,7 +39,7 @@ extern void wig3j_( double *L2, double *L3, double *M2, double *M3,
          double *L1MIN, double *L1MAX, double *THRCOF, int *NDIM, int *IER);
 extern void wig3j_c( long l2, long l3, long m2, long m3, double *wigner);
 //void make_mll_pol( long lmax, double *well, double *mll);
-} 
+}
 
 //****************************************************************************************************************************//
 template <class T>
@@ -49,7 +49,7 @@ double  MasterPola <T>::Check_Matrix_2Norm(dblarray &Matrix,unsigned short xsubi
 
     long Nx=Matrix.axis(1), Ny=Matrix.axis(2);
     double init_vector[Nx],vec_fwd[Ny],vec_bwd[Nx],vec_bwd2[Nx];
-    long kl,kl1,kl2, offset;    
+    long kl,kl1,kl2, offset;
     double gamma=-1.;
     double Nrm2In=0.,Nrm2fwd,Nrm2bwd,Totalbwd;
     double *buffer_mat=Matrix.buffer();
@@ -58,13 +58,13 @@ double  MasterPola <T>::Check_Matrix_2Norm(dblarray &Matrix,unsigned short xsubi
         init_vector[kl]=erand48(xsubi);
         Nrm2In+=init_vector[kl]*init_vector[kl];
     }
-    
+
     Nrm2In =sqrt(Nrm2In);
     for(kl=0;kl<Nx;kl++) init_vector[kl] /= Nrm2In;
-    
+
     for(int kit=0;kit < nit_max;kit++) {
         Nrm2fwd=0.;
-        #ifdef _OPENMP 
+        #ifdef _OPENMP
             #pragma omp parallel for default(none) reduction(+: Nrm2fwd)  shared(vec_fwd,init_vector, buffer_mat,Nx,Ny) private(kl1,kl2,offset)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
         #endif
         for(kl1=0;kl1<Ny;kl1++) {
@@ -78,7 +78,7 @@ double  MasterPola <T>::Check_Matrix_2Norm(dblarray &Matrix,unsigned short xsubi
 
         for(kl1=0;kl1<Nx;kl1++) vec_bwd[kl1]=0.;
 
-        #ifdef _OPENMP 
+        #ifdef _OPENMP
             #pragma omp parallel for default(none) shared(vec_bwd, vec_fwd, buffer_mat,Nx,Ny) private(kl1,kl2)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
         #endif
         for(kl1=0;kl1<Nx;kl1++) {
@@ -118,18 +118,18 @@ void MasterPola <T>::get_Pspec_from_masks(bool NormALM, bool PolaFastALM) {
     if( this->lLmax <= 0 ) this->lLmax = 3 * Nside_map;
     if(this->Verbose) printf("MasterPola: set Lmax\n");
     if((!this->MaskTFlag)&&(!this->MaskPFlag)) {
-        printf("Should first specify either MaskT or MaskP\n");    
+        printf("Should first specify either MaskT or MaskP\n");
         exit(EXIT_FAILURE);
     }
 
     if(this->Verbose) printf("MasterPola: Compute Mask Power Spectra\n");
-    this->MaskTT_Powspec.alloc(this->lLmax+1);                
-    this->MaskPP_Powspec.alloc(this->lLmax+1);                
-    this->MaskTP_Powspec.alloc(this->lLmax+1);                
+    this->MaskTT_Powspec.alloc(this->lLmax+1);
+    this->MaskPP_Powspec.alloc(this->lLmax+1);
+    this->MaskTP_Powspec.alloc(this->lLmax+1);
 
     if(this->MaskTFlag) {
           long NpixMask=this->MaskT.Npix();
-        int NsideMask=this->MaskT.Nside();    
+        int NsideMask=this->MaskT.Nside();
         AlmMskT.alloc(NsideMask,this->lLmax, PolaFastALM);
         Hdmap mask_dbl;
         int limit;
@@ -140,7 +140,7 @@ void MasterPola <T>::get_Pspec_from_masks(bool NormALM, bool PolaFastALM) {
         AlmMskT.alm_trans(mask_dbl);
         if(this->Verbose) printf("MasterPola: PS for MaskT\n");
         for(int l=0; l <= this->lLmax; ++l) {
-            this->MaskTT_Powspec[l] = norm( AlmMskT(l,0));    
+            this->MaskTT_Powspec[l] = norm( AlmMskT(l,0));
             limit = min( l,AlmMskT.Mmax() );
                for(int m=1; m <= limit; ++m) this->MaskTT_Powspec[l] += 2*norm( AlmMskT(l,m) );
                this->MaskTT_Powspec[l]/=(2.*l+1.);
@@ -148,7 +148,7 @@ void MasterPola <T>::get_Pspec_from_masks(bool NormALM, bool PolaFastALM) {
     }
     if(this->MaskPFlag) {
           long NpixMask=this->MaskT.Npix();
-        int NsideMask=this->MaskT.Nside();    
+        int NsideMask=this->MaskT.Nside();
         AlmMskP.alloc(this->MaskP.Nside(),this->lLmax, PolaFastALM);
         Hdmap mask_dbl;
         int limit;
@@ -160,7 +160,7 @@ void MasterPola <T>::get_Pspec_from_masks(bool NormALM, bool PolaFastALM) {
         if(this->Verbose) printf("MasterPola: PS for MaskP\n");
         for(int l=0; l <= this->lLmax; ++l) {
             this->MaskPP_Powspec[l] = norm( AlmMskP(l,0));
-            limit = min( l,AlmMskP.Mmax() );    
+            limit = min( l,AlmMskP.Mmax() );
                for(int m=1; m <= limit; ++m) this->MaskPP_Powspec[l] += 2*norm( AlmMskP(l,m) );
                this->MaskPP_Powspec[l]/=(2.*l+1.);
         }
@@ -171,7 +171,7 @@ void MasterPola <T>::get_Pspec_from_masks(bool NormALM, bool PolaFastALM) {
         int limit;
         for(int l=0; l <= this->lLmax; ++l) {
             this->MaskTP_Powspec[l] = ( AlmMskT(l,0)*conj( AlmMskP(l,0) ) ).real();
-            limit = min( l,AlmMskT.Mmax() );    
+            limit = min( l,AlmMskT.Mmax() );
                for(int m=1; m <= limit; ++m) this->MaskTP_Powspec[l] += 2*( AlmMskT(l,m)*conj( AlmMskP(l,m) ) ).real();
                this->MaskTP_Powspec[l]/=(2.*l+1.);
         }
@@ -204,22 +204,22 @@ void MasterPola <T>::get_TEB_Pspec_from_map(bool NormALM, bool PolaFastALM) {
 
     if(Nmaps ==3) {
           long NpixMap= this->Map_TQU.Npix();
-        int NsideMap=this->Map_TQU.get_nside();    
+        int NsideMap=this->Map_TQU.get_nside();
          struct timeval start,end,diff;
          if(this->Timer==True) gettimeofday(&start, (struct timezone *) NULL);
 
         if(this->Verbose) printf("PS for all 3 maps\n");
         if((! this->MaskTFlag)&&(! this->MaskPFlag)) {
-            printf("Should specify either MaskT or MaskP\n");    
+            printf("Should specify either MaskT or MaskP\n");
             exit(EXIT_FAILURE);
         }
         if(( this->MaskTFlag)&&( this->MaskT.Nside()!= this->Nside_map)) {
-            printf("MaskT should have same size as Maps (Ns=%d vs %d)\n", this->MaskT.Nside(), this->Nside_map);    
-            exit(EXIT_FAILURE);                    
+            printf("MaskT should have same size as Maps (Ns=%d vs %d)\n", this->MaskT.Nside(), this->Nside_map);
+            exit(EXIT_FAILURE);
         }
         if(( this->MaskPFlag)&&( this->MaskP.Nside()!= this->Nside_map)) {
-            printf("MaskP should have same size as Maps (Ns=%d vs %d)\n", this->MaskP.Nside(), this->Nside_map);    
-            exit(EXIT_FAILURE);                    
+            printf("MaskP should have same size as Maps (Ns=%d vs %d)\n", this->MaskP.Nside(), this->Nside_map);
+            exit(EXIT_FAILURE);
         }
         this->MskMapPowSpec.num_specs=6;
         PolaHmap<double> Map_TQU_msk;
@@ -246,19 +246,19 @@ void MasterPola <T>::get_TEB_Pspec_from_map(bool NormALM, bool PolaFastALM) {
 
     } else { //only TT
           long NpixMap=this->Map_TQU.map_T.Npix();
-        int NsideMap=this->Map_TQU.map_T.Nside();    
-        
+        int NsideMap=this->Map_TQU.map_T.Nside();
+
          struct timeval start,end,diff;
          if(this->Timer==True) gettimeofday(&start, (struct timezone *) NULL);
 
         if(this->Verbose) printf("PS for map T [lLmax=%d, NpixMap=%ld, NsideMap=%d]\n",this->lLmax,NpixMap,NsideMap);
         if(! this->MaskTFlag) {
-            printf("Should specify MaskT\n");    
+            printf("Should specify MaskT\n");
             exit(EXIT_FAILURE);
         }
         if(( this->MaskTFlag)&&( this->MaskT.Nside()!= this->Nside_map)) {
-            printf("MaskT should have same size as Maps (Ns=%d vs %d)\n", this->MaskT.Nside(), this->Nside_map);    
-            exit(EXIT_FAILURE);                    
+            printf("MaskT should have same size as Maps (Ns=%d vs %d)\n", this->MaskT.Nside(), this->Nside_map);
+            exit(EXIT_FAILURE);
         }
             this->MskMapPowSpec.num_specs=1;
         PowSpec powspec_TT;
@@ -275,7 +275,7 @@ void MasterPola <T>::get_TEB_Pspec_from_map(bool NormALM, bool PolaFastALM) {
         if(this->Verbose) printf("MasterPola: PS for Map T [%d]\n",powspec_TT.Lmax()+1);
         this->MskMapPowSpec.tt_.alloc(powspec_TT.Lmax()+1);
         for(long kl=0;kl<=powspec_TT.Lmax();kl++) this->MskMapPowSpec.tt_[kl]=powspec_TT.tt(kl);
-    
+
         if(this->Timer==True) {
             gettimeofday(&end, (struct timezone *) NULL);
             timersub(&end,&start,&diff);
@@ -292,22 +292,22 @@ void MasterPola <T>::get_TEB_Pspec_from_Noisemap(bool NormALM, bool PolaFastALM)
 
     if(Nmaps ==3) {
           long NpixNoiseMap=this->NoiseMap_TQU.Npix();
-        int NsideNoiseMap=this->NoiseMap_TQU.get_nside();    
+        int NsideNoiseMap=this->NoiseMap_TQU.get_nside();
          struct timeval start,end,diff;
          if(this->Timer==True) gettimeofday(&start, (struct timezone *) NULL);
 
         if(this->Verbose) printf("PS for all 3 maps\n");
         if((! this->MaskTFlag)&&(! this->MaskPFlag)) {
-            printf("Should specify either MaskT or MaskP\n");    
+            printf("Should specify either MaskT or MaskP\n");
             exit(EXIT_FAILURE);
         }
         if(( this->MaskTFlag)&&( this->MaskT.Nside()!= this->Nside_map)) {
-            printf("MaskT should have same size as Maps (Ns=%d vs %d)\n", this->MaskT.Nside(), this->Nside_map);    
-            exit(EXIT_FAILURE);                    
+            printf("MaskT should have same size as Maps (Ns=%d vs %d)\n", this->MaskT.Nside(), this->Nside_map);
+            exit(EXIT_FAILURE);
         }
         if(( this->MaskPFlag)&&( this->MaskP.Nside()!= this->Nside_map)) {
-            printf("MaskP should have same size as Maps (Ns=%d vs %d)\n", this->MaskP.Nside(), this->Nside_map);    
-            exit(EXIT_FAILURE);                    
+            printf("MaskP should have same size as Maps (Ns=%d vs %d)\n", this->MaskP.Nside(), this->Nside_map);
+            exit(EXIT_FAILURE);
         }
         this->MskNoisePowSpec.num_specs=6;
         PolaHmap<double> NoiseMap_TQU_msk;
@@ -336,16 +336,16 @@ void MasterPola <T>::get_TEB_Pspec_from_Noisemap(bool NormALM, bool PolaFastALM)
         struct timeval start,end,diff;
         if(this->Timer==True) gettimeofday(&start, (struct timezone *) NULL);
           long NpixNoiseMap=this->NoiseMap_TQU.map_T.Npix();
-        int NsideNoiseMap=this->NoiseMap_TQU.map_T.Nside();    
+        int NsideNoiseMap=this->NoiseMap_TQU.map_T.Nside();
 
         if(this->Verbose) printf("PS for map T [lLmax=%d]\n",this->lLmax);
         if(! this->MaskTFlag) {
-            printf("Should specify MaskT\n");    
+            printf("Should specify MaskT\n");
             exit(EXIT_FAILURE);
         }
         if(( this->MaskTFlag)&&( this->MaskT.Nside()!= this->Nside_map)) {
-            printf("MaskT should have same size as Maps (Ns=%d vs %d)\n", this->MaskT.Nside(), this->Nside_map);    
-            exit(EXIT_FAILURE);                    
+            printf("MaskT should have same size as Maps (Ns=%d vs %d)\n", this->MaskT.Nside(), this->Nside_map);
+            exit(EXIT_FAILURE);
         }
         this->MskMapPowSpec.num_specs=1;
         PowSpec powspec_TT;
@@ -362,7 +362,7 @@ void MasterPola <T>::get_TEB_Pspec_from_Noisemap(bool NormALM, bool PolaFastALM)
         if(this->Verbose) printf("MasterPola: PS for Map T [%d]\n",powspec_TT.Lmax()+1);
         this->MskNoisePowSpec.tt_.alloc(powspec_TT.Lmax()+1);
         for(long kl=0;kl<=powspec_TT.Lmax();kl++) this->MskNoisePowSpec.tt_[kl]=powspec_TT.tt(kl);
-    
+
         if(this->Timer==True) {
             gettimeofday(&end, (struct timezone *) NULL);
             timersub(&end,&start,&diff);
@@ -383,15 +383,15 @@ void MasterPola <T>::make_mll_blocks_c( ) {
      double sum_TT, sum_TE, sum_EE_EE, sum_EE_BB, sum_EB;
      double *wigner0, *wigner2;
      long ndim, maxl3;
-        
+
      struct timeval start,end,diff;
      if(this->Timer==True) gettimeofday(&start, (struct timezone *) NULL);
-    
+
      if(this->Nmaps < 1) {
         printf("There should be at least one map at this stage (%d)\n",this->Nmaps);
         exit(EXIT_FAILURE);
      }
-    
+
     this->MAT_TT_TT.alloc(this->lLmax+1,this->lLmax+1);
     if(this->Nmaps == 3) {
         this->MAT_EE_EE.alloc(this->lLmax+1,this->lLmax+1);
@@ -407,7 +407,7 @@ void MasterPola <T>::make_mll_blocks_c( ) {
         if(this->Verbose) printf("Wigner 2 allocated\n");
         wigner2 = (double *) malloc( (2*this->lLmax+1) * sizeof(double));
     }
-    
+
      /* loop over the matrice elements */
     for( long l1=0; l1<=(long) this->lLmax; l1++) {
         //if (this->Verbose) printf("MasterPola: computing MLL[%ld] (out of %d) \n",l1,this->lLmax);
@@ -415,19 +415,19 @@ void MasterPola <T>::make_mll_blocks_c( ) {
             /* alloc wigners */
             ndim = l2+l1-abs(l1-l2)+1;
             if(ndim > (2*this->lLmax+1)) printf("BEWARE OF NDIM !!!! [%ld]\n",ndim);
-            
+
             /* compute wigners */
             wig3j_c( l1, l2, (long) 0,  (long) 0, wigner0);
             if(this->Nmaps == 3) wig3j_c( l1, l2,  (long)-2,  (long)2, wigner2);
-            
+
             /* loop on l3 */
             maxl3 = (l1+l2 < this->lLmax) ? l1+l2 : this->lLmax;
             if(this->Nmaps !=3) {
                 /* initialization */
                 sum_TT    = 0.;
-                for( long l3=abs(l1-l2); l3<=maxl3; l3++) 
+                for( long l3=abs(l1-l2); l3<=maxl3; l3++)
                 if( (l1+l2+l3)%2 == 0) sum_TT    += MaskTT_Powspec[l3] * (double)(2.*l3+1.) * wigner0[l3] * wigner0[l3];
-                this->MAT_TT_TT(l2,l1) = (2.*double(l2)+1.)/(4.*M_PI) * sum_TT;    
+                this->MAT_TT_TT(l2,l1) = (2.*double(l2)+1.)/(4.*M_PI) * sum_TT;
             } else {
                 /* initialization */
                 sum_TT    = 0.;
@@ -442,15 +442,15 @@ void MasterPola <T>::make_mll_blocks_c( ) {
                     if( (l1+l2+l3)%2 == 0) sum_EE_EE += MaskPP_Powspec[l3] * (double)(2.*l3+1.) * wigner2[l3] * wigner2[l3];
                     if( (l1+l2+l3)%2 != 0) sum_EE_BB += MaskPP_Powspec[l3] * (double)(2.*l3+1.) * wigner2[l3] * wigner2[l3];
                     sum_EB += MaskPP_Powspec[l3] * (double)(2.*l3+1.) * wigner2[l3] * wigner2[l3];
-                }          
+                }
                 this->MAT_TT_TT(l2,l1) = (2.*double(l2)+1.)/(4.*M_PI) * sum_TT; //BEWARE: M_ll' = M(l',l) (first index=column)
                 this->MAT_EE_EE(l2,l1) = (2.*double(l2)+1.)/(4.*M_PI) * sum_EE_EE;
                 this->MAT_EE_BB(l2,l1) = (2.*double(l2)+1.)/(4.*M_PI) * sum_EE_BB;
                 this->MAT_TE_TE(l2,l1) = (2.*double(l2)+1.)/(4.*M_PI) * sum_TE;
                 this->MAT_EB_EB(l2,l1) = (2.*double(l2)+1.)/(4.*M_PI) * sum_EB;
             }
-            for( long l3=0; l3< ndim; l3++) wigner0[l3]=0.; 
-            if(this->Nmaps == 3) for( long l3=0; l3< ndim; l3++) wigner2[l3]=0.; 
+            for( long l3=0; l3< ndim; l3++) wigner0[l3]=0.;
+            if(this->Nmaps == 3) for( long l3=0; l3< ndim; l3++) wigner2[l3]=0.;
         } //end loop l2
     } //end loop l1
     free(wigner0);
@@ -470,15 +470,15 @@ void MasterPola <T>::make_mll_blocks_c_fast( ) {
      double *wigner0, *wigner2,C3, *normfact;
      int kthr;
      long ndim, maxl3,minl3_odd,minl3_even,offset_thr,l1,l2;
-     long Nls=this->lLmax+1;    
+     long Nls=this->lLmax+1;
      struct timeval start,end,diff;
      if(this->Timer==True) gettimeofday(&start, (struct timezone *) NULL);
-    
+
      if(this->Nmaps < 1) {
         printf("There should be at least one map at this stage (%d)\n",this->Nmaps);
         exit(EXIT_FAILURE);
      }
-    
+
     this->MAT_TT_TT.alloc(Nls, Nls);
     if(this->Nmaps == 3) {
         this->MAT_EE_EE.alloc(Nls, Nls);
@@ -488,7 +488,7 @@ void MasterPola <T>::make_mll_blocks_c_fast( ) {
     }
 
      /* Allocation set out of the loop */
-    #ifdef _OPENMP    
+    #ifdef _OPENMP
         wigner0 = (double *) malloc( (2*this->lLmax+1)*outer_loop_threads*inner_loop_threads * sizeof(double));
         if(this->Verbose) printf("wigner0 allocated\n");
         if(this->Nmaps == 3) {
@@ -507,18 +507,18 @@ void MasterPola <T>::make_mll_blocks_c_fast( ) {
     for( long l1=0; l1<Nls; l1++) normfact[l1]= (2.*double(l1)+1.)/(4.*M_PI);
 
     long offset[Nls];
-    for(l1=0;l1<Nls;l1++) offset[l1]=l1*Nls; 
+    for(l1=0;l1<Nls;l1++) offset[l1]=l1*Nls;
 
     //Decompose into two steps: build half matrices and use symmetries, then apply normalization
      /* loop over the matrice elements */
     double *MAT_TT_TT_Buffer=this->MAT_TT_TT.buffer(),*MAT_EE_EE_Buffer= this->MAT_EE_EE.buffer(),*MAT_EE_BB_Buffer= this->MAT_EE_BB.buffer(),*MAT_TE_TE_Buffer= this->MAT_TE_TE.buffer(),*MAT_EB_EB_Buffer= this->MAT_EB_EB.buffer() ;
-    #ifdef _OPENMP 
+    #ifdef _OPENMP
         #pragma omp parallel for default(none) private(l1,l2,ndim,maxl3,sum_TT,sum_TE, sum_EE_EE, sum_EE_BB, sum_EB, minl3_even, minl3_odd,C3,kthr,offset_thr) shared(normfact, wigner0, wigner2, Nls, offset, MAT_TT_TT_Buffer, MAT_EE_EE_Buffer, MAT_EE_BB_Buffer, MAT_TE_TE_Buffer, MAT_EB_EB_Buffer) num_threads(outer_loop_threads*inner_loop_threads) schedule(dynamic)
     #endif
     for(l1=0; l1<Nls; l1++) {
         #ifdef _OPENMP
             kthr=omp_get_thread_num();
-        #else 
+        #else
             kthr=0;
         #endif
         offset_thr= kthr*(2*this->lLmax+1);
@@ -526,11 +526,11 @@ void MasterPola <T>::make_mll_blocks_c_fast( ) {
             /* alloc wigners */
             ndim = l2+l1-abs(l1-l2)+1;
             if(ndim > (2*this->lLmax+1)) printf("BEWARE OF NDIM !!!! [%ld]\n",ndim);
-            
+
             /* compute wigners */
             wig3j_c( l1, l2, (long) 0,  (long) 0, &wigner0[offset_thr]);
             if(this->Nmaps == 3) wig3j_c( l1, l2,  (long)-2,  (long)2, &wigner2[offset_thr]);
-            
+
             /* loop on l3 */
             maxl3 = (l1+l2 < this->lLmax) ? l1+l2 : this->lLmax;
             if(this->Nmaps !=3) {
@@ -541,7 +541,7 @@ void MasterPola <T>::make_mll_blocks_c_fast( ) {
                 for( long l3= minl3_even; l3<=maxl3; l3+=2) {
                     sum_TT += MaskTT_Powspec[l3] * (double)(2.*l3+1.) * wigner0[l3+offset_thr] * wigner0[l3+offset_thr];
                 }
-                MAT_TT_TT_Buffer[l2+ offset[l1]] = normfact[l2] * sum_TT;    
+                MAT_TT_TT_Buffer[l2+ offset[l1]] = normfact[l2] * sum_TT;
                 MAT_TT_TT_Buffer[l1+ offset[l2]] = normfact[l1] * sum_TT;    //Symmetry of wigner0 with respect to l1 and l2
             } else {
                 /* initialization */
@@ -583,16 +583,16 @@ void MasterPola <T>::make_mll_blocks_c_fast( ) {
                 MAT_EE_BB_Buffer[l2+offset[l1]]  = normfact[l2] * sum_EE_BB;
                 MAT_TE_TE_Buffer[l2+offset[l1]] = normfact[l2] * sum_TE;
                 MAT_EB_EB_Buffer[l2+offset[l1]]  = normfact[l2] * sum_EB;
-                if(l1 != l2) {//wigner2 and wigner0 symmetric with respect to l1 and l2 
-                    MAT_TT_TT_Buffer[l1+offset[l2]]  = normfact[l1]* sum_TT; 
+                if(l1 != l2) {//wigner2 and wigner0 symmetric with respect to l1 and l2
+                    MAT_TT_TT_Buffer[l1+offset[l2]]  = normfact[l1]* sum_TT;
                     MAT_EE_EE_Buffer[l1+offset[l2]]  = normfact[l1] * sum_EE_EE;
                     MAT_EE_BB_Buffer[l1+offset[l2]] = normfact[l1] * sum_EE_BB;
                     MAT_TE_TE_Buffer[l1+offset[l2]]  = normfact[l1] * sum_TE;
                     MAT_EB_EB_Buffer[l1+offset[l2]] = normfact[l1] * sum_EB;
                 }
             }
-            for( long l3=0; l3< ndim; l3++) wigner0[l3+offset_thr]=0.; 
-            if(this->Nmaps == 3) for( long l3=0; l3< ndim; l3++) wigner2[l3+offset_thr]=0.; 
+            for( long l3=0; l3< ndim; l3++) wigner0[l3+offset_thr]=0.;
+            if(this->Nmaps == 3) for( long l3=0; l3< ndim; l3++) wigner2[l3+offset_thr]=0.;
         } //end loop l2
     } //end loop l1
     free(wigner0);
@@ -618,18 +618,18 @@ void MasterPola <T>::Mult_cl_matmask_1block(const arr<double> & ClIn,const dblar
         printf("Size of Matrices [%d,%d] and vectors [%d] or [%d] do not agree\n",MatMask.nx(),MatMask.ny(),Nls,(int) ClOut.size());
         exit(EXIT_FAILURE);
     }
-    
-    if(transpose) { 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+
+    if(transpose) {
+
         for(kl1=0;kl1<Nls;kl1++) ClOutBuffer[kl1]=0.;
-        #ifdef _OPENMP 
+        #ifdef _OPENMP
             #pragma omp parallel for default(none) private(kl1,kl2) shared(Nls, MatMask_buffer, ClInBuffer, ClOutBuffer)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
         #endif
         for(kl1=0;kl1<Nls;kl1++) {
             for(kl2=0;kl2<Nls;kl2++)  ClOutBuffer[kl1]+= MatMask_buffer[kl1+kl2*Nls]* ClInBuffer[kl2];  //BEWARE: M_ll' = M(l',l) (first index=column)
         }
     } else {
-        #ifdef _OPENMP 
+        #ifdef _OPENMP
             #pragma omp parallel for default(none)  private(offset,kl1,kl2) shared(Nls, MatMask_buffer, ClInBuffer, ClOutBuffer) num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
         #endif
         for(kl1=0;kl1<Nls;kl1++) {
@@ -657,7 +657,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
         {
             case PSPEC_TT: {
                     if(this->Verbose)  printf("PSPEC_TT processing\n");
-                    arr<double> PS_TT_2process(Nls); 
+                    arr<double> PS_TT_2process(Nls);
                     if(PNoiseMapFlag) {
                         if(this->Verbose)  printf("First Subtract Masked Noise Power Spectra\n");
                         for(int kl=0;kl<Nls;kl++)  PS_TT_2process[kl] =this->MskMapPowSpec.tt_[kl]-this->MskNoisePowSpec.tt_[kl];
@@ -687,16 +687,16 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                         if(this->Timer==True) gettimeofday(&start, (struct timezone *) NULL);
                         if((this->inv_MAT_TT_TT.nx() != Nls)||(this->inv_MAT_TT_TT.ny()!= Nls)) {
                             if(this->ZeroFirst2L) {
-                                dblarray TempMat(Nls-2,Nls-2), invTempMat; //Note: TempMat(Nls-2,Nls) should theoretically be used, but because of large cosmic variance - even for a full sky field with zero monopole and dipole, the masked sky has high probability of having quite large non-zero monopole or dipoles, we do not want even to take into account contribution from l>=2 multipoles to the monopole/dipole obtained after masking. 
+                                dblarray TempMat(Nls-2,Nls-2), invTempMat; //Note: TempMat(Nls-2,Nls) should theoretically be used, but because of large cosmic variance - even for a full sky field with zero monopole and dipole, the masked sky has high probability of having quite large non-zero monopole or dipoles, we do not want even to take into account contribution from l>=2 multipoles to the monopole/dipole obtained after masking.
                                 double *TempBuffer= TempMat.buffer(), *MAT_TT_TT_Buffer=this->MAT_TT_TT.buffer();
                                 long offset_Nlsm2[Nls-2], offset_Nls[Nls],offset1,offset2;
-                                for(kl2=0;kl2<Nls-2;kl2++) offset_Nlsm2[kl2]=kl2*(Nls-2);        
-                                for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;        
+                                for(kl2=0;kl2<Nls-2;kl2++) offset_Nlsm2[kl2]=kl2*(Nls-2);
+                                for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;
 
-                                #ifdef _OPENMP 
+                                #ifdef _OPENMP
                                     #pragma omp parallel for default(none) private(offset1,offset2,kl2) shared(Nls, MAT_TT_TT_Buffer,TempBuffer, offset_Nlsm2, offset_Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                                 #endif
-                                for(kl2=0;kl2<Nls-2;kl2++) {                                
+                                for(kl2=0;kl2<Nls-2;kl2++) {
                                     offset1= offset_Nlsm2[kl2];
                                     offset2=2+offset_Nls[kl2+2];
                                     for(long kl1=0;kl1<Nls-2;kl1++) TempBuffer[kl1+ offset1]= MAT_TT_TT_Buffer[kl1+offset2];
@@ -705,7 +705,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                                 TempMat.free();
                                 this->inv_MAT_TT_TT.alloc(Nls,Nls);
                                 double *invMatBuffer= invTempMat.buffer(), *invMAT_TT_TT_Buffer=this->inv_MAT_TT_TT.buffer();
-                                #ifdef _OPENMP 
+                                #ifdef _OPENMP
                                     #pragma omp parallel for default(none) private(offset1,offset2,kl2) shared(Nls, invMAT_TT_TT_Buffer, invMatBuffer, offset_Nlsm2, offset_Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                                 #endif
                                 for(kl2=0;kl2<Nls-2;kl2++) {
@@ -720,7 +720,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                         if(this->Verbose) printf("MasterPola: inv_MAT_TT_TT size: [%d, %d]\n", this->inv_MAT_TT_TT.nx(), this->inv_MAT_TT_TT.ny());
                         this->Master_TT_Powspec.alloc(Nls);
                         this->Master_TT_Powspec.fill(0.);
-                        Mult_cl_matmask_1block(PS_TT_2process, this->inv_MAT_TT_TT, this->Master_TT_Powspec); 
+                        Mult_cl_matmask_1block(PS_TT_2process, this->inv_MAT_TT_TT, this->Master_TT_Powspec);
                         if(this->Timer==True) {
                             gettimeofday(&end, (struct timezone *) NULL);
                             timersub(&end,&start,&diff);
@@ -732,8 +732,8 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
             case PSPEC_EE:
             case PSPEC_BB: {
                     if(this->Verbose) printf("PSPEC_EE AND BB processing\n");
-                    arr<double> PS_EE_2process(Nls); 
-                    arr<double> PS_BB_2process(Nls); 
+                    arr<double> PS_EE_2process(Nls);
+                    arr<double> PS_BB_2process(Nls);
                     if(PNoiseMapFlag) {
                         if(this->Verbose)  printf("First Subtract Masked Noise Power Spectra\n");
                         for(int kl=0;kl<Nls;kl++)  PS_EE_2process[kl] =this->MskMapPowSpec.ee_[kl]-this->MskNoisePowSpec.ee_[kl];
@@ -759,12 +759,12 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                                 dblarray MAT_EB_4Blocks(2* Nls,2* Nls);
                                 double *Mat_EB_4Buffer= MAT_EB_4Blocks.buffer(), *MAT_EE_EE_Buffer=this->MAT_EE_EE.buffer(), *MAT_EE_BB_Buffer =this->MAT_EE_BB.buffer();
                                 long offset_2Nls[2*Nls], offset_Nls[Nls];
-                                for(kl2=0;kl2<2*Nls;kl2++) offset_2Nls[kl2]=kl2*2*Nls;        
-                                for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;        
+                                for(kl2=0;kl2<2*Nls;kl2++) offset_2Nls[kl2]=kl2*2*Nls;
+                                for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;
 
                                 long offset1,offset2,offset3,offset4,offset5;
 
-                                #ifdef _OPENMP 
+                                #ifdef _OPENMP
                                     #pragma omp parallel for default(none) private(offset1,offset2,offset3,offset4,offset5,kl2) shared(Nls, MAT_EE_EE_Buffer, MAT_EE_BB_Buffer, Mat_EB_4Buffer,offset_2Nls, offset_Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                                 #endif
                                 for(kl2=0;kl2<Nls;kl2++) {
@@ -805,16 +805,16 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                     } else {
                         struct timeval start,end,diff;
                         if(this->Timer==True) gettimeofday(&start, (struct timezone *) NULL);
-                        if((this-> inv_MAT_EB_4Blocks.nx() != 2*Nls)||(this-> inv_MAT_EB_4Blocks.ny()!= 2*Nls)) { 
+                        if((this-> inv_MAT_EB_4Blocks.nx() != 2*Nls)||(this-> inv_MAT_EB_4Blocks.ny()!= 2*Nls)) {
                             if(Fast_Radius) { //Compute inverse matrices from sub_matrices: ((A,B),(B,A)) where A= MAT_EE_EE, B= MAT_EE_BB
                                 dblarray Mat_EE_EE_r(Nls-2,Nls-2),Mat_EE_BB_r(Nls-2,Nls-2),inv_Mat_EE_EE_r;
                                 double *Mat_EE_EE_r_Buffer= Mat_EE_EE_r.buffer(),*Mat_EE_BB_r_Buffer= Mat_EE_BB_r.buffer(),*Mat_EE_EE_Buffer= this->MAT_EE_EE.buffer(),*Mat_EE_BB_Buffer=this->MAT_EE_BB.buffer();
                                 long offset1,offset2;
                                 long offset_Nls[Nls],offset_Nlsm2[Nls-2];
-                                for(kl2=0;kl2<Nls-2;kl2++) offset_Nlsm2[kl2]=kl2*(Nls-2);        
-                                for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;        
-                    
-                            #ifdef _OPENMP 
+                                for(kl2=0;kl2<Nls-2;kl2++) offset_Nlsm2[kl2]=kl2*(Nls-2);
+                                for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;
+
+                            #ifdef _OPENMP
                                     #pragma omp parallel for default(none) private(offset1,offset2,kl2) shared(Nls, Mat_EE_EE_Buffer, Mat_EE_EE_r_Buffer, Mat_EE_BB_r_Buffer, Mat_EE_BB_Buffer, offset_Nlsm2, offset_Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                             #endif
                             for(kl2=0;kl2<Nls-2;kl2++) {
@@ -829,7 +829,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                                 (this->inv_MAT_EE_EE).alloc(Nls,Nls);
                                 double *inv_Mat_EE_EE_r_Buffer= inv_Mat_EE_EE_r.buffer(),*inv_Mat_EE_EE_Buffer= this->inv_MAT_EE_EE.buffer();
 
-                                #ifdef _OPENMP 
+                                #ifdef _OPENMP
                                     #pragma omp parallel for default(none) private(offset1,offset2,kl2) shared(Nls, inv_Mat_EE_EE_Buffer, inv_Mat_EE_EE_r_Buffer, offset_Nlsm2, offset_Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                                 #endif
                                 for(kl2=0;kl2<Nls-2;kl2++) {
@@ -840,7 +840,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                                 dblarray tempMat1(Nls-2,Nls-2);
                                 double *TempMat1Buffer= tempMat1.buffer();
 
-                                #ifdef _OPENMP 
+                                #ifdef _OPENMP
                                     #pragma omp parallel for default(none) private(offset1,offset2,kl2) shared(Nls, TempMat1Buffer, Mat_EE_BB_r_Buffer, inv_Mat_EE_EE_r_Buffer, offset_Nlsm2)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                                 #endif
                                 for(kl2=0;kl2<Nls-2;kl2++) {
@@ -854,7 +854,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
 
                                 dblarray tempMat2(Nls-2,Nls-2);
                                 double *TempMat2Buffer= tempMat2.buffer();
-                                #ifdef _OPENMP 
+                                #ifdef _OPENMP
                                     #pragma omp parallel for default(none) private(offset1,offset2,kl2) shared(Nls, TempMat2Buffer, TempMat1Buffer, Mat_EE_BB_r_Buffer, Mat_EE_EE_r_Buffer, offset_Nlsm2)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                                 #endif
                                 for(kl2=0;kl2<Nls-2;kl2++) {
@@ -864,16 +864,16 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                                         for(long kl1=0;kl1<Nls-2;kl1++) TempMat2Buffer[kl1+offset1] += TempMat1Buffer[kl3+offset1]* Mat_EE_BB_r_Buffer[kl1+offset2];
                                     }
                                     for(long kl1=0;kl1<Nls-2;kl1++) TempMat2Buffer[kl1+offset1]= Mat_EE_EE_r_Buffer[kl1+offset1]- TempMat2Buffer[kl1+offset1];
-                                } 
+                                }
                                 //mat_mult(tempMat1, Mat_EE_BB_r, tempMat2); //B A^-1 B
                                 //for(int kl1=0;kl1<Nls-2;kl1++) for(int kl2=0;kl2<Nls-2;kl2++) tempMat2(kl1,kl2)= Mat_EE_EE_r(kl1,kl2)-tempMat2(kl1,kl2);//A - BA^-1B
-                                
+
                                 dblarray BlockDiag;
                                 inv_mat_svd(tempMat2, BlockDiag); //(A - BA^-1B)^-1
-                        
+
                                 dblarray BlockOffDiag(Nls-2,Nls-2);
                                 double *BlockOffDiagBuffer= BlockOffDiag.buffer(), *BlockDiagBuffer= BlockDiag.buffer();
-                                #ifdef _OPENMP 
+                                #ifdef _OPENMP
                                     #pragma omp parallel for default(none) private(offset1,offset2,kl2) shared(Nls, BlockOffDiagBuffer, BlockDiagBuffer, TempMat1Buffer, offset_Nlsm2)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                                 #endif
                                 for(kl2=0;kl2<Nls-2;kl2++) {
@@ -883,14 +883,14 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                                         for(long kl1=0;kl1<Nls-2;kl1++) BlockOffDiagBuffer[kl1+offset1] += BlockDiagBuffer[kl3+offset1]* TempMat1Buffer[kl1+offset2];
                                     }
                                 } //mat_mult(BlockDiag, tempMat1, BlockOffDiag); //(A-BA^-1B)^-1 B A^-1
-                                
+
                                 long offset_2Nls[2*Nls];
-                                for(kl2=0;kl2<2*Nls;kl2++) offset_2Nls[kl2]=kl2*2*Nls;        
+                                for(kl2=0;kl2<2*Nls;kl2++) offset_2Nls[kl2]=kl2*2*Nls;
 
                                 long offset3, offset4,offset5;
                                 (this->inv_MAT_EB_4Blocks).alloc(2*Nls,2*Nls);
                                 double *inv_MAT_EB_4BlocksBuffer= inv_MAT_EB_4Blocks.buffer();
-                                #ifdef _OPENMP 
+                                #ifdef _OPENMP
                                     #pragma omp parallel for default(none) private(offset1,offset2,offset3,offset4,offset5,kl2) shared(Nls, BlockDiagBuffer, inv_MAT_EB_4BlocksBuffer, BlockOffDiagBuffer, offset_Nlsm2, offset_2Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                                 #endif
                                 for(kl2=0;kl2<Nls-2;kl2++) {
@@ -913,20 +913,20 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                                     }
                                 }*/
                                 if(this->Verbose) printf("MasterPola: FAST Inversion computed for EB block matrix\n");
-    
+
                             } else {
                                 dblarray MAT_EB_4Blockst_nomonop_nodip(2* (Nls-2),2* (Nls-2));
                                 double *MAT_EB_4Blockst_nomonop_nodipBuffer= MAT_EB_4Blockst_nomonop_nodip.buffer();
                                 double *Mat_EE_EE_Buffer= this->MAT_EE_EE.buffer(),*Mat_EE_BB_Buffer=this->MAT_EE_BB.buffer();
 
                                 long offset_Nls[Nls],offset_2Nls[2*Nls],offset_Nlsm2[Nls-2],offset_2Nlsm4[2* (Nls-2)];
-                                for(kl2=0;kl2<Nls-2;kl2++) offset_Nlsm2[kl2]=kl2*(Nls-2);        
-                                for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;        
-                                for(kl2=0;kl2<2*Nls;kl2++) offset_2Nls[kl2]=kl2*2*Nls;        
-                                for(kl2=0;kl2<2* (Nls-2);kl2++) offset_2Nlsm4[kl2]=kl2*2* (Nls-2);        
-                            
+                                for(kl2=0;kl2<Nls-2;kl2++) offset_Nlsm2[kl2]=kl2*(Nls-2);
+                                for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;
+                                for(kl2=0;kl2<2*Nls;kl2++) offset_2Nls[kl2]=kl2*2*Nls;
+                                for(kl2=0;kl2<2* (Nls-2);kl2++) offset_2Nlsm4[kl2]=kl2*2* (Nls-2);
+
                                 long offset1,offset2,offset3, offset4,offset5;
-                                #ifdef _OPENMP 
+                                #ifdef _OPENMP
                                     #pragma omp parallel for default(none) private(offset1,offset2,offset3,offset4,offset5,kl2) shared(Nls, MAT_EB_4Blockst_nomonop_nodipBuffer, Mat_EE_EE_Buffer, Mat_EE_BB_Buffer, offset_2Nlsm4, offset_Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                                 #endif
                                 for(kl2=0;kl2<Nls-2;kl2++) {
@@ -940,14 +940,14 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                                     for(long kl1=0;kl1<Nls-2;kl1++) MAT_EB_4Blockst_nomonop_nodipBuffer[kl1+offset3]= Mat_EE_BB_Buffer[kl1+offset1];
                                     for(long kl1=0;kl1<Nls-2;kl1++) MAT_EB_4Blockst_nomonop_nodipBuffer[kl1+offset5]= Mat_EE_EE_Buffer[kl1+offset1];
                                 }
-                
-                                dblarray invMAT_EB_4Blockst_nomonop_nodip(2* (Nls-2),2* (Nls-2));                
+
+                                dblarray invMAT_EB_4Blockst_nomonop_nodip(2* (Nls-2),2* (Nls-2));
                                 inv_mat_svd(MAT_EB_4Blockst_nomonop_nodip, invMAT_EB_4Blockst_nomonop_nodip);
                                 (this->inv_MAT_EB_4Blocks).alloc(2*Nls,2*Nls);
                                 double *invMAT_EB_4Blockst_nomonop_nodipBuffer= invMAT_EB_4Blockst_nomonop_nodip.buffer();
                                 double *inv_MAT_EB_4BlocksBuffer= this->inv_MAT_EB_4Blocks.buffer();
                                 long offset6,offset7,offset8;
-                                #ifdef _OPENMP 
+                                #ifdef _OPENMP
                                     #pragma omp parallel for default(none) private(offset1,offset2,offset3,offset4,offset5,offset6,offset7,offset8,kl2) shared(Nls, inv_MAT_EB_4BlocksBuffer, invMAT_EB_4Blockst_nomonop_nodipBuffer, offset_2Nlsm4, offset_2Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                                 #endif
                                 for(kl2=0;kl2<Nls-2;kl2++) {
@@ -968,12 +968,12 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                             }
                         }
                         if(this->Verbose) printf("MasterPola: inv_MAT_EB_4Blocks size: [%d, %d]\n", this->inv_MAT_EB_4Blocks.nx(), this->inv_MAT_EB_4Blocks.ny());
-                        arr<double> ClsIn(2*Nls), ClsOut(2*Nls);    
+                        arr<double> ClsIn(2*Nls), ClsOut(2*Nls);
                         for(long kl=0;kl<Nls;kl++) {
                             ClsIn[kl]= PS_EE_2process[kl];
                             ClsIn[kl+Nls]= PS_BB_2process[kl];
                         }
-                        Mult_cl_matmask_1block(ClsIn,this->inv_MAT_EB_4Blocks,ClsOut); 
+                        Mult_cl_matmask_1block(ClsIn,this->inv_MAT_EB_4Blocks,ClsOut);
                         this->Master_EE_Powspec.alloc(Nls);
                         this->Master_BB_Powspec.alloc(Nls);
                         for(long kl=0;kl<Nls;kl++) {
@@ -990,7 +990,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                 break;
             case PSPEC_TE: {
                     if(this->Verbose) printf("PSPEC_TE processing\n");
-                    arr<double> PS_TE_2process(Nls); 
+                    arr<double> PS_TE_2process(Nls);
                     if((PNoiseMapFlag)&&(!FlagUncorrNoise)) {
                         if(this->Verbose)  printf("First Subtract Masked Noise Power Spectra\n");
                         for(int kl=0;kl<Nls;kl++)  PS_TE_2process[kl] =this->MskMapPowSpec.te_[kl]-this->MskNoisePowSpec.te_[kl];
@@ -1019,10 +1019,10 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                             double *Mat_TE_TE_r_Buffer= Mat_TE_TE_r.buffer(),*Mat_TE_TE_Buffer=this->MAT_TE_TE.buffer();
                             long offset1,offset2;
                             long offset_Nls[Nls],offset_Nlsm2[Nls-2];
-                            for(kl2=0;kl2<Nls-2;kl2++) offset_Nlsm2[kl2]=kl2*(Nls-2);        
-                            for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;        
-    
-                            #ifdef _OPENMP 
+                            for(kl2=0;kl2<Nls-2;kl2++) offset_Nlsm2[kl2]=kl2*(Nls-2);
+                            for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;
+
+                            #ifdef _OPENMP
                                 #pragma omp parallel for default(none) private(offset1,offset2,kl2) shared(Nls, Mat_TE_TE_r_Buffer, Mat_TE_TE_Buffer, offset_Nlsm2, offset_Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                             #endif
                             for(kl2=0;kl2<Nls-2;kl2++) {
@@ -1033,7 +1033,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                             inv_mat_svd(Mat_TE_TE_r, invMat_TE_TE_r);
 
                             double *invMat_TE_TE_r_Buffer=invMat_TE_TE_r.buffer(),*invMat_TE_TE_Buffer=this->inv_MAT_TE_TE.buffer();
-                            #ifdef _OPENMP 
+                            #ifdef _OPENMP
                                 #pragma omp parallel for default(none) private(offset1,offset2,kl2) shared(Nls, invMat_TE_TE_r_Buffer, invMat_TE_TE_Buffer, offset_Nlsm2, offset_Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                             #endif
                             for(kl2=0;kl2<Nls-2;kl2++) {
@@ -1044,7 +1044,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                         }
                         if(this->Verbose) printf("MasterPola: inv_MAT_TE_TE size: [%d, %d]\n", this->inv_MAT_TE_TE.nx(), this->inv_MAT_TE_TE.ny());
                         this->Master_TE_Powspec.alloc(Nls);
-                        Mult_cl_matmask_1block(PS_TE_2process, this->inv_MAT_TE_TE, this->Master_TE_Powspec); 
+                        Mult_cl_matmask_1block(PS_TE_2process, this->inv_MAT_TE_TE, this->Master_TE_Powspec);
                         if(this->Timer==True) {
                             gettimeofday(&end, (struct timezone *) NULL);
                             timersub(&end,&start,&diff);
@@ -1055,7 +1055,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                 break;
             case PSPEC_TB: {
                     if(this->Verbose) printf("PSPEC_TB processing\n");
-                    arr<double> PS_TB_2process(Nls); 
+                    arr<double> PS_TB_2process(Nls);
                     if((PNoiseMapFlag)&&(!FlagUncorrNoise)) {
                         if(this->Verbose)  printf("First Subtract Masked Noise Power Spectra\n");
                         for(int kl=0;kl<Nls;kl++)  PS_TB_2process[kl] =this->MskMapPowSpec.tb_[kl]-this->MskNoisePowSpec.tb_[kl];
@@ -1085,10 +1085,10 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                             double *Mat_TE_TE_r_Buffer= Mat_TE_TE_r.buffer(),*Mat_TE_TE_Buffer=this->MAT_TE_TE.buffer();
                             long offset1,offset2;
                             long offset_Nls[Nls],offset_Nlsm2[Nls-2];
-                            for(kl2=0;kl2<Nls-2;kl2++) offset_Nlsm2[kl2]=kl2*(Nls-2);        
-                            for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;        
-    
-                            #ifdef _OPENMP 
+                            for(kl2=0;kl2<Nls-2;kl2++) offset_Nlsm2[kl2]=kl2*(Nls-2);
+                            for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;
+
+                            #ifdef _OPENMP
                                 #pragma omp parallel for default(none) private(offset1,offset2,kl2) shared(Nls, Mat_TE_TE_r_Buffer, Mat_TE_TE_Buffer, offset_Nlsm2, offset_Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                             #endif
                             for(kl2=0;kl2<Nls-2;kl2++) {
@@ -1099,7 +1099,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                             inv_mat_svd(Mat_TE_TE_r, invMat_TE_TE_r);
 
                             double *invMat_TE_TE_r_Buffer=invMat_TE_TE_r.buffer(),*invMat_TE_TE_Buffer=this->inv_MAT_TE_TE.buffer();
-                            #ifdef _OPENMP 
+                            #ifdef _OPENMP
                                 #pragma omp parallel for default(none) private(offset1,offset2,kl2) shared(Nls, invMat_TE_TE_r_Buffer, invMat_TE_TE_Buffer, offset_Nlsm2, offset_Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                             #endif
                             for(kl2=0;kl2<Nls-2;kl2++) {
@@ -1110,7 +1110,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                         }
                         if(this->Verbose) printf("MasterPola: inv_MAT_TE_TE size: [%d, %d]\n", this->inv_MAT_TE_TE.nx(), this->inv_MAT_TE_TE.ny());
                         this->Master_TB_Powspec.alloc(Nls);
-                        Mult_cl_matmask_1block(PS_TB_2process, this->inv_MAT_TE_TE, this->Master_TB_Powspec); 
+                        Mult_cl_matmask_1block(PS_TB_2process, this->inv_MAT_TE_TE, this->Master_TB_Powspec);
                         if(this->Timer==True) {
                             gettimeofday(&end, (struct timezone *) NULL);
                             timersub(&end,&start,&diff);
@@ -1121,7 +1121,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                 break;
             case PSPEC_EB: {
                     if(this->Verbose) printf("PSPEC_EB processing\n");
-                    arr<double> PS_EB_2process(Nls); 
+                    arr<double> PS_EB_2process(Nls);
                     if((PNoiseMapFlag)&&(!FlagUncorrNoise)) {
                         if(this->Verbose)  printf("First Subtract Masked Noise Power Spectra\n");
                         for(int kl=0;kl<Nls;kl++)  PS_EB_2process[kl] =this->MskMapPowSpec.eb_[kl]-this->MskNoisePowSpec.eb_[kl];
@@ -1151,10 +1151,10 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                             double *Mat_EB_EB_r_Buffer= Mat_EB_EB_r.buffer(),*Mat_EB_EB_Buffer=this->MAT_EB_EB.buffer();
                             long offset1,offset2;
                             long offset_Nls[Nls],offset_Nlsm2[Nls-2];
-                            for(kl2=0;kl2<Nls-2;kl2++) offset_Nlsm2[kl2]=kl2*(Nls-2);        
-                            for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;        
-    
-                            #ifdef _OPENMP 
+                            for(kl2=0;kl2<Nls-2;kl2++) offset_Nlsm2[kl2]=kl2*(Nls-2);
+                            for(kl2=0;kl2<Nls;kl2++) offset_Nls[kl2]=kl2*Nls;
+
+                            #ifdef _OPENMP
                                 #pragma omp parallel for default(none) private(offset1,offset2,kl2) shared(Nls, Mat_EB_EB_r_Buffer, Mat_EB_EB_Buffer, offset_Nlsm2, offset_Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                             #endif
                             for(kl2=0;kl2<Nls-2;kl2++) {
@@ -1165,7 +1165,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                             inv_mat_svd(Mat_EB_EB_r, invMat_EB_EB_r);
 
                             double *invMat_EB_EB_r_Buffer=invMat_EB_EB_r.buffer(),*invMat_EB_EB_Buffer=this->inv_MAT_EB_EB.buffer();
-                            #ifdef _OPENMP 
+                            #ifdef _OPENMP
                                 #pragma omp parallel for default(none) private(offset1,offset2,kl2) shared(Nls, invMat_EB_EB_r_Buffer, invMat_EB_EB_Buffer, offset_Nlsm2, offset_Nls)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
                             #endif
                             for(kl2=0;kl2<Nls-2;kl2++) {
@@ -1176,7 +1176,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                         }
                         if(this->Verbose) printf("MasterPola: inv_MAT_EB_EB size: [%d, %d]\n", this->inv_MAT_EB_EB.nx(), this->inv_MAT_EB_EB.ny());
                         this->Master_EB_Powspec.alloc(Nls);
-                        Mult_cl_matmask_1block(PS_EB_2process, this->inv_MAT_EB_EB, this->Master_EB_Powspec); 
+                        Mult_cl_matmask_1block(PS_EB_2process, this->inv_MAT_EB_EB, this->Master_EB_Powspec);
                         if(this->Timer==True) {
                             gettimeofday(&end, (struct timezone *) NULL);
                             timersub(&end,&start,&diff);
@@ -1190,7 +1190,7 @@ void MasterPola <T>::get_MASTER_pspec(unsigned short xsubi[3], PSPEC_TYPE selspe
                  this->get_MASTER_pspec(xsubi, PSPEC_EE , iter, Niter, Positivity, Fast_Radius);
                  this->get_MASTER_pspec(xsubi, PSPEC_TE , iter, Niter, Positivity, Fast_Radius);
                  this->get_MASTER_pspec(xsubi, PSPEC_TB , iter, Niter, Positivity, Fast_Radius);
-                 this->get_MASTER_pspec(xsubi, PSPEC_EB , iter, Niter, Positivity, Fast_Radius);            
+                 this->get_MASTER_pspec(xsubi, PSPEC_EB , iter, Niter, Positivity, Fast_Radius);
     }
 
 }
@@ -1204,7 +1204,7 @@ void MasterPola <T>::SingleBlock_deconv_iter(const arr<double> & ClData, arr<dou
     arr<double> Fwd(Nls);
     arr<double> Resi(Nls);
     double total_energy=0.;
-    arr<double> Prop(Nls);    
+    arr<double> Prop(Nls);
     Prop.fill(0.);
 
     if((MatMask.nx() != Nls) || (MatMask.ny() !=Nls)) {
@@ -1273,7 +1273,7 @@ void MasterPola <T>::SingleBlock_deconv_iter(const arr<double> & ClData, arr<dou
             }
         }
     }
-}   
+}
 
 
 //****************************************************************************************************************************//
@@ -1281,7 +1281,7 @@ template <class T>
 void MasterPola <T>:: FourSymBlock_deconv_iter(const arr<double> & ClData1,const arr<double> & ClData2, arr<double> & ClSol1, arr<double> & ClSol2, dblarray & MatMask1, dblarray & MatMask2, const int Niter, const double mu, bool Positivity) {
 
     long Nls=ClData1.size(),kl2;
-    arr<double> CLIn(2*Nls),ClOut(2*Nls);    
+    arr<double> CLIn(2*Nls),ClOut(2*Nls);
     CLIn.fill(0.);
     ClOut.fill(0.);
     if((MatMask1.nx() != (int) Nls) || (MatMask1.ny() !=(int) Nls)) {
@@ -1302,7 +1302,7 @@ void MasterPola <T>:: FourSymBlock_deconv_iter(const arr<double> & ClData1,const
     double *ClData1Buffer= (double *) ClData1.begin(),*ClSol1Buffer=(double *) ClSol1.begin(),*ClData2Buffer=(double *) ClData2.begin(),*ClSol2Buffer=(double *) ClSol2.begin(), *CLInBuffer=(double *) CLIn.begin(),*CLOutBuffer =(double *) ClOut.begin();
     long offset1,offset2,offset3,offset4,offset5;
 
-    #ifdef _OPENMP 
+    #ifdef _OPENMP
         #pragma omp parallel for default(none) private(offset1,offset2,offset3,offset4,offset5,kl2) shared(Nls, MAT_4BlocksBuffer, MatMask1Buffer, MatMask2Buffer)  num_threads(outer_loop_threads*inner_loop_threads) schedule(static)
     #endif
     for(kl2=0;kl2<Nls;kl2++) {
@@ -1338,7 +1338,7 @@ void MasterPola <T>:: FourSymBlock_deconv_iter(const arr<double> & ClData1,const
 //****************************************************************************************************************************//
 template <class T>
 void MasterPola <T>:: read_coupling_mat(char * Name) {
-    fitsfile *fptr;   // pointer to the FITS file  
+    fitsfile *fptr;   // pointer to the FITS file
     int  nfound, anynull,nhdu;
     double nullval;
       long naxes[2],fpixel=1;
@@ -1361,8 +1361,8 @@ void MasterPola <T>:: read_coupling_mat(char * Name) {
     }
 
     //READ TTTT inv Matrix
-       naxes[0] = 0;  // int converted to long  
-       naxes[1] = 0;  // int converted to long  
+       naxes[0] = 0;  // int converted to long
+       naxes[1] = 0;  // int converted to long
     if (fits_read_keys_lng(fptr, "NAXIS", 1, 2, naxes, &nfound, &status) ) {
         printf(" Error: cannot read NAXIS keyword for TTTT inv Matrix");
         fits_close_file(fptr, &status);
@@ -1382,8 +1382,8 @@ void MasterPola <T>:: read_coupling_mat(char * Name) {
         printf("Error: cannot move to hdu 2 for file %s %d ", FitsName, status);
         exit(EXIT_FAILURE);
       }
-      naxes[0] = 0;  // int converted to long  
-       naxes[1] = 0;  // int converted to long  
+      naxes[0] = 0;  // int converted to long
+       naxes[1] = 0;  // int converted to long
     if (fits_read_keys_lng(fptr, "NAXIS", 1, 2, naxes, &nfound, &status) ) {
         printf(" Error: cannot read NAXIS keyword for EEEE Matrix");
         fits_close_file(fptr, &status);
@@ -1403,8 +1403,8 @@ void MasterPola <T>:: read_coupling_mat(char * Name) {
         printf("Error: cannot move to hdu 3 for file %s %d ", FitsName, status);
         exit(EXIT_FAILURE);
       }
-      naxes[0] = 0;  // int converted to long  
-       naxes[1] = 0;  // int converted to long  
+      naxes[0] = 0;  // int converted to long
+       naxes[1] = 0;  // int converted to long
         if (fits_read_keys_lng(fptr, "NAXIS", 1, 2, naxes, &nfound, &status) ) {
             printf(" Error: cannot read NAXIS keyword for EEBB Matrix");
         fits_close_file(fptr, &status);
@@ -1424,8 +1424,8 @@ void MasterPola <T>:: read_coupling_mat(char * Name) {
         printf("Error: cannot move to hdu 2 for file %s %d ", FitsName, status);
         exit(EXIT_FAILURE);
       }
-      naxes[0] = 0;  // int converted to long  
-       naxes[1] = 0;  // int converted to long  
+      naxes[0] = 0;  // int converted to long
+       naxes[1] = 0;  // int converted to long
     if (fits_read_keys_lng(fptr, "NAXIS", 1, 2, naxes, &nfound, &status) ) {
         printf(" Error: cannot read NAXIS keyword  for TETE Matrix");
         fits_close_file(fptr, &status);
@@ -1439,14 +1439,14 @@ void MasterPola <T>:: read_coupling_mat(char * Name) {
                exit(EXIT_FAILURE);
         }
     }
-    
+
     //READ EBEB inv Matrix
     if(fits_movabs_hdu(fptr, 5, &hdutype,&status)) {
         printf("Error: cannot move to hdu 5 for file %s %d ", FitsName, status);
         exit(EXIT_FAILURE);
       }
-      naxes[0] = 0;  // int converted to long  
-       naxes[1] = 0;  // int converted to long  
+      naxes[0] = 0;  // int converted to long
+       naxes[1] = 0;  // int converted to long
     if (fits_read_keys_lng(fptr, "NAXIS", 1, 2, naxes, &nfound, &status) ) {
         printf(" Error: cannot read NAXIS keyword for EBEB Matrix");
         fits_close_file(fptr, &status);
@@ -1471,7 +1471,7 @@ void MasterPola <T>:: read_coupling_mat(char * Name) {
 //****************************************************************************************************************************//
 template <class T>
 void MasterPola <T>::read_spec_radii(char * Name) {
-    fitsfile *fptr;   // pointer to the FITS file  
+    fitsfile *fptr;   // pointer to the FITS file
     int  nfound, anynull;
     double nullval;
       long naxes[1],fpixel=1;
@@ -1485,7 +1485,7 @@ void MasterPola <T>::read_spec_radii(char * Name) {
         exit(-1);
       }
     //SAVE TTTT inv Matrix
-       naxes[0] = 0;  // int converted to long  
+       naxes[0] = 0;  // int converted to long
     if (fits_read_keys_lng(fptr, "NAXIS", 1, 1, naxes, &nfound, &status) ) {
         printf(" Error: cannot read NAXIS keyword");
         fits_close_file(fptr, &status);
@@ -1497,7 +1497,7 @@ void MasterPola <T>::read_spec_radii(char * Name) {
         exit(EXIT_FAILURE);
     }
     double spec_radii[6];
-    nullval= 0; 
+    nullval= 0;
     if(fits_read_img(fptr, TDOUBLE, fpixel, 6,  (void *) &nullval, spec_radii, &anynull, &status) ){
        printf("\n error in fits_read_img %s", FitsName);
        exit(EXIT_FAILURE);
@@ -1509,7 +1509,7 @@ void MasterPola <T>::read_spec_radii(char * Name) {
     this->gamma_TE_TE= spec_radii[3];
     this->gamma_EB_EB= spec_radii[4];
     this->gamma_EB_4BLOCKS= spec_radii[5];
-    
+
     if(this->Verbose) printf("SpecRadii= TTTT %f, EEEE %f, EEBB %f, TETE %f,EBEB %f, EB_4B %f\n",this->gamma_TT_TT,this->gamma_EE_EE,this->gamma_EE_BB, this->gamma_TE_TE,this->gamma_EB_EB,this->gamma_EB_4BLOCKS);
 
     if ( fits_close_file(fptr, &status) ) {
@@ -1521,7 +1521,7 @@ void MasterPola <T>::read_spec_radii(char * Name) {
 //****************************************************************************************************************************//
 template <class T>
 void MasterPola <T>:: read_inv_mat(char * Name) {
-    fitsfile *fptr;   // pointer to the FITS file  
+    fitsfile *fptr;   // pointer to the FITS file
     int nfound, anynull,nhdu;
     double nullval;
       long naxes[2],fpixel=1;
@@ -1544,8 +1544,8 @@ void MasterPola <T>:: read_inv_mat(char * Name) {
     }
 
     //READ TTTT inv Matrix
-       naxes[0] = 0;  // int converted to long  
-       naxes[1] = 0;  // int converted to long  
+       naxes[0] = 0;  // int converted to long
+       naxes[1] = 0;  // int converted to long
     if (fits_read_keys_lng(fptr, "NAXIS", 1, 2, naxes, &nfound, &status) ) {
         printf(" Error: cannot read NAXIS keyword for TTTT inv Matrix");
         fits_close_file(fptr, &status);
@@ -1566,8 +1566,8 @@ void MasterPola <T>:: read_inv_mat(char * Name) {
         printf("Error: cannot move to hdu 3 for file %s %d ", FitsName, status);
         exit(EXIT_FAILURE);
       }
-      naxes[0] = 0;  // int converted to long  
-       naxes[1] = 0;  // int converted to long  
+      naxes[0] = 0;  // int converted to long
+       naxes[1] = 0;  // int converted to long
     if (fits_read_keys_lng(fptr, "NAXIS", 1, 2, naxes, &nfound, &status) ) {
         printf(" Error: cannot read NAXIS keyword for EEEE inv Matrix");
         fits_close_file(fptr, &status);
@@ -1587,8 +1587,8 @@ void MasterPola <T>:: read_inv_mat(char * Name) {
         printf("Error: cannot move to hdu 4 for file %s %d ", FitsName, status);
         exit(EXIT_FAILURE);
       }
-      naxes[0] = 0;  // int converted to long  
-       naxes[1] = 0;  // int converted to long  
+      naxes[0] = 0;  // int converted to long
+       naxes[1] = 0;  // int converted to long
     if (fits_read_keys_lng(fptr, "NAXIS", 1, 2, naxes, &nfound, &status) ) {
         printf(" Error: cannot read NAXIS keyword for EEBB inv Matrix");
         fits_close_file(fptr, &status);
@@ -1602,14 +1602,14 @@ void MasterPola <T>:: read_inv_mat(char * Name) {
                exit(EXIT_FAILURE);
         }
     }
-    
+
     //READ TETE inv Matrix
     if(fits_movabs_hdu(fptr, 4, &hdutype,&status)) {
         printf("Error: cannot move to hdu 2 for file %s %d ", FitsName, status);
         exit(EXIT_FAILURE);
       }
-      naxes[0] = 0;  // int converted to long  
-       naxes[1] = 0;  // int converted to long  
+      naxes[0] = 0;  // int converted to long
+       naxes[1] = 0;  // int converted to long
     if (fits_read_keys_lng(fptr, "NAXIS", 1, 2, naxes, &nfound, &status) ) {
         printf(" Error: cannot read NAXIS keyword  for TETE inv Matrix");
         fits_close_file(fptr, &status);
@@ -1628,8 +1628,8 @@ void MasterPola <T>:: read_inv_mat(char * Name) {
         printf("Error: cannot move to hdu 5 for file %s %d ", FitsName, status);
         exit(EXIT_FAILURE);
       }
-      naxes[0] = 0;  // int converted to long  
-       naxes[1] = 0;  // int converted to long  
+      naxes[0] = 0;  // int converted to long
+       naxes[1] = 0;  // int converted to long
     if (fits_read_keys_lng(fptr, "NAXIS", 1, 2, naxes, &nfound, &status) ) {
         printf(" Error: cannot read NAXIS keyword for EBEB inv Matrix");
         fits_close_file(fptr, &status);
@@ -1649,8 +1649,8 @@ void MasterPola <T>:: read_inv_mat(char * Name) {
         printf("Error: cannot move to hdu 6 for file %s %d ", FitsName, status);
         exit(EXIT_FAILURE);
       }
-      naxes[0] = 0;  // int converted to long  
-       naxes[1] = 0;  // int converted to long  
+      naxes[0] = 0;  // int converted to long
+       naxes[1] = 0;  // int converted to long
     if (fits_read_keys_lng(fptr, "NAXIS", 1, 2, naxes, &nfound, &status) ) {
         printf(" Error: cannot read NAXIS keyword for EB 4 Blocks inv Matrix");
         fits_close_file(fptr, &status);
@@ -1680,10 +1680,10 @@ void MasterPola <T>:: read_inv_mat(char * Name) {
 //****************************************************************************************************************************//
 template <class T>
 void MasterPola <T>::write_coupling_mat(char * Name) {
-    fitsfile *fptr;   // pointer to the FITS file  
+    fitsfile *fptr;   // pointer to the FITS file
       long naxes[2], firstpixel=1, npixels;
        int status = 0;
-      int bitpix = -64;   
+      int bitpix = -64;
       char FitsName[MAXCHAR];
        char *NameFits=fitsname(Name);
     strcpy(FitsName, NameFits);
@@ -1696,7 +1696,7 @@ void MasterPola <T>::write_coupling_mat(char * Name) {
       }
 
     //SAVE TTTT Matrix
-       naxes[0] = (long) this->MAT_TT_TT.axis(1);  // int converted to long  
+       naxes[0] = (long) this->MAT_TT_TT.axis(1);  // int converted to long
        naxes[1] = (long) this->MAT_TT_TT.axis(2);
     if (fits_create_img(fptr,bitpix, 2, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
@@ -1710,7 +1710,7 @@ void MasterPola <T>::write_coupling_mat(char * Name) {
            }
     }
     //SAVE EEEE Matrix
-       naxes[0] = (long) this->MAT_EE_EE.axis(1);  // int converted to long  
+       naxes[0] = (long) this->MAT_EE_EE.axis(1);  // int converted to long
        naxes[1] = (long) this->MAT_EE_EE.axis(2);
     if (fits_create_img(fptr,bitpix, 2, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
@@ -1724,7 +1724,7 @@ void MasterPola <T>::write_coupling_mat(char * Name) {
            }
     }
        //SAVE EEBB Matrix
-       naxes[0] = (long) this->MAT_EE_BB.axis(1);  // int converted to long  
+       naxes[0] = (long) this->MAT_EE_BB.axis(1);  // int converted to long
        naxes[1] = (long) this->MAT_EE_BB.axis(2);
     if (fits_create_img(fptr,bitpix, 2, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
@@ -1736,9 +1736,9 @@ void MasterPola <T>::write_coupling_mat(char * Name) {
                printf("Error: cannot write EEBB matrix %s %d ", FitsName, status);
                exit(-1);
            }
-    }    
+    }
     //SAVE TETE Matrix
-       naxes[0] = (long) this->MAT_TE_TE.axis(1);  // int converted to long  
+       naxes[0] = (long) this->MAT_TE_TE.axis(1);  // int converted to long
        naxes[1] = (long) this->MAT_TE_TE.axis(2);
     if (fits_create_img(fptr,bitpix, 2, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
@@ -1752,7 +1752,7 @@ void MasterPola <T>::write_coupling_mat(char * Name) {
            }
     }
     //SAVE EBEB Matrix
-       naxes[0] = (long) this->MAT_EB_EB.axis(1);  // int converted to long  
+       naxes[0] = (long) this->MAT_EB_EB.axis(1);  // int converted to long
        naxes[1] = (long) this->MAT_EB_EB.axis(2);
     if (fits_create_img(fptr,bitpix, 2, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
@@ -1764,20 +1764,20 @@ void MasterPola <T>::write_coupling_mat(char * Name) {
                printf("Error: cannot write EBEB matrix %s %d ", FitsName, status);
                exit(-1);
            }
-    }    
+    }
     if ( fits_close_file(fptr, &status) ) {
        printf("Error: cannot close %s %d ", FitsName, status);
        exit(-1);
     }
-}   
+}
 
 //****************************************************************************************************************************//
 template <class T>
 void MasterPola <T>::write_spec_radii(char * Name) {
-    fitsfile *fptr;   // pointer to the FITS file  
+    fitsfile *fptr;   // pointer to the FITS file
       long naxes[1];
        int status = 0;
-      int bitpix = -64;   
+      int bitpix = -64;
       char FitsName[MAXCHAR];
     char *NameFits=fitsname(Name);
     strcpy(FitsName, NameFits);
@@ -1788,7 +1788,7 @@ void MasterPola <T>::write_spec_radii(char * Name) {
         exit(-1);
       }
     //SAVE TTTT inv Matrix
-       naxes[0] = 6;  // int converted to long  
+       naxes[0] = 6;  // int converted to long
 
     if (fits_create_img(fptr,bitpix, 1, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
@@ -1815,10 +1815,10 @@ void MasterPola <T>::write_spec_radii(char * Name) {
 //****************************************************************************************************************************//
 template <class T>
 void MasterPola <T>::write_inv_mat(char * Name) {
-    fitsfile *fptr;   // pointer to the FITS file  
+    fitsfile *fptr;   // pointer to the FITS file
       long naxes[2], firstpixel=1, npixels;
        int status = 0, hdunum,nhdu,res;
-      int bitpix = -64;   
+      int bitpix = -64;
       char FitsName[MAXCHAR];
     char *NameFits=fitsname(Name);
      strcpy(FitsName, NameFits);
@@ -1829,7 +1829,7 @@ void MasterPola <T>::write_inv_mat(char * Name) {
         exit(-1);
       }
     //SAVE TTTT inv Matrix
-       naxes[0] = (long) this->inv_MAT_TT_TT.axis(1);  // int converted to long  
+       naxes[0] = (long) this->inv_MAT_TT_TT.axis(1);  // int converted to long
        naxes[1] = (long) this->inv_MAT_TT_TT.axis(2);
     if (fits_create_img(fptr,bitpix, 2, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
@@ -1849,7 +1849,7 @@ void MasterPola <T>::write_inv_mat(char * Name) {
     }
 
     //SAVE EEEE inv Matrix
-       naxes[0] =(long) this->inv_MAT_EE_EE.axis(1);  // int converted to long  
+       naxes[0] =(long) this->inv_MAT_EE_EE.axis(1);  // int converted to long
        naxes[1] =(long) this->inv_MAT_EE_EE.axis(2);
     if (fits_create_img(fptr,bitpix, 2, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
@@ -1869,7 +1869,7 @@ void MasterPola <T>::write_inv_mat(char * Name) {
     }
 
        //SAVE EEBB inv Matrix
-       naxes[0] = (long) this->inv_MAT_EE_BB.axis(1);  // int converted to long  
+       naxes[0] = (long) this->inv_MAT_EE_BB.axis(1);  // int converted to long
        naxes[1] = (long) this->inv_MAT_EE_BB.axis(2);
     if (fits_create_img(fptr,bitpix, 2, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
@@ -1881,7 +1881,7 @@ void MasterPola <T>::write_inv_mat(char * Name) {
                printf("Error: cannot write inv EEBB matrix %s %d ", FitsName, status);
                exit(-1);
            }
-    }    
+    }
     if(this->Verbose) {
         res =fits_get_hdu_num(fptr,&hdunum);
         res =fits_get_num_hdus(fptr,&nhdu,&status);
@@ -1890,7 +1890,7 @@ void MasterPola <T>::write_inv_mat(char * Name) {
 
 
     //SAVE TETE inv Matrix
-       naxes[0] = (long) this->inv_MAT_TE_TE.axis(1);  // int converted to long  
+       naxes[0] = (long) this->inv_MAT_TE_TE.axis(1);  // int converted to long
        naxes[1] = (long) this->inv_MAT_TE_TE.axis(2);
     if (fits_create_img(fptr,bitpix, 2, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
@@ -1911,7 +1911,7 @@ void MasterPola <T>::write_inv_mat(char * Name) {
 
 
     //SAVE EBEB inv Matrix
-       naxes[0] =  (long) this->inv_MAT_EB_EB.axis(1);  // int converted to long  
+       naxes[0] =  (long) this->inv_MAT_EB_EB.axis(1);  // int converted to long
        naxes[1] =  (long) this->inv_MAT_EB_EB.axis(2);
     if (fits_create_img(fptr,bitpix, 2, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
@@ -1923,7 +1923,7 @@ void MasterPola <T>::write_inv_mat(char * Name) {
                printf("Error: cannot write inv EBEB matrix %s %d ", FitsName, status);
                exit(-1);
            }
-    }    
+    }
     if(this->Verbose) {
         res =fits_get_hdu_num(fptr,&hdunum);
         res =fits_get_num_hdus(fptr,&nhdu,&status);
@@ -1931,7 +1931,7 @@ void MasterPola <T>::write_inv_mat(char * Name) {
     }
 
     //SAVE EB 4 blocks inv Matrix
-       naxes[0] = (long) this->inv_MAT_EB_4Blocks.axis(1);  // int converted to long  
+       naxes[0] = (long) this->inv_MAT_EB_4Blocks.axis(1);  // int converted to long
        naxes[1] = (long) this->inv_MAT_EB_4Blocks.axis(2);
     if (fits_create_img(fptr,bitpix, 2, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
@@ -1949,12 +1949,12 @@ void MasterPola <T>::write_inv_mat(char * Name) {
         res =fits_get_num_hdus(fptr,&nhdu,&status);
         printf("EB 4 blocks: %d out of %d\n", hdunum, nhdu);
     }
-    
+
     if ( fits_close_file(fptr, &status) ) {
        printf("Error: cannot close %s %d ", FitsName, status);
        exit(-1);
     }
-}   
+}
 
 //****************************************************************************************************************************//
 template <class T>
@@ -1965,19 +1965,19 @@ void MasterPola <T>:: write_master_allPSPEC(char * Name) {
     //Get number of spectra
     long nspec = 0;
     long szspec[6];
-    szspec[0] = (long) Master_TT_Powspec.size();  // int converted to long  
-    if(szspec>0) ++nspec;
-    szspec[1] = (long) Master_EE_Powspec.size();  // int converted to long  
-    if(szspec>0) ++nspec;
-    szspec[2] = (long) Master_BB_Powspec.size();  // int converted to long  
-    if(szspec>0) ++nspec;
-    szspec[3] = (long) Master_TE_Powspec.size();  // int converted to long  
-    if(szspec>0) ++nspec;
-    szspec[4] = (long) Master_TB_Powspec.size();  // int converted to long  
-    if(szspec>0) ++nspec;
-    szspec[5] = (long) Master_EB_Powspec.size();  // int converted to long  
-    if(szspec>0) ++nspec;
-    
+    szspec[0] = (long) Master_TT_Powspec.size();  // int converted to long
+    if(szspec>(void *)0) ++nspec;
+    szspec[1] = (long) Master_EE_Powspec.size();  // int converted to long
+    if(szspec>(void *)0) ++nspec;
+    szspec[2] = (long) Master_BB_Powspec.size();  // int converted to long
+    if(szspec>(void *)0) ++nspec;
+    szspec[3] = (long) Master_TE_Powspec.size();  // int converted to long
+    if(szspec>(void *)0) ++nspec;
+    szspec[4] = (long) Master_TB_Powspec.size();  // int converted to long
+    if(szspec>(void *)0) ++nspec;
+    szspec[5] = (long) Master_EB_Powspec.size();  // int converted to long
+    if(szspec>(void *)0) ++nspec;
+
     PowSpec HPspec= PowSpec(nspec, lLmax);
     arr<double> arr_TT_temp=Master_TT_Powspec;
     if(nspec==1) HPspec.Set(arr_TT_temp);
@@ -1999,15 +1999,15 @@ void MasterPola <T>:: write_master_allPSPEC(char * Name) {
     if (intest.good()) out.delete_file(infile);
     write_powspec_to_fits (infile,HPspec,nspec);
     free(NameFits);
-} 
+}
 
 //****************************************************************************************************************************//
 template <class T>
 void MasterPola <T>:: write_master_PSPEC(char * Name) {
-    fitsfile *fptr;   // pointer to the FITS file  
+    fitsfile *fptr;   // pointer to the FITS file
       long naxes[1], firstpixel=1, npixels;
        int status = 0;
-      int bitpix = -64;   
+      int bitpix = -64;
       char FitsName[MAXCHAR];
     char *NameFits=fitsname(Name);
     strcpy(FitsName, NameFits);
@@ -2019,7 +2019,7 @@ void MasterPola <T>:: write_master_PSPEC(char * Name) {
      remove(FitsName);
 
     //SAVE Master_TT_Powspec
-       naxes[0] = (long) this->Master_TT_Powspec.size();  // int converted to long  
+       naxes[0] = (long) this->Master_TT_Powspec.size();  // int converted to long
     if (fits_create_img(fptr,bitpix, 1, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
         exit(-1);
@@ -2033,7 +2033,7 @@ void MasterPola <T>:: write_master_PSPEC(char * Name) {
     }
 
     //SAVE Master_EE_Powspec
-       naxes[0] = (long) this->Master_EE_Powspec.size();  // int converted to long  
+       naxes[0] = (long) this->Master_EE_Powspec.size();  // int converted to long
     if (fits_create_img(fptr,bitpix, 1, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
         exit(-1);
@@ -2046,7 +2046,7 @@ void MasterPola <T>:: write_master_PSPEC(char * Name) {
            }
     }
        //SAVE Master_BB_Powspec
-       naxes[0] = (long) this->Master_BB_Powspec.size();  // int converted to long  
+       naxes[0] = (long) this->Master_BB_Powspec.size();  // int converted to long
     if (fits_create_img(fptr,bitpix, 1, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
         exit(-1);
@@ -2057,10 +2057,10 @@ void MasterPola <T>:: write_master_PSPEC(char * Name) {
                printf("Error: cannot write Master_BB_Powspec %s %d ", FitsName, status);
                exit(-1);
            }
-    }    
+    }
 
     //SAVE Master_TE_Powspec
-       naxes[0] = (long) this->Master_TE_Powspec.size();  // int converted to long  
+       naxes[0] = (long) this->Master_TE_Powspec.size();  // int converted to long
     if (fits_create_img(fptr,bitpix, 1, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
         exit(-1);
@@ -2073,7 +2073,7 @@ void MasterPola <T>:: write_master_PSPEC(char * Name) {
            }
     }
     //SAVE Master_TB_Powspec
-       naxes[0] = (long) this->Master_TB_Powspec.size();  // int converted to long  
+       naxes[0] = (long) this->Master_TB_Powspec.size();  // int converted to long
     if (fits_create_img(fptr,bitpix, 1, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
         exit(-1);
@@ -2087,7 +2087,7 @@ void MasterPola <T>:: write_master_PSPEC(char * Name) {
     }
 
     //SAVE Master_EB_Powspec
-       naxes[0] = (long) this->Master_EB_Powspec.size();  // int converted to long  
+       naxes[0] = (long) this->Master_EB_Powspec.size();  // int converted to long
     if (fits_create_img(fptr,bitpix, 1, naxes, &status) ) {
         printf("Error: cannot write header %s %d", FitsName, status);
         exit(-1);
@@ -2098,10 +2098,9 @@ void MasterPola <T>:: write_master_PSPEC(char * Name) {
                printf("Error: cannot write inv EBEB matrix %s %d ", FitsName, status);
                exit(-1);
            }
-    }    
+    }
     if ( fits_close_file(fptr, &status) ) {
        printf("Error: cannot close %s %d ", FitsName, status);
        exit(-1);
     }
-}   
-
+}

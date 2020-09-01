@@ -33,16 +33,16 @@ else()
 endif()
 
 # Locate CFITSIO
-find_cfitsio()
+find_pkg(CFITSIO cfitsio)
 
+# Locate HEALPix
+find_pkg(HEALPIX healpix_cxx)
 
 # Set Sparse2D source dir
 set(SPARSE2D_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/sparse2d)
 
 # Build Sparse2D
 include(BuildSparse2D)
-
-# set(FFTW_CXX_FLAGS "-DUSE_FFTW")
 
 # Set compilation flags
 set(CMAKE_CXX_FLAGS
@@ -53,6 +53,30 @@ set(CMAKE_CXX_FLAGS_RELEASE
   "${CMAKE_CXX_FLAGS_RELEASE} -g0 -fomit-frame-pointer"
 )
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+
+# --- #
+# MRS #
+# --- #
+
+# Build mrs libs
+set(mrs_libs mrs mrsp)
+foreach(library ${mrs_libs})
+  build_lib(${library} mrs cc h)
+endforeach()
+
+# Find all mrs targets
+find_targets(mrs_targets mrs/mainmrs cc)
+
+# # Build binaries
+foreach(program ${mrs_targets})
+  build_bin(${program} "${mrs_libs}" mrs/mainmrs cc)
+endforeach(program)
+
+# Install libraries
+install(TARGETS ${mrs_libs} DESTINATION lib)
+
+# Install binaraies
+install(TARGETS ${mrs_targets} DESTINATION bin)
 
 # -------- #
 # Astro WL #

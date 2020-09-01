@@ -1,18 +1,17 @@
-# Locate CFITSIO using pkg-config or use command line arguments to configure
-# CFITSIO
-function(find_cfitsio)
-  if(CFITSIO_LIBRARIES STREQUAL "" OR NOT DEFINED CFITSIO_LIBRARIES OR
-     CFITSIO_LIBRARY_DIRS STREQUAL "" OR NOT DEFINED CFITSIO_LIBRARY_DIRS OR
-     CFITSIO_INCLUDE_DIRS STREQUAL "" OR NOT DEFINED CFITSIO_INCLUDE_DIRS)
-    pkg_check_modules(CFITSIO REQUIRED cfitsio)
+# Locate pkgconfig package
+function(find_pkg package module)
+  if(${package}_LIBRARIES STREQUAL "" OR NOT DEFINED ${package}_LIBRARIES OR
+     ${package}_LIBRARY_DIRS STREQUAL "" OR NOT DEFINED ${package}_LIBRARY_DIRS OR
+     ${package}_INCLUDE_DIRS STREQUAL "" OR NOT DEFINED ${package}_INCLUDE_DIRS)
+    pkg_check_modules(${package} REQUIRED ${module})
   else()
-    message(STATUS "Use manually configured cfitsio")
-    message(STATUS "  includes: ${CFITSIO_INCLUDE_DIRS}")
-    message(STATUS "  libs: ${CFITSIO_LIBRARY_DIRS}")
-    message(STATUS "  flags: ${CFITSIO_LIBRARIES}")
+    message(STATUS "Use manually configured ${package}")
+    message(STATUS "  includes: ${${package}_INCLUDE_DIRS}")
+    message(STATUS "  libs: ${${package}_LIBRARY_DIRS}")
+    message(STATUS "  flags: ${${package}_LIBRARIES}")
   endif()
-  include_directories(${CFITSIO_INCLUDE_DIRS})
-  link_directories(${CFITSIO_LIBRARY_DIRS})
+  include_directories(${${package}_INCLUDE_DIRS})
+  link_directories(${${package}_LIBRARY_DIRS})
 endfunction()
 
 # Extract target names from source files
@@ -36,6 +35,6 @@ endfunction()
 # Build binary
 function(build_bin program libs target_path ext)
   add_executable(${program} "${PROJECT_SOURCE_DIR}/${target_path}/${program}.${ext}")
-  target_link_libraries(${program} ${CFITSIO_LIBRARIES} ${fftw_libs} ${libs} ${sparse2d_libs})
+  target_link_libraries(${program} ${CFITSIO_LIBRARIES} ${HEALPIX_LIBRARIES} ${fftw_libs} ${libs} ${sparse2d_libs})
   add_dependencies(${program} sparse2d-git)
 endfunction()
