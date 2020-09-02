@@ -9,24 +9,24 @@
 **    Author: Florent Sureau
 **
 **    Date:  Oct 13
-**    
+**
 **    File:  mrsp_matmask.cc
 **
 *******************************************************************************
 **
-**    DESCRIPTION Polarized MASTER deconvolution to obtain power spectra for 
+**    DESCRIPTION Polarized MASTER deconvolution to obtain power spectra for
 **		polarized masked maps on the sphere
-**    ----------- 
-**                 
+**    -----------
+**
 **    Usage: mrsp_matmask options TQU/TEB PolaMap_File_input MaskT_input spec_file_output
 **
 ******************************************************************************
 **
 **    HISTORY
-**    ----------- 
-**                 
-**    Core is computation of standart coupling matrices 
-**	  from M. Tristram routines (i.e. wrapper to wigner-3j fortran routines, 
+**    -----------
+**
+**    Core is computation of standart coupling matrices
+**	  from M. Tristram routines (i.e. wrapper to wigner-3j fortran routines,
 **	and calling routine to compute the matrices commented below)
 **    This code was rewritten for better runtime performance and
 **	  added input/outputs routines, own inversion, open-mp parallelization
@@ -61,7 +61,7 @@ void make_mll_pol( long lmax, double *well, double *mll);
 //
 // output:
 //    mll matrices in RowMajorOrder, 5 matrices of size (lmax+1,lmax+1)
-//    mll = [mll_TT_TT, mll_EE_EE, mll_EE_BB, mll_TE_TE, mll_EB_EB 
+//    mll = [mll_TT_TT, mll_EE_EE, mll_EE_BB, mll_TE_TE, mll_EB_EB
 //
 // dependancy:
 //    Need FORTRAN routine wig3j_f.f to compute 3j-wigner
@@ -78,7 +78,7 @@ void make_mll_pol( long lmax, double *well, double *mll);
 //                              clean memory in wig3j
 //=========================================================================
 
-    
+
     //Wrapper to FORTRAN routine wig3j_f.f
     //Be careful, for vanishing wigner coeff, FORTRAN routine does not return 0.
     void wig3j_c( long l2, long l3, long m2, long m3, double *wigner)
@@ -87,23 +87,23 @@ void make_mll_pol( long lmax, double *well, double *mll);
         double l1min, l1max;
         double dl2, dl3, dm2, dm3;
         int ndim, ier=0, l;
-        
+
         l1min = MAX( abs(l2-l3), abs(m2+m3));
         l1max = l2 + l3;
         ndim = (int)(l1max-l1min+1);
-        
+
         dl2 = (double)l2;
         dl3 = (double)l3;
         dm2 = (double)m2;
         dm3 = (double)m3;
-        
-        // wigner=0 for l<l1min 
+
+        // wigner=0 for l<l1min
         for( l=0; l<l1min; l++) wigner[l] = 0.;
-        
-        THRCOF = wigner + (int)l1min;    // wig3j start at max( abs(l2-l3), abs(m2+m3)) 
+
+        THRCOF = wigner + (int)l1min;    // wig3j start at max( abs(l2-l3), abs(m2+m3))
         if( l2<abs(m2) || l3<abs(m3) || (l1max-l1min)<0 ) for( l=0; l<ndim; l++) THRCOF[l] = 0.;
         else wig3j_( &dl2, &dl3, &dm2, &dm3, &l1min, &l1max, THRCOF, &ndim, &ier);
-        
+
         if( ier) {
             for( l=0; l<ndim; l++) THRCOF[l] = 0.;
             printf( "err=%d  l2=%d, l3=%d, m2=%d, m3=%d : ", ier, l2, l3, m2, m3);
@@ -117,10 +117,10 @@ void make_mll_pol( long lmax, double *well, double *mll);
             }
             fflush(stdout);
         }
-        
+
     }
 
-    
+
 
 /*void make_mll_pol( long lmax, double *well, double *mll)
 {
@@ -132,23 +132,23 @@ void make_mll_pol( long lmax, double *well, double *mll);
   long n=lmax+1;
   long well_lmax = lmax;   // well supposed to be lmax+1 size long also
 
-  // split Mll into components 
+  // split Mll into components
   mll_TT_TT = &mll[ 0*n*n];
   mll_EE_EE = &mll[ 1*n*n];
   mll_EE_BB = &mll[ 2*n*n];
   mll_TE_TE = &mll[ 3*n*n];
   mll_EB_EB = &mll[ 4*n*n];
 
-  // split well into components 
+  // split well into components
   well_TT = &well[ 0*(well_lmax+1)];
   well_TP = &well[ 1*(well_lmax+1)];
-  well_PP = &well[ 2*(well_lmax+1)];  
+  well_PP = &well[ 2*(well_lmax+1)];
 
-  // loop over the matrice elements 
+  // loop over the matrice elements
   for( long l1=0; l1<=lmax; l1++) {
     for( long l2=0; l2<=lmax; l2++) {
 
-      // initialization 
+      // initialization
       sum_TT    = 0.;
       sum_TE    = 0.;
       sum_EE_EE = 0.;
@@ -174,7 +174,7 @@ void make_mll_pol( long lmax, double *well, double *mll);
 	if( (l1+l2+l3)%2 != 0) sum_EE_BB += well_PP[l3] * (double)(2.*l3+1.) * wigner2[l3] * wigner2[l3];
 	sum_EB += well_PP[l3] * (double)(2.*l3+1.) * wigner2[l3] * wigner2[l3];
       }
-      
+
       mll_TT_TT[ l1*n+l2] = (2.*double(l2)+1.)/(4.*M_PI) * sum_TT;
       mll_EE_EE[ l1*n+l2] = (2.*double(l2)+1.)/(4.*M_PI) * sum_EE_EE;
       mll_EE_BB[ l1*n+l2] = (2.*double(l2)+1.)/(4.*M_PI) * sum_EE_BB;
@@ -191,7 +191,7 @@ void make_mll_pol( long lmax, double *well, double *mll);
 
 }
 
- 
+
 
 /*********************************************************************/
 char flag_tqu_teb[4];
@@ -240,7 +240,7 @@ float ZeroPadding=0;
 int Lmax = 0;
 int Nit_inv = 0;
 
-#ifdef _OPENMP    
+#ifdef _OPENMP
  	extern int inner_loop_threads;
   	extern int outer_loop_threads;
 #endif
@@ -260,22 +260,22 @@ static void usage(char *argv[])
 
     fprintf(OUTMAN, "         [-f] \n");
     fprintf(OUTMAN, "             Fast inversion. Default is false (faster upper bound for iterative approach, or fast block inverse\n");
-    
+
     fprintf(OUTMAN, "         [-i] \n");
     fprintf(OUTMAN, "             Invert Coupling Matrix with SVD. Default is no SVD (iterative approach).\n");
- 
+
     fprintf(OUTMAN, "         [-k Nits]\n");
     fprintf(OUTMAN, "             Number of iterations for iterative approach (default 40).\n");
 
     fprintf(OUTMAN, "         [-l lmax]\n");
     fprintf(OUTMAN, "             Default is 3*nside \n");
- 
+
     fprintf(OUTMAN, "         [-m Name_File_Polarized Mask.\n");
     fprintf(OUTMAN, "             Mask for Polarization (default : same as temperature).\n");
-    
+
     fprintf(OUTMAN, "         [-n]\n");
     fprintf(OUTMAN, "             Normalization. Default is no.\n");
-    
+
     fprintf(OUTMAN, "         [-o]\n");
     fprintf(OUTMAN, "             Timer on.\n");
 
@@ -299,10 +299,10 @@ static void usage(char *argv[])
 
     fprintf(OUTMAN, "         [-z]\n");
     fprintf(OUTMAN, "             zero monopole and dipole in solution (temperature).\n");
-	
+
     fprintf(OUTMAN, "         [-E Name_File_EB]\n");
     fprintf(OUTMAN, "         	  FileName to save EB map (if input map is TQU).\n");
-    
+
     fprintf(OUTMAN, "         [-I Name_file_inv_coupling_matrix]\n");
     fprintf(OUTMAN, "             FileName where the inverse coupling matrix is stored.\n");
 
@@ -317,7 +317,7 @@ static void usage(char *argv[])
 
     fprintf(OUTMAN, "         [-O Name_file_mask_spectra]\n");
     fprintf(OUTMAN, "             FileName where the power spectra of the noise maps are stored.\n");
- 
+
     fprintf(OUTMAN, "         [-P Name_file_masked_map_spectra]\n");
     fprintf(OUTMAN, "             FileName where the power spectra of the masked maps are saved.\n");
 
@@ -335,9 +335,9 @@ static void sinit( int argc, char *argv[] )
     int c;
     /* get options */
     while( (c = GetOpt( argc,argv,(char *) "a:efik:l:m:nopstuvwzE:I:K:M:N:O:P:R:" )) != -1 ) {
-	switch (c) { 
+	switch (c) {
 		case 'a':
-			#ifdef _OPENMP    
+			#ifdef _OPENMP
 	        	if (sscanf(OptArg,"%d:%d",&outer_loop_threads,&inner_loop_threads) < 1)
 				{
 		   			fprintf(OUTMAN, "Error: syntaxe is outer_loop_threads:inner_loop_threads ... \n");
@@ -385,23 +385,23 @@ static void sinit( int argc, char *argv[] )
  		        break;
  		case 's':
 	   		PolaFastALM = false;
- 		        break;       
+ 		        break;
  		case 't':
 	   		Flag_onlyT = true;
- 		        break;       
+ 		        break;
  		case 'u':
 	   		FlagUncorrNoise = true;
- 		        break;     
+ 		        break;
  		case 'v':
 	   		Verbose = true;
- 		        break;     
+ 		        break;
  		case 'w':
 	   		WriteIntFile = true;
- 		     break;     
- 
+ 		     break;
+
  		case 'z':
 	   		Zero_first2l = true;
- 		    break;       
+ 		    break;
 		case 'E':
 			if( sscanf(OptArg,"%s",Name_file_EB) != 1 ) {
 		            fprintf(OUTMAN, "Error: bad Filename for EBmap: %s\n", OptArg);
@@ -415,7 +415,7 @@ static void sinit( int argc, char *argv[] )
 		            exit(-1);
 			}
 			Flag_inv_coupling_mat=true;
-			break;		
+			break;
 		case 'K':
   	              if( sscanf(OptArg,"%s",Name_file_coupling_mat) != 1 ) {
 		            fprintf(OUTMAN, "Error: bad Filename for Coupling Matrix: %s\n", OptArg);
@@ -429,21 +429,21 @@ static void sinit( int argc, char *argv[] )
 		            exit(-1);
 			}
 			Flag_mask_spec=true;
-			break;		
+			break;
 		case 'N':
   	              if( sscanf(OptArg,"%s",Name_file_noise) != 1 ) {
 		            fprintf(OUTMAN, "Error: bad Filename for Mask for Polarization: %s\n", OptArg);
 		            exit(-1);
 			}
 			FlagNoise =true;
-			break;		
+			break;
 		case 'O':
   	              if( sscanf(OptArg,"%s",Name_file_spec_noise) != 1 ) {
 		            fprintf(OUTMAN, "Error: bad Filename for Mask for Polarization: %s\n", OptArg);
 		            exit(-1);
 			}
 			FlagSpecNoise =true;
-			break;		
+			break;
 		case 'P':
 			if( sscanf(OptArg,"%s",Name_file_masked_map_spec) != 1 ) {
 		            fprintf(OUTMAN, "Error: bad Filename for EBmap: %s\n", OptArg);
@@ -462,20 +462,20 @@ static void sinit( int argc, char *argv[] )
 			Flag_spec_radii=true;
 			break;
 		}
-	} 
+	}
 
-    
+
 	// get optional input file names from trailing parameters and open files
 	if( OptInd < argc ) {
 		strcpy( flag_tqu_teb, argv[OptInd] );
 		OptInd++;
 	} else usage(argv);
-    
+
 	if( OptInd < argc ) {
 	    	strcpy( Name_file_Map, argv[OptInd] );
     		OptInd++;
 	} else usage(argv);
-    
+
 	if( OptInd < argc ) {
 	    	strcpy( Name_file_MaskT, argv[OptInd] );
     		OptInd++;
@@ -485,7 +485,7 @@ static void sinit( int argc, char *argv[] )
     		strcpy( Name_file_MASTER_spec, argv[OptInd] );
     		OptInd++;
 	} else usage(argv);
-    
+
 	/* make sure there are not too many parameters */
 	if( OptInd < argc ) {
 		fprintf( OUTMAN, "Too many parameters: %s ...\n", argv[OptInd] );
@@ -501,11 +501,11 @@ extern int GetOpt(int argc, char **argv, char *opts);
 	//char** env;
  	/*for (env = envp; *env != 0; env++) {
     	char* thisEnv = *env;
-    	printf("%s\n", thisEnv);    
+    	printf("%s\n", thisEnv);
   	}*/
 	printf("Inside Main\n");
 	sinit(argc, argv);
-    
+
 	#ifdef _OPENMP
 		if(! set_threads) auto_set_inner_outer_threads(0,0);
 		else {
@@ -539,9 +539,9 @@ extern int GetOpt(int argc, char **argv, char *opts);
 	strncpy(prefix,Name_file_MASTER_spec,len_substr);
 	prefix[len_substr]='\0';
 	if(Verbose) printf("prefix=%s\n",prefix);
-	
 
-	if( Lmax > 0 ) MasterP.set_Lmax(Lmax);	
+
+	if( Lmax > 0 ) MasterP.set_Lmax(Lmax);
 	if(! Flag_masked_map_spec) { //Need to load maps
 		if(Flag_onlyT) MasterP.read_HmapT(Name_file_Map);
 		else {
@@ -551,7 +551,7 @@ extern int GetOpt(int argc, char **argv, char *opts);
 				if(Flag_Save_EB) MasterP.write_PolaHmap_EB(Name_file_EB,PolaFastALM);//Save EB map if QU input
 			} else {
 				if(Verbose) printf("Load TEB maps\n");
-				MasterP.read_PolaHmap(Name_file_Map,true,false,false);	
+				MasterP.read_PolaHmap(Name_file_Map,true,false,false);
 			}
 		}
 		if(Verbose) printf("Loaded Input Map\n");
@@ -565,10 +565,10 @@ extern int GetOpt(int argc, char **argv, char *opts);
 		else {
 			if( strcmp( flag_tqu_teb, "TQU" ) == 0 ) {
 				if(Verbose) printf("Load TQU Noise maps\n");
-				MasterP.read_NoisePolaHmap(Name_file_noise,false,false,false);		  
+				MasterP.read_NoisePolaHmap(Name_file_noise,false,false,false);
 			} else {
 				if(Verbose) printf("Load TEB Noise maps\n");
-				MasterP.read_NoisePolaHmap(Name_file_noise,true,false,false);	
+				MasterP.read_NoisePolaHmap(Name_file_noise,true,false,false);
 			}
 		}
 		if(Verbose) printf("Loaded Noise Map\n");
@@ -621,25 +621,25 @@ extern int GetOpt(int argc, char **argv, char *opts);
 			MasterP.make_mll_blocks_c_fast();
 			if(Verbose) printf("Coupling Matrix Computed\n");
 			sprintf(tempname,"%s_coupling_matrices.fits",prefix);
-			if(WriteIntFile) MasterP.write_coupling_mat(tempname);	
+			if(WriteIntFile) MasterP.write_coupling_mat(tempname);
 		} else {
 			MasterP.read_coupling_mat(Name_file_coupling_mat);
 			if(Verbose) printf("Loaded Coupling Matrix\n");
 		}
-	
+
 		unsigned short xsubi[3]={1980,1947,1978};
 		bool Flag_iter=!Flag_SVD;
-		
+
 		if((Flag_iter)&&(Flag_spec_radii)) {
 			MasterP.read_spec_radii(Name_file_spec_radii);
 			if(Verbose) printf("Loaded Spectral Radii\n");
-		}			
+		}
 		if((Verbose)&&(Flag_iter)) printf("ITERATIVE MASTER of PowerSpectra, iter=%d \n", Nit_inv);
 		if((Verbose)&&(!Flag_iter)) printf("SVD MASTER of PowerSpectra\n");
 
 		if(Flag_onlyT) MasterP.get_MASTER_pspec(xsubi,PSPEC_TT,Flag_iter,Nit_inv,Flag_positivity,Flag_fastinv);
 		else MasterP.get_MASTER_pspec(xsubi,PSPEC_ALL,Flag_iter,Nit_inv,Flag_positivity,Flag_fastinv);
-		
+
 		if(Flag_iter) {
 			if(Flag_fastinv) sprintf(tempname,"%s_mask_spec_radii_fast.fits",prefix);
 			else sprintf(tempname,"%s_mask_spec_radii.fits",prefix);
@@ -655,15 +655,14 @@ extern int GetOpt(int argc, char **argv, char *opts);
 		if(Flag_onlyT) MasterP.get_MASTER_pspec(xsubi,PSPEC_TT,false,Nit_inv,Flag_positivity,Flag_fastinv);
 		else MasterP.get_MASTER_pspec(xsubi,PSPEC_ALL,false,Nit_inv,Flag_positivity,Flag_fastinv);
 	}
-	
+
 	//Finally Save Spectra
 	//MasterP.write_master_PSPEC(Name_file_MASTER_spec);
 	MasterP.write_master_allPSPEC(Name_file_MASTER_spec);
-	
+
 	return 0;
 }
 
 
 
 /*********************************************************************/
-
