@@ -23,16 +23,13 @@ from setuptools.command.install import install
 from importlib import import_module
 from setuptools import setup, find_packages
 
-setup(
-    name="pycs",
-    author="CosmoStat Laboratory",
-    author_email="",
-    version="0.0.1rc1",
-    packages=find_packages(),
-#    install_requires = [
-#     'lenspack @ git+https://github.com/CosmoStat/lenspack.git@master#egg=lenspack',
-#    ]
-)
+# setup(
+#     name="pycs",
+#     author="CosmoStat Laboratory",
+#     author_email="",
+#     version="0.0.1rc1",
+#     packages=find_packages(),
+# )
 
 
 # Package information
@@ -73,7 +70,8 @@ def pipinstall(package_list):
     if not isinstance(package_list, list):
         raise TypeError('preinstall inputs must be of type list.')
     for package in package_list:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+        subprocess.check_call([sys.executable, "-m", "pip", "install",
+                               package])
 
 
 class CMakeBuild(build_ext):
@@ -108,8 +106,8 @@ class CMakeBuild(build_ext):
                 ", ".join(e.name for e in self.extensions))
         cmake_version = LooseVersion(re.search(r"version\s*([\d.]+)",
                                      out.decode()).group(1))
-        if cmake_version < "3.0.0":
-            raise RuntimeError("CMake >= 3.0.0 is required.")
+        if cmake_version < "3.18.0":
+            raise RuntimeError("CMake >= 3.18.0 is required.")
 
         # Build extensions
         for ext in self.extensions:
@@ -154,46 +152,6 @@ class CMakeBuild(build_ext):
         print()
 
 
-class HybridTestCommand(TestCommand):
-    """ Define custom mix Python/C++ test runner.
-
-    We will execute both Python unittest tests and C++ Catch tests.
-    """
-    def distutils_dir_name(self, dname):
-        """ Returns the name of a distutils build directory.
-        """
-        dir_name = "{dirname}.{platform}-{version[0]}.{version[1]}"
-        return dir_name.format(dirname=dname,
-                               platform=sysconfig.get_platform(),
-                               version=sys.version_info)
-
-    def run(self):
-        """ Run hybrid tests.
-        """
-        # Run Python tests
-        super(HybridTestCommand, self).run()
-        print("\nPython tests complete, now running C++ tests...\n")
-
-        # Run catch tests
-        test_dir = os.path.join("build", self.distutils_dir_name("temp"),
-                                "sparse2d", "src", "sparse2d", "tests")
-        print("\nExpect C++ test script in {0}.\n".format(test_dir))
-        subprocess.call(["./*_test"], cwd=test_dir, shell=True)
-
-
-class PluginBuild(install):
-    """ Install Plugins
-
-    Install plugins from PyPi following pycs build.
-
-    """
-
-    def run(self):
-
-        pipinstall(release_info["PLUGINS"])
-        install.run(self)
-
-
 # Write setup
 setup(
     name=release_info["NAME"],
@@ -207,7 +165,6 @@ setup(
     url=release_info["URL"],
     packages=find_packages(exclude="doc"),
     platforms=release_info["PLATFORMS"],
-    extras_require=release_info["EXTRA_REQUIRES"],
     install_requires=release_info["REQUIRES"],
     package_data=pkgdata,
     scripts=scripts,
@@ -215,8 +172,5 @@ setup(
         "pymrs", sourcedir=os.path.join("src", "cxx"))],
     cmdclass={
         "build_ext": CMakeBuild,
-        "test": HybridTestCommand,
-        "install": PluginBuild
     }
 )
-

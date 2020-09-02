@@ -20,33 +20,33 @@ def nsNorm(nx,ny,nz,trans=1):
     elif trans == 2:                      # starlet transform 1st generation
         wt = star2d(im,nz,fast=True,gen2=False,normalization=False)
         tmp = wt**2
-    tabNs = numpy.sqrt(numpy.sum(numpy.sum(tmp,1),1))       
+    tabNs = numpy.sqrt(numpy.sum(numpy.sum(tmp,1),1))
     return tabNs
 
 def wavOrth2d(im, nz, wname='haar', wtype=1, mode="symmetric"):
     sx,sy = numpy.shape(im)
     scale = nz
     if scale > numpy.ceil(numpy.log2(sx))+1 or scale > numpy.ceil(numpy.log2(sy))+1:
-        print "Too many decomposition scales! The decomposition scale will be set to default value: 1!"
+        print("Too many decomposition scales! The decomposition scale will be set to default value: 1!")
         scale = 1
     if scale < 1:
-        print "Decomposition scales should not be smaller than 1! The decomposition scale will be set to default value: 1!"
+        print("Decomposition scales should not be smaller than 1! The decomposition scale will be set to default value: 1!")
         scale = 1
-    
+
     band = numpy.zeros((scale+1,len(numpy.shape(im))))
     band[-1] = numpy.shape(im)
-    
+
     if wname =='haar' or wname == 'db1' or wname == 'db2' or wname == 'db3' or wname == 'db4' or wname == 'db5':
         wtype = 1
     else:
         wtype = 2
-    
+
     (h0,g0) = wavFilters(wname,wtype,'d')
     lf = numpy.size(h0)
     wt = numpy.array([])
     start = numpy.array([1,1])
 
-    for sc in numpy.arange(scale-1):  
+    for sc in numpy.arange(scale-1):
         end = numpy.array([sx + lf - 1, sy + lf - 1])
         lenExt = lf - 1
         imExtCol = numpy.lib.pad(im, ((0,0),(lenExt,lenExt)), mode)      # Extension of columns
@@ -104,18 +104,18 @@ def scaleFilter(wname,wtype):
     if wtype == 1:
         if wname =='haar' or wname == 'db1':
             F = numpy.array([0.5,0.5])
-            
+
         elif wname == 'db2':
             F = numpy.array([0.34150635094622,0.59150635094587,0.15849364905378,-0.09150635094587])
-            
+
         elif wname == 'db3':
             F = numpy.array([0.23523360389270,0.57055845791731,0.32518250026371,-0.09546720778426,\
                           -0.06041610415535,0.02490874986589])
-            
+
         elif wname == 'db4':
             F = numpy.array([0.16290171402562,0.50547285754565,0.44610006912319,-0.01978751311791,\
                           -0.13225358368437,0.02180815023739,0.02325180053556,-0.00749349466513])
-            
+
         elif wname == 'db5':
             F = numpy.array([0.11320949129173,0.42697177135271,0.51216347213016,0.09788348067375,\
                            -0.17132835769133,-0.02280056594205,0.05485132932108,-0.00441340005433,\
@@ -182,14 +182,14 @@ def scaleFilter(wname,wtype):
             Rf = numpy.hstack((Rf,Rf[::-1]))
         return (Rf,Df)
 
-def orthWavFilter(F):       
+def orthWavFilter(F):
     p = 1
 #     h1 = numpy.copy(F)
     Lo_R = numpy.sqrt(2)*F/numpy.sum(F)
 #     Lo_R = F/numpy.sqrt(numpy.sum(F**2))
     Hi_R = numpy.copy(Lo_R[::-1])
     first = 2-p%2
-#     print first 
+#     print first
 #     print tmp
     Hi_R[first::2] = -Hi_R[first::2]
     Hi_D=numpy.copy(Hi_R[::-1])
@@ -205,8 +205,8 @@ def biorWavFilter(Rf,Df):
         lmax += 1
     Rf = numpy.hstack([numpy.zeros((lmax-lr)/2),Rf,numpy.zeros((lmax-lr+1)/2)])
     Df = numpy.hstack([numpy.zeros((lmax-ld)/2),Df,numpy.zeros((lmax-ld+1)/2)])
-    
+
     [Lo_D1,Hi_D1,Lo_R1,Hi_R1] = orthWavFilter(Df)
     [Lo_D2,Hi_D2,Lo_R2,Hi_R2] = orthWavFilter(Rf)
-    
+
     return (Lo_D1,Hi_D1,Lo_R1,Hi_R1,Lo_D2,Hi_D2,Lo_R2,Hi_R2)
