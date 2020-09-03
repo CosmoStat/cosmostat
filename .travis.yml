@@ -60,6 +60,8 @@ before_install:
       fi
     - source activate testenv
     - pip install --upgrade pip
+    - echo "Check Healpix headers"
+    - ls /usr/include/healpix_cxx
 
 install:
     - python setup.py install
