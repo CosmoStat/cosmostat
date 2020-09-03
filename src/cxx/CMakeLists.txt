@@ -43,6 +43,7 @@ find_pkg(CFITSIO cfitsio)
 # Locate HEALPix
 find_pkg(HEALPIX healpix_cxx)
 include_directories(${HEALPIX_INCLUDE_DIRS})
+message(STATUS "Using HEALPIX_INCLUDE_DIRS = ${HEALPIX_INCLUDE_DIRS}")
 
 # Build Sparse2D
 include(BuildSparse2D)
