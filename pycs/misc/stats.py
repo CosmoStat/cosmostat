@@ -12,23 +12,9 @@ import numpy as np
 from scipy.optimize import brentq
 from scipy.stats import norm, gaussian_kde
 import scipy
+from modopt.math.stats import *
 
 
-def mad(x):
-    """Compute median absolute deviation (MAD) of an array.
-
-    Parameters
-    ----------
-    x : array_like
-        Input array.
-
-    Returns
-    -------
-    float
-        The MAD of `x`.
-
-    """
-    return np.median(np.abs(x - np.median(x)))
 
 ################################################
 
@@ -392,11 +378,11 @@ def get_grf(size, intput_power_map=None):
                 power_map[i, j] = 1.
             else:
                 power_map[i, j] = intput_power_map[i,j]
-            
+
     power_sample = np.random.normal(loc=0.0, scale=np.sqrt(0.5 * np.reshape(power_map, -1))) +               1j *  np.random.normal(loc=0.0, scale=np.sqrt(0.5 *  np.reshape(power_map, -1)))
     power_sample = np.reshape(power_sample, (size, size))
     map_fourier = np.zeros((size,size), dtype = complex)
-    
+
     for (i, j,), value in np.ndenumerate(map_fourier):
         n = i - int(size/2)
         m = j - int(size/2)
@@ -412,7 +398,5 @@ def get_grf(size, intput_power_map=None):
             map_fourier[size - i,size - j] = np.conj(power_sample[i,j])
 
     map_pixel = np.fft.ifft2(np.fft.fftshift(map_fourier))
-    
+
     return map_pixel
-
-

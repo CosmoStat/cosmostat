@@ -4,25 +4,25 @@ Created on Mar 30, 2015
 @author: Ming  Jiang and Jean-Luc Starck
 
                     CLASS FUNCTION  class starlet2d()
-            
+
     Allow to perform a starlet transform, manipulate it (visualisation, thresholding, statistics, etc),
     and to reconstruct.
-    If pysap is installed, then the pysparse module should be available and 
+    If pysap is installed, then the pysparse module should be available and
     the code will used C++ binding for fast calculation.
     Otherwise full python code is used.
-    
-    Details of the starlet transform can be found in 
-    J.L. Starck, F. Murtagh, and J. Fadili, 
-    Sparse Image and Signal Processing: Wavelets and 
-    Related Geometric Multiscale Analysis, 
+
+    Details of the starlet transform can be found in
+    J.L. Starck, F. Murtagh, and J. Fadili,
+    Sparse Image and Signal Processing: Wavelets and
+    Related Geometric Multiscale Analysis,
     Cambridge University Press, Cambridge (GB),  2016.
-    
-    or 
-    
+
+    or
+
     J.-L. Starck, J. Fadili and F. Murtagh,
-    "The Undecimated Wavelet Decomposition and its Reconstruction", 
+    "The Undecimated Wavelet Decomposition and its Reconstruction",
     IEEE Transaction on Signal Processing , 16, 2, pp 297--309, 2007.
-        
+
     Example how to use the Class:
         CW = starlet2d()      # Create the class
         CW.transform(Image)   # Starlet transform of a 2D np array
@@ -33,11 +33,11 @@ Created on Mar 30, 2015
 import numpy as np
 import scipy.signal as psg
 # import pcosmostat.sparsity.sparse2d.param as pm
-from pycs.tools.cosmostat_init import *
-from pycs.tools.stats import *
+from pycs.misc.cosmostat_init import *
+from pycs.misc.stats import *
 
 import sys
- 
+
 import imp
 PYSAP_CXX = True
 try:
@@ -51,7 +51,7 @@ except ImportError:
 #    PYSAP_CXX = True
 
 if PYSAP_CXX is False:
-    print("Warning in starlet.py: do not find pysad bindings ==> use slow python code. ")
+    print("Warning in starlet.py: do not find pysap bindings ==> use slow python code. ")
 
 #print("PYSAP_CXX = ", PYSAP_CXX)
 
@@ -88,7 +88,7 @@ def test_ind(ind,N):
 
 def b3splineTrans(im_in,step):
     """
-    Apply a 2d B-spline smmothing to an image, using holes in the smoothing 
+    Apply a 2d B-spline smmothing to an image, using holes in the smoothing
     kernel (a-trous algorithm)
     Parameters
     ----------
@@ -165,7 +165,7 @@ def star2d(im, scale, gen2=False, bord=1, nb_procs=0, fast=True, verb=0):
     ----------
     im : 2D np.ndarray
             input image.
-     scale : int. 
+     scale : int.
         number of scales.
     gen2 : bool, optional
         if True, performs the second generation starlet transform
@@ -173,10 +173,10 @@ def star2d(im, scale, gen2=False, bord=1, nb_procs=0, fast=True, verb=0):
         Type of border used to handle the border effect. The default is 1.
         this parameter is only used if the C++ pysap code is available.
     nb_procs : int, optional
-        Numper of preocessor to use. Only used if the C++ pysap code is available 
+        Numper of preocessor to use. Only used if the C++ pysap code is available
         and if openmp is available. The default is 0.
     fast : bool, optional
-        for python implementation only. If true, the convolve2d routine is used, 
+        for python implementation only. If true, the convolve2d routine is used,
         which is faster. The default is True.
     verb : bool, optional
         Verbose mode. The default is 0.
@@ -236,10 +236,10 @@ def istar2d(wt, gen2=True, bord=0, nb_procs=0, fast=True, verb=0):
         Type of border used to handle the border effect. The default is 1.
         this parameter is only used if the C++ pysap code is available.
     nb_procs : int, optional
-        Numper of preocessor to use. Only used if the C++ pysap code is available 
+        Numper of preocessor to use. Only used if the C++ pysap code is available
         and if openmp is available. The default is 0.
     fast : bool, optional
-        for python implementation only. If true, the convolve2d routine is used, 
+        for python implementation only. If true, the convolve2d routine is used,
         which is faster. The default is True.
     verb : bool, optional
         Verbose mode. The default is 0.
@@ -255,7 +255,7 @@ def istar2d(wt, gen2=True, bord=0, nb_procs=0, fast=True, verb=0):
     if PYSAP_CXX is True:
         # print("RECBINDING: ", head, ", norm = ", l2norm)
         dat_list = []
-        for s in range(nz):    
+        for s in range(nz):
             dat_list.append( wt[s,:,:].astype(np.float))
         psWT = pysparse.MRStarlet(bord, gen2, nb_procs,verb)
         imRec = (psWT.recons(dat_list)).astype(np.double)
@@ -295,15 +295,15 @@ def istar2d(wt, gen2=True, bord=0, nb_procs=0, fast=True, verb=0):
                     im_out = b3splineTrans(wt[k,:,:],step_hole)
                 imRec += wt[k,:,:]+im_out
                 step_hole /= 2
- 
-    return imRec    
-        
+
+    return imRec
+
 
 def adstar2d(wtOri, gen2=True, bord=0, nb_procs=0, fast=True, verb=0):
     """
     Routine to calculate the 1st and 2nd generation adjoint starlet operator.
     if the global variable PYSAP_CXX is True, a C++ code will be used through
-    binding for this calculation. This routine is generally used when the gradient 
+    binding for this calculation. This routine is generally used when the gradient
     of a functional involving a starlet transform operator is required.
     Parameters
     ----------
@@ -315,10 +315,10 @@ def adstar2d(wtOri, gen2=True, bord=0, nb_procs=0, fast=True, verb=0):
         Type of border used to handle the border effect. The default is 1.
         this parameter is only used if the C++ pysap code is available.
     nb_procs : int, optional
-        Numper of preocessor to use. Only used if the C++ pysap code is available 
+        Numper of preocessor to use. Only used if the C++ pysap code is available
         and if openmp is available. The default is 0.
     fast : bool, optional
-        for python implementation only. If true, the convolve2d routine is used, 
+        for python implementation only. If true, the convolve2d routine is used,
         which is faster. The default is True.
     verb : bool, optional
         Verbose mode. The default is 0.
@@ -335,7 +335,7 @@ def adstar2d(wtOri, gen2=True, bord=0, nb_procs=0, fast=True, verb=0):
         for s in range(nz):
             dat_list.append((wt[s,:,:]).astype(float))
         psWT = pysparse.MRStarlet(bord, gen2, nb_procs, verb)
-        imRec = (psWT.recons(dat_list,True)).astype(double)   
+        imRec = (psWT.recons(dat_list,True)).astype(double)
     else:
         # print("NO BINDING")
         # Unnormalization step
@@ -371,7 +371,7 @@ class starlet2d():
     Class for the starlet decomposition and reconstruction
     """
     name = "wt"     # name of the class
-    gen2 = True     # if true, it will the second genereal starlet transform    
+    gen2 = True     # if true, it will the second genereal starlet transform
     l2norm=False    # if true, consider a l2 normalisation
     nx=0            # image size first axis
     ny=0            # image size second axis
@@ -383,7 +383,7 @@ class starlet2d():
     Starlet_Gen1TabNorm =0 # Normalization table for the first generation starlet transform
 
     # __init__ is the constructor
-    def __init__(self, name='wt', gen2=True,l2norm=True, bord=1, verb=False, nb_procs=0): 
+    def __init__(self, name='wt', gen2=True,l2norm=True, bord=1, verb=False, nb_procs=0):
         """
         Constructor
 
@@ -398,12 +398,12 @@ class starlet2d():
         bord : int, optional
             Type of border used to handle the border effect. The default is 1.
             this parameter is only used if the C++ pysap code is available.
-                    # case 0:  bord = I_ZERO;  
-                    # case 1:  bord = I_CONT;  
-                    # case 2:  bord = I_MIRROR;  
+                    # case 0:  bord = I_ZERO;
+                    # case 1:  bord = I_CONT;
+                    # case 2:  bord = I_MIRROR;
                     # case 3:  bord = I_PERIOD;
         nb_procs : int, optional
-            Numper of preocessor to use. Only used if the C++ pysap code is available 
+            Numper of preocessor to use. Only used if the C++ pysap code is available
             and if openmp is available. The default is 0.
         verb : bool, optional
         Returns
@@ -420,8 +420,8 @@ class starlet2d():
 
     def get_gen1_starlet_tabnorm(self):
         """
-        Compute the normalisation coefficients at each scale of the firast generation 
-        starlet transform.    
+        Compute the normalisation coefficients at each scale of the firast generation
+        starlet transform.
         Returns
         -------
         tabNs : TYPE
@@ -434,7 +434,7 @@ class starlet2d():
         tmp = wt**2
         tabNs = np.sqrt(np.sum(np.sum(tmp,1),1))
         return tabNs
-  
+
     def init_starlet(self, nx, ny, nscale=0):
         """
         Initialize the scale for a given image size and a number of scales.
@@ -445,7 +445,7 @@ class starlet2d():
         nscale : int, optional
             Number of wavelet scales. The default is 0.
             If it is 0, the numnber of scales is fixed to
-                  log( MIN([nx,ny]))  
+                  log( MIN([nx,ny]))
         Returns
         -------
         None.
@@ -461,7 +461,7 @@ class starlet2d():
             self.TabNorm = np.ones(self.ns, dtype=float)
         else:
             self.TabNorm = self.get_gen1_starlet_tabnorm()
-        # for pysparse 
+        # for pysparse
         self.nb_procs=0
 
     def info(self):          # sound is a method (a method is a function of an object)
@@ -499,7 +499,7 @@ class starlet2d():
 #    def transform(im,nscale,gen2=self.gen2,normalization=self.l2norm):
     def transform(self, im, WTname=None):
         """
-        Apply the starlet transform to image. Coeffients are stored in 
+        Apply the starlet transform to image. Coeffients are stored in
         self.coef[:,:,:].  self.coef[s,:,:] is the wavelet scale at scale s.
         See class routines get_scale, get_ptr_scale, put_scale to manipulate
         the coefficients.
@@ -511,12 +511,12 @@ class starlet2d():
             Name given to the decomposition. The default is None.
         Returns
         -------
-        None. 
+        None.
         """
         (Nx,Ny) = im.shape
         if self.ns <=1 or self.nx != Nx or self.ny != Ny :
             self.init_starlet(Nx, Ny, nscale=0)
-        if WTname is not None: 
+        if WTname is not None:
             self.name = WTname
         self.coef = star2d(im, self.ns, self.gen2, self.bord, self.nb_procs, True, self.verb)
         if self.l2norm:
@@ -530,7 +530,7 @@ class starlet2d():
         Parameters
         ----------
         adjoint : bool, optional
-            If true, used the adjoint operator instead of the exact reconstruction one. 
+            If true, used the adjoint operator instead of the exact reconstruction one.
             The default is False.
 
         Returns
@@ -550,7 +550,7 @@ class starlet2d():
 
     def denoising(self, Image, SigmaNoise=0, Nsigma=3,ThresCoarse=False, hard=True):
         """
-        Do a denoising of the input image, by taking the wavelet decomposition, 
+        Do a denoising of the input image, by taking the wavelet decomposition,
         thresholding it, and reconstructing the denoised image.
         Parameters
         ----------
@@ -581,10 +581,10 @@ class starlet2d():
     def pos_transform(self,im, nscale=0, Niter=100,fast=True,hard=False,den=False, KillCoarse=False, pos=True, SigmaNoise=0, Nsigma=3.,verb=False):
         """
         Iterative method to make a decomposition on positive coefficients.
-        Coeffients are stored in self.coef[:,:,:].  
+        Coeffients are stored in self.coef[:,:,:].
         See class routines get_scale, get_ptr_scale, put_scale to manipulate
         the coefficients.
-        
+
         Parameters
         ----------
             ----------
@@ -598,14 +598,14 @@ class starlet2d():
         KillCoarse : bool, optional
             IF true the coarsest scale is removed. The default is False.
         fast : bool, optional
-            for python implementation only. If true, the convolve2d routine is used, 
+            for python implementation only. If true, the convolve2d routine is used,
             which is faster. The default is True.
         pos: bool, optional
-            it true, keep only positive wavelet coefficients. Default is True. 
+            it true, keep only positive wavelet coefficients. Default is True.
         SigmaNoise: float, optional
             Standard deviation of the noise. Default is 0.
         Nsigma: float, optional
-            Detection level. Defautl is 3  (.e. 3 SigmaNoise).  
+            Detection level. Defautl is 3  (.e. 3 SigmaNoise).
         verb : bool, optional
             Verbose mode. The default is 0.
         Raises
@@ -628,7 +628,7 @@ class starlet2d():
         rsd = np.copy(im)
         self.transform(im)
         mwt = self.coef.max()
-        # wt = np.copy(self.coef)  
+        # wt = np.copy(self.coef)
         wt = np.zeros((self.ns,self.nx,self.ny))
         for it in np.arange(Niter):
             ld = mwt * (1. - (it+1.)/Niter)
@@ -653,8 +653,8 @@ class starlet2d():
                 wt[wt<0] = 0
             if KillCoarse is True:
                     wt[self.ns-1,:,:] = 0
-            self.coef = np.copy(wt) 
-            rec = self.recons()  
+            self.coef = np.copy(wt)
+            rec = self.recons()
     #        print (rec>=0).all()
             rsd = im - rec
     #         fits.writeto('pstar2d'+str(it)+'.fits',rsd,clobber=True)
@@ -663,7 +663,7 @@ class starlet2d():
 
     def get_scale(self, j):
         """
-        Return a copy of a given scale of the decomposition. 
+        Return a copy of a given scale of the decomposition.
         Parameters
         ----------
         j : int
@@ -679,7 +679,7 @@ class starlet2d():
 
     def get_ptr_scale(self, j):
         """
-        Return a pointer to the jth scale. Modifying the return array will 
+        Return a pointer to the jth scale. Modifying the return array will
         impact the coefficients self.coef of the class.
 
         Parameters
@@ -692,7 +692,7 @@ class starlet2d():
             jth wavelet scale of the decomposition.
         """
         return (self.coef)[j]
-        
+
     def put_scale(self, ScaleCoef, j):
         """
         Replace the scale j in self.coef by the 2D array ScaleCoef.
@@ -744,7 +744,7 @@ class starlet2d():
         s = (self.coef)[0]
         SigmaNoise = mad(s)
         return SigmaNoise
-        
+
     def tvsl(self, j, SigmaNoise=0, Levels=[5]):
         """
         Display the scale j, with contours corresponding to the noise detect
@@ -755,7 +755,7 @@ class starlet2d():
              Scale number. It must be in [0:self.ns].
         Returns
         -------
-        Window appearing showing scale j, with contours around structures 
+        Window appearing showing scale j, with contours around structures
         detected a specified levels.
         """
         if SigmaNoise == 0:
@@ -770,7 +770,7 @@ class starlet2d():
 #        print(TabLevels)
         TabLevels[ TabLevels > (self.coef)[j].max()] = (self.coef)[j].max()
         tvimacont((self.coef)[j], TabLevels, vmin=0, vmax=0, gamma=0.5, cmap='gist_stern')
-        
+
     def tvall(self, scales=None, multiview=False):
         """
         Display a window with all scales.
@@ -790,7 +790,7 @@ class starlet2d():
     def get_tabsigma(self, nscale, Nsigma=3):
         """
         Create the detection table TabNsigma[0:nsale-1], for diffent type
-        of calling. 
+        of calling.
         By default, it is 4 at the finest scale at 3 at the others.
         If Nsigma is an array small than the number of scales, the last value
         of Nsigma is repeated.
@@ -823,7 +823,7 @@ class starlet2d():
                 else:
                     TabNsigma[j] = Nsigma[vssig[1]-1]
         return TabNsigma
-                    
+
     def threshold(self, SigmaNoise=0, Nsigma=3, ThresCoarse=False, hard=True,  FirstDetectScale=0, KillCoarse=False, Verbose=False):
         """
         Apply a hard or a soft thresholding on the coefficients self.coef
@@ -833,11 +833,11 @@ class starlet2d():
             Noise standard deviation. The default is 0.
             If it is 0, it will be automatically estimated from the first scale.
         Nsigma : 1D np.ndarray, optional
-            Detect level [per scale]. The default is [4,3,..,3]  
+            Detect level [per scale]. The default is [4,3,..,3]
         ThresCoarse : bool, optional
             If true the coarsest scale is also thresholded. The default is False.
         hard : bool, optional
-            IF true, apply hard thresholding, and soft-thresholding otherwise. 
+            IF true, apply hard thresholding, and soft-thresholding otherwise.
             The default is True.
         FirstDetectScale : int, optional
             Remove the first FirstDetectScale scales. The default is 0.
@@ -913,13 +913,13 @@ class starlet2d():
 
 if __name__ == '__main__':
     print ( "Main :)")
-        
+
     i = readfits("/Users/starck/Main/python/data/ngc2997.fits")
     #[1]
     # PYSAP_CXX=True
 # In[1]:
 
-    ns=5  
+    ns=5
     testbinding=1
     if testbinding:
         print("TEST BINDING FUNCTION")
@@ -938,9 +938,9 @@ if __name__ == '__main__':
         else:
             print  ("Error in  TEST BINDING FUNCTION")
         print  (" ")
-    
+
 # In[2]:
-        
+
     testroutines=1
     if testroutines:
         print("TEST routines starlets")
@@ -954,7 +954,7 @@ if __name__ == '__main__':
             print ("OK  TEST 1 routines starlets")
         else:
             print  ("Error in TEST 1 routines starlets")
-        
+
         gen2=False
         w = star2d(i, ns, gen2=gen2)
         r = istar2d(w, gen2=gen2)
@@ -964,10 +964,10 @@ if __name__ == '__main__':
         else:
             print  ("Error in TEST 2 routines starlets")
         print  (" ")
-            
-    
+
+
     testclass=1
-    if testclass: 
+    if testclass:
         gen2=False
         l2norm=False
         CW= starlet2d(gen2=gen2, l2norm=l2norm, name="wt C")
@@ -978,7 +978,7 @@ if __name__ == '__main__':
             print ("OK  TEST 1 Class starlet(gen1,l1norm)")
         else:
             print  ("Error in TEST 1 Class starlet")
-                
+
         n = np.random.normal(loc=0.0, scale=1., size=(256,256))
         gen2=True
         l2norm=True
@@ -991,10 +991,10 @@ if __name__ == '__main__':
             print ("OK  TEST 1 Class starlet (l2norm,gen2)")
         else:
             print  ("Error in TEST 1 Class starlet")
-        print  (" ")    
-    
+        print  (" ")
+
     testdenoise=1
-    if testdenoise: 
+    if testdenoise:
         CW= starlet2d()
         CW.transform(i)
         r = CW.denoising(i)
@@ -1005,8 +1005,8 @@ if __name__ == '__main__':
             print ("OK  TEST 1 Class denoise")
         else:
             print  ("Error in TEST 1 Class denoise")
-        print  (" ")    
-    
+        print  (" ")
+
     testpos=1
     if testpos:
         CW= starlet2d()
@@ -1021,7 +1021,7 @@ if __name__ == '__main__':
             print ("OK  TEST Pos starlet")
         else:
             print  ("Error in TEST Pos starlet")
-        print  (" ")    
+        print  (" ")
         #for s in range(CW.ns):
         #    CW.tvs(s)
 
@@ -1035,6 +1035,3 @@ if __name__ == '__main__':
         #  CW.tvall()
         print ("OK  TEST TV 2 ")
         # CW.tvall(multiview=True)
-     
-
-

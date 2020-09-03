@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-##########################################################################
-# pySAP - Copyright (C) CEA, 2017 - 2018
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-##########################################################################
 
 # Module current version
 version_major = 0
@@ -29,7 +22,7 @@ PYthon CosmoStat Package
 SUMMARY = """
 .. container:: summary-carousel
 
-    pycs is a Python module by **CosmoStat lab **
+    pycs is a Python package developed by **CosmoStat**
 
 """
 long_description = (
@@ -49,8 +42,8 @@ DOWNLOAD_URL = "https://github.com/CosmoStat/cosmostat"
 LICENSE = "CeCILL-B"
 CLASSIFIERS = CLASSIFIERS
 AUTHOR = """
-Francois Lanusse <francois.lanusse@cea.fr>
 Samuel Farrens <samuel.farrens@cea.fr>
+Francois Lanusse <francois.lanusse@cea.fr>
 Jean-Luc Starck <jl.starck@cea.fr>
 """
 AUTHOR_EMAIL = "sam.farrens@cea.fr"
@@ -59,9 +52,17 @@ ISRELEASE = True
 VERSION = __version__
 PROVIDES = ["pycs"]
 REQUIRES = [
-    "numpy>=1.16.4",
+    "astropy>=4.0",
+    "healpy>1.14",
+    # "lenspack" // wait for lenspack release on PyPi
+    "matplotlib>=3.3"
+    "modopt>=1.4.4",
+    "numpy>=1.19",
+    "pyqtgraph>=0.11",
+    "scipy>=1.5",
+    "seaborn>=0.10"
 ]
 
 PREINSTALL_REQUIRES = [
-    "pybind11>=2.3.0"
+    "pybind11>=2.5"
 ]

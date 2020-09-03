@@ -16,8 +16,8 @@ from subprocess import call
 from datetime import datetime
 from astropy.io import fits
 import shlex
-from pycs.tools.cosmostat_init import *
-from pycs.tools.cosmostat_init import writefits
+from pycs.misc.cosmostat_init import *
+from pycs.misc.cosmostat_init import writefits
 
 ##
 #  Function that calls mr_filter to perform a wavelet filtering on the
@@ -58,7 +58,7 @@ def mr_prog(data, prog="mr_filter", opt=None, path='./', remove_files=True, verb
         optF= opt
     if verbose:
         optF = optF + " -v "
-        
+
     cmd = cmd + " " + optF + " "  + file_fits + " "   + file_out
     if verbose:
         print ('CMD = ', cmd)

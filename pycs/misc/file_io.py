@@ -16,7 +16,7 @@ deconvolution_script.py.
 import numpy as np
 from os.path import splitext
 from astropy.io import fits
-from src.tools.types import check_npndarray
+from .types import check_npndarray
 
 
 def check_data_format(data, n_dim):
