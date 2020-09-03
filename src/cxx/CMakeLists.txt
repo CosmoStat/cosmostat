@@ -101,7 +101,7 @@ foreach(library ${astro_wl_libs})
   build_lib(${library} ${astro_wl_path} cc h)
   add_dependencies(${library} ${mrs_libs})
 endforeach()
-set(astro_wl_mrs_libs ${mrs_libs} ${astro_wl_libs})
+set(astro_wl_mrs_libs ${astro_wl_libs} ${mrs_libs})
 
 # Find all astro wl targets
 find_targets(astro_wl_targets ${astro_wl_path}/mainwl cc)

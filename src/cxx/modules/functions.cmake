@@ -35,7 +35,7 @@ endfunction()
 # Build binary
 function(build_bin program libs target_path ext)
   add_executable(${program} "${PROJECT_SOURCE_DIR}/${target_path}/${program}.${ext}")
-  target_link_libraries(${program} ${CFITSIO_LIBRARIES} ${HEALPIX_LIBRARIES} ${fftw_libs} ${libs} ${sparse2d_libs})
+  target_link_libraries(${program} ${libs} ${sparse2d_libs} ${CFITSIO_LIBRARIES} ${HEALPIX_LIBRARIES} ${fftw_libs})
 endfunction()
 
 # Build Python binding
