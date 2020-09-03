@@ -8,10 +8,10 @@ branches:
 jobs:
   include:
     - os: linux
-      dist: bionic
+      dist: focal
       compiler: gcc
       python: 3.8
-      name: "Linux Bionic Python 3.8"
+      name: "Linux Focal Python 3.8"
       env:
         - CC=gcc-9
         - CXX=g++-9
@@ -24,13 +24,13 @@ jobs:
             - g++-9
             - cmake
             - libcfitsio-dev
-            - libhealpix-cxx-dev=3.60.0-2build1
+            - libhealpix-cxx-dev
           update: true
     - os: osx
-      osx_image: xcode11.3
+      osx_image: xcode12
       language: shell
       env: PYTHON_VERSION=3.8
-      name: "macOS 10.14 AppleClang Python 3.8"
+      name: "macOS 10.15 AppleClang Python 3.8"
       addons:
         homebrew:
           taps: sfarrens/sf
