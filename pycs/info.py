@@ -59,6 +59,7 @@ REQUIRES = [
     "matplotlib>=3.3"
     "modopt>=1.4.4",
     "numpy>=1.19",
+    "pyqt5>=5.12.2",
     "pyqtgraph>=0.11",
     "scipy>=1.5",
     "seaborn>=0.10"
