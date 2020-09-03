@@ -24,6 +24,7 @@ jobs:
             - g++-9
             - cmake
             - libcfitsio-dev
+            - libhealpix-cxx-dev
     - os: osx
       osx_image: xcode11.3
       language: shell
@@ -38,6 +39,7 @@ jobs:
             - pkgconfig
             - healpix
             - bigmac
+          update: true
 
 before_install:
     - if [ $TRAVIS_OS_NAME = 'linux' ]; then sudo apt-get update; fi
