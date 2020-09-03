@@ -59,6 +59,7 @@ before_install:
       else conda create -n testenv --yes pip python=$TRAVIS_PYTHON_VERSION;
       fi
     - source activate testenv
+    - pip install --upgrade pip
 
 install:
     - python setup.py install
