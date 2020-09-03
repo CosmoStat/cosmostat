@@ -1,12 +1,4 @@
 #! /usr/bin/env python
-##########################################################################
-# XXX - Copyright (C) XXX, 2017
-# Distributed under the terms of the CeCILL-B license, as published by
-# the CEA-CNRS-INRIA. Refer to the LICENSE file or to
-# http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
-# for details.
-#  COSMOSTAT setup
-##########################################################################
 
 # System import
 import os
@@ -18,18 +10,7 @@ from pprint import pprint
 from distutils.version import LooseVersion
 from setuptools.command.build_ext import build_ext
 from setuptools import setup, find_packages, Extension
-from setuptools.command.test import test as TestCommand
-from setuptools.command.install import install
 from importlib import import_module
-from setuptools import setup, find_packages
-
-# setup(
-#     name="pycs",
-#     author="CosmoStat Laboratory",
-#     author_email="",
-#     version="0.0.1rc1",
-#     packages=find_packages(),
-# )
 
 
 # Package information
@@ -38,21 +19,6 @@ infopath = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "pycs", "info.py"))
 with open(infopath) as open_file:
     exec(open_file.read(), release_info)
-pkgdata = {
-    "pycs": [
-        os.path.join("test", "*.py"),
-        os.path.join("test", "*.json")]
-}
-scripts = [
-    os.path.join("pycs")
-]
-
-# Workaround
-if "--release" in sys.argv:
-    sys.argv.remove("--release")
-    scripts = [
-        os.path.join("pycs"),
-    ]
 
 
 class CMakeExtension(Extension):
@@ -116,12 +82,16 @@ class CMakeBuild(build_ext):
     def build_extension(self, ext):
         """ Build extension with cmake.
         """
+
+        # Set CMake install location
+        cmake_path = os.path.join(os.getcwd(), self.build_temp)
+
         # Define cmake arguments
         extdir = os.path.abspath(
             os.path.dirname(self.get_ext_fullpath(ext.name)))
-        cmake_args = ["-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + extdir,
-                      "-DPYTHON_EXECUTABLE=" + sys.executable,
-                      "-DPYBIND11_INCLUDE_DIR=" + self.pybind_path]
+        cmake_args = ["-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}".format(extdir),
+                      "-DPYBIND11_INCLUDE_DIR={}".format(self.pybind_path),
+                      "-DCMAKE_INSTALL_PREFIX:PATH={}".format(cmake_path)]
         cfg = "Debug" if self.debug else "Release"
         build_args = ["--config", cfg]
         if platform.system() == "Windows":
@@ -149,6 +119,8 @@ class CMakeBuild(build_ext):
                               cwd=self.build_temp, env=env)
         subprocess.check_call(["cmake", "--build", "."] + build_args,
                               cwd=self.build_temp)
+        subprocess.check_call(["cmake", "--install", "."],
+                              cwd=self.build_temp)
         print()
 
 
@@ -166,8 +138,7 @@ setup(
     packages=find_packages(exclude="doc"),
     platforms=release_info["PLATFORMS"],
     install_requires=release_info["REQUIRES"],
-    package_data=pkgdata,
-    scripts=scripts,
+    zip_safe=False,
     ext_modules=[CMakeExtension(
         "pymrs", sourcedir=os.path.join("src", "cxx"))],
     cmdclass={
