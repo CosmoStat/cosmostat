@@ -25,6 +25,7 @@ jobs:
             - cmake
             - libcfitsio-dev
             - libhealpix-cxx-dev=3.60.0-2build1
+          update: true
     - os: osx
       osx_image: xcode11.3
       language: shell
