@@ -20,7 +20,6 @@ RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh &
     conda init bash && \
     conda create -n cosmostat python=3.8 -y
 
-
 RUN cd home && \
     git clone https://github.com/CosmoStat/cosmostat && \
     cd cosmostat && \
