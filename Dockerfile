@@ -7,7 +7,7 @@ ARG CC=gcc-9
 ARG CXX=g++-9
 
 RUN apt-get update && \
-    apt-get install -y autoconf automake libtool pkg-config && \
+    apt-get install -y autoconf automake libtool pkg-config libgl1-mesa-glx && \
     apt-get install -y gcc-9 g++-9 && \
     apt-get install -y git cmake wget && \
     apt-get install -y libcfitsio-dev libhealpix-cxx-dev && \
@@ -21,7 +21,6 @@ RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh &
 
 RUN cd home && \
     git clone https://github.com/CosmoStat/cosmostat && \
-    cd cosmostat
-    # && \
-    # conda activate cosmostat && \
-    # python setup.py install
+    cd cosmostat && \
+    conda activate cosmostat && \
+    python setup.py install

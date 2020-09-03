@@ -55,8 +55,7 @@ CMAKE_VERSION = "3.12.0"
 REQUIRES = [
     "astropy>=4.0",
     "healpy>=1.14",
-    # "lenspack" // wait for lenspack release on PyPi
-    "matplotlib>=3.3"
+    "matplotlib>=3.3",
     "modopt>=1.4.4",
     "numpy>=1.19",
     "pyqt5>=5.12.2",
