@@ -2,7 +2,7 @@
 # COSMOSTAT 2020 #
 ##################
 
-cmake_minimum_required(VERSION 3.18.0)
+cmake_minimum_required(VERSION 3.12.0)
 project(cosmostat)
 
 # Include modules in CMake module path

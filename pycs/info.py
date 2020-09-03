@@ -51,6 +51,7 @@ PLATFORMS = "Linux,OSX"
 ISRELEASE = True
 VERSION = __version__
 PROVIDES = ["pycs"]
+CMAKE_VERSION = "3.12.0"
 REQUIRES = [
     "astropy>=4.0",
     "healpy>1.14",
