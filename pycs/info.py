@@ -55,6 +55,7 @@ CMAKE_VERSION = "3.12.0"
 REQUIRES = [
     "astropy>=4.0",
     "healpy>=1.14",
+    "lenspack>=1.0.0",
     "matplotlib>=3.3",
     "modopt>=1.4.4",
     "numpy>=1.19",

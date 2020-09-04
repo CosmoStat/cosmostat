@@ -6,5 +6,4 @@ This module contains submodules for weak gravitational lensing.
 
 """
 
-from . import *
-# from lenspack import * // Wait for lenspack release on PyPi
+from lenspack import *
