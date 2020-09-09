@@ -8,12 +8,17 @@ set(Sparse2DVersion v2.1.5_beta3)
 # Set Sparse2D source dir
 set(SPARSE2D_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/sparse2d)
 
+option(BUILD_FFTW "Build FFTW libraries" OFF)
+if(NOT FFTW3_FOUND)
+  set(BUILD_FFTW ON)
+endif()
+
 # Download and build Sparse2D
 ExternalProject_Add(sparse2d-git
   GIT_REPOSITORY https://github.com/sfarrens/Sparse2D.git
   GIT_TAG ${Sparse2DVersion}
   PREFIX sparse2d
-  CMAKE_ARGS ${CMAKE_ARGS} -DBUILD_MSVST=ON -DUSE_FFTW=ON -DBUILD_FFTW=OFF -DBUILD_NFFT=OFF
+  CMAKE_ARGS ${CMAKE_ARGS} -DBUILD_MSVST=ON -DUSE_FFTW=ON -DBUILD_FFTW=${BUILD_FFTW} -DBUILD_NFFT=OFF
 -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
 )
 
