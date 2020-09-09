@@ -24,6 +24,7 @@ jobs:
             - g++-9
             - cmake
             - libcfitsio-dev
+            - libfftw3-dev
             - libhealpix-cxx-dev
           update: true
     - os: osx
@@ -38,6 +39,7 @@ jobs:
             - cmake
             - cfitsio
             - pkgconfig
+            - fftw
             - healpix
             - bigmac
           update: true

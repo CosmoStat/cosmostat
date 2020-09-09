@@ -93,6 +93,7 @@ class CMakeBuild(build_ext):
             os.path.dirname(self.get_ext_fullpath(ext.name)))
         cmake_args = ["-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}".format(extdir),
                       "-DPYBIND11_INCLUDE_DIR={}".format(self.pybind_path),
+                      "-DBigMac_FFTW_CMake=ON",
                       "-DCMAKE_INSTALL_PREFIX:PATH={}".format(cmake_path)]
         cfg = "Debug" if self.debug else "Release"
         build_args = ["--config", cfg]

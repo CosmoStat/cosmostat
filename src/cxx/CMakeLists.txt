@@ -44,6 +44,9 @@ find_pkg(CFITSIO cfitsio)
 find_pkg(HEALPIX healpix_cxx)
 include_directories(${HEALPIX_INCLUDE_DIRS})
 
+# Locate FFTW
+find_package(FFTW3)
+
 # Build Sparse2D
 include(BuildSparse2D)
 
