@@ -86,7 +86,7 @@ class CMakeBuild(build_ext):
         """
 
         # Set CMake install location
-        cmake_path = os.path.join(os.getcwd(), self.build_temp)
+        cmake_path = os.path.join(os.getcwd(), 'build')
 
         # Define cmake arguments
         extdir = os.path.abspath(
