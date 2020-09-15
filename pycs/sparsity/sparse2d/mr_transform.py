@@ -9,7 +9,7 @@ from astropy.io import fits
 from scipy.ndimage import convolve1d
 from scipy.fftpack import dct, idct
 
- 
+
 def mr_transform(image, nscales=4, type=2, verbose=False):
     """Compute the multi-resolution wavelet transform of an image.
 

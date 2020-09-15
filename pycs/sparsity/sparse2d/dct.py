@@ -9,6 +9,7 @@ from astropy.io import fits
 from scipy.ndimage import convolve1d
 from scipy.fftpack import dct, idct
 
+
 def dct2d(image, norm='ortho'):
     """Compute the discrete cosine transform (type 2) of an image.
 
@@ -281,4 +282,3 @@ def iblockdct2d(image, norm='ortho', blocksize=None, overlap=False):
                 result[i1:i2, j1:j2] = idct(imsub, norm=norm)
 
     return result
-

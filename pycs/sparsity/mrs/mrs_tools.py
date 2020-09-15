@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 from astropy.io import fits
 from importlib import reload
-from pycs.tools.cosmostat_init import *
-from pycs.tools.mr_prog import *
+from pycs.misc.cosmostat_init import *
+from pycs.misc.mr_prog import *
 
 def make_healpix_map(ra, dec, weights, nside):
     pixels= hp.ang2pix(nside,theta = 0.5*np.pi - np.deg2rad(dec), phi = np.deg2rad(ra))
@@ -123,8 +123,8 @@ def mrs_prog(data, prog="mrs_powspec", opt=None, path='./', remove_files=True, v
         mrs_write(file_fits, data)
     else:
         writefits(file_fits, data)
-        
-        
+
+
     # print("PROG: ", prog)
     cmd = prog
 
@@ -134,7 +134,7 @@ def mrs_prog(data, prog="mrs_powspec", opt=None, path='./', remove_files=True, v
         optF= opt
     if verbose:
         optF = optF + " -v "
-        
+
     cmd = cmd + " " + optF + " "  + file_fits + " "   + file_out
     if verbose:
         print ('CMD = ', cmd)
@@ -192,7 +192,7 @@ def tol(map,lmax_amin,amin=False):
     a = mrs_almtrans(map, lmax=lmax)
     b = mrs_almrec(a, nside=ns)
     return  b
-    
+
 def mrs_uwttrans(map, lmax=None, opt=None, verbose=False, path='./',progpath=None):
     optParam = ' '
     if opt is not None:
