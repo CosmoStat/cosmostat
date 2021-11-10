@@ -61,8 +61,163 @@ set(CMAKE_CXX_FLAGS_RELEASE
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
 # --- #
+# MR #
+# --- #
+
+# Build misc libs
+set(misc_libs misc1d misc2d misc3d)
+foreach(library ${misc_libs})
+  build_lib(${library} misc cc h)
+endforeach()
+set(mr_libs mr1d mr2d)
+foreach(library ${mr_libs})
+  build_lib(${library} mr cc h)
+endforeach()
+set(mr_alllibs ${misc_libs} ${mr_libs})
+
+# Find all mrs targets
+find_targets(misc_targets misc/main2d cc)
+find_targets(misc3d_targets misc/main3d cc)
+find_targets(mr1d_targets mr/mrmain1d cc)
+find_targets(mr2d_targets mr/mrmain2d cc)
+find_targets(mr3d_targets mr/mrmain3d cc)
+
+set(misc_all_targets ${misc_targets} ${misc3d_targets} ${mr1d_targets} ${mr2d_targets} ${mr3d_targets})
+
+# Build  binaries
+foreach(program ${misc_targets})
+  build_bin(${program} "${misc_libs}" misc/main2d cc)
+endforeach(program)
+foreach(program ${misc3d_targets})
+  build_bin(${program} "${misc_libs}" misc/main3d cc)
+endforeach(program)
+foreach(program ${mr1d_targets})
+  build_bin(${program} "${mr_alllibs}" mr/mrmain1d cc)
+endforeach(program)
+foreach(program ${mr2d_targets})
+  build_bin(${program} "${mr_alllibs}" mr/mrmain2d cc)
+endforeach(program)
+foreach(program ${mr3d_targets})
+  build_bin(${program} "${mr_alllibs}" mr/mrmain3d cc)
+endforeach(program)
+
+# Install libraries
+install(TARGETS ${misc_libs} DESTINATION lib)
+install(TARGETS ${mr_libs} DESTINATION lib)
+
+# Install binaraies
+install(TARGETS ${misc_all_targets} DESTINATION bin)
+
+# --- #
+# MC #
+# --- #
+
+# Build misc libs
+set(mc_libs mc1d mc2d)
+foreach(library ${mc_libs})
+  build_lib(${library} mr cc h)
+endforeach()
+set(mc_alllibs ${misc_libs} ${mr_libs} ${mc_libs})
+
+# Find all mrs targets
+find_targets(mc1d_targets mr/mcmain1d cc)
+find_targets(mc2d_targets mr/mcmain2d cc)
+
+set(mc_all_targets  ${mc1d_targets} ${mc2d_targets} )
+
+# Build  binaries
+foreach(program ${mc1d_targets})
+  build_bin(${program} "${mc_alllibs}" mr/mcmain1d cc)
+endforeach(program)
+foreach(program ${mc2d_targets})
+  build_bin(${program} "${mc_alllibs}" mr/mcmain2d cc)
+endforeach(program)
+ 
+# Install libraries
+install(TARGETS ${mc_libs} DESTINATION lib)
+
+# Install binaraies
+install(TARGETS ${mc_all_targets} DESTINATION bin)
+
+# --- #
+# MGA #
+# --- #
+
+# Build misc libs
+set(mga_libs mga1d mga3d)
+foreach(library ${mga_libs})
+  build_lib(${library} mga cc h)
+endforeach()
+
+set(mga_alllibs ${misc_libs} ${mr_libs} ${mc_alllibs} ${mga_libs})
+
+# Find all mrs targets
+find_targets(mga1d_targets mga/mgamain1d cc)
+find_targets(mga2d_targets mga/mgamain2d cc)
+find_targets(mga3d_targets mga/mgamain3d cc)
+
+set(gma_all_targets  ${mga1d_targets} ${mga2d_targets} ${mga3d_targets})
+
+# Build  binaries
+foreach(program ${mga1d_targets})
+  build_bin(${program} "${mga_alllibs}" mga/mgamain1d cc)
+endforeach(program)
+foreach(program ${mga2d_targets})
+  build_bin(${program} "${mga_alllibs}" mga/mgamain2d cc)
+endforeach(program)
+foreach(program ${mga3d_targets})
+  build_bin(${program} "${mga_alllibs}" mga/mgamain3d cc)
+endforeach(program)
+
+# Install libraries
+install(TARGETS ${mga_alllibs} DESTINATION lib)
+
+# Install binaraies
+install(TARGETS ${gma_all_targets} DESTINATION bin)
+
+
+# ------------- #
+# MS-VST & MWIR #
+# ------------- #
+
+option(BUILD_MSVST "Build MSVST library" OFF)
+message(STATUS "MSVST Build: ${BUILD_MSVST}")
+
+if(BUILD_MSVST)
+
+# Build misc libs
+set(mwir_libs mvst-mwir)
+foreach(library ${mwir_libs})
+  build_lib(${library} mr cc h)
+endforeach()
+set(mwir_alllibs ${misc_libs} ${mr_libs} ${mwir_libs})
+
+# Find all mrs targets
+find_targets(mwir_targets mr/msvstmain cc)
+
+set(mwir_all_targets  ${mwir_targets})
+
+# Build  binaries
+foreach(program ${mwir_all_targets})
+  build_bin(${program} "${mwir_alllibs}" mr/msvstmain cc)
+endforeach(program)
+ 
+# Install libraries
+install(TARGETS ${mwir_libs} DESTINATION lib)
+
+# Install binaraies
+install(TARGETS ${mwir_all_targets} DESTINATION bin)
+
+endif()
+
+
+# --- #
 # MRS #
 # --- #
+option(BUILD_MRS "Build MRS library" OFF)
+message(STATUS "MRS Build: ${BUILD_MRS}")
+
+if(BUILD_MRS)
 
 # Build mrs libs
 set(mrs_libs mrs mrsp)
@@ -91,9 +246,15 @@ install(TARGETS ${mrs_libs} DESTINATION lib)
 # Install binaraies
 install(TARGETS ${mrs_all_targets} DESTINATION bin)
 
+endif()
+
 # -------- #
 # Astro WL #
 # -------- #
+option(BUILD_ASTRO "Build ASTRO library" OFF)
+message(STATUS "ASTRO Build: ${BUILD_ASTRO}")
+
+if(BUILD_ASTRO)
 
 # Set path to astro weaklensing
 set(astro_wl_path astro/weaklensing)
@@ -127,9 +288,15 @@ install(TARGETS ${astro_wl_libs} DESTINATION lib)
 # Install binaraies
 install(TARGETS ${astro_wl_all_targets} DESTINATION bin)
 
+endif()
+
 # --------------- #
 # Python Bindings #
 # --------------- #
+option(BUILD_BINDING "Build BINDING library" OFF)
+message(STATUS "BINDING Build: ${BUILD_BINDING}")
+
+if(BUILD_BINDING)
 
 # Include Pybind11 headers
 if(NOT DEFINED PYBIND11_INCLUDE_DIR)
@@ -145,3 +312,5 @@ set(binding_targets pymrs)
 foreach(program ${binding_targets})
   build_pybind(${program} python_binding cpp)
 endforeach(program)
+
+endif()
