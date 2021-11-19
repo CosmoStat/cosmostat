@@ -1,0 +1,942 @@
+
+\chapter{\projmr3 \ Data Processing Tools}
+
+\section{Introduction}
+\projmr3 deals with the analysis of multi-channel data or 3D
+data. Multi-channel data can be either 1D or 2D multi-channel:
+\begin{itemize}
+\item 1D multi-channel: a 1D signal is observed at several wavelength
+or at different times. The result is an image, $I(*,N_v)$, where
+$N_v$ is the number of vectors.
+\item 2D multi-channel: a 2D signal (image) is observed at several wavelengths
+or at different times. The result is a cube, $C(*,*,N_i)$, where
+$N_v$ is the number of images. A special case of multi-channel
+images is color images. In this case, we have three channels.
+Several color coordinate systems exist.
+The most widely-used is the RGB system. Each pixel is identified by
+three values R, G, and B corresponding to the three colors red, green, 
+and blue.
+\end{itemize}
+
+Programs which deal with a 1D multi-channel image (i.e., a 2D data set)
+read/write all image formats decribed in \proj, raw format (.d), 
+FITS format (.fits), GIF format (.gif), JPEG format (.jpg) 
+and PGM format (.pgm). 
+
+Programs relative to a 3D data set, cubes or multi-channel images, 
+ read/write FITS format (.fits), GIF format (.gif),
+TIFF format (.tiff), and JPEG format (.jpg).
+As for single channel images, and for the same reasons (i.e, to avail
+by default of 32-bit pixel data types), 
+it is recommended to use FITS format. 
+In the FITS format, the two first dimensions must be the spatial dimensions,
+and the third one the time or the wavelength.
+
+\section{3D-Image Manipulation Tools}
+A number of programs have been developed for basic 3D-image manipulation.
+
+\subsection{Image conversion: im3d\_convert}
+\index{im3d\_convert}
+The program {\em im3d\_convert} converts 
+an image from one data format to another. 
+{\bf
+\begin{center}
+     USAGE: im3d\_convert options file\_name\_in file\_name\_out
+\end{center}
+}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf[-b]} \\
+Normalize the data between 0 and 255.
+\item {\bf[-x]} \\
+Flip x-axis.
+\item {\bf[-y]} \\
+Flip y-axis.
+\item {\bf[-r]} \\
+90 degrees rotation.
+\end{itemize}
+If the ``-b'' option is set, data are scaled in order to have a minimum value
+equal to 0, and a maximum value equal to 255.
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item im3d\_convert image.jpeg image.fits \\
+Converts an image from JPEG format to FITS format.
+\item im3d\_convert -b image.fits image.gif \\
+Converts an image from raw format to GIF format with  normalization of scale.
+\end{itemize}
+
+\subsection{Image information: im3d\_info}
+\index{im3d\_info}
+{\em im3d\_info} gives information about a cube or a multi-channel image.
+If the ``-a'' option is used, 
+it returns also information about each individual 
+frame:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item the number of rows and columns
+\item the minimum, the maximum, the average
+\item the average and the standard deviation
+\item the flux: $\sum_k I_k$
+\item the energy: $\sum_k I_k^2$
+\end{itemize}
+The command line is:
+{\bf
+\begin{center}
+     USAGE: im3d\_info file\_name\_in 
+\end{center}
+}
+where options are:
+\begin{itemize}
+\item {\bf[-a]} \\
+Print also information about all individual frames.
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item im3d\_info image.tiff  \\
+Gives information about the image.
+\item im3d\_info -a image.tiff \\
+Ditto, but print also information about all individual frames.
+\end{itemize}
+
+\subsection{Extract a subcube: im3d\_get}
+\index{im3d\_get}
+{\em im3d\_get} extracts a part of a cube:
+{\bf
+\begin{center}
+USAGE: im3d\_get options cube\_in cube\_out
+\end{center}
+}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf[-x Xstart:XEnd]} \\
+Area to extract in the first dimension.
+\item {\bf[-y Ystart:YEnd]} \\
+Area to extract in the second dimension.
+\item {\bf[-z Zstart:ZEnd]} \\
+Area to extract in the third dimension.
+\end{itemize}
+
+\subsection{Insert a subcube: im3d\_put}
+\index{im3d\_put}
+{\em im3d\_put} inserts an image into a larger one:
+{\bf
+\begin{center}
+USAGE: im3d\_put options cube\_in  cube\_inout
+\end{center}
+}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf[-x Xstart]} \\
+x-coordinate of the cube to insert.
+\item {\bf[-y Ystart]} \\
+y-coordinate of the cube to insert.
+\item {\bf[-Z Zstart]} \\
+z-coordinate of the cube to insert.
+\end{itemize}
+
+\subsection{Operation on two cubes: im3d\_op}
+\index{im3d\_op}
+{\em im3d\_op} calculates an operation on two cubes.
+{\bf
+\begin{center}
+USAGE: im3d\_put cube\_in1 $[+-*/]$ cube\_in2 cube\_out
+\end{center}}
+
+\subsection{Image simulation: im3d\_simu}
+\index{im3d\_simu}
+{\em im3d\_simu} adds noise (Poisson, Gaussian, or both kinds of noise)
+to the input image, and/or convolves it beforehand with a 
+point spread function (PSF)
+which can either be read from a file, or created by the program.
+If the PSF is simulated, it is a Gaussian and a parameter fixes the
+full-width at half-maximum (FWHM). 
+{\bf
+\begin{center}
+USAGE: im3d\_simu options image\_in image\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf[-p ]} \\
+Add Poisson Noise. Default is not to do this.
+\item{\bf [-g sigma]} \\
+Add Gaussian noise. {\em sigma} is the standard 
+deviation of the added noise. Default is not to do this.
+\item{\bf [-c sigma]} \\
+Add Poisson noise and Gaussian noise. 
+{\em sigma} is standard deviation of the Gaussian noise. Default is not to do this.
+\item{\bf [-r psf\_image]} \\
+Convolve the input image with a PSF. The 
+PSF is read from a file of name {\em psf\_image}. Default is not to do this.
+ \item{\bf [-f FWHM]} \\
+Convolve the input image with a PSF. The PSF
+is a Gaussian which has a full-width at half-maximum equal 
+to {\em FWHM}. Default is not to do this.
+\item{\bf [-w PsfFileName]} \\
+Write the calculated PSF to  disk. Valid only if ``-f'' option is set.
+Default is no.
+\item {\bf [-I InitRandomVal]} \\
+Value used for random value generator initialization. \\
+Default is 100. 
+\end{itemize}
+The r and f options cannot be used together. \\
+The g, p, and c options cannot be used together.
+\subsubsection*{Examples:}
+\begin{itemize}
+\item im3d\_simu -g 200 image.fits image\_g200.fits \\
+Add Gaussian noise to an image.
+\item im3d\_simu -f 3. -g 200 image.fits image\_g200.fits \\
+Convolve the image with a Gaussian (FWHM=3), and add Gaussian noise of
+standard deviation equal to 200.
+\item im3d\_simu -r PSF.fits -c 20 image.fits image\_p.fits \\
+Convolve the image with another one (PSF.fits), and add Poisson
+noise and read-out noise (Gaussian noise).
+\end{itemize}
+
+\section{Multi-Temporal Images}
+\subsection{Introduction}
+An observation is often repeated several times in the same configuration
+(same wavelength, same field, etc.). Hence, we have a 3D data set, where 
+each frame contains the same field of view. 
+However, the data can generally not
+be coadded because a small offset exists between the frames, due to 
+the observation conditions. The problem is then to find an image $I(x,y)$
+from the data set $D(x,y,k)$, $k=1,..,N_f$, where $N_f$ is the number of
+frames. In the case where the point spread function of the instrument 
+is undersampled (i.e., the sampling theorem is not respected), these offsets 
+may be an advantage because we may
+recover information at a higher resolution than the resolution of a 
+single frame.
+
+\subsection{Image Coaddition: im3d\_coadd}
+\index{coaddition}
+\index{im3d\_coadd}
+Program {\em im3d\_coadd} coadds a set of images, taking into account the
+offsets between the successive frames. The offsets are determined by
+cross-correlation in a given surface area. The ``-r'' option allows the user 
+to coadd the data
+on a finer grid. The resampled and registered cube can be saved with the
+``-W'' option. If the offsets are already known, {\em im3d\_coadd} can use
+this information when the option ``-o'' is selected. Denoting $D_r(x,y,k)$
+as the registered cube, 
+the output image $I$ is a simple average of the frames:
+\[
+ I(x,y) = {1 \over N_f} \sum_{i=1}^{N_f} D_r(x,y,i)
+\]
+ If the ``-M'' option is used, the median image is calculated 
+ instead of the mean image:
+ \[
+ I(x,y) =  \mathrm{median}({D_r(x,y,i)}_{i=1,..,N_f})
+\]
+When the ``-R'' option is set, the root mean square is calculated by:
+\[
+R(x,y) = \sqrt{{1\over N_f} \sum_{i=1}^{N_f} (D_r(x,y,i) - I(x,y))^2}
+\]
+where $I$ is either the mean or the median image.
+The command line is:
+{\bf
+\begin{center}
+ USAGE: im3d\_coadd options cube\_in image\_out
+\end{center}}
+where options are:
+\begin{itemize}     
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-f type\_of\_interpolation] }
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item  Sinc interpolation: $\phi(x) = \mathrm{sinc}(x) = \frac{\sin(\pi x)}{\pi x}$.
+\item  Lanczos interpolation: 
+$
+\phi(x) = \left\{
+ \begin{array}{ll}
+     \mathrm{sinc}(x) \mathrm{sinc}({x \over 2})   &  \mbox{ if }  \mid x \mid  < 2    \\
+    0   &   \mbox{ otherwise}
+  \end{array}
+  \right. 
+$
+\item  Hamming interpolation: 
+$
+\phi(x) = \left\{
+ \begin{array}{ll}
+     \alpha + (1-\alpha) \cos(\frac{\sin(2 \pi x)}{N}     &  \mbox{ if } \mid x  \mid < {N-1 \over 2}     \\
+    0   &  \mbox{  otherwise}
+  \end{array}
+  \right. 
+$
+where $N$ is the number of samples 
+in the windowing function, and $\alpha=0.54$.
+\item  Hann: same as Hamming interpolation but $\alpha = 0.5$.
+\item  Hyperbolic tangent: this is defined in Fourier space by 
+\[
+H_k(\nu) = \left( \frac{\mathrm{tanh}(k(\nu + 0.5)) + 1}{2} \right)
+      \left( \frac{\mathrm{tanh}(k(-\nu + 0.5)) + 1}{2} \right)
+\]
+
+\end{enumerate} 
+Default is 5.
+\item {\bf [-r ZoomFactor]}  \\
+Rebin the reconstructed image.
+\item {\bf [-d MaxDist]} \\
+Maximum offset between two frames. Default is 4 pixels.
+\item {\bf [-a Surface]}  \\
+Surface area used for the cross-correlation calculation.
+Default is 10 (i.e., $10 \times 10$ pixels).
+\item {\bf [-x XPos]}  \\
+X position for the search area. Default is image center.
+\item {\bf [-y YPos]}  \\
+Y position for the search area. Default is image center.
+\item {\bf [-m]}  \\
+Subtract from each frame its mean value before calculating the offsets.
+\item {\bf [-o InputOffsetFileName]}  \\
+Read the offsets from a FITS file. If this option is set, the offsets are
+not calculated.
+The offset file contains an array $(2,N_f)$.
+\begin{verbatim}
+              Array(0,k) = x offset from frame k to first frame.
+              Array(1,k) = y offset from frame k to first frame.
+\end{verbatim}
+\item {\bf [-w OutputOffsetFileName]}  \\
+Store in a FITS file the calculated offsets. The 
+offset file contains an array $(2,N_f)$.
+\begin{verbatim}
+              Array(0,k) = x offset from frame k to first frame.
+              Array(1,k) = y offset from frame k to first frame.
+\end{verbatim}
+\item {\bf [-W RegisterCubeFileName]}  \\
+Write to disk the registered cube.
+\item {\bf [-M]}  \\
+Take the median instead of the mean when coadding the frame.
+\item {\bf [-R OutputRMSFileName]}  \\
+Write to disk the Root Mean Square Map.
+\item {\bf [-N]}  \\
+No offset.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item im3d\_coadd cube.fits ima.fits \\
+Coadd the cube, using all default options.
+\item im3d\_coadd -r 4 cube.fits ima.fits \\
+Ditto, but rebin by 4 the frames before the coadding. The output image
+is therefore 4 times larger in both directions.
+\end{itemize}
+
+
+\subsection{Deconvolution: im3d\_deconv}
+\index{deconvolution}
+\subsubsection{Introduction}
+Some observations are made with an undersampled PSF. When the observation
+is repeated several times with a small shift between two measurements, 
+we can reconstruct a deconvolved image on a smaller grid. We denote
+$D(i,j,k)$ the $k$th observation (k = 1..n), 
+$\Delta_{i,k}$, $\Delta_{j,k}$ the shift in both directions 
+relative to the first frame, ${\cal L}_{\uparrow}$ the operator
+which coadds all the frames on a smaller grid, 
+and ${\cal L}^{-1}_{\downarrow}$ the
+operator which estimates $D$ from 
+${\cal L}_{\uparrow} D$ using shifting and averaging operations. 
+The $\Delta_{i,k}$, $\Delta_{j,k}$ shifts are generally derived from the
+observations using correlation methods, or PSF fitting (e.g., in the case
+of  a star is an astronomical field), 
+but can also be the camera jitter information in other cases (e.g., 
+space-borne detectors).  
+Note also that ${\cal L}^{-1}_{\downarrow} {\cal L}_{\uparrow} D \ne D$.
+The point spread function $P$ can generally be defined on a finer grid using
+a set of observations of a star, or using optical modeling of the instrument.
+The Landweber deconvolution iteration becomes:
+\begin{eqnarray}
+O^{n+1} =  O^{n} + \alpha P^*\left[  {\cal L}_{\uparrow} (D - {\cal L}^{-1}_{\downarrow}(P*O^n)) \right] 
+\end{eqnarray}
+and the positivity and spatial constraints can also be used:
+\begin{eqnarray}
+O^{n+1} =  {\cal P}^+_{C_s} \left[  O^{n} + \alpha P^*\left[  {\cal L}_{\uparrow} (D - {\cal L}^{-1}_{\downarrow}(P*O^n)) \right] \right]
+\end{eqnarray}
+The coaddition operator ${\cal L}_{\uparrow}$ can be implemented in different 
+ways. All frames can first be interpolated to the finer grid size,
+shifted using an interpolation function, and then coadded. 
+In \cite{rest:lauer99}, another method has been proposed which eliminates
+aliasing effects.
+
+If noise is present in the data, it may be amplified during the 
+iterations, and wavelet regularization then becomes helpful.
+
+\subsubsection{Deconvolution Program}
+\index{im3d\_deconv}
+
+Program {\em im3d\_deconv} coadds and deconvolves at the same time a set
+of frames, taking into account the
+offsets between the successive frames. The offsets are determined by
+cross-correlation. Offset can be either calculated or given 
+using the ``-o option''. For example, offsets can be calculated using 
+the {\em im3d\_coadd} program. If the ``-W'' option is set, the wavelet 
+transform is used for the regularization.
+The command line is: \\
+{\bf
+\begin{center}
+ USAGE: im3d\_deconv option  cube\_in cube\_out]
+\end{center}}
+where options are:
+\begin{itemize}     
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-d type\_of\_deconvolution] }
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item Van-Citter iteration.
+\item Landweber iteration.
+\item Lucy iteration.
+\item MAP iteration.
+\end{enumerate} 
+\item {\bf [-f type\_of\_interpolation] }
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item  Sinc.
+\item  Lanczos.
+\item  Hamming.
+\item  Hann.
+\item  Tanh.
+\end{enumerate} 
+Default is 5.
+\item {\bf [-r ZoomFactor]}  \\
+Rebin the reconstructed image.
+\item {\bf [-o InputOffsetFileName]}  \\
+Read the offsets from a FITS file. If this option is set, the offsets are
+not calculated.
+The offset file contains an array $(2,N_f)$.
+\begin{verbatim}
+              Array(0,k) = x offset from frame k to first frame.
+              Array(1,k) = y offset from frame k to first frame.
+\end{verbatim}
+\item {\bf [-i MaxIter]}  \\
+ Number of iterations. Default is 50.
+\item {\bf [-p]}  \\
+Suppress the positivity constraint.
+\item {\bf [-N]}  \\
+No offset.
+\item {\bf [-W]}  \\
+Regularization by the wavelet transform.
+\item {\bf [-t type\_of\_multiresolution\_transform]}
+{\small 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm\item linear wavelet transform: \`a trous algorithm 
+\item B-spline wavelet transform: \`a trous algorithm 
+\item wavelet transform in Fourier space 
+\item morphological median transform 
+\item morphological minmax transform 
+\item pyramidal linear wavelet transform 
+\item pyramidal B-spline wavelet transform 
+\item pyramidal wavelet transform in Fourier space: 
+                     wavelet =  between two resolutions 
+\item  pyramidal wavelet transform in Fourier space: 
+                     wavelet = difference between the square of two resolutions
+\item  pyramidal median transform 
+\item  pyramidal Laplacian 
+\item  morphological pyramidal minmax transform 
+\item  decomposition on scaling function 
+\item  (bi-) orthogonal wavelet transform. \\ 
+Antonini 7/9 filters ~\cite{wave:antonini92} are used by default, with an 
+$L_1$ normalization. The filters can be changed using the ``-T'' option, and
+an $L_2$ normalization is obtained by ``-L'' option.
+\item  Feauveau wavelet transform 
+\item  Feauveau wavelet transform without undersampling 
+\item  G transform (non-redundant morphological min-max algorithm)
+\item Haar wavelet transform (L2 normalization).
+\item Half-pyramidal wavelet transform (HPWT)
+\item Mixed HPWT and Median method
+\item dyadic wavelet transform 
+\item Mixed WT and PMT method (WT-PMT) 
+\item Undecimated Haar transform: \`a trous algorithm
+\item Undecimated (bi-) orthogonal wavelet transform. \\
+Antonini 7/9 filters ~\cite{wave:antonini92} are used by default, with an 
+$L_1$ normalization. The filters can be changed using the ``-T'' option, and
+an $L_2$ normalization is obtained by ``-L'' option.
+\end{enumerate}}
+Default is 2.
+\item {\bf [-n number\_of\_scales]} \\
+ Number of scales used in the multiresolution transform.
+ Default is 4.
+ \item {\bf [-s NSigma]} \\
+The detection level at each scale is determined by the product
+of the standard deviation of the noise by the {\em NSigma}.
+{\em NSigma} fixes the confidence interval we want. By default,
+{\em NSigma} is equal to 3.
+ \end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item im3d\_deconv cube.fits ima.fits \\
+Coadd the cube, using all default options.
+\item im3d\_deconv -r 4 cube.fits ima.fits\\
+Ditto, but rebin by 4 the frames before the coadding. The output image
+is therefore 4 times larger in both directions.
+\item im3d\_deconv -r 4 -W cube.fits ima.fits\\
+Ditto, but use also the wavelet transform for the regularization.
+\end{itemize}
+
+
+\section{Color Images}
+\index{color images}
+\subsection{Introduction}
+Color images are a special case of multi-channel images. The information
+included in the three R,G,B channels is in general very redundant, and a
+good filtering or compression method should use this redundancy. 
+A Karhunen-Lo\`eve transform could be used to do this job, as discussed in
+the next chapter, but a more efficient approach is to use a pre-defined 
+transformation which is known to be near optimal for decorrelating
+the information. The YUV transformation consists of performing the following
+operations: 
+\begin{eqnarray}
+   Y  & = & (0.257 * R) + (0.504 * G) + (0.098 * B) + 16  \nonumber \\
+   C_r & = &(0.439 * R) - (0.368 * G) - (0.071 * B) + 128 \nonumber \\
+   C_b & = & -(0.148 * R) - (0.291 * G) + (0.439 * B) + 128
+\end{eqnarray}
+where $Y$ is called the luminance map, and $C_r$ and $C_b$ the chromaticity maps. Each pixel of the original map can therefore be decomposed, independently
+of the others. The transformation does not require much computation time,
+and no extra memory.
+
+\subsection{Color Image Filtering: col\_filter}
+\index{col\_filter}
+Program {\em col\_filter} filters a
+color image by the undecimated bi-orthogonal wavelet 
+transforms (7/9 filters). The data are first transformed into 
+the YUV coordinate system. Each $L,C_r,C_b$ map is 
+wavelet transformed, thresholded, and reconstructed. 
+The inverse transformation
+YUV to RGB furnishes the filtered image.
+
+The undecimated wavelet transform is very redundant. The number of pixels
+after transformation is $3(N-1)+1$ where $N$ is the number of pixels in the
+input channel. For this reason, it requires much more computation time
+than the decimated wavelet transform, but the quality is also much better.
+The ``-u'' option allows the user to keep the first scales undecimated 
+(highest frequency bands) while decimating the others. So this option defines 
+a ``partially'' decimated wavelet transform. If ``-u 0'' is set, a decimated
+wavelet transform is selected, and if ``-u NumberOfScales'' is set, an
+undecimated wavelet transform
+is selected. Experiments have shown that a good trade-off between
+quality and redundancy is obtained with only one undecimated scale (``-u 1'').
+
+{\bf
+\begin{center}
+ USAGE: col\_filter option image\_in image\_out
+\end{center}}
+where options are:
+\begin{itemize}     
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-n number\_of\_scales]}  \\
+Number of scales used in the multiresolution transform. Default is 6.
+\item {\bf [-u number\_of\_undecimated\_scales]} \\
+Number of undecimated scales used in the  wavelet transform.
+Default is all. 
+\item {\bf [-s NSigma]}  \\
+Thresholding at NSigma * SigmaNoise. Default is 3.  
+\item {\bf [-S]} \\
+Use soft thresholding instead of hard thresholding.
+Default is False.
+\item {\bf [-g SigmaNoise]}  \\
+SigmaNoise = Gaussian noise standard deviation. 
+Default is automatically estimated.
+\item {\bf [-C]} \\
+Correlated noise. 
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\item col\_filter image.fits  output.fits \\
+Filter the image with all default options.
+\item col\_filter -u 1 -n5  image.tiff output.tiff  \\
+Filter the image using 5 scales, and only one undecimated scale.
+\item col\_filter -u 1 -n5 -s5 image.tiff output.tiff  \\
+Ditto, but filter more structures.
+\item col\_filter -C image.tiff output.tiff  \\
+Consider correlated noise.
+\end{itemize}
+
+
+\subsection{Color Image Compression: col\_comp}
+\index{col\_comp}
+Program {\em col\_comp} compresses an 
+image by the bi-orthogonal wavelet wavelet transform (7/9 filters).
+The quantization is not uniform, and uses the quantization levels
+given in \cite{compress:watson97}, which depend on the orientation 
+(i.e., horizontal, diagonal, or vertical band) and on the scale. These
+levels have been derived from properties of the human visual system. 
+
+The output file has the ``.MRC'' suffix. If the output file
+ is not specified,  the output file will be the
+ input file name with the extension ``.MRC''. When the ``-B'' option is set,
+ the image is first separated into independent blocks, and each block 
+ is wavelet compressed. This allows the user to have fast access to
+ a part of the image during the decompression.
+{\bf
+\begin{center}
+ USAGE: col\_comp option image\_in [compressed\_file\_out]
+\end{center}}
+where options are:
+\begin{itemize}     
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+% \item {\bf [-m Compression\_Method] }
+% \begin{enumerate}
+% \baselineskip=0.4truecm
+% \item Compression by the pyramidal median transform.
+% \item Compression the Mallat-Daubechies transform.
+% \end{enumerate} 
+% Default is Compression by Mallat-Daubechies transform.
+\item {\bf [-g QuantifParam]}  \\
+Quantization parameter of noise level. Default is 7.
+\item {\bf [-p ReadPseudo]} \\
+Read the input data as a pseudo-image (for JPEG format only).
+\item {\bf [-n number\_of\_scales]}  \\
+Number of scales used in the multiresolution transform. Default is 6.
+% \item {\bf [-s NSigma]}  \\
+% Thresholding at NSigma * SigmaNoise. Default is 3.
+% \item {\bf [-r]} \\
+% If -r option is given, the noise is compressed
+% with a step of sigma\_noise/2. By default, the noise is not conserved.
+% \item {\bf [-R Compression\_Ratio]} \\
+%  Fixes the compression ratio. Default is not to do this.
+\item {\bf [-B BlockSize]} \\
+Compress by block. BlockSize = size of each block.
+Default is not to use blocks.
+% \item {\bf [-N]} \\
+% Do not use noise modeling.
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item col\_comp image.tiff \\
+Compress the image, and store the result in ``image.tiff.MRC''
+\item col\_comp -g 10 image.jpg  test.MRC \\
+Compress the image, and store the result ``test.MRC''. The quantization
+parameter has been increased in order to increase the compression ratio.
+\item col\_comp -B 128 lena.jpg  lena.MRC \\
+The $512 \times 512$ input image is first decomposed into 4 
+blocks, and each of them
+is wavelet compressed.
+\end{itemize}
+
+\subsection{Color Image Decompression: col\_decomp}
+\index{col\_decomp}
+Program {\em col\_decomp} decompresses a file compressed with {\em col\_comp}.
+We are not always interested in decompressing the image at full resolution. 
+The option ``-r'' allows an image at lower resolution to be extracted from 
+the compressed file, and produces in this way 
+a smaller image than the original. 
+Note that for lower resolution decompression, only the necessary part of the
+file is read and decompressed (and so the decompression is particularly 
+efficient).   
+ 
+{\bf
+\begin{center}
+ USAGE: col\_decomp option CompressedFileName OutputFileName
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item {\bf [-B BlockNbr]} \\
+Decompress only one block. {\em BlockNbr} is the block number to decompress.
+Default is to take the entire image.
+\item {\bf [-r resolution]} \\
+{\em resolution} must be $ \geq 0$ and $<$ number of scales of the transform.
+By default, the image is reconstructed at full resolution with its noise 
+if this exists in the compressed file.
+% \item {\bf [-t output\_type]} \\
+% If the input image was a FITS format image, the image 
+% output type can be fixed 
+% by the user to ``i'' for integer, or ``s'' for short. 
+% By default, the output type 
+% is the same as the type of the original image. 
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\item col\_comp image.tiff \\
+Compress the image, and store the result ``image.tiff.MRC''
+\item col\_decomp image.tiff.MRC  decima.tiff\\
+Decompress the file, and store the result ``decima.tiff''. 
+\item col\_decomp -r 1 image.tiff.MRC  decima.tiff \\
+Decompress the file at a lower resolution. The decompressed image
+has  size 128 $\times$ 128 when the original one had a size of 256 $\times$
+256.
+\item col\_decomp  -r 3 image.tiff.MRC  decima.tiff \\
+Same as before, but the  decompressed image has size 32 $\times$ 32.
+\item col\_comp -B 128 lena.jpg  lena.MRC \\
+The $512 \times 
+512$ input image is first decomposed into 4 blocks, and each of them
+is wavelet compressed.
+\item col\_decomp  -B 2 -r 2 lena.MRC  decima.tiff \\
+Decompress only the second block, and at a lower resolution.
+\end{itemize}
+
+
+\newpage
+\subsection{Color Image Enhancement: col\_contrast}
+\index{col\_contrast}
+Program {\em col\_constrast} improves the contrast in a color image.
+
+\subsubsection*{Color saturation}
+
+A RGB color image can be saturated by the following procedure:
+\begin{eqnarray}
+\left( \begin{array}{c}
+R^{'}\\
+G^{'}\\
+B^{'}
+\end{array}\right)  = \frac{C_{1}}{C_{1}-C_{2}} \left( \begin{array}{c}
+R-C_{2}\\
+G-C_{2}\\
+B-C_{2}
+\end{array}
+\right)
+\end{eqnarray}
+with $C_1 = \max\{R,G,B\}$ and $C_2 = \min\{R,G,B\}$.
+
+As objects can exhibit variations in color satutation
+with little or no corresponding in luminance variation, 
+several multiscale methods have been proposed in the past for color image
+enhancement \cite{col:toet92}.
+ 
+\subsubsection*{Color saturation with sigma clipping}
+The sigma clipping method consists in estimating the mean and the 
+data set standard deviation, but without considering the outlier 
+values. 
+\begin{enumerate}
+\item  Set $i=1$, and $L^i$ = list of all pixels.
+\item  Calculate $m^i$ and $\sigma^i$, the mean 
+       and the standard deviation of $L^i$.
+\item  while $i \le k$ do
+\begin{itemize}
+\item Remove from $L^i$ all pixels such that $ \mid L^i(l) - m^i \mid  > 3\sigma^i$.
+We get $L^{i+1}$.  
+\item Calculate $m^{i+1}$ and $\sigma^{i+1}$, the mean 
+      and the standard deviation of $L^{i+1}$.
+\end{itemize}
+\item i = i + 1 and goto 3
+\item Set $m_k = m^{i}$ and $ \sigma_k =  \sigma^{i}$.
+\end{enumerate}
+We take generally $k=3$.  
+
+The saturation is then performed by:
+\begin{eqnarray}
+\left( \begin{array}{c}
+R^{'}\\
+G^{'}\\
+B^{'}
+\end{array}\right)  = \frac{C_{1}}{C_{1}-C_{2}} \left( \begin{array}{c}
+S(R)-C_{2}\\
+S(G)-C_{2}\\
+S(B)-C_{2}
+\end{array}
+\right)
+\end{eqnarray}
+with $C_1 = m_k - K \sigma_k$, $C_2 = m_k + K \sigma_k$, and $S$ is the
+function defined by:
+\begin{eqnarray}
+S(x) =  \left\{ 
+\begin{array}{cc}
+ x & \mbox{ if } \in [C_1, C_2] \\
+ C_1 & \mbox{ if } x < C_1\\
+ C_2 & \mbox{ if } x > C_1
+\end{array}\right.
+\end{eqnarray}
+
+ 
+\subsubsection*{Histogram equalization}
+The luminance map $L$ can be modified by an histogram equalization. 
+Let $\tilde L$ represent the enhanced version of $L(x,y)$.
+We modify the RGB components by:
+\begin{eqnarray}
+\tilde R(x,y) & = & K(x,y) R(x,y) \nonumber  \\
+\tilde G(x,y) & = & K(x,y) G(x,y) \nonumber  \\
+\tilde B(x,y) & = & K(x,y) B(x,y)
+\end{eqnarray}
+where $K(x,y) = {\tilde L(x,y) \over L(x,y)}$.
+Thus no inverse color transformation is required.
+
+\subsubsection*{The Retinex}
+The retinex concept has been introduced by Land \cite{col:land86} as a model
+for human color constitancy. 
+The single scale retinex (SSR) method \cite{col:jobson97a} consists in
+applying the following transform to each band $i$ of the color image:
+\begin{eqnarray}
+R_i(x,y) = \log( I_i(x,y)) - \log(F(x,y) * I_i(x,y)) 
+\end{eqnarray}
+Where $R_i(x,y)$ is the retinex output, $I_i(x,y)$ is the image 
+distribution in the $i$th spectral band, and $F$ a Gaussian function.
+A gain/offset is applied to the retinex ouput which clips the highest and
+lowest signal excursions. This can be done by a k-sigma clipping.
+The retinex method is efficient for dynamic range compression, but does not provide good
+tonal rendition \cite{col:rahman96}. 
+
+\subsubsection*{Multiscale Retinex}
+The multiscale Retinex (MSR) combines several SSR outputs to produce 
+a single output image which has both good dynamic range compression and
+color constancy, and good tonal rendition \cite{col:jobson97b}.
+The MSR can be defined by:
+\begin{eqnarray}
+R_{MSR_i} = \sum_{j=1}^N w_j R_{i,j}
+\end{eqnarray}
+with 
+\begin{eqnarray}
+R_{i,j}(x,y) = \log( I_i(x,y)) - \log(F_j(x,y) * I_i(x,y)) 
+\end{eqnarray}
+$N$ is the number of scales, $R_{i,j}$ is the $i$th spectral
+component of the MSR output, and $w_j$ is the weight associated with
+the scale $j$. The Gaussian $F_j$ is given by:
+\begin{eqnarray}
+F_j(x,y) = K \exp{- {r^2 \over c_j^2}}
+\end{eqnarray}
+$c_j$ defines the width of the Gaussian.
+In \cite{col:jobson97b}, three scales were recommended with $c_j$ values
+equal respectively to 15,80,250, and all weights $w_j$ fixed to ${1 \over N}$.
+
+% \subsubsection*{A Trous Multiscale Retinex}
+% The multiscale retinex can be performed in a very fast way using
+% the \`a trous algorithm scheme. Indeed, by the \`a trous mechanism,
+%  the smooth map $F_j * I_i$ can be computed  in a very efficicent way 
+% when $F_j$ is a $B_3$ spline instead of a Gaussian, and the size of
+%  the $F_j$ kernels follow a power of two.
+ 
+\subsubsection*{Multiscale Edge Enhancement}
+Velde has proposed the following algorithm \cite{col:velde99}:
+\begin{enumerate}
+\item The RGB image is transformed in Luv image.
+\item The $L$ component is mapped nonlinearly according to:
+\begin{eqnarray}
+   L(i) \rightarrow L(i)^{1-q} 100^q
+\end{eqnarray}
+\item The $L$,$u$,$v$ components are each decomposed into a multiscale gradient
+pyramid by using the diadic wavelet transform (two directions per scale).
+The gradient at the scale $j$, the pixel position $i$ and
+ for the component $C$ ($X \in \{L,u,v\}$) is
+calculated by: $G_j^C(i) = \sqrt{ (w_j^{(h)}(i))^2 + (w_j^{(v)}(i))^2}$ where 
+$w_j^{(h)}$ and $w_j^{(v)}$ are the wavelet coefficients in both directions
+at pixel position $i$. The norm of the color gradient at resolution level $j$
+and pixel $i$ is therefore:
+\begin{eqnarray}
+\Gamma_j(i) = \sqrt{ \parallel G_j^L(i) \parallel^2 + 
+                     \parallel G_j^u(i) \parallel^2 +
+		     \parallel G_j^v(i) \parallel^2 }
+\end{eqnarray}
+\item All wavelet coefficients at scale $j$ and at position $i$ 
+are multiplied by  $y(\Gamma_j(i) )$, 
+where $y$ is defined by:
+\begin{eqnarray}
+  y(x) & = & ({m \over c})^p \mbox{ if } \mid x \mid < c \nonumber \\
+  y(x) & = & ({m \over \mid x \mid })^p  \mbox{ if } c \le \mid x \mid < m \nonumber \\
+  y(x) & = & 1  \mbox{ if } \mid x \mid \ge m
+\end{eqnarray}
+\item The $\tilde L$, $\tilde u$, $\tilde v$ components are reconstructed 
+from the modified wavelet coefficients.
+\item The components $\tilde L$, $\tilde u$, $\tilde v$  are linearly
+rescaled to the original range of $L$,$u$,$v$.
+\item the $\tilde L$ components  is mapped nonlinearly according to:
+\begin{eqnarray}
+  \tilde L(i) \rightarrow \tilde L(i)^{1 \over 1-q} 100^{- {q \over {1-q}}}
+\end{eqnarray}
+\item The component $\tilde u$, $\tilde v$ are shifted in order to have the
+same mean as components $u$ and $v$.
+\item The ($\tilde L$,$\tilde u$,$\tilde v$) image is transformed into
+an RGB image.
+\end{enumerate}
+Four parameters are needed $p$,$q$,$m$,$c$. 
+$p$ determines the degree of non-linearity in the nonlinear rescaling
+of the luminance, and must be in $]0,1[$. $q$ must be in $[-0.5,0.5]$.
+When $q > 0$, then darker parts are less enhanced than the lighter parts.
+When $ q < 0$, then the dark parts are more enhanced than lighter parts.
+Coefficients larger than $m$ are not modified by the algorithm.
+The $c$ parameter corresponds to the noise level. \\
+
+The command line is:
+{\bf
+\begin{center}
+ USAGE: col\_contrast option in\_image out\_image
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-f]} \\
+ Performs a filtering before the enhancement. Default is no.
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales used in the wavelet transform.
+Default is 4. 
+\item {\bf [-s nsigma]} \\
+ Only used when is filtering is performed: HardThres = nsigma * SigmaNoise.
+Default is 3.
+\item {\bf [-g sigma]} \\
+Noise standard deviation. Only used when is filtering is performed.
+Default is automatically estimated.
+\item {\bf [-S]} \\
+By default a color saturation is performed. When this option, no
+color saturation is performed.
+\item {\bf [-c]} \\
+By default a sigma clipping is performed. When this option, no
+sigma clipping is performed.
+\item {\bf [-h]} \\
+Histogram equalization of the $L$ component. Default is no.
+\item {\bf [-e]} \\
+Multiscale Edge enhancement. Default is no.
+\item {\bf [-r]} \\
+Retinex method.
+\item {\bf [-R]} \\
+Multiscale Retinex Method.
+% \item {\bf [-a]} \\
+% A trous Multiscale Retinex Method.
+\item {\bf [-A]} \\
+Logarithm transformation of the wavelet cofficients of the luminance map.
+
+\item {\bf [-m M\_parameter]} \\
+M Parameter. Only used is ``-e'' option is set. 
+Default is 100.
+\item {\bf [-P P\_parameter]} \\
+P Parameter. Only used is ``-e'' option is set. 
+Default is $0.5$.
+\item {\bf [-Q Q\_parameter]} \\ 
+Q Parameter. Only used is ``-e'' option is set. 
+Default is $0$.
+\item {\bf [-C C\_parameter]} \\  
+C Parameter. Only used is ``-e'' option is set. 
+Default is $0$.
+\item {\bf [-K ClippingValue]} \\
+Clipping value. Default is 3.
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item col\_contrast image.tiff image\_out.tiff\\
+Enhance the constrast by sigma clipping and color saturation.
+\item col\_contrast -r image.tiff image\_out.tiff\\
+Apply the retinex method.
+\item col\_contrast -R image.tiff image\_out.tiff\\
+Apply the multiscale retinex method.
+\item col\_contrast -e image.tiff image\_out.tiff\\
+Apply the multiscale edge enhancement method.
+\end{itemize}
+ 

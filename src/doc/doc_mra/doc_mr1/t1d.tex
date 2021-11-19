@@ -1,0 +1,140 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{psfig}
+\usepackage{amstex}
+ 
+\newcommand{\mw}{/export/home/starck/Main/sadam/tex/report/doc_mr2}
+% \newcommand{\psdir}{/home/starck/Main/sun/starck/tex/report/FIG}
+\newcommand{\psdir}{/home/starck/Main/sun/starck/tex/report/FIG}
+
+\psfigurepath{\psdir/mr1:\psdir/demo:\psdir/cours:\psdir/edge:\psdir/compress:\psdir/fractal:\psdir/detect:\psdir/book98:\psdir/entropy:\psdir/iso:\psdir/cours}
+
+\def\aa{{A\&A } }
+\def\aj{{AJ} }
+\def\apj{{ApJ\ }}
+\def\va{{ Vistas in Astronomy}}
+\def\pasp{{ PASP\ }}
+
+\def\projmra{MR}
+\def\defprojmra{The Multiresolution Analysis Software}
+
+\medskip
+
+\def\proj{MR/1 }
+\def\defproj{The Multiresolution Environment}
+
+\def\projmw{MR/2 }
+\def\defprojmw{Multiscale Entropy and Applications}
+
+\newcommand{\be}{\begin{eqnarray}}
+\newcommand{\ee}{\end{eqnarray}}
+\newcommand{\bn}{\begin{enumerate}}
+\newcommand{\en}{\end{enumerate}}
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+
+% \makeindex
+% \input psfig.tex
+
+% \voffset -1.5cm
+% \hoffset -1.cm
+\evensidemargin 1.truecm
+\oddsidemargin  1.truecm
+
+ 
+\begin{document}
+ 18 transforms are implemented, which are grouped into 5 classes 
+\begin{itemize}
+\item{Class 1:} no decimation (transforms 1 to 6 and 10 to 13).
+\item{Class 2:} pyramidal transform (transforms 7 to 9).
+\item{Class 3:} orthogonal transform (14 and 15).
+\item{Class 4:} Wavelet packets (16 and 17).
+\item{Class 5:} Wavelet packets via the \`a trous algorithm  (18).
+\end{itemize}
+
+Morlet, Mexican hat,
+and French hat wavelet transforms are non-dyadic (the resolution is
+not decreased by a factor two between two scales), 
+and 12 voices (fixed value) are calculated (instead of one for the
+dyadic case) when the resolution is divided by two. Then the number of 
+rows in the output image will be equal to 12*{\em number\_of\_scales}.
+The Morlet wavelet is complex, so the wavelet transform is complex too.
+Four transforms are non-redundant: the bi-orthogonal,
+the lifting scheme, and the wavelet packet methods (transforms 16 and 17). 
+In this case, the output is not an 
+image but a signal (i.e.\ 1D rather than 2D), 
+which has the same size as the original one.
+ 
+\begin{enumerate}
+\item linear wavelet transform: \`a trous algorithm 
+\item B$_1$-spline wavelet transform: \`a trous algorithm 
+\item B$_3$-spline wavelet transform: \`a trous algorithm 
+\item derivative of a B$_3$-spline: \`a trous algorithm 
+\item undecimated Haar wavelet transform: \`a trous algorithm
+\item morphological median transform 
+\item pyramidal linear wavelet transform 
+\item pyramidal B$_3$-spline wavelet transform 
+\item pyramidal median transform 
+\item Morlet's wavelet transform \\
+Continuous wavelet transform with a complex wavelet 
+which can be decomposed into two parts, one for
+the real part, and the other for the imaginary part:
+\begin{eqnarray*}
+\psi_r(x) & = & \frac{1}{\sqrt{2 \pi}\sigma}  e^{-\frac{x^2}{2\sigma^2}} \cos(2\pi\nu_0 {x \over \sigma}) \nonumber \\
+\psi_i(x) & = & \frac{1}{\sqrt{2 \pi}\sigma}  e^{-\frac{x^2}{2\sigma^2}} \sin(2\pi\nu_0 {x \over \sigma}) 
+\end{eqnarray*}
+First scale $\sigma_0$ is chosen equal to $2 \nu_0$ and $\nu_0 = 0.8$, 
+using 12 voices per octave.
+\item Mexican hat wavelet transform \\
+Continuous wavelet transform with the Mexican hat wavelet.
+This is the second derivative of a Gaussian
+\begin{eqnarray}
+\psi(x) = (1 - {x^2 \over \sigma^2}) e^{-\frac{ x^2}{2\sigma^2}} 
+\end{eqnarray}
+First scale $\sigma_0$ is chosen equal to ${1 \over \sqrt{3}}$, using 12 voices per octave.
+\item French hat wavelet transform \\
+Continuous wavelet transform with the French  hat wavelet
+\begin{eqnarray}
+\psi(x) =  \left \{
+\begin{array}{ll}
+     0  & \mbox{ if }  \mid {x \over \sigma} \mid > 1 \\
+     -1 & \mbox{ if } \mid  {x \over \sigma} \mid \in [{1 \over 3},1]  \\
+     2  & \mbox{ if } \mid  {x \over \sigma} \mid < {1 \over 3}
+\end{array}
+\right.
+\end{eqnarray}  
+First scale $\sigma_0$ equal to $0.66$, and 12 voices per octave. 
+\item Gaussian derivative wavelet transform \\
+ Continuous wavelet transform. The wavelet is the first 
+derivative of a Gaussian
+ \begin{eqnarray}
+ \psi(x) =  - x e^{-\frac{1}{2}x^2} 
+ \end{eqnarray}
+ First scale $\sigma_0$ equal to ${1 \over \sqrt{3}}$, and 12 voices per octave. 
+\item (bi-) orthogonal transform. \\
+Implemented filters are
+\begin{enumerate}
+\item Antonini 7/9 filters 
+\item Daubechies filter 4 
+\item Haar filter 
+\item Odegard 7/9 filters
+\end{enumerate}
+\item (bi-) orthogonal transform via lifting scheme. \\
+ Implemented lifting scheme method are:
+\begin{enumerate}
+\item  CDF WT 
+\item  median prediction
+\item  integer Haar WT 
+\item  integer CDF WT 
+\item  integer (4,2) interpolating transform 
+\end{enumerate}}
+\item Wavelet packets.
+\item Wavelet packets via lifting scheme. 
+\item Wavelet packets using the \`a trous algorithm.
+\end{enumerate}
+\end{itemize}
+
+
+% \bibliographystyle{plain}
+% \bibliography{starck,wave,restore,compress,iso,reg,ima,edge,fractal}
+
+\end{document}

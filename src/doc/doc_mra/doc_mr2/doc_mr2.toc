@@ -1,0 +1,69 @@
+\contentsline {chapter}{Contents}{3}
+\contentsline {chapter}{\numberline {1}Multiscale Entropy Theory}{5}
+\contentsline {section}{\numberline {1.1}Entropy and Image Restoration}{5}
+\contentsline {subsection}{\numberline {1.1.1}Introduction}{5}
+\contentsline {subsection}{\numberline {1.1.2}The concept of entropy}{9}
+\contentsline {subsection}{\numberline {1.1.3}Conclusion}{13}
+\contentsline {section}{\numberline {1.2}Entropy from Noise Modeling}{16}
+\contentsline {subsection}{\numberline {1.2.1}Information and wavelet coefficient}{16}
+\contentsline {subsection}{\numberline {1.2.2}Signal information and noise information}{17}
+\contentsline {subsubsection}{N1-MSE}{19}
+\contentsline {subsubsection}{N2-MSE}{20}
+\contentsline {subsubsection}{LOG-MSE}{21}
+\contentsline {subsection}{\numberline {1.2.3}Conclusion}{22}
+\contentsline {chapter}{\numberline {2}Multiscale Entropy Applied to Filtering}{23}
+\contentsline {section}{\numberline {2.1}Introduction}{23}
+\contentsline {section}{\numberline {2.2}Multiresolution and Filtering}{24}
+\contentsline {subsection}{\numberline {2.2.1}The choice of the multiresolution transform}{24}
+\contentsline {subsection}{\numberline {2.2.2}Filtering in wavelet space}{25}
+\contentsline {section}{\numberline {2.3}Multiscale Entropy Filtering}{29}
+\contentsline {subsection}{\numberline {2.3.1}Filtering}{29}
+\contentsline {subsection}{\numberline {2.3.2}The regularization parameter}{29}
+\contentsline {subsection}{\numberline {2.3.3}The use of a model}{31}
+\contentsline {subsection}{\numberline {2.3.4}The multiscale entropy filtering algorithm}{32}
+\contentsline {subsection}{\numberline {2.3.5}Derivative calculation of $h_s$ and $h_n$ for N2-MSE}{34}
+\contentsline {subsubsection}{Gaussian case}{34}
+\contentsline {subsection}{\numberline {2.3.6}General Case}{37}
+\contentsline {subsection}{\numberline {2.3.7}Optimization}{38}
+\contentsline {section}{\numberline {2.4}Examples}{39}
+\contentsline {subsection}{\numberline {2.4.1}1D data filtering}{39}
+\contentsline {subsection}{\numberline {2.4.2}Image filtering}{39}
+\contentsline {section}{\numberline {2.5}Comparison with Other Methods from Simulations}{45}
+\contentsline {subsection}{\numberline {2.5.1}Simulation descriptions}{45}
+\contentsline {section}{\numberline {2.6}Simulation Analysis}{46}
+\contentsline {subsubsection}{Noise treatment strategies}{47}
+\contentsline {section}{\numberline {2.7}Conclusion: Toward Combined Filtering}{48}
+\contentsline {chapter}{\numberline {3}Multiscale Entropy Applied to Deconvolution}{55}
+\contentsline {section}{\numberline {3.1}Introduction to Deconvolution}{55}
+\contentsline {section}{\numberline {3.2}Non-Regularized Deconvolution Methods}{56}
+\contentsline {section}{\numberline {3.3}Tikhonov Regularization}{58}
+\contentsline {section}{\numberline {3.4}The CLEAN Approach}{60}
+\contentsline {subsection}{\numberline {3.4.1}The CLEAN algorithm}{60}
+\contentsline {subsection}{\numberline {3.4.2}Multiresolution CLEAN}{60}
+\contentsline {subsection}{\numberline {3.4.3}CLEAN and wavelets}{62}
+\contentsline {subsubsection}{The wavelet transform chosen.}{62}
+\contentsline {subsubsection}{Deconvolution by CLEAN in wavelet space.}{62}
+\contentsline {subsubsection}{Improvements to multiresolution CLEAN.}{63}
+\contentsline {section}{\numberline {3.5}Regularization from the Multiresolution Support}{66}
+\contentsline {subsection}{\numberline {3.5.1}Noise suppression based on the wavelet transform}{66}
+\contentsline {subsection}{\numberline {3.5.2}Noise suppression based on the multiresolution support}{67}
+\contentsline {subsubsection}{The multiresolution support}{67}
+\contentsline {subsubsection}{Regularization}{68}
+\contentsline {subsubsection}{Regularization of Van Cittert's Algorithm}{68}
+\contentsline {subsubsection}{Regularization of the One-Step Gradient Method}{69}
+\contentsline {subsubsection}{Regularization of the Richardson-Lucy Algorithm}{69}
+\contentsline {subsubsection}{Convergence}{69}
+\contentsline {section}{\numberline {3.6}Regularization using a Markov Model}{70}
+\contentsline {subsection}{\numberline {3.6.1}Introduction}{70}
+\contentsline {subsubsection}{Posterior modeling}{72}
+\contentsline {subsection}{\numberline {3.6.2}Application}{73}
+\contentsline {section}{\numberline {3.7}Multiscale Entropy Deconvolution}{77}
+\contentsline {subsection}{\numberline {3.7.1}The principle}{77}
+\contentsline {subsection}{\numberline {3.7.2}The parameters}{78}
+\contentsline {subsubsection}{The Intrinsic Correlation Function}{80}
+\contentsline {subsubsection}{ICF calculation}{81}
+\contentsline {chapter}{\numberline {4}Multiscale Entropy applied to Background Fluctuation Analysis}{83}
+\contentsline {chapter}{\numberline {5}Multiscale Entropy as a Measure of Relevant Information in an Image}{87}
+\contentsline {chapter}{\numberline {6}Conclusion}{91}
+\contentsline {chapter}{Appendix A: The ``\`A Trous'' Wavelet Transform Algorithm}{93}
+\contentsline {chapter}{Appendix B: Noise Modeling the Wavelet Space}{95}

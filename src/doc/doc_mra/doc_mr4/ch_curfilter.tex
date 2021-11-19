@@ -1,0 +1,256 @@
+
+\chapter{Filtering}
+\label{sec:filtering}
+\section{Curvelet Coefficient Thresholding}
+We now apply our digital transforms for
+removing noise from image data. The methodology is standard and is
+outlined mainly for the sake of clarity and self-containedness.
+
+Suppose that one is given noisy data of the form
+\[
+x_{i,j} = f(i,j) + \sigma z_{i,j},
+\]
+where $f$ is the image to be recovered and $z$ is white noise, i.e.
+$z_{i,j} \stackrel{i.i.d.}{\sim} N(0,1)$. Unlike FFTs or FWTs, our
+discrete ridgelet (resp. curvelet) transform is not norm-preserving
+and, therefore, the variance of the noisy ridgelet (resp. curvelet)
+coefficients will depend on the ridgelet (resp. curvelet) index
+$\lambda$.  For instance, letting $F$ denote the discrete curvelet
+transform matrix, we have $F z \stackrel{i.i.d.}{\sim} N(0,F F^T)$
+where $T$ denotes transpose.
+Because the computation of $F F^T$ is prohibitively expensive, we
+calculated an approximate value $\tilde{\sigma}^2_\lambda$ of the
+individual variances using Monte Carlo simulations where the diagonal
+elements of $F F^T$ are simply estimated by evaluating the curvelet
+transforms of a few standard white noise images.
+
+Let $y_\lambda$ be the noisy curvelet coefficients
+($y = F x$). We use the following hard-thresholding rule
+for estimating the unknown curvelet coefficients:
+\begin{eqnarray}
+\hat y_\lambda = y_\lambda  & \mbox{ if }  &
+|y_\lambda|/\sigma \geq k \tilde{\sigma}_\lambda\\
+\hat y_\lambda = 0 &  \mbox{ if } & |y_\lambda|/\sigma
+<  k \tilde{\sigma}_\lambda.
+\end{eqnarray}
+In our experiments, we actually chose a scale-dependent value for $k$;
+we have $k = 4$ for the first scale $(j = 1)$ while $k = 3$
+for the others $(j > 1)$.
+
+\subsection*{Poisson Observations}
+Assume now that we have Poisson data $x_{i,j}$ with unknown mean
+$f(i,j)$.  The Anscombe transformation \cite{rest:anscombe48}
+\begin{equation}
+\tilde{x} = 2\sqrt{x + \frac{3}{8}}
+\end{equation}
+stabilizes the variance and we have $\tilde{x} = 2 \sqrt{f} +
+\epsilon$ where $\epsilon$ is a vector with independent and
+approximately standard normal components. In practice, this is a good
+approximation whenever the number of counts is large enough, greater
+than 30 per pixel, say.
+ 
+For a small number of counts, a possibility is to compute the Radon
+transform of the image, and then to apply the Anscombe transformation
+to the Radon data. The rationale is that, roughly speaking, the
+Radon transform corresponds to a summation of pixel values over lines
+and  the sum of independent Poisson random variables is a Poisson
+random variable with intensity equal to the sum of the individual
+intensities. Hence, the intensity of the sum may be quite large (hence
+validating the Gaussian approximation) even though the individual
+intensities may be small. This might be viewed as an interesting
+feature  since,  unlike wavelet transforms, the ridgelet and curvelet
+transforms tend to average data over elongated and rather large
+neighborhoods.
+
+\section{Filtering Experiments}
+
+\subsubsection{Recovery of Linear Features}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_line.ps,bbllx=1cm,bblly=12cm,bburx=15cm,bbury=26cm,width=7.5cm,height=7.5cm,clip=}
+\psfig{figure=fig_line_g0p5.ps,bbllx=1cm,bblly=12cm,bburx=15cm,bbury=26cm,width=7.5cm,height=7.5cm,clip=}
+}
+\hbox{
+\psfig{figure=fig_f24_line_g0p5.ps,bbllx=1cm,bblly=12cm,bburx=15cm,bbury=26cm,width=7.5cm,height=7.5cm,clip=}
+\psfig{figure=fig_cur_line_g0p5.ps,bbllx=1cm,bblly=12cm,bburx=15cm,bbury=26cm,width=7.5cm,height=7.5cm,clip=}
+}}}
+\caption{The top panels display a geometric image and that same image
+      contaminated with Gaussian white noise. The bottom left and right
+      panels display the restored images using the undecimated wavelet
+      transform and the curvelet transform, respectively.}
+\label{fig_cur_line}
+\end{figure}
+The next experiment (Figure~\ref{fig_cur_line}) consists of an
+artificial image containing a few bars, lines and a square.  The
+intensity is constant along each individual bar; from left to right,
+the intensities of the ten vertical bars (these are in fact thin
+rectangles which are 4 pixels wide and 170 pixels long) are equal to
+${32 \over 2^i}$, $i = 0, \ldots 9$.  The intensity along all the
+other lines is equal to 1, and the noise standard deviation is $1/2$.
+Displayed images have been log-transformed in order to better see
+the results at low signal to noise ratio.
+
+The curvelet reconstruction of the nonvertical lines is obviously
+sharper than that obtained using wavelets.  The curvelet transform
+also seems to go one step further as far as the reconstruction of the
+vertical lines is concerned. Roughly speaking, for those templates,
+the wavelet transform stops detecting signal at a SNR equal to 1
+(we defined here the SNR as the intensity level of the pixels
+on the line, divided by the noise standard deviation of the noise)
+while the cut-off value equals 0.5 for the curvelet approach.  It is
+important to note that the horizontal and vertical lines correspond to
+privileged directions for the wavelet transform, because the underlying
+basis functions are direct products of functions varying solely in
+the horizontal
+and vertical directions.  Wavelet methods will
+give even poorer results on lines
+of the same intensity but tilting substantially
+away from the Cartesian axes.
+Cf.\ the reconstructions of the faint diagonal
+lines in the image.
+
+\subsubsection{Recovery of Curves}
+In this experiment (Figure~\ref{fig_cur_picasso}), we have added 
+Gaussian noise to ``War and Peace,'' a drawing from Picasso which
+contains many curved features.  Figure \ref{fig_cur_picasso} bottom left
+and right show respectively the restored images by the undecimated
+wavelet transform and the curvelet transform. Curves are more sharply
+recovered with the curvelet transform.
+
+The authors are working on new methods (some of which will be based on
+the curvelet transform) to extract and recover curves from noisy data
+with greater accuracy and, therefore, this example is merely to be
+taken for illustrative purposes.
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_picasso.ps,bbllx=2cm,bblly=13cm,bburx=18cm,bbury=25cm,width=8cm,height=6cm,clip=}
+\psfig{figure=fig_picasso_g50.ps,bbllx=2cm,bblly=13cm,bburx=18cm,bbury=25cm,width=8cm,height=6cm,clip=}
+}
+\hbox{
+\psfig{figure=fig_picasso_wt.ps,bbllx=2cm,bblly=13cm,bburx=18cm,bbury=25cm,width=8cm,height=6cm,clip=}
+\psfig{figure=fig_picasso_cur.ps,bbllx=2cm,bblly=13cm,bburx=18cm,bbury=25cm,width=8cm,height=6cm,clip=}
+}}}
+\caption{The top panels display a Picasso picture (War and Peace) 
+      and that same image
+      contaminated with Gaussian white noise. The bottom left and right
+      panels display the restored images using the undecimated wavelet
+      transform and the curvelet transform respectively.}
+\label{fig_cur_picasso}
+\end{figure}
+
+
+\subsubsection{Denoising of a Color Image}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_cmp_lena_rgb.ps,bbllx=2cm,bblly=13cm,bburx=20cm,bbury=25cm,width=6cm,height=4.cm,clip=}
+\psfig{figure=fig_cmp_pepper_rgb.ps,bbllx=2cm,bblly=13cm,bburx=20cm,bbury=25cm,width=6cm,height=4.cm,clip=}
+}
+\hbox{
+\psfig{figure=fig_cmp_mandrill_rgb.ps,bbllx=2cm,bblly=13cm,bburx=20cm,bbury=25cm,width=6cm,height=4.cm,clip=}
+\psfig{figure=fig_cmp_barbara_rgb.ps,bbllx=2cm,bblly=13cm,bburx=20cm,bbury=25cm,width=6cm,height=4.cm,clip=}
+}
+}}
+\caption{PSNR versus noise standard deviation using different filtering
+      methods. YUV and curvelet, YUV and undecimated wavelet, and YUV and
+      decimated wavelet transforms are represented respectively with a
+      continuous, dashed, and dotted line.  The upper left panel
+      corresponds to {\tt Lena} (RGB), the upper right to {\tt pepper}
+      (RGB), the bottom left to {\tt Baboon} (RGB), and the bottom right
+      to {\tt Barbara} (RGB).}
+\label{fig_exp_rgb_curv}
+\end{figure}
+
+In a wavelet based denoising scenario, color RGB images are generally
+mapped into the YUV space, and each YUV band is then filtered
+independently from the others. The goal here is to see whether the
+curvelet transform would give improved results. We used four of the
+classical color images, namely {\tt Lena}, {\tt Peppers}, {\tt
+      Baboon}, and {\tt Barbara} (all images except perhaps {\tt Barbara}
+are available from the USC-SIPI Image Database \cite{SIPI}).
+We performed
+a series of experiments and
+summarized our findings in Figure~\ref{fig_exp_rgb_curv} which again
+displays the PSNR (peak signal-to-noise ratio) 
+versus the noise standard deviation for the four
+images.
+
+In all cases, the curvelet transform outperforms the wavelet
+transforms in terms of PSNR -- at least for moderate and large values
+of the noise level.  In addition, the curvelet transform outputs
+images that are visually more pleasant.
+ 
+\subsubsection{Saturn Rings}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=SATURN/fig_sat_sub_g20.ps,bbllx=1.8cm,bblly=12.7cm,bburx=14.5cm,bbury=25.4cm,width=7cm,height=7cm,clip=}
+\psfig{figure=SATURN/fig_sat_sub_fil_owt.ps,bbllx=1.8cm,bblly=12.7cm,bburx=14.5cm,bbury=25.4cm,width=7cm,height=7cm,clip=}
+}
+\hbox{
+\psfig{figure=SATURN/fig_sat_sub_fil_atrou.ps,bbllx=1.8cm,bblly=12.7cm,bburx=14.5cm,bbury=25.4cm,width=7cm,height=7cm,clip=}
+\psfig{figure=SATURN/fig_sat_sub_fil_cur.ps,bbllx=1.8cm,bblly=12.7cm,bburx=14.5cm,bbury=25.4cm,width=7cm,height=7cm,clip=}
+}}
+}
+\caption{Top left, part of Saturn image with Gaussian noise. Top right,
+filtered image using the undecimated bi-orthogonal wavelet transform.
+Bottom left and right, filtered image by the \`a trous wavelet 
+transform algorithm and the curvelet transform.}
+\label{fig_sub_saturn_cur_filter}
+\end{figure}
+
+Gaussian white noise with a standard deviation
+fixed to 20 was added to the {\tt Saturn} image.
+We employed several methods to filter the noisy image:
+\begin{enumerate}
+\item Thresholding of the Curvelet transform.
+\item Bi-orthogonal undecimated wavelet de-noising methods using  the
+      Dau\-che\-chies-An\-to\-ni\-ni 7/9 fil\-ters (FWT-7/9) and hard thresholding.
+\item A trous wavelet transform algorithm and hard thresholding.
+\end{enumerate}
+Our experiments are reported in Figure~\ref{fig_sub_saturn_cur_filter}.  The
+curvelet reconstruction does not contain the quantity of disturbing artifacts
+along edges that one sees in wavelet reconstructions. An examination
+of the details of the restored images % (Figure~\ref{fig_sub_saturn_cur_filter})
+is instructive. One notices that the decimated wavelet transform
+exhibits distortions of the boundaries and suffers substantial loss of
+important detail.  The \`a trous  wavelet transform gives better
+boundaries, but completely omits to reconstruct certain ridges. 
+In addition, it exhibits numerous small-scale embedded
+blemishes; setting higher thresholds to avoid these blemishes would
+cause even more of the intrinsic structure to be missed.
+
+% Further results are visible at the following URL: {\tt
+%  http://www-stat.stanford.edu/$\sim$jstarck}.
+
+\subsubsection{Supernova with Poisson noise}
+
+\begin{figure}[htb]
+\centerline{  
+\hbox{
+\psfig{figure=fig_kepler1604.ps,bbllx=1.8cm,bblly=12.7cm,bburx=14.5cm,bbury=25.4cm,width=7cm,height=7cm,clip=}
+\psfig{figure=fig_kepler1604_fil_rid.ps,bbllx=1.8cm,bblly=12.7cm,bburx=14.5cm,bbury=25.4cm,width=7cm,height=7cm,clip=}
+}}
+\caption{Left, XMM/Newton image of the Kepler SN1604 supernova.
+Right, ridgelet filtered image.}
+\label{fig_sn1604}
+\end{figure}
+Figure~\ref{fig_sn1604} shows an example of an X-ray image filtering by the
+ridgelet transform using such an approach. Figure~\ref{fig_sn1604} left
+and right 
+show respectively the  XMM/Newton image of the Kepler SN1604 supernova and
+the ridgelet filtered image (using a five sigma hard thresholding). 
+
+
+% \clearpage
+% \newpage

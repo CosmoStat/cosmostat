@@ -1,0 +1,39 @@
+% \section{Mutual Information}
+\newpage
+\chapter{Conclusion}
+
+We have seen that information must be measured from the transformed
+data, and not from the data itself. This approach has been used in fact
+for several years in the domain of image compression. Indeed, modern
+image compression methods consist firstly of  applying a transformation 
+(cosine transform for JPEG, wavelet transform, etc.) to the image, and
+then coding the coefficients obtained. A good transform for
+image compression is obviously an orthogonal transform because there
+is no redundancy, and the number of pixels is the same as in the original
+image. The exact number of bits necessary to code the coefficients is
+given by the Shannon entropy. For signal restoration, the problem is
+not to reduce the number of bits in the representation of the data, and we
+prefer to use a non-orthogonal wavelet transform, which avoids
+artifacts in reconstruction due to undersampling. 
+
+We could
+have used the Shannon entropy to measure the information at a given scale,
+and derive the bins of the histogram from the standard deviation of the noise,
+but for several reasons we thought it better to directly introduce 
+noise probability into our information measure. 
+Firstly, we have seen that this leads, for Gaussian noise, to
+a very physical relation between the information and the wavelet coefficients:
+information is proportional to the energy of the wavelet coefficients
+normalized by the standard deviation of the noise. 
+Secondly, it works even in the case
+of images with few photons/events (the histograms in this case present a bias).
+We have seen that the equations are easy to manipulate. 
+Finally, experiments have 
+confirmed that this approach gives good results.
+We have seen also that our new information
+measure leads naturally to a new method for signal restoration. 
+We are now experimenting with this method, and working on generalizations to
+other classes of noise.
+
+\clearpage
+\newpage

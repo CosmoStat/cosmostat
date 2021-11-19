@@ -1,0 +1,240 @@
+\begin{theindex}
+
+  \item  mw\_deconv, 278
+
+  \indexspace
+
+  \item a trous wavelet transform, 140, 255
+  \item Anscombe transformation, 285, 286
+
+  \indexspace
+
+  \item blind source separation, 340
+
+  \indexspace
+
+  \item cb\_filter, 396
+  \item CEA\_FILTER, 49
+  \item CEA\_LICENSE\_HOST, 17
+  \item cea\_lm, 17
+  \item CEA\_MR\_DIR, 18
+  \item CEA\_VM\_DIR, 19
+  \item CEA\_VM\_SIZE, 19
+  \item CLEAN, 250--253
+  \item clean beam, 251
+  \item clean map, 251
+  \item closing, 35
+  \item coaddition, 300
+  \item col\_colcontrast, 395
+  \item col\_comp, 306
+  \item col\_contrast, 308
+  \item col\_decomp, 307
+  \item col\_filter, 305
+  \item color images, 305
+  \item compression, 93
+  \item continuous wavelet transform, 39
+  \item Cosmic Microwave Background, 340
+  \item cur\_colfilter, 393
+  \item cur\_contrast, 394
+  \item cur\_filter, 393
+  \item cur\_stat, 392
+  \item cur\_trans, 391
+
+  \indexspace
+
+  \item data
+    \subitem \texttt{3}C120, 340
+  \item deconvolution, 87, 247, 253, 254, 302
+  \item detection, 109
+  \item dilation, 34
+  \item dirty map, 250
+
+  \indexspace
+
+  \item edge detection, 129
+  \item entropy, 205
+  \item erosion, 34
+
+  \indexspace
+
+  \item fft, 30
+  \item fft\_cf\_2d, 31
+  \item fft\_f\_2d, 31
+  \item filtering, 63, 221, 316, 332
+  \item format, 19
+  \item fourier, 30
+  \item Fourier transform, 250, 252
+  \item fractal, 165
+
+  \indexspace
+
+  \item ICA, 340
+  \item im1d\_convert, 143
+  \item im1d\_info, 143
+  \item im1d\_stf, 161
+  \item im1d\_tend, 145
+  \item im1d\_tfreq, 163
+  \item im3d\_coadd, 300
+  \item im3d\_convert, 297
+  \item im3d\_deconv, 303
+  \item im3d\_get, 298
+  \item im3d\_info, 298
+  \item im3d\_op, 299
+  \item im3d\_put, 299
+  \item im3d\_simu, 299
+  \item im\_closing, 35
+  \item im\_convert, 21
+  \item im\_dct, 32
+  \item im\_deconv, 87
+  \item im\_dilate, 34
+  \item im\_dst, 32
+  \item im\_edge, 134
+  \item im\_erode, 34
+  \item im\_get, 24
+  \item im\_info, 21
+  \item im\_mirror, 27
+  \item im\_op, 24
+  \item im\_opening, 35
+  \item im\_pca, 36
+  \item im\_pca\_rec, 37
+  \item im\_put, 24
+  \item im\_radon, 387
+  \item im\_random, 25
+  \item im\_rot, 28
+  \item im\_segment, 27
+  \item im\_simu, 26
+  \item im\_snr, 23
+  \item im\_thin, 35
+  \item im\_threshold, 27
+  \item independent component analysis, 340
+  \item intrinsic correlation function, 210
+
+  \indexspace
+
+  \item JADE, 340
+
+  \indexspace
+
+  \item Kullback-Leibler, 340
+
+  \indexspace
+
+  \item Mallat's multiresolution, 42, 166, 170
+  \item mathematical morphology, 33
+  \item maximum entropy method, 210
+  \item MEM, 210
+  \item mf1d\_chain, 173
+  \item mf1d\_create\_ds, 173
+  \item mf1d\_repart, 174
+  \item mf\_analyse, 174
+  \item mr1d\_acor, 158
+  \item mr1d\_detect, 151
+  \item mr1d\_filter, 149
+  \item mr1d\_max, 153
+  \item mr1d\_maxrecons, 153
+  \item mr1d\_nowcast, 158, 159
+  \item mr1d\_recons, 149
+  \item mr1d\_trans, 146
+  \item mr3d\_cat2fits, 319
+  \item mr3d\_extract, 315
+  \item mr3d\_filter, 316
+  \item mr3d\_insert, 315
+  \item mr3d\_pfilter, 321
+  \item mr3d\_phisto, 319
+  \item mr3d\_psupport, 320
+  \item mr3d\_recons, 316
+  \item mr3d\_trans, 314
+  \item mr\_abaque, 78
+  \item mr\_at\_edge, 138
+  \item mr\_background, 57
+  \item mr\_comp, 100
+  \item mr\_compare, 57
+  \item mr\_contrast, 140
+  \item mr\_decomp, 105
+  \item mr\_deconv, 89
+  \item mr\_detect, 113
+  \item mr\_edge, 137
+  \item mr\_extract, 50
+  \item mr\_filter, 67
+  \item mr\_fusion, 122
+  \item mr\_hfilter, 84
+  \item mr\_info, 54
+  \item mr\_insert, 50
+  \item mr\_lcomp, 103
+  \item mr\_mrc, 91
+  \item mr\_pfilter, 80
+  \item mr\_psupport, 79
+  \item mr\_rec\_edge, 138
+  \item mr\_recons, 51
+  \item mr\_rfilter, 73, 74
+  \item mr\_segment, 55
+  \item mr\_sigma, 56
+  \item mr\_support, 52
+  \item mr\_transform, 42
+  \item mr\_upresol, 106
+  \item mr\_visu, 51
+  \item multi-channel, 323
+  \item multiresolution support, 16, 52, 256
+  \item Multiscale, 39
+  \item multiscale entropy, 214
+  \item mw1d\_filter, 274
+  \item mw\_comb\_filter, 276
+  \item mw\_entrop, 273
+  \item mw\_filter, 275
+  \item mw\_proba, 273
+
+  \indexspace
+
+  \item noise, 255, 256, 285, 286
+
+  \indexspace
+
+  \item Principal component analysis, 36
+  \item pyramid, 210, 211
+
+  \indexspace
+
+  \item registration, 121
+  \item regularization, 209
+  \item regularization, Tikhonov, 249
+  \item restoration, 61
+  \item Richardson-Lucy deconvolution, 249, 255, 258
+  \item rid\_stat, 389
+  \item rid\_trans, 388
+  \item rotation, 28
+
+  \indexspace
+
+  \item skeleton, 35
+  \item speckle, 73
+  \item stationary signal, 64, 247
+  \item support, multiresolution, 16, 256
+
+  \indexspace
+
+  \item Tikhonov regularization, 249
+  \item transform
+    \subitem Wigner-Ville transform, 163
+
+  \indexspace
+
+  \item Van Cittert deconvolution, 248, 254, 255, 257
+  \item variance stabilization, 286
+
+  \indexspace
+
+  \item wavelet transform, 59, 140, 252, 255, 285, 286
+  \item wavelet transform, continuous, 39
+  \item wavelet transform, Morlet-Grossman, 39
+  \item wcomp, 99
+  \item Wigner-Ville transform, 163
+  \item wk1d\_filter, 334
+  \item wk1d\_trans, 327
+  \item wk1d\_trec, 327
+  \item wk\_filter, 335
+  \item wk\_memfilter, 336
+  \item wk\_trans, 328
+  \item wk\_trec, 330
+  \item ww\_filter, 338
+
+\end{theindex}

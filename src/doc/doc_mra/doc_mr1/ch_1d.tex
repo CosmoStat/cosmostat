@@ -1,0 +1,646 @@
+\chapter{\proj 1D Data}
+\label{ch_1d}
+\markright{1D Data}
+
+
+\section{1D Tools}
+\subsection{Conversion: im1d\_convert}
+\index{im1d\_convert}
+Program {\em im1d\_convert} converts a 1D signal from one data format 
+to another one. 
+Currently supported signal formats are the ascii format, the FITS format, 
+  and Excel format. Suffixes for these formats are 
+respectively ``.dat'', ``.fits'',
+  and ``.csv"''. The ``-s'' option allows the user to 
+suppress a given number
+  of lines at the beginning of the file. This option has an effect only  
+  for ascii and Excel input formats. The ascii format consists of a series of
+  numbers separated by a space, a tab, or a new line.
+{\bf
+\begin{center}
+     USAGE: im1d\_convert [-s NbrLines] file\_name\_in file\_name\_out
+\end{center}}
+\subsubsection*{Examples:}
+\begin{itemize}
+\item im1d\_convert sig.dat image.fits \\
+Converts an ascii file to FITS format.
+\item im1d\_convert -s 2 sig.dat image.fits  \\
+Ditto, but the first lines are not taken into account.
+\end{itemize}
+
+
+\subsection{Statistical information: im1d\_info}
+\index{im1d\_info}
+
+{\em im1d\_info} gives information about a signal:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item the number of pixels
+\item the minimum, the maximum 
+\item the arithmetic mean: $  {\bar x} = \frac{1}{N}\sum_k x_k$
+\item the standard deviation: $\sigma = \frac{1}{N} \sum_k (x_k - {\bar x})^2 = \sqrt{{\bar {x^2}} - {\bar x}^2}$
+\item the flux: $F  = \sum_k x_k$
+\item the energy: $E = \sum_k x_k^2$
+\item the skewness: 
+$
+S  =   \frac{1}{N \sigma^3}\sum_k (x_k - {\bar x})^3  
+        =   \frac{1}{\sigma^3} ({\Bar {x^3}} - 3 {\bar x}{\Bar {x^2}} + 2{\bar x}^3)
+$ \\
+\item the kurtosis:
+$
+C  =   \frac{1}{N \sigma^4}\sum_k (x_k - {\bar x})^4 - 3 
+   =  \frac{1}{\sigma^4} ({\Bar {x^4}} - 4 {\bar x}{\Bar {x^3}} + 6 {\Bar {x^2}}{\bar x}^2 - 3 {\bar x}^4) - 3
+$ \\
+\item Measure of dependence: calculate the autoregressive model  
+which fits the data, for all orders between $1$ and $M$, and select the 
+AR model which minimizes the following equation: 
+\begin{eqnarray*}
+J(p) = \log \sigma_{A(p)}^2 + {\cal P}(A(p))
+\end{eqnarray*}
+where $\sigma_{A}$ is the prediction error, and
+${\cal P}$ is a penalty function, which increases with the AR order.
+Examples of penalty functions are:
+\begin{itemize}
+\item AIC: $AIC = \log \sigma_{A_j}^2 + \frac{2 A_j}{N}$ 
+\item AICC: $AICC = \log \sigma_{A_j}^2 + \frac{N +  A_j}{N - A_j - 2}$
+\item SIC: $SIC = \log \sigma_{A_j}^2 + \frac{ A_j\log N }{N}$
+\end{itemize}
+\end{itemize}
+When the ``-a'' option is set, then the  autocorrelation function $\rho(h)$
+is also calculated:
+\begin{eqnarray}
+\rho(h) = \frac{\gamma(h)}{\gamma(0)} 	
+\end{eqnarray}
+ where $\gamma(h)$ is the autocovariance function defined by:
+ \begin{eqnarray}
+ \gamma(h)= \frac{1}{N} \sum_k (x_{k+h} - {\bar x})(x_k - {\bar x})
+ \end{eqnarray}
+
+The command line is:
+{\bf
+\begin{center}
+     USAGE: im1d\_info file\_name\_in 
+\end{center}
+}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf[-a Nbr\_of\_Lags]} \\
+ Calculate the autocorrelation function (AF) with a given number of lags.
+The output AF is saved in a file of name ``autocor''.
+Default number of lags is 10.
+\item {\bf[-O Estimation\_AR\_Order\_Method]} 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item AIC 
+\item AICC
+\item BIC
+\end{enumerate}
+Default is BIC method.
+\item {\bf[-M MaxAROrder]} \\
+Maximum AR model order. Default is 10.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\itemsep=0.1truecm
+\item im1d\_info data.dat  \\
+Gives information about the data.
+\item im1d\_info -a 10 data.dat \\
+Ditto, but calculates also autocorrelation function with 10 lags.
+\end{itemize}
+
+\subsection{Tendency estimation: im1d\_tend}
+\index{im1d\_tend}
+If the signal exhibits a tendency, it may be convenient to remove it
+before starting the analysis. A well-known fitting
+method is the polynomial one.
+A polynomial of order $p$ is fitted around each pixel 
+in a window of size $T$ ($p$ equals 2 in this program). 
+In order to have smooth tendency estimation,
+it is recommended to weight the pixels with weights from 1 to zero for pixels
+in the middle to the border of the window.
+{\bf
+\begin{center}
+ USAGE: im1d\_tend option in\_data out\_tend out\_signal\_no\_tend
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-T WindowSize\_for\_tendency\_estimation]} \\
+Default is 100.
+\item {\bf [-f FirstPixels]} 
+Default is the input signal size. If this option is set, the tendency is
+estimated only on the first {\em FirstPixels} pixels.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\item im1d\_tend sig.dat tend.dat sig\_out \\
+Remove the tendency in the input data with all default options.
+\item im1d\_tend -T 200 sig.dat tend.dat sig\_out   \\
+Ditto, but increase the window size.
+\end{itemize}
+\begin{figure}[htb]
+\centerline{
+\vbox{ 
+\psfig{figure=fig_ar_tend.ps,bbllx=2cm,bblly=12.5cm,bburx=20cm,bbury=25.5cm,width=13.5cm,height=10cm,clip=}
+}}
+\caption{Top, input signal containing an AR(4) signal and a tendency. Middle,
+estimated tendency. Bottom, difference between the two previous signals.}
+\label{fig_artend}
+\end{figure}  
+Figure~\ref{fig_artend} shows the results when applying the {\em tend\_est}
+program (with a window size equal to 400) 
+to a time series containing a tendency and an AR(4). 
+
+
+\section{Wavelet Transform}
+\subsection{Multiresolution transform: mr1d\_trans}
+\label{sect_mr1dtrans}
+\index{mr1d\_trans}
+
+Program {\em mr1d\_trans} applies a one-dimensional multiresolution
+transform to a signal. The ouput file contains an image, in which
+each row is a band of the multiresolution transform. Morlet, Mexican hat,
+and French hat wavelet transforms are non-dyadic (the resolution is
+not decreased by a factor two between two scales), 
+and 12 voices (fixed value) are calculated (instead of one for the
+dyadic case) when the resolution is divided by two. Then the number of 
+rows in the output image will be equal to 12*{\em number\_of\_scales}.
+The Morlet wavelet is complex, so the wavelet transform is complex too.
+Using this transform, the first 12*{\em number\_of\_scales}  lines represent
+the real part of the transform, and the 12*{\em number\_of\_scales} last lines 
+the imaginary part. Four transforms are non-redundant: the bi-orthogonal,
+the lifting scheme, and the wavelet packet methods (transforms 16 and 17). 
+In this case, the output is not an 
+image but a signal (i.e.\ 1D rather than 2D), 
+which has the same size as the original one.
+Position and length of a given band in the output signal can be found by
+reading the file created using the ``-w'' option. For the lifting scheme
+based method, the type of lifting can be changed using the ``-l'' option,
+and for the (bi-) orthogonal and packet one, the filter can be changed
+by the ``-f'' option.
+
+19 transforms are available, which are grouped into 5 classes 
+\begin{itemize}
+\item{Class 1:} no decimation (transforms 1 to 7 and 11 to 14).
+\item{Class 2:} pyramidal transform (transforms 8 to 10).
+\item{Class 3:} orthogonal transform (15 and 16).
+\item{Class 4:} Wavelet packets (17 and 18).
+\item{Class 5:} Wavelet packets via the \`a trous algorithm  (19).
+\end{itemize}
+Depending on the class, the transform does not contain the
+same number of pixels, and the data representation differs.
+By default, the number of scales is calculated from
+the length of the signal.
+{\bf
+\begin{center}
+ USAGE: mr1d\_trans option signal\_in image\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_multiresolution\_transform]}
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item Linear wavelet transform: \`a trous algorithm 
+\item B$_1$-spline wavelet transform: \`a trous algorithm 
+\item B$_3$-spline wavelet transform: \`a trous algorithm 
+\item Derivative of a B$_3$-spline: \`a trous algorithm 
+\item Undecimated Haar wavelet transform: \`a trous algorithm
+\item Morphological median transform 
+\item Undecimated (bi-) orthogonal wavelet transform 
+\item Pyramidal linear wavelet transform 
+\item Pyramidal B$_3$-spline wavelet transform 
+\item Pyramidal median transform 
+\item Morlet's wavelet transform \\
+Continuous wavelet transform with a complex wavelet 
+which can be decomposed into two parts, one for
+the real part, and the other for the imaginary part:
+\begin{eqnarray*}
+\psi_r(x) & = & \frac{1}{\sqrt{2 \pi}\sigma}  e^{-\frac{x^2}{2\sigma^2}} \cos(2\pi\nu_0 \frac{x}{\sigma}) \nonumber \\
+\psi_i(x) & = & \frac{1}{\sqrt{2 \pi}\sigma}  e^{-\frac{x^2}{2\sigma^2}} \sin(2\pi\nu_0 \frac{x}{\sigma}) 
+\end{eqnarray*}
+First scale $\sigma_0$ is chosen equal to $2 \nu_0$ and $\nu_0 = 0.8$, 
+using 12 voices per octave.
+\item Mexican hat wavelet transform \\
+Continuous wavelet transform with the Mexican hat wavelet.
+This is the second derivative of a Gaussian
+\begin{eqnarray}
+\psi(x) = (1 - \frac{x^2}{\sigma^2}) e^{-\frac{ x^2}{2\sigma^2}} 
+\end{eqnarray}
+First scale $\sigma_0$ is chosen equal to $\frac{1}{\sqrt{3}}$, using 12 voices per octave.
+\item French hat wavelet transform \\
+Continuous wavelet transform with the French  hat wavelet
+\begin{eqnarray}
+\psi(x) =  \left \{
+\begin{array}{ll}
+     0  & \mbox{ if }  \mid \frac{x}{\sigma} \mid > 1 \\
+     -1 & \mbox{ if } \mid  \frac{x}{\sigma} \mid \in [\frac{1}{3},1]  \\
+     2  & \mbox{ if } \mid  \frac{x}{\sigma} \mid < \frac{1}{3}
+\end{array}
+\right.
+\end{eqnarray}  
+First scale $\sigma_0$ equal to $0.66$, and 12 voices per octave. 
+\item Gaussian derivative wavelet transform \\
+ Continuous wavelet transform. The wavelet is the first 
+derivative of a Gaussian
+ \begin{eqnarray}
+ \psi(x) =  - x e^{-\frac{1}{2}x^2} 
+ \end{eqnarray}
+ First scale $\sigma_0$ equal to $\frac{1}{\sqrt{3}}$, and 12 voices per octave. 
+\item (bi-) orthogonal transform. 
+\item (bi-) orthogonal transform via lifting scheme. 
+\item Wavelet packets.
+\item Wavelet packets via lifting scheme. 
+\item Wavelet packets using the \`a trous algorithm.
+\end{enumerate}
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales used in the multiresolution transform.
+\item {\bf [-r]} \\
+Rebin all scales to the input signal size 
+(for pyramidal transforms only).
+\item {\bf [-k]} \\
+Set to 0 pixels contaminated by the border problem.
+\item {\bf [-T type\_of\_filters]}  
+{\small
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item Antonini 7/9 filters. 
+\item Daubechies filter 4. 
+\item Biorthogonal 2/6 Haar filters.
+\item Biorthogonal 2/10 Haar filters.
+\item Odegard 7/9 filters.
+\item User's filters.
+\end{enumerate}}
+Default is Antonini 7/9 filters. \\
+ This option is only available if the chosen transform method is
+ the (bi-) orthogonal transform (-t option in [7,15,17]).
+\item {\bf [-L]} \\
+Use an $L_2$ normalization. Default is $L_1$.
+\item {\bf [-l type\_of\_lifting\_transform]}  
+{\small 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item Lifting scheme: CDF WT. 
+\item Lifting scheme: median prediction.
+\item Lifting scheme: integer Haar WT. 
+\item Lifting scheme: integer CDF WT. 
+\item Lifting scheme: integer (4,2) interpolating transform. 
+\item Lifting scheme:  Antonini 7/9 filters.
+\item Lifting scheme: integer Antonini 7/9 filters. 
+\end{enumerate}}
+ Default is Lifting scheme: integer Haar WT. \\
+ This option is only available if the chosen transform method is
+ the lifing scheme (-t 24).
+\item {\bf [-w InfoFileName]} \\
+Write in a file the size and the starting index of each band.
+This file contains a 2D float array (Array[2, NbrBand+3]).
+\begin{verbatim}
+        info[0,0] = transform number
+        info[1,0] = number of scales
+        info[0,1] = transform class number (5 classes)
+        info[1,1] = number of bands
+                  it is not equal to the number of scales
+                  for wavelet packets transform.
+        info[0,2] = number of pixels
+        info[1,2] = lifting scheme type
+        info[0,3] = type of filter
+        info[1,3] = type of normalization
+        for i=4 to Number_of_bands + 3
+        info[0,i] = number of pixels in the band i
+        info[1,i] = position number of the pixel of the band
+\end{verbatim}
+If a user filter file is given (i.e. -T 6,filename), with a filename 
+of $L$ characters, $L$ lines are added to the array:
+\begin{verbatim}
+        info[1,Number_of_bands + 4] = number of characters of the filter file name
+        for i=Number_of_bands+4 to  Number_of_bands+4+L-1
+	info[0,i] = ascii number of the ith character.
+\end{verbatim}
+
+\end{itemize}
+\subsubsection*{Examples:}
+\baselineskip=0.4truecm
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item mr1d\_trans -n 7 -t 3 sig.fits image.fits \\
+\`A trous algorithm with 7 scales.
+\item mr1d\_trans -n 7 -T 5 -t 15 sig.fits image.fits  \\
+Bi-orthogonal wavelet transform (Odegard 7/9 filters).
+\item mr1d\_trans -n 7 -T 5 -t 15 -w info.fits sig.fits image.fits  \\
+Ditto, but an information file is written. This information 
+is necessary for reconstruction.
+\item mr1d\_trans -n 7 -T 5 -t 15 -w info.fits sig.fits image.fits  \\
+Ditto, but an information file is written. This information 
+is necessary for reconstruction.
+\item mr1d\_trans -n 7 -T 6,dau4 -t 15 -w info.fits sig.fits image.fits  \\
+Ditto, but the filters defined in the file ``dau4.wvf'' are used instead
+of the Odegard filters.
+\end{itemize}
+
+
+\subsection{Reconstruction: mr1d\_recons}
+\index{mr1d\_recons}
+Program {\em mr1d\_recons} reconstructs a signal from its transform.
+To be able to reconstruct it, the program needs the information file
+which has been created by the ``-w'' option during the transformation.
+{\bf
+\begin{center}
+ USAGE: mr1d\_recons TransformFileName\_in InfoFileName\_in  signal\_out
+\end{center}}
+\subsubsection*{Examples:}
+\begin{itemize}
+\item mr1d\_trans -n 7 -t 3 -w info sig.fits image.fits \\
+      mr1d\_recons image.fits info sig\_rec.fits \\
+\`A trous algorithm with 7 scales, and reconstruction.
+\item mr1d\_trans -n 7 -T 4 -t 15 -w info sig.fits image.fits  \\
+mr1d\_recons image.fits info sig\_rec.fits \\
+Bi-orthogonal wavelet transform (Odegard 7/9 filters), and reconstruction.
+\end{itemize}
+
+Reconstruction is not implemented for transforms 10, 11, and 13. 
+For pyramidal transforms,
+the reconstruction cannot be performed by {\em mr1d\_recons} if 
+the rebin option ``-r'' was set.
+
+
+\section{Filtering: mr1d\_filter}
+\index{mr1d\_filter}
+Program {\em mr1d\_filter} filters a signal using different methods. 
+{\bf
+\begin{center}
+ USAGE: mr1d\_filter option signal\_in signal\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-f type\_of\_filtering]} 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item  Multiresolution Hard K-Sigma Thresholding 
+\item Multiresolution Soft K-Sigma Thresholding 
+\item Iterative Multiresolution Thresholding 
+\item Universal Hard Thesholding 
+\item Universal Soft Thesholding 
+\item SURE Hard Thesholding 
+\item SURE Soft Thesholding 
+\item MULTI-SURE Hard Thesholding 
+\item MULTI-SURE Soft Thesholding 
+\item Median Absolute Deviation (MAD) Hard Thesholding 
+\item Median Absolute Deviation (MAD) Soft Thesholding 
+\item Total Variation + Wavelet Constraint 
+\end{enumerate}
+Default is Multiresolution Hard K-Sigma Thresholding.
+\item {\bf [-t type\_of\_multiresolution\_transform]} 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item Linear wavelet transform: \`a trous algorithm 
+\item B$_1$-spline wavelet transform: \`a trous algorithm 
+\item B$_3$-spline wavelet transform: \`a trous algorithm 
+\item Derivative of a B$_3$-spline: \`a trous algorithm 
+\item Undecimated Haar wavelet transform: \`a trous algorithm 
+\item morphological median transform 
+\item Undecimated (bi-) orthogonal wavelet transform 
+\item pyramidal linear wavelet transform 
+\item pyramidal B$_3$-spline wavelet transform 
+\item pyramidal median transform 
+\end{enumerate}
+Default is 3. 
+\item {\bf [-T type\_of\_filters]}  
+{\small
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item Antonini 7/9 filters. 
+\item Daubechies filter 4. 
+\item Biorthogonal 2/6 Haar filters.
+\item Biorthogonal 2/10 Haar filters.
+\item Odegard 7/9 filters.
+\item User's filters.
+\end{enumerate}}
+Default is Antonini 7/9 filters. \\
+This option is only available if the chosen transform method is
+the (bi-) orthogonal transform (-t 7).
+\item {\bf [-m type\_of\_noise]}
+{\small
+\begin{enumerate}
+\itemsep=0.1truecm
+\baselineskip=0.4truecm
+\item Gaussian Noise 
+\item Poisson Noise 
+\item Poisson Noise + Gaussian Noise 
+\item Multiplicative Noise 
+\item Non-stationary additive noise 
+\item Non-stationary multiplicative noise 
+\item Undefined stationary noise 
+\item Undefined noise 
+\item Stationary correlated noise 
+\item Poisson noise with few events 
+\end{enumerate}
+}
+Default is Gaussian noise.
+\item {\bf [-g sigma]} 
+\item {\bf [-c gain,sigma,mean]} 
+\item {\bf [-E Epsilon]} \\
+Epsilon = precision for computing thresholds
+(only used in case of poisson noise with few events).
+Default is $1e-03$.
+\item {\bf [-n number\_of\_scales]} 
+\item {\bf [-s NSigma]} 
+\item {\bf [-i number\_of\_iterations]} 
+\item {\bf [-e epsilon]}  \\
+Convergence parameter. Default is $1e-4$.
+\item {\bf [-K]}  \\
+Suppress the last scale. Default is no.
+\item {\bf [-p]}  \\
+Detect only positive structure. Default is no.
+\item {\bf [-k]}  \\
+Suppress isolated pixels in the support. Default is no.
+\item {\bf [-S SizeBlock]} \\
+Size of the  blocks used for local variance estimation. Default is 7.
+\item {\bf [-N NiterSigmaClip]} \\
+Iteration number used for local variance estimation. Default is 1.
+\item {\bf [-F first\_detection\_scale]} \\
+If this option is set, all wavelet coefficients detected at scales lower 
+than {\em first\_detection\_scale} are considered as significant.
+\item {\bf [-G RegulParam]} \\
+Regularization parameter for filtering methods 11 and 12. default is 0.01.
+\item {\bf [-v]}  \\
+Verbose. Default is no.
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\item mr1d\_filter sig.fits filter\_sig.fits \\
+Filtering using the \`a trous algorithm, and a Gaussian noise model.
+\item mr1d\_filter -m 2 sig.fits filter\_sig.fits   \\
+Ditto, but assuming Poisson noise.
+\end{itemize}
+
+
+\section{Band Detection: mr1d\_detect}
+\index{mr1d\_detect}
+
+Program {\em mr1d\_detect} detects emission or absorption bands in 
+a spectrum \cite{starck:sta97}. The output is an image, in which each row
+contains a detected band. By default, {\em mr1d\_detect} detects
+both emission and absorption bands. The program gives better results
+if we detect only emission (``-e" option) bands, or only absorption bands
+(``-a" option). This is due to the fact that  positivity and negativity 
+constraints can be introduced in the iterative reconstruction for, 
+respectively, 
+emission and absorption band detection. If the user wants to 
+detect both kinds of band at the same time, he/she should 
+use the multiresolution
+median transform (``-M" option) which gives in this case better results
+than the wavelet transform.
+{\bf
+\begin{center}
+ USAGE: mr1d\_detect option signal\_in tab\_band\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-n number\_of\_scales]} 
+\item {\bf [-s NSigma]} 
+\item {\bf [-m type\_of\_noise]}
+{\small
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item Gaussian Noise 
+\item Poisson Noise 
+\item Poisson Noise + Gaussian Noise 
+\item Multiplicative Noise 
+\item Non-stationary additive noise 
+\item Non-stationary multiplicative noise 
+\item Undefined stationary noise 
+\item Undefined noise 
+\end{enumerate}
+}
+Description in section~\ref{sect_filter}. Default is Gaussian noise.
+\item {\bf [-g sigma]} 
+\item {\bf [-c gain,sigma,mean]} 
+\item {\bf [-a]} \\
+Detection of Absorption lines only. Default is not to do this. 
+\item {\bf [-e]} \\
+Detection of Emission lines only. Default is not to do this. 
+\item {\bf [-f FirstScale]} \\
+First scale. Default is 1. All bands detected at the scale smaller than 
+{\em FirstScale} are not reconstructed.
+\item {\bf [-l LastScale]} \\
+Last scale. Default is number\_of\_scales -- 2.
+All bands detected at the scale higher than {\em LastScale} are not reconstructed.
+\item {\bf [-i IterNumber]} \\
+Number of iterations for the reconstruction. Default is 20.
+ \item {\bf [-M]} \\
+Use the multiresolution median transform 
+instead of the \`a trous algorithm. If this option is set, the reconstruction
+is not iterative, and the previous option (``-i") is not active.
+\item {\bf [-A ]} \\
+Detect only negative multiresolution coefficients. Default is no. 
+\item {\bf [-E ]} \\
+Detect only positive multiresolution coefficients. Default is no. 
+\item {\bf [-w ]} \\
+Write two other files: 
+\begin{itemize}
+\item tabadd.fits: sum of the reconstructed objects. All detected bands are co-added. 
+\item tabseg.fits: segmented wavelet transform.
+\end{itemize}
+\item {\bf [-v ]} \\
+Verbose. Default is no.
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\item mr1d\_detect -a -A sig.fits band\_sig.fits \\
+Detection using the \`a trous algorithm, and a Gaussian noise model.
+The detection is performed from the positive wavelet coefficients, and
+only emission bands are reconstructed.
+\item mr1d\_detect -m 2 -a -A -s 5 sig.fits band\_sig.fits   \\
+Ditto, but assuming Poisson noise and a five sigma detection.
+\end{itemize}
+
+\begin{figure}[htb] 
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=ch4_sig10_wid02.ps,bbllx=1.5cm,bblly=19cm,bburx=20cm,bbury=25.5cm,height=5cm,width=16cm,clip=}}
+\hbox{
+\psfig{figure=ch4_extr_simu3.ps,bbllx=1.5cm,bblly=13cm,bburx=20cm,bbury=25.5cm,height=10cm,width=16cm,clip=}}
+}}
+\caption{Simulation: top, simulated spectrum, 
+middle, reconstructed simulated band (full line) and original band (dashed line). Bottom,
+simulated spectrum minus the reconstructed band.}
+\label{fig_detect_spect}
+\end{figure}
+
+A simulated spectrum was created containing a smooth continuum  
+with superimposed, variable Gaussian noise and an emission band at $3.50\mu$m 
+with a maximum of five times the local noise standard 
+deviation and a width of 
+FWHM = $0.01 \mu$m (see Figure~\ref{fig_detect_spect} top). 
+Figure~\ref{fig_detect_spect}
+(middle) shows the comparison of the 
+reconstructed emission band with the original Gaussian.
+Figure~\ref{fig_detect_spect} (bottom) shows the  difference between 
+the simulated spectrum and the reconstructed band.
+
+
+\section{Modulus Maxima Representation}
+\subsection{Modulus maxima detection: mr1d\_max}
+\index{mr1d\_max}
+Program {\em mr1d\_max} detects the modulus maxima using the dyadic
+  \`a trous algorithm  with the wavelet function equal to the derivative
+of a B-spline (transform number 4 in {\em mr1d\_trans}).
+{\bf
+\begin{center}
+ USAGE: mr1d\_max option signal\_in  output
+\end{center}}
+where options are:
+\begin{itemize}
+\item {\bf [-n number\_of\_scales]} 
+\item {\bf [-v ]} \\
+Verbose. Default is no.
+\end{itemize}
+\subsubsection*{Example:}
+\begin{itemize}
+\item mr1d\_max sig.fits band\_sig.fits   \\
+Modulus maxima detection.
+\end{itemize}
+
+
+\subsection{Reconstruction: mr1d\_maxrecons}
+\index{mr1d\_maxrecons}
+Program {\em mr1d\_maxrecons} reconstructs a signal from its modulus maxima.
+{\bf
+\begin{center}
+ USAGE: mr1d\_maxrecons option tab\_band\_in signal\_out 
+\end{center}}
+where options are:
+\begin{itemize} 
+ \item {\bf [-i number\_of\_iterations]}  \\
+Maximum number of iterations for the reconstruction. Default is 10.
+\item {\bf [-v ]} \\
+Verbose. Default is no.
+\end{itemize}
+\subsubsection*{Example:}
+\begin{itemize}
+\item mr1d\_max sig.fits band\_sig.fits   \\
+      mr1d\_maxrecons band\_sig.fits sig\_rec.fits \\
+Modulus maxima detection, and reconstruction from the maxima.
+\end{itemize}
+

@@ -1,0 +1,185 @@
+\chapter{Deconvolution}
+\section{Wavelet and Deconvolution}
+\label{wdec}
+Consider an image characterized by its intensity
+distribution $I$, corresponding to the observation of a
+``real image'' $O$ through an optical system. If the
+imaging system is linear and shift-invariant, the relation between
+the data and the image in the same coordinate frame is a
+convolution:
+$I(x,y) = (P * O)(x,y) + N(x,y)$,
+where
+$P$ is the point spread function (PSF) of the imaging system, and $N$
+is additive noise. We want to determine $O(x,y)$ knowing $I$ and $P$. This
+inverse problem has led to a large amount of work, the main difficulties 
+being the existence of: (i) a cut-off frequency of the 
+PSF, 
+and (ii) the additive noise (see for example \cite{ima:bertero98}).
+
+The wavelet based non-iterative algorithm, 
+the wavelet-vaguelette decomposition \cite{rest:donoho95b},
+consists of first applying an inverse filtering
+($F = P^{-1} * I  +  P^{-1} * N = O + Z$
+where $\hat{P}^{-1}(\nu) = \frac{1}{\hat{P}(\nu)}$). 
+The noise $Z =  P^{-1} * N$ is not white but remains 
+Gaussian. It is amplified when the deconvolution
+problem is unstable. 
+Then, a wavelet transform is applied on $F$, the wavelet coefficients
+are soft or hard thresholded \cite{rest:donoho93_2}, 
+and the inverse wavelet transform 
+furnishes the solution. 
+
+The method has been refined by 
+adapting the wavelet basis to the frequency response of the inverse of $P$
+\cite{rest:kalifa99}. This leads to a special basis,
+the {\em Mirror Wavelet Basis}.  This basis has a 
+time-frequency tiling structure different from the conventional wavelets one.
+It isolates the frequency $\nu_s$ where $\hat{P}$ is close to zero, because 
+a singularity in $\hat{P}^{-1}(\nu_s)$ influences the noise variance in
+the wavelet scale corresponding to the frequency band which includes $\nu_s$.
+Because it may not be possible to isolate all singularities, Neelamani
+\cite{rest:neelamani99} has advocated a hybrid approach,
+and proposes to still use the Fourier domain to restrict excessive noise
+amplification. These approaches are fast and competitive compared to linear methods, and
+the wavelet thresholding removes the Gibbs oscillations. 
+This  presents however several drawbacks:
+(i) the first step (division in the Fourier space by the PSF) 
+cannot always be done properly,
+(ii) the positivity a priori is not used, and
+(iii) it is not trivial to consider non-Gaussian noise.
+
+As an alternative, 
+several wavelet-based iterative algorithms have been proposed 
+ \cite{starck:book98}, especially in the astronomical
+domain where the positivity a priori is known to improve 
+significantly the result. The simplest method consists of first 
+estimating the multiresolution support $M$ (i.e. $M(j,x,y)= 1$ if   
+the wavelet transform of the data presents a significant coefficient 
+at band $j$ and at pixel position $(x,y)$, and $0$ otherwise), and to
+apply the following iterative scheme:
+\begin{equation}
+O^{n+1} = O^{n} + P^* * \cW^{-1}[M.\cW (I - P * O^n)]
+\end{equation}
+where $\cW$ is the wavelet transform operator.
+At each iteration, information is extracted from the 
+residual only at scales and positions defined by the multiresolution support.
+$M$ is estimated from the input data and the correct noise modeling
+can easily be considered.
+
+ 
+\section{The Combined Deconvolution Method}
+\label{cbdec}
+ Similar to the filtering, we expect that the combination 
+of different transforms can improve the quality of the result.
+The combined approach for the deconvolution leads to two different 
+methods. 
+
+If the noise is Gaussian and if the division by the PSF in the Fourier space 
+can be carried out properly, then the deconvolution problem becomes a 
+filtering problem where the noise is still Gaussian, but not white.
+The Combined Filtering Algorithm can then be applied using the curvelet 
+transform and the wavelet transform, but by estimating first the 
+correct thresholds in the different bands of both transforms.  
+Since the mirror wavelet basis is known to produce better results than
+the wavelet basis, it is recommended to use it instead of the standard
+undecimated wavelet transform.
+
+An iterative deconvolution method 
+ is more general and can always be applied. 
+Furthermore,
+the correct noise modeling can much more easily be taken into account.
+This approach consists of detecting, first, all the significant coefficients
+with all multiscale transforms used. If we use $K$ transforms
+$T_1, \dots, T_K$, we derive $K$ multiresolution supports $M_1, \dots, M_K$
+from the input image $I$ using noise modeling.
+
+For instance, in the case of Poisson noise, we apply the Anscombe transform
+to the data (i.e. $\cA(I) = 2 \sqrt{I + \frac{3}{8}}$). Then
+we detect the significant coefficients with the kth transform $T_k$, 
+assuming Gaussian noise with standard deviation equal to 1,
+in $T_k \cA(I)$ instead of $T_k I$.  $M_k(j,x,y) = 1$ if a coefficient
+in band $j$ at pixel position $(x,y)$ is detected , and  $M_k(j,x,y) = 0$
+otherwise. For the band $J$ which corresponds to the smooth array
+in transforms such as the wavelet or the curvelet transform, 
+we force $M_k(J,x,y) = 1$ for all $(x,y)$.
+
+Following determination of a set of multiresolution supports, 
+we propose to solve
+the following optimization problem:
+\begin{equation}
+  \label{eq:dec-min}
+  \min \cS(\tilde O), \quad \mbox{subject to} \quad \tilde O \in C,  
+\end{equation}
+where $\cS$ is an edge preservation penalization term defined by:
+\[ \cS(\tilde O) = \int \parallel \nabla \tilde O \parallel_p, \] 
+with $p=1.1$.
+ $C$ is the set of images $\tilde{O}$ 
+which obey the two constraints:
+\begin{enumerate}
+\item $\tilde{O} \ge 0$ (positivity).
+\item $ M_k T_k I = M_k T_k [P *\tilde{O}]$, for all $k$. 
+\end{enumerate}
+The second constraint
+imposes fidelity to the data, or more exactly, 
+to the significant coefficients of the data, 
+obtained by the different transforms.
+Non-significant (i.e. noisy) coefficients are not taken into account, 
+preventing any noise amplification in the final algorithm.
+
+The solution is computed by using the 
+projected Landweber method \cite{ima:bertero98}:
+\begin{eqnarray}
+\tilde O^{n+1} = {\cP}_c \left[ 
+\tilde O^n + \alpha( P^* * {\bar R}^n - \lambda \frac{\partial \cS(\tilde O)}{\partial O}) \right]
+\end{eqnarray}
+where ${\cP}_c$ is the projection operator which enforces the positivity
+(i.e. set to 0 all negative values).
+${\bar R}^n$ is the significant residual which
+ is obtained using the following algorithm:
+\begin{itemize}
+\item Set $I^n_{0} = I^n = P * \tilde O^n$.
+\item For $k=1,\dots,K$ do 
+$
+I^n_k = I^n_{k-1} + T_k^{-1} \left[ M_k (T_k I - T_k I^n_{k-1}) \right] \nonumber
+$
+\item The significant residual ${\bar R}^n$ is obtained by:
+  $ {\bar R}^n = I^n_K - I^n $.
+\end{itemize}
+
+$\alpha$ is a convergence parameter and $\lambda$ is the 
+regularization hyperparameter. Since the noise is controlled by the
+multiscale transforms, the regularization parameter does not   
+have the same importance as in standard deconvolution methods.
+A much lower value is enough to remove the artifacts relative to the
+use of the wavelets and the curvelets. The positivity constraint can
+be applied at each iteration.
+
+\begin{figure}[htb]
+\vbox{
+\centerline{
+\hbox{
+\psfig{figure=phantom.ps,bbllx=8.2cm,bblly=12.6cm,bburx=12.7cm,bbury=17.1cm,width=7cm,height=7cm,clip=}
+\psfig{figure=phantom_p.ps,bbllx=8.2cm,bblly=12.6cm,bburx=12.7cm,bbury=17.1cm,width=7cm,height=7cm,clip=}
+}}
+\centerline{
+\hbox{
+\psfig{figure=dec_mr_t24_p_n5_i400_s5.ps,bbllx=8.2cm,bblly=12.6cm,bburx=12.7cm,bbury=17.1cm,width=7cm,height=7cm,clip=}
+\psfig{figure=dec_cb_s5_i400.ps,bbllx=8.2cm,bblly=12.6cm,bburx=12.7cm,bbury=17.1cm,width=7cm,height=7cm,clip=}
+}}
+}
+\caption{Top, original image (phantom) and simulated data
+(i.e. convolved image plus Poisson noise). Bottom, deconvolved image
+by the wavelet based method and the combined approach.}
+\label{fig_dec_phantom}
+\end{figure}
+Figure~\ref{fig_dec_phantom}, top, shows the Logan-Shepp Phantom 
+and the simulated data, i.e. original image convolved by a Gaussian 
+PSF (full width at half maximum,
+FWHM=3.2) and Poisson noise. Figure~\ref{fig_dec_phantom}, 
+bottom, shows the deconvolution with  (left) a pure wavelet deconvolution
+method (no penalization term) and (right) the combined deconvolution method
+(parameter $\lambda = 0.4$).
+
+
+\clearpage
+\newpage

@@ -1,0 +1,90 @@
+\NeedsTeXFormat{LaTeX2e}
+%\documentstyle[makeidx]{cmmp}
+\documentclass[11pt,a4paper]{book}
+
+\usepackage{makeidx}
+% \usepackage{astron}
+\usepackage{psfig}
+\newcommand{\psdir}{/export/home/starck/Main/sadam/tex/report/FIG}
+\psfigurepath{\psdir/mr1:\psdir/demo:\psdir/cours:\psdir/edge:\psdir/compress:\psdir/fractal:\psdir/detect:\psdir/book98:\psdir/entropy:\psdir/iso:\psdir/cours}
+
+
+\def\aa{{A\&A } }
+\def\aj{{AJ} }
+\def\apj{{ApJ\ }}
+\def\va{{ Vistas in Astronomy}}
+\def\pasp{{ PASP\ }}
+ 
+\def\projmw{MRS}
+\def\defprojmw{MultiResolution on the Sphere}
+
+% \makeindex
+%\input{psfig}
+% \input psfig.tex
+
+%-----------------------------------------------------------------------------
+% To run master file, sum.tex: 
+% rm *.aux (to remove previous links/cross-references)
+% latex sum, re-do 2 or 3 times
+% makeindex sum.idx
+% latex sum
+% dvips -p xx -l yy sum.dvi -o sum.ps
+% Alternatively in file sum.tex, use \includeonly{chapter1,chapter2} etc.
+% J.-L. Starck, JANUARY 1997
+%-----------------------------------------------------------------------------
+\voffset -1.5cm
+\title{{\bf \huge MultiResolution on the Sphere}   }
+% \vspace{0.2cm}
+
+\author{  {\Large Y. Moudden, J.L. Starck and P. Abrial} \\ [12pt] \\  
+   DAPNIA/SEDI-SAP, CEA/Saclay, \\
+   Service d'Astrophysique, \\
+   91191 Gif sur Yvette, France \\
+   jstarck@cea.fr \\
+}
+\vspace{0.2cm}
+
+ \date{16 February 2005 \\
+ \vspace{0.2cm}
+   \begin{figure}[hb]
+\centerline{
+\hbox{
+% \psfig{figure=fig_ngc.ps,bbllx=1.9cm,bblly=12.6cm,bburx=14.6cm,bbury=25.4cm,width=9cm,height=9cm,clip=}
+\psfig{figure=ch1_wave_ngc40.ps,bbllx=2.2cm,bblly=9.2cm,bburx=19cm,bbury=19.7cm,height=10cm,width=17cm,clip=}
+}}
+\end{figure}
+} 
+ 
+% \includeonly{deconv}
+
+\begin{document}
+
+\include{cover} 
+
+% Introduction chapter
+\include{intro}
+
+\include{multicale}
+
+% Filtering chapter
+\include{mrs_ica}
+
+% Deconvolution chapter
+\include{restore}
+
+\include{fluctu}
+
+\include{conclu}
+
+\include{mrs_idl}
+
+\bibliographystyle{plain}
+\bibliography{starck,wave,restore,ima,astro,mc,curvelet}
+
+\clearpage
+
+% \newpage
+% \include{annexA}
+
+ 
+\end{document}

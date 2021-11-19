@@ -1,0 +1,70 @@
+\chapter{Multiscale Entropy applied to Background Fluctuation Analysis}
+
+\section*{The mean entropy vector}
+
+The multiscale entropy has been defined by:
+\begin{eqnarray}
+H(X) = \sum_{j=1}^{l}  \sum_{k=1}^{N} h(w_j)  
+\end{eqnarray}
+with $h(w_j = \ln ( p(w_j(k))))$.
+In order to study the behavior of the information at a given scale, we 
+prefer to calculate the mean entropy vector $E$ defined by:
+\begin{eqnarray}
+E(j) = \frac{1}{N}\sum_{k=1}^{N} h(w_j)
+\end{eqnarray}
+$E(j)$ gives the mean entropy at the scale $j$. From the mean entropy vector,
+we have  statistical information on each scale separately. 
+Having a noise model, we are able to calculate (generally from simulations)
+the mean entropy vector $E^{(noise)}(j)$ resulting from a pure noise.
+Then we define the normalized mean entropy vector by
+\begin{eqnarray}
+E_n(j) = \frac{ E(j) }{ E^{(noise)}(j) }
+\end{eqnarray}
+
+
+Figure~\ref{fig_source1} shows the result of a simulation. 
+Five simulated images were created by adding $n$ sources (i.e., point
+sources, or idealized stars) to an 1024
+$\times$ 1024 image 
+containing Gaussian noise of standard deviation equal to 1. The $n$ sources
+are identical, with a maximum equal to 1, and standard deviation equal to 2.
+Defining the signal to noise ratio (SNR) as the ratio between
+the standard deviation in the smallest box which contains at least 90\% 
+of the flux of the source, and the noise standard deviation, we have a SNR
+equal to $0.25$. The sources  are not detectable in the simulated
+image, nor in its wavelet transform. Figure~\ref{fig_source2} shows a region
+which contains a source at the center. It is clear there is no way to find
+this kind of noisy signal. The five images were created using a number 
+of sources
+respectively equal to 0,50,100,200 and 400, and the simulation was
+repeated ten times with different noise maps in order to have an error bar on
+each entropy measurement. For the image which contains 400
+sources, the number of pixels affected by a source is less  than $2.5$\%.
+
+When the number of sources increases, the difference between the multiscale
+entropy curves increases. Even if the sources are very faint, the presence
+of signal can be clearly detected using the mean entropy vector. But it is 
+obvious that the positions of these sources remain unknown.
+ 
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\psfig{figure=fig_source.ps,bbllx=3.5cm,bblly=13cm,bburx=19.5cm,bbury=25.5cm,width=16cm,height=12.5cm}
+}}
+\caption{Mean entropy versus the scale of 5 simulated images containing undetectable
+sources and noise. Each curve corresponds to the multiscale transform
+of one image. From
+top to bottom, the image contains respectively 400,200,100, 50 and 0 sources.}
+\label{fig_source1}
+\end{figure}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\psfig{figure=fig_1source.ps,bbllx=1.8cm,bblly=12.9cm,bburx=14.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+}}
+\caption{Region of a simulated image containing an undetectable source at the
+center.}
+\label{fig_source2}
+\end{figure}
+

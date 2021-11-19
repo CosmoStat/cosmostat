@@ -1,0 +1,276 @@
+\chapter{ISOCAM Programs}
+
+ 
+\section*{Deglitching}
+
+\begin{center}
+ USAGE: mr1d\_deglitch option cube\_in cube\_out
+\end{center}
+where options are:
+\begin{itemize}
+\item {\bf [-n number\_of\_scales]} \\
+number of scales used in the multiresolution transform. Default is 3.
+\item {\bf [-s Nsigma]} \\
+\item {\bf [-f]} \\
+Suppress the noise, but not the glitches.
+\end{itemize}
+
+\section*{Transient Correction}
+
+\begin{center}
+ USAGE: transient\_fit option cube\_in cube\_out
+\end{center}
+where options are:
+\begin{itemize}
+\item {\bf [-d downward\_model]} \\
+for fitting downward transients.
+\item {\bf [-e ending\_scd]} \\
+e = position of the ending scd to be considered  for fitting transients.
+\item {\bf [-g]} \\
+Global correction. upward \& downward transients are fitted over all the scds.
+ \item {\bf [-m method]} \\
+m = name of the method used for the minimization of the merit-function:
+'cauchy','exponential','gaussian'.
+\item {\bf [-n number\_of\_iterations]} \\
+n = max number of iterations when fitting the model with the data.
+\item {\bf [-o]} \\
+overshoot upward model.
+\item {\bf [-s starting\_scd]} \\
+s = position of the starting scd to be considered  for fitting transients.
+\item {\bf [-t down\_threshold]} \\
+t = the greatest negative value of the slope of a downward transient above 
+which   no fitting is undertaken.
+\item {\bf [-T up\_Threshhold]} \\
+T = the lowest positive value of the slope of a upward transient beneath
+ which no fitting is undertaken.
+\item {\bf [-u upward\_model]} \\
+for fitting upward transients.
+\end{itemize}
+
+\section*{Field of view Distortion Correction}
+\begin{center}
+ USAGE: projection  options input1 input2 ... output  
+\end{center}
+where options are:
+\begin{itemize}
+\item {\bf [-R CROTA2]} \\
+Creates a map with given {\em CROTA2} (decimal degrees).
+Default is 0 .
+\item {\bf [-d CDELT1]} \\
+Creates a map with a given resolution (in arcsec). \\
+if {\em CDELT1} is set and not {\em CDELT2}, then  \\
+                 CDELT1 = -{\em CDELT1} and CDELT2 = {\em CDELT1} \\
+to ensure North top and West left astronomical convention  with CROTA2=0 images.
+\item {\bf [-D CDELT2]} \\
+ Creates a map with a given CDELT2 (in arcsec). CDELT1 must have been provided.
+\item {\bf [-M map]} \\
+ Will use the orientation of the map input number map for the result map.
+\item {\bf [-C]} \\
+Will produce as many outputs as inputs, with the same astrometry, 
+but without coadding the maps. Fits files will be numbered from 1 to n 
+after the given output filename.
+\item {\bf [-o output file name]} \\
+Output file name. Default is "result.fits". 
+\item {\bf [-x line of pixel to be examined]} \\
+Default is -1000.
+\item {\bf [-y column of pixel to be examined]} \\
+ Default is -1000.
+\end{itemize}
+
+
+\section*{The PRETI Program}
+The {\em mr\_preti} applies the calibration from pattern recognition.
+The first input (raw data + observation parameters) file should be created 
+using the {\em mosaic2fits} routine from the CAM Interactive Analysis package.
+\begin{center}
+ USAGE: mr\_preti option cube\_in cube\_in\_or\_out
+\end{center}
+where options are:
+\begin{itemize}
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales used in the multiresolution transform for the short glitches
+removal. 
+Default is 3.
+\item {\bf [-N number\_of\_scales]} \\
+Nnumber of scales used for the suppresion of long glitches. 
+Default is 8.
+\item {\bf [-g sigma]} \\
+sigma = noise standard deviation. By default, it is automatically
+estimated for each temporal vector.
+\item {\bf [-s Nsigma]} \\
+Detection level at nsigma * SigmaNoise.
+\item {\bf [-d]} \\
+Apply a short  glitches removal.  Default is no.
+\item {\bf [-D]} \\
+Apply a long glitches removal. Default is no.
+\item {\bf [-b]} \\
+Suppress the base line. Default is no.
+\item {\bf [-B number\_of\_scales]} \\
+ Number of scales used for baseline suppression.
+\item {\bf [-f]} \\
+Flat field correction. Default is no.
+\item {\bf [-t]} \\ 
+ Transient correction. Default is no.
+\item {\bf [-K BorderNumber]} \\
+Do not take into account the border.
+\item {\bf [-a]} \\
+Average the frames belonging to the same sky position. Default is no.
+\item {\bf [-r]} \\
+Create a rasmap.
+\item {\bf [-S NSigma\_Long\_Glitch]} \\
+NSigma for long glitch detection. Default is 5. 
+\item {\bf [-F]} \\ 
+Kill detected objects containing more than 50 masked  pixels.
+\item {\bf [-G]} \\
+Kill detected objects if the first 3 pixels are masked .
+\item {\bf [-M]} \\
+Mask pixels where long glitches have been detected.
+\item {\bf [-A]} \\
+(for all) Apply a flat field correction, a short and long glitches removal,
+a baseline suppression, average the frame, create the raster map. It is equivalent
+to options "-d -D -f -b -a -r".
+\item {\bf [-L]} \\
+Use the slope of an object for source/glitch separation.
+\item {\bf [-m]} \\
+Creates a micro-scan map instead of a raster map.
+\end{itemize}
+
+There is two modes for using the {\em mr\_isocalib} program: \\
+If option "-d" and/or "-D" is set then the second file of the command
+line is an output file, which contains the deglitched data cube, without
+the baseline (if "-b" is set), and hence contains only the 
+noise and the sources. In this case  the program will also create
+a set of other files:
+\begin{itemize}
+\item xx\_baddata.fits: data cube which contains the detected long glitches.
+\item xx\_mask.fits: data cube which contains the mask. mask(x,y,z) equal
+to 1 if a short glitch is found at position (x,y,z). If "-M" is set, 
+positions were long glitches have been detected are set also to 1.
+\item xx\_bgr.fits: data cube which contains the baseline.
+\item xx\_sigmanoise.fits: image which contains the estimated noise for each
+detector pixel.
+\item xx\_source.fits: data cube which contains the detected sources.
+\end{itemize}
+
+If neither "-d" or "-D" is set (second mode), all the files described above are read 
+by {\em mr\_isocalib}. This allows us to treat in several steps the data.
+
+other created files are created:
+\begin{itemize}
+\item Results concerning the flat field (only if "-f" is set):
+\begin{itemize}
+\item "xx\_auto\_flat.fits": estimated flat field.
+\item "xx\_rms\_flat.fits": RMS of the estimated flat field.
+\end{itemize}
+\item Results concerning the reduced data (frame at the same sky position
+have been averaged). Only if "-r" or/and "-f", or/and "-m" is set.
+\begin{itemize}
+\item "xx\_reduce.fits": reduced and flat-fielded (if "-f") cube.
+\item "xx\_rms.fits": RMS cube of the averaged cube.
+\item "xx\_npix.fits": number of pixels used for pixel of the averaged cube.
+\item "xx\_rms\_noise.fits": Estimated noise on the averaged cube.
+\item "xx\_raster.fits": raster scan or micro scan final map.
+\item "xx\_rmsraster.fits": RMS of the final map
+\item "xx\_npixraster.fits": number of pixels used
+ for the final map calculation.
+\end{itemize}
+\item Results concerning the baseline:
+\begin{itemize}
+\item "xx\_bgrreduce.fits"
+\item "xx\_bgrrms.fits"
+\item "xx\_bgrnpix.fits"
+\item "xx\_bgrraster.fits"
+\item "xx\_bgrrmsraster.fits"
+\item "xx\_bgrnpixraster.fits"
+\end{itemize}
+\item Results concerning the bad data (long glitches):
+\begin{itemize}
+\item "xx\_badreduce.fits"
+\item "xx\_badraster.fits"
+\end{itemize}
+\end{itemize}
+
+\section*{Markov Random Field Deconvolution}
+
+\begin{center}
+ USAGE: ${\bf im\_dec\_markov}$ option image\_in psf\_in image\_out
+\end{center}
+where options are: 
+\begin{itemize}
+\item {\bf [-b]} \\
+If this option is set, the support of the image is dilated by using I\_MIRROR to
+obtain a solution with the same support. By default, we use I\_CONT.
+\item {\bf [-d delta]} \\
+Scaling parameter $\delta$. This parameter must be strictly positive. 
+Default is 1 (See Parameter estimation section)
+\item {\bf [-e epsilon]} \\
+Convergence parameter. Default is 0.001
+\item {\bf [-g sigma]} \\
+Gaussian Noise standard deviation. Default is automatically estimated.
+\item {\bf [-i number\_of\_iterations]} \\
+Maximum number of iterations. Default is 500
+\item {\bf [-l lambda]} \\
+Regularizing parameter $\lambda$. This parameter must be strictly positive. 
+Default is 1 (See Parameter estimation section)
+\item {\bf [-o omega]} \\
+Over-relaxation coefficient such as: $1\leq omega<2$. Omega is used to allow faster 
+convergence. Default is 1 
+\item {\bf [-r residual\_file\_name]} \\
+If this option is set, the residual is written to 
+the file of name {\em residual\_file\_name}. By default, the
+residual is not written. The residual is equal to the difference between
+the input image and the solution convolved by the PSF.
+
+The maximum of the PSF must be at the center of its support.
+So, dimensions of the PSF support must be odd.
+\end{itemize}
+\noindent
+
+{\bf Example:}
+\begin{itemize}
+\item im\_dec\_markov -d 100 -i 100 -l 10 -r residu.fits 
+image\_in.fits psf\_in.fits ima\_out.fits \\
+deconvolves an image with $\delta=100$ and $\lambda=10$, assuming
+a Gaussian noise (its standard deviation is automatically estimated).
+\end{itemize}
+
+For each iteration, the following informations will be printed:
+
+...
+
+It 95 D=90674.9 M=537432 V=628106 Ec=75.5482 Fx=9.38398e+07 min=1224.23 max=13732.2
+
+It 96 D=90676.3 M=537430 V=628107 Ec=70.6314 Fx=9.38399e+07 min=1224.23 max=13731.7
+
+It 97 D=90677.5 M=537429 V=628107 Ec=66.1543 Fx=9.38398e+07 min=1224.23 max=13731.3
+
+It 98 D=90678.7 M=537429 V=628107 Ec=61.8843 Fx=9.38399e+07 min=1224.23 max=13730.8
+
+It 99 D=90679.9 M=537428 V=628107 Ec=57.978 Fx=9.38399e+07 min=1224.23 max=13730.4
+ 
+where D=$U({\bf y/x})$, M=$U({\bf x})$ and V=$U({\bf x/y})$ (V=D+M). 
+
+Ec is the correction energy compared
+to the convergence parameter (epsilon).
+
+Fx is the flux of the estimated
+solution $\bf \hat x$.
+
+Minimum and maximum of the restored image are also printed.
+
+
+\section*{IDL routine}
+{\em mr1d\_deglitch} IDL routine eliminates glitches in 
+a cube $D$ calling the previous program. Each vector $D(s,y,*)$
+at position $(x,y)$ is treated individually. 
+\begin{center}
+     USAGE: mr1d\_deglitch, Cube, filter=filter, Nscale=Nscale, Nsigma=Nsigma, mask=mask
+\end{center}
+where 
+\begin{itemize}
+\item {\em Cube}: 3D IDL array (input-ouput parameter). Cube to deglitch.
+\item {\em Nscale}: number of scale for the multiresolution analysis.
+\item {\em Nsigma}: glitch detection at Nsigma.
+\item {\em filter}: if set, then an adaptive temporal filter is applied.
+\item {\em mask}: output 3D IDL array: Mask where glitches have been detected.
+\end{itemize}

@@ -1,0 +1,633 @@
+  
+\section{Wavelet Analysis of Time Series}  
+
+\subsection{Introduction}
+
+Several approaches have been proposed for time 
+series  prediction by the WT, based on a   
+neural network \cite{starck:gonghui99,pred:bashir00},
+Kalman filtering \cite{pred:cristi00,pred:hong98}, or
+an AR (autoregression) model \cite{pred:soltani00}.
+In~\cite{starck:gonghui99,pred:soltani00} the undecimated Haar transform
+was used. This choice of the Haar transform 
+was motivated by the fact that the wavelet
+coefficients are calculated only from data obtained previously in time,
+and the choice of an undecimated wavelet transform avoids aliasing problems.
+ 
+The \`a trous wavelet transform with a wavelet function related to a spline 
+function, as described earlier, is not consistent with a directed
+(time-varying) data stream. We now keep the wavelet function, but alter the 
+wavelet transform, to make of it a multiscale transform
+which is appropriate for a data stream. We consider a signal s(1), 
+s(2),..., s(n), where n is the present time-point.
+\begin{enumerate}
+\item For index k sufficiently large, carry out an \`a trous wavelet transform 
+ on $\{s(1), s(2), ... , s(k)\}$.
+\item Retain the detail coefficient values, and the continuum value, for the 
+   kth time-point only (cf. equation 8): $w_{1,k},w_{2,k},w_{J,k},c_{J,k}$.
+     Note that summing these values gives $s(k)$.
+\item If k is less than n, set k to k+1 and return to Step 1.
+\end{enumerate}
+
+This produces an additive decomposition of the signal, which is similar to 
+the \`a trous wavelet transform decomposition
+with the $B_3$ spline on $\{s(1),s(2),...,s(k),...,s(n)\}$. The computational time 
+is evidently greater, $O(n^2)$ as against $O(n)$. 
+
+We have not touched on an important matter in regard to equation 2: how 
+to handle signal boundaries. Although other strategies could be
+envisaged, we use a mirror approach. This is tantamount, of course, to 
+redefining the discrete filter associated with
+the scaling function in the signal boundary region; and to redefining 
+the associated wavelet function in this region. This strategy is of
+particular relevance when we work on an ordered data stream. We hypothesize 
+future data based on values in the immediate past. Not
+surprisingly there is discrepancy in fit in the succession of scales, which 
+grows with scale as larger numbers of immediately past values
+are taken into account.  
+
+\subsection{The redundant Haar wavelet transform}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{ 
+\psfig{figure=fig_haartrous.ps,bbllx=1cm,bblly=20cm,bburx=19.cm,bbury=24.5cm,width=15cm,height=4.5cm,clip=}
+}}
+\caption{This figure shows which pixels of the input signal are used
+to calculate the last wavelet coefficient in the different scales.}
+\label{fig_haar}
+\end{figure}  
+The Haar wavelet transform was first described in the early years of this 
+century and is described in almost every text on the wavelet
+transform. As already mentioned, the asymmetry of the wavelet function 
+used makes it a good choice for edge detection, i.e.\ localized
+jumps. The usual Haar wavelet transform, however, is a decimated one. 
+We now develop a non-decimated or redundant version of this
+transform. This will be an \`a trous algorithm, but with a different pair 
+of scaling and wavelet functions compared to those used previously.
+
+The non-decimated Haar algorithm is exactly the same as the \`a trous 
+algorithm, except that the low-pass filter $h$, 
+$(\frac{1}{16}, \frac{1}{4}, \frac{3}{8},
+\frac{1}{4}, \frac{1}{16})$,
+is replaced by the simpler filter $(\frac{1}{2},\frac{1}{2})$. 
+There h is now non-symmetric. 
+Consider the creation of the first wavelet resolution level. We
+have  created it from  by convolving the original signal with h. Then:
+\begin{eqnarray}
+c_{j+1,l} = 0.5( c_{j,l-2^j} +  c_{j,l})
+\end{eqnarray}
+and
+\begin{eqnarray}
+w_{j+1,l} =  c_{j,l}  - c_{j+1,l}
+\end{eqnarray}
+At any time point, $l$, we never use information after $l$ in 
+calculating the 
+wavelet coefficient. 
+Figure \ref{fig_haar} shows which pixels of the input signal are used
+to calculate the last wavelet coefficient in the different scales.
+A wavelet coefficient at a
+position $t$ is calculated from the signal samples at positions less
+than or equal to $t$, but never larger.
+% Examples of the \`a trous Haar transform. 
+% the Haar \`a trous wavelet transform, will be seen later. 
+
+\subsection{Autoregressive Multiscale Prediction}
+\label{sect_AR_pred}
+\subsubsection{Stationary signal}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{ 
+\psfig{figure=fig_haarpred.ps,bbllx=1cm,bblly=20cm,bburx=19.cm,bbury=24.5cm,width=15cm,height=4.5cm,clip=}
+}}
+\caption{Wavelet coefficients which are used for the prediction of the next value.}
+\label{fig_haarpred}
+\end{figure}  
+Assuming a stationary signal $D = (d_1, \dots, d_N)$,
+the AR (autoregressive) multiscale prediction model is:
+\begin{eqnarray}
+d_{t+1} = \sum_{j=1}^J \sum_{k=1}^{A_j} a_{j,k} w_{j,t-2^{j}(k-1)}  +
+\sum_{k=1}^{A_{J+1}} a_{J+1,k} c_{J,t-2^{J}(k-1)}  + \epsilon(t+1)
+\end{eqnarray}
+where ${\cal W} = {w_{1}, \dots, w_J, c_J}$ represents the Haar \`a trous
+wavelet transform of $D$ ($D = \sum_{j=1}^J w_j + c_J$).
+For example, choosing $A_j = 1$ for all resolution levels $j$ leads 
+to the equation
+\begin{eqnarray}
+d_{t+1} = \sum_{j=1}^J  a_{j} w_{j,t} + a_{J+1} c_{J,t}  + \epsilon(t+1)
+\end{eqnarray}
+Figure~\ref{fig_haarpred} shows which wavelet coefficients are used 
+for the prediction using  $A_j = 2$ for all resolution levels $j$,
+and a wavelet transform with five scales (four wavelet scales + the
+smoothed array). In this case, we can see that only ten coefficients 
+are used, but taking into account low resolution information. This means
+that a long term prediction can easily be introduced, either by increasing
+the number of scales in the wavelet transform, or by increasing the 
+AR order in the last scales, but with a very small additional number of
+parameters.
+To find the $Q = \sum_{j=1}^{J+1} A_{j}$ unknown parameters: \\ 
+$$\{\{a_{1,1},...,a_{1,A_1}\},..., 
+\{a_{j,1},...,a_{j,A_j}\},..., 
+\{a_{J,1},...,a_{j,A_J}\},\{a_{J+1,1},...,a_{j,A_J+1}\}\}$$ 
+of our model, we need to resolve the following equation: $A X = S$,
+where $A,X,W$ are defined by:
+\begin{eqnarray*}
+A^t & = & (L_{N-1}, \dots, L_{N-P}) \\
+L_i & = & (w_{1,i}, \dots, w_{1,i-2 A_1}, \dots, w_{2,i}, \dots, w_{2,i-2^2 A_2},
+\dots, w_{J,i}, \dots, w_{J,i-2^J A_J}, c_{J,i}, \dots, c_{J,i-2^J A_{J+1}}) \\ 
+X^t & = & (a_{1,1},\dots, a_{1,A_1},a_{2,1}, \dots,a_{2,A_2},
+ \dots, a_{J,1}, \dots, a_{J,A_j}, \dots, a_{J+1,1}, 
+ \dots, a_{J+1,A_{J+1}})  \\
+S^t & = & (d_N, \dots, d_{i+1},  \dots, d_{N-P+1})  
+\end{eqnarray*}
+We have $P$ equations and $Q$ unknowns, so $A$ is a $Q \times P$ matrix 
+($P$ rows
+$L_i$, each with $Q$ elements),
+$X$ and $S$ are respectively $Q$- and $P$-sized vectors. When $Q$ is larger
+than $P$, many minimization methods may be used to find $X$. In our experiments,
+we used the standard SVD method.
+
+
+\subsubsection{Non-stationary signal}
+When the signal is not stationary, the previous method will not
+correctly model our data. However, in many cases, the 
+non-stationary part affects the low frequency components, while
+the high frequencies may still give rise to stationary behavior.
+Then we can separate our signal $D$ into two parts,   
+the low and the high frequencies $L$ and $H$:
+\begin{eqnarray*}
+L & = & c_J \\
+H & = & D - L = \sum_{j=1}^J w_j \\
+d_{t+1} & = & l_{t+1} + h_{t+1} \\
+\end{eqnarray*}
+The smoothed array of the wavelet transform is first subtracted from
+the data, and we consider now that the signal $H$ is stationary.
+Our prediction will be the coaddition of two predicted values,
+one on the signal $H$ by the AR Multiscale model, and the second on
+the low frequency component by some other method.
+The AR-Multiscale model gives:
+\begin{eqnarray}
+h_{t+1} = 
+\sum_{j=1}^J \sum_{k=1}^{A_j} a_{j,k} w_{j,t-2^{j}(k-1)} +  \epsilon(t+1)
+\end{eqnarray}
+We have now $Q = \sum_{j=1}^{J} A_{j}$ unknown parameters: 
+$$\{\{a_{1,1},...,a_{1,A_1}\},..., 
+\{a_{j,1},...,a_{j,A_j}\},..., 
+\{a_{J,1},...,a_{j,A_J}\} \}$$ and
+we need to resolve the following equation: $A X = S$,
+where $A,X,W$ are defined by:
+\begin{eqnarray*}
+A^t & = & (L_{N-1}, \dots, L_{N-P}) \\
+L_i & = & (w_{1,i}, \dots, w_{1,i-2 A_1}, \dots, w_{2,i}, \dots, w_{2,i-2^2 A_2},
+\dots, w_{J,i}, \dots, w_{J,i-2^J A_J}) \\ 
+X^t & = & (a_{1,1},\dots, a_{1,A_1},a_{2,1}, \dots,a_{2,A_2},
+ \dots, a_{J,1}, \dots, a_{J,A_j})  \\
+S^t & = & (h_N, \dots, h_{i+1},  \dots, h_{N-P+1})  
+\end{eqnarray*}
+Many methods may be used for the prediction of $l_{t+1}$. The problem
+is simplified by the fact that $L$ is very smooth. We used a polynomial
+fitting of degree 3 in our experiments.
+
+\subsubsection{AR order determination}
+The AR order at the different scales must now be defined. 
+It can be a user parameter,
+but an automatic method is generally preferable. At each scale $j$, 
+we need to know how many coefficients should be used. This value $A_j$
+may be determined by looking at how the wavelet coefficients at the
+scale $j$ are correlated. Therefore each scale is first analyzed separately,
+and the best AR order $A_j$ at scale $j$ minimizes:
+\begin{eqnarray*}
+J(A_j) = \log \sigma_{A_j}^2 + {\cal P}(A_j)
+\end{eqnarray*}
+where $\sigma_{A_j}$ is the prediction error, and
+${\cal P}$ is a penalty function, which increases with the AR order.
+Examples of penalty functions are:
+\begin{itemize}
+\item AIC: $AIC = \log \sigma_{A_j}^2 + \frac{2 A_j}{N}$ 
+\item AICC: $AICC = \log \sigma_{A_j}^2 + \frac{N +  A_j}{N - A_j - 2}$
+\item SIC: $SIC = \log \sigma_{A_j}^2 + \frac{ A_j\log N }{N}$
+\end{itemize}
+
+
+\subsection{Wavelets and autocorrelation function: mr1d\_acor}
+\index{mr1d\_acor}
+Program {\em mr1d\_acor} calculates the autocorrelation at each scale
+of the wavelet transform. 
+{\bf
+\begin{center}
+ USAGE: mr1d\_acor option signal\_in autocor\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales used in the multiresolution transform.
+\item {\bf [-S Nbr\_of\_Lags]} \\
+Default is 10.
+\end{itemize}
+
+\subsection{Transition detection: mr1d\_nowcast}
+\index{mr1d\_nowcast}
+Program {\em mr1d\_nowcast} detects the transitions in all scales at a 
+given position. The wavelet transform used is the Haar transform,
+so a given wavelet coefficient at position $x$ and at scale $j$ ($j=1..P$,
+$P$ being the number of scales)
+is calculated from pixel values between  positions $x-2^{j}+1$ and $x$.
+Only pixels in the signal which are on the left of a given position $x$
+(or before a given time for temporal signal) are
+used for the calculation of the wavelet coefficients at position $x$.
+This allows us to detect a new event in a temporal series 
+irrespective of the time 
+scale of the event.
+By default, the analysed position is the last one of the signal, but other
+positions can equally well be analyzed using the ``-x'' option. The program
+prints for each scale $j$ the following information corresponding to 
+the position $x$:
+\begin{itemize}
+\item {\bf No detection} \\
+ if the wavelet coefficient $\mid w_j(x) \mid  < k \sigma_j$
+\item {\bf New upward detection}\\
+ if $  w_j(x) > k \sigma_j$  and $\mid w_j(x-1) \mid  < k \sigma_j$
+\item {\bf New downward detection}\\
+ if $  w_j(x) < - k \sigma_j$ and $\mid w_j(x-1) \mid  < k \sigma_j$
+\item {\bf Positive significant structure}\\
+ if $  w_j(x) > k \sigma_j$ and $\mid w_j(x-1) \mid  > k \sigma_j$ \\
+The first detected coefficient of the structure is also given.
+\item {\bf Negative significant structure}\\
+ if $  w_j(x) < -k \sigma_j$ and $\mid w_j(x-1) \mid  > k \sigma_j$ \\
+The first detected coefficient of the structure is also given.
+\item {\bf End of significant structure}\\
+ if $\mid w_j(x) \mid  < k \sigma_j$ and $\mid w_j(x-1) \mid  > k \sigma_j$
+\end{itemize}
+Furthermore the signal to noise ratio of the wavelet coefficient is given.
+{\bf
+\begin{center}
+ USAGE: mr1d\_nowcast option signal\_in  
+\end{center}}
+where options are:
+\begin{itemize}
+\item {\bf [-m type\_of\_noise]}
+{\small
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item Gaussian Noise 
+\item Poisson Noise 
+\item Poisson Noise + Gaussian Noise 
+\item Multiplicative Noise 
+\item Non-stationary additive noise 
+\item Non-stationary multiplicative noise 
+\item Undefined stationary noise 
+\item Undefined noise 
+\end{enumerate}
+}
+ Default is Gaussian noise.
+\item {\bf [-g sigma]} 
+\item {\bf [-c gain,sigma,mean]} 
+\item {\bf [-n number\_of\_scales]} 
+\item {\bf [-s NSigma]} 
+\item {\bf [-x Position]}  \\
+Position to analyse. Default is the last point.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\item mr1d\_nowcast sig.dat  \\
+Analyse the last point of the signal with all default option.
+\item mr1d\_nowcast -x 55 -s 10 sig.dat  \\
+Analyse the point at position 55, and detect the transition with a 
+signal to noise ratio equal to 10.
+\end{itemize}
+
+
+\subsection{Prediction: mr1d\_fcast}
+\index{mr1d\_nowcast}
+
+Program {\em mr1d\_fcast} performs a forecasting by four different methods:
+the standard AR model (AR), an AR method per scale (and the prediction
+is the coaddition of the predicted wavelet coefficients), 
+the multiresolution AR model (MAR), and a neural network.
+The program can be used in two modes: the evaluation and the prediction 
+mode. In the evaluation mode, the first part of the time series is used
+to predict the second part, and the output file contains the same 
+number of values as the input file. The initial values (corresponding to
+the initial part of the signal) are identical, 
+and the other values are the predicted ones. 
+The error prediction is calculated
+and printed on the standard output device (screen window). 
+In the prediction mode,
+the output file contains more values than the input file. The last values
+correspond to the predicted values.
+For the AR and MAR models, the order of the model can either be fixed 
+by the user (``-a option''), or automatically calculated. 
+In case of an automatic
+MAR model order estimation, the order can be different at each scale.
+
+By default, the signal is assumed to be stationary. 
+If the ``-h'' option is set,
+we assume a non-stationary signal. In that case, the last scale of the
+wavelet transform is analyzed differently (i.e. not with the AR model).
+Several methods can be selected by the ``-B'' option. 
+The default is the polynomial extrapolation of order 2.
+
+If the ``-L'' option is set, only the last pixels will be used in the
+analysis.
+
+{\bf
+\begin{center}
+ USAGE: mr1d\_fcast option signal\_in  signal\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\item {\bf [-P predict\_method]}
+{\small
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item  Autoregressive model.
+\item  Autoregressive model per scale. 
+\item  Multiresolution Autoregressive model.
+\item  Neural network.
+\end{enumerate}
+}
+Default is Multiresolution Autoregressive Model.
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales to be used in the Multiresolution AR model. Default is 5.
+\item {\bf [-a AR\_Order]} \\
+AR oder used for the prediction. Default is automatically estimated.
+\item {\bf [-O Estimation\_AR\_Order\_Method]}
+{\small
+\begin{enumerate}
+\item AIC 
+\item AICC
+\item BIC
+\end{enumerate}}
+Default is BIC method.
+\item {\bf[-h]} \\
+Non stationary signal. Default is stationary.
+\item {\bf[-p Number\_of\_Predict]} \\
+Number of prediction. Default is 0.
+\item {\bf[-m MinAROrder]} \\
+Minimum AR model order. Default is 1.
+\item {\bf[-M MaxAROrder]} \\
+Maximum AR model order. Default is 10.
+\item {\bf[-w]} \\
+Write to disk some infomation about the prediction error and the
+ AR model order. 
+The file contains a 1D table 
+of size $N+3$, where $N$ is the number of scales ($N = 1$ when the 
+MAR model is not used).
+\begin{verbatim}
+  T[0] = prediction error
+  T[1] = Number_of_scale 
+  T[2] = Percentage of prediction in the interval [Pred-SigmaNoise, Pred+SigmaNoise]. 
+  for j = 0 to Number_of_scale-1 do T[j] = AR order at scale j    
+\end{verbatim}
+\item {\bf[-L NPix]]} \\
+Analyse the last NPix pixels. Default is all pixels.
+\item {\bf [-B extrapol\_type]}
+{\small
+\begin{enumerate}
+\item Constant border ($c_J(N+i) = c_J(N)$, where $c_J$ is the last scale,
+$N$ the number of pixels).
+\item Mirror border ($c_J(N+i) = c_J(N-i)$).
+\item Double mirror border ($c_J(N+i) = 2 c_J(N) - c_J(N-i)$).
+\item Polynomial extrapolation (deg 1).
+\item Polynomial extrapolation (deg 2).
+\end{enumerate}}
+Default is 5. Only used if the ``-h'' option is set.
+\item {\bf[-T Poly\_Nbr\_Pix]} \\
+Number of pixels used for the polynomial extrapolation.
+Default is 5. Only used if the ``-h'' option is set and if a polynomial
+extrapolation is used.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\item mr1d\_fcast sig.dat eval.dat \\
+Evaluate the prediction by MAR method.
+\item mr1d\_fcast -p 1 sig.dat pred.dat \\
+Make a prediction at position N+1.
+\end{itemize}
+
+ 
+\section{Time-Frequencies Analsysis}  
+
+\subsection{The Short Term Fourier Transform: im1d\_stf}
+ \index{im1d\_stf}
+The Short-Term Fourier Transform of a 1D signal $f$ is defined by:
+\begin{eqnarray}
+STFT(t, \nu) = \int_{-\infty}^{+\infty} e^{-j2\pi\nu \tau} f(\tau)g(\tau-t) d\tau
+\end{eqnarray}
+If $g$ is the Gaussian window, this corresponds to the Gabor transform.
+The energy density function, called the {\em spectrogram}, is given by:
+\begin{eqnarray}
+SPEC(t, \nu) = \mid STFT(t, \nu) \mid^2 
+=  \mid  \int_{-\infty}^{+\infty} e^{-j2\pi\nu \tau} f(\tau)g(\tau-t) d\tau \mid^2 
+\end{eqnarray}
+Most used windows are:
+{\small
+\begin{itemize}
+\itemsep=1truecm
+\baselineskip=0.4truecm
+\item Truncated window function:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+    1   &  \mbox{ if }  \mid \hat{P}(\nu) \mid \ge \sqrt{\epsilon}    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+where $\epsilon$ is the regularization parameter.
+\item Rectangular window:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+    1   &  \mbox{ if }  \mid  \nu \mid \le \Omega    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+where $\Omega$ defines the band-width.
+\item Triangular window:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+    1 - \frac{\nu}{\Omega}  &  \mbox{ if }  \mid  \nu \mid \le \Omega    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+\item Hamming Window:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+    0.54 + 0.46 \cos(\frac{2\pi \nu}{\Omega})    &  \mbox{ if }  \mid  \nu \mid \le \Omega    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+
+\item Hanning Window:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+    \cos(\frac{\pi \nu}{\Omega})    &  \mbox{ if }  \mid  \nu \mid \le \Omega    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+
+\item Gaussian Window:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+     \exp(-4.5 \frac{\nu^2}{\Omega^2})    &  \mbox{ if }  \mid  \nu \mid \le \Omega    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+
+\item Blackman Window:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+  0.42 + 0.5  \cos(\frac{\pi \nu}{\Omega}) +  0.08  \cos(\frac{2\pi \nu}{\Omega})  &  \mbox{ if }  \mid  \nu \mid \le \Omega    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+\end{itemize}
+ }
+ 
+The inverse transform is obtained by:
+\begin{eqnarray}
+f(t) =  \int_{-\infty}^{+\infty}  g(t-\tau)  \int_{-\infty}^{+\infty} e^{j2\pi\nu \tau} STFT(\tau, \nu) d\nu d\tau
+\end{eqnarray}
+
+\bigskip
+Program {\em im1d\_stf} calculate the short term Fourier Transform of a signal.
+It outputs three files: the real part of the STF,  the imaginary part
+of the STF, and the spectrogram. When the ``-r'' option is set, the 
+the signal is reconstructed from the STF real and imaginary parts  
+(the spectrogram is not used for the reconstruction).
+ 
+\smallskip
+The command line is:
+{\bf
+\begin{center}
+ USAGE: im1d\_stf option signal\_in image\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item {\bf [-t type\_of\_window ]}
+\begin{enumerate}
+\itemsep=0.1truecm
+\baselineskip=0.4truecm
+\item Hamming window
+\item Hanning window
+\item Gaussian window
+\item Blackman window
+\item Rectangular window
+\end{enumerate}
+Default is Hamming window.
+\item {\bf [-w window\_size]} \\
+Window size. Default is 1024. 
+If the signal has less than 1024 pixels, the default value is
+the number of pixels divided by four.
+\item {\bf [-W window\_param]} \\
+ Window parameter. Default is 0.5.
+\item {\bf [-S Step]} \\
+ Step between two points. Default is WindowSize/2. 
+\item {\bf [-r]} \\
+ Reverse transform.
+\item {\bf [-v]} \\
+Verbose. Default is no.
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\item im1d\_stf sig.fits stf \\
+Creates three files, ``stf\_re.fits'', ``stf\_im.fits'',  ``stf\_spec.fits'',
+corresponding respectively the STF real part, the STF imaginary part and
+the spectrogram.
+\item  im1d\_stf -r stf rec \\
+Reconstruct a signal from its STF (i.e. ``stf\_re.fits'' and ``stf\_im.fits'').
+\end{itemize}
+
+
+\subsection{Time-Frequency Distribution: im1d\_tfreq}
+\index{im1d\_tfreq}
+
+% \subsubsection*{The Wigner-Ville Distribution.}
+\index{Wigner-Ville transform}
+\index{transform!Wigner-Ville transform}
+
+The Wigner-Ville 
+distribution \cite{ima:wigner32,ima:ville48} of a signal $s(t)$ is 
+\begin{eqnarray}
+W(t, \nu) = \frac{1}{2\pi} \int s^*(t - \frac{1}{2}\tau ) 
+           s(t + \frac{1}{2}\tau ) e^{-i\tau 2 \pi \nu} d\tau
+\end{eqnarray}
+where $s^*$ is the conjugate of $s$.  
+The Wigner-Ville transform is always real (even for a complex signal).
+In practice, its use is limited by the existence of interference terms,
+even if they can be attenuated using specific averaging approaches.
+More details can be found in \cite{ima:cohen95,ima:mallat98}.
+
+% \subsubsection*{The Choi-Williams Distribution.}
+% The Choi-Williams distribution of a signal $s(t)$ is 
+% \begin{eqnarray}
+% W(t, \nu) = \frac{1}{4\pi^{\frac{3}{2}}} \int \int 
+%    \frac{1}{\sqrt{\tau^2/\sigma}} s^*(u - \frac{1}{2}\tau ) 
+%            s(u + \frac{1}{2}\tau ) e^{-\sigma(u-t)^2/\tau^2 - 2i\tau \pi \nu} d\tau
+% \end{eqnarray}
+% 
+% \bigskip
+
+Program {\em im1d\_stf} calculates the short term Fourier Transform of a signal.
+It outputs three files: the real part of the STF,  the imaginary part
+of the STF, and the spectrogram.
+
+\smallskip
+The command line is:
+{\bf
+\begin{center}
+ USAGE: im1d\_stf option signal\_in image\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item {\bf [-T TimeFrequency\_Distrib ]}
+\begin{enumerate}
+\itemsep=0.1truecm
+\baselineskip=0.4truecm
+\item Short Term Fourier Transform Spectogram 
+\item Wigner-Ville Distribution
+% \item Choi-Williams Distribution
+\end{enumerate}
+Default is 1.
+\item {\bf [-t type\_of\_window ]}
+\begin{enumerate}
+\itemsep=0.1truecm
+\baselineskip=0.4truecm
+\item Hamming window
+\item Hanning window
+\item Gaussian window
+\item Blackman window
+\item Rectangular window
+\end{enumerate}
+default is Hamming window.
+% \item {\bf [-F type\_of\_window (freq. domain) ]} \\
+%  Only for Choi-Williams distribution.             
+% Default is Hamming window.
+\item {\bf [-w window\_size (time domain)]} \\
+Window size. Default is 1024.
+If the signal has less than 1024 pixels, the default value is
+the number of pixels divided by four.
+\item {\bf [-W window\_param (time domain)]} \\
+ Window parameter. Default is $0.5$.
+\item {\bf [-S Step]} \\
+ Step between two points. Default is WindowSize / 2.
+\item {\bf [-v]} \\
+Verbose. Default is no.
+\end{itemize}

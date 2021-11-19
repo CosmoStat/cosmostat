@@ -1,0 +1,506 @@
+ 
+
+\chapter{ISOCAM data deconvolution using Markov random field}
+ 
+\section{Introduction}
+
+The aim of image deconvolution is to estimate the original image $\bf x$ from its
+observed image $\bf y$. The degradation model is described by the linear
+relation:
+\begin{eqnarray}
+{\bf y = H x + n }  
+\label{eqn_lin}
+\end{eqnarray}
+where $\bf H$ is the Point Spread Function (PSF) matrix and $\bf n$ is 
+a white Gaussian additive noise.
+In general, the information provided by the data alone and the forward model 
+(\ref{eqn_lin}) is not sufficient to
+determine a solution with acceptable accuracy.
+Consequently, some a priori information about the structure of $\bf x$ is needed
+for recovery. Regularization is one method for adding constraints to the solution.
+More details may be found in \cite{rest:demoment89}.
+Many regularized solutions have been presented (see \cite{starck:sta94_1} and 
+\cite{rest:blancferaud96}).
+
+\section{Regularization using Markov model}
+
+\subsection{Introduction}
+
+Let us briefly review the ingredients of the proposed regularization method.
+The basic procedure uses a Markov random field as the prior model, 
+the relation (\ref{eqn_lin}) for image formation consisting typically of blur and superposition
+of Gaussian noise, and Bayes formula to obtain the posterior distribution $P(\bf
+x/y)$. 
+
+\subsubsection{Random Markov field}
+
+A random sequence $\bf x$ is called a Markov random field if for each site $s$:
+\begin{eqnarray}
+P({\bf x}) > 0 && \forall {\bf x}\in \Omega  
+\end{eqnarray}
+\begin{eqnarray}
+P(x_s/x_t;t\in S-\{s\}) = P(x_s/x_t;t\in{{\cal V}_s}) 
+\end{eqnarray}
+where $\Omega$ represents all possible configurations and $S$ is the dimension of
+the field $\bf x$.
+At every site $s$ of the field $\bf x$, the conditional probability  
+depends on a neighborhood ${\cal V}_s$ which is defined by the neighbors $t$ of the 
+site $s$. Note that ${\cal V}_s$ increases with the order of the model.
+
+\subsubsection{Examples of models}
+
+The four-neighbor system is defined such as:
+
+\begin{picture}(100,120)(0,0)
+\put(50,0){\circle{5}}
+\multiput(0,50)(100,0){2}{\circle{5}}
+\put(50,50){\circle*{5}}
+\put(55,55){site s}
+\put(50,100){\circle{5}}
+\put(150,55){4 NEIGHBOR MODEL}
+\end{picture}
+
+Because the edges of the image are not only parallel to the axes, there seems
+to be need to include diagonal neighbor pixels.
+Then, the four-neighbor model can be ameliorated such as:
+
+\begin{picture}(100,120)(0,0)
+\multiput(0,0)(50,0){3}{\circle{5}}
+\multiput(0,50)(100,0){2}{\circle{5}}
+\put(50,50){\circle*{5}}
+\put(55,55){site s}
+\multiput(0,100)(50,0){3}{\circle{5}}
+\put(150,55){8 NEIGHBOR MODEL}
+\end{picture}
+
+\subsubsection{Gibbs distribution}
+
+The prior distribution $P({\bf x})$ can be interpreted as a Gibbs energy.
+Then, $\bf x$ is a Markov random field if 
+$P({\bf x})$ is a Gibbs distribution such as:
+\begin{eqnarray} 
+P({\bf x}) = \frac{1}{Z}\exp(-U({\bf x})) 
+\end{eqnarray}
+where $Z$ is a partition function and $U({\bf x})$ a prior energy such as:
+\begin{eqnarray} 
+U({\bf x}) = \sum_{c \in {\cal C}} V_c(\bf x)
+\end{eqnarray}
+where $V_c(\bf x)$ are potentials functions and $c$ is a clique which is 
+defined as a pair of adjacent pixels. 
+
+\subsection{Potential function and line process}
+
+In order to preserve edges, 
+the use of a {\it line process} was introduced by Geman and Geman \cite{rest:geman84}. 
+In practise, a line process is defined via a potential function $\phi$
+which has particular properties (see \cite{rest:geman92}):
+
+Suppose $\phi(u)$ has the following properties on $[0,+\infty[$:
+\begin{itemize}
+\item $\phi(0)=0$
+\item $\phi(\sqrt u)$ concave
+\item $\lim_{u \rightarrow +\infty} \phi(u)=1$
+\end{itemize}
+
+Then, there exists a function $\psi(l)$ defined on an interval [0,L] such as: 
+\begin{eqnarray} 
+\phi(u) = \inf_{0\leq l\leq L}(lu^2+\psi(l))
+\label{mar_eqn_vdl}
+\end{eqnarray}
+
+and such that $\psi(l)$ has the properties:
+\begin{itemize}
+\item $\psi(0)=1$
+\item $\psi(L)=0$ 
+\item $\psi(l)$ strictly decreasing.
+\end{itemize}
+
+The line process is defined as the derivative of  
+$\phi(\sqrt u)$ such as:
+\begin{eqnarray} 
+l = \phi'(\sqrt u) 
+\end{eqnarray}
+
+\subsection{Posterior modelization}
+ 
+In the context of Bayesian estimation, the posterior distribution  
+$P({\bf x/y})$ can be written as:
+\begin{eqnarray}
+P({\bf x/y}) \propto P({\bf y/x})P({\bf x}) 
+\end{eqnarray}
+where 
+\begin{eqnarray} 
+P({\bf y/x}) \propto \exp(-U({\bf y/x})) 
+\end{eqnarray}
+and
+\begin{eqnarray}
+P({\bf x}) \propto \exp(-U({\bf x}))
+\end{eqnarray}
+Then, the posterior $P({\bf x/y})$ is also a Gibbs energy such as:
+\begin{eqnarray}
+U({\bf x/y}) = U({\bf y/x}) + U({\bf x})
+\end{eqnarray}
+The traditional choice in image restoration is:
+\begin{eqnarray} 
+U({\bf y/x}) = \frac{\|{\bf y-Hx}\|^2}{2\sigma^2}
+\end{eqnarray}
+In the first order case, the prior $P({\bf x})$ is defined such as:
+\begin{eqnarray} 
+U({\bf x}) = \sum_{cliques} \phi(x_r-x_s)
+\end{eqnarray} 
+where $\phi$ is the potential function and $(x_s-x_r)$ is the difference 
+between the values $x_r$ and $x_s$ of the two neighbors inside the 
+clique $c$.
+The solution is estimated by maximizing the posterior distribution
+$P({\bf x/y})$.
+Then, the energy $U({\bf x/y})$ must be minimized.
+\begin{eqnarray} 
+U({\bf x/y}) = \frac{\|{\bf y-Hx}\|^2}{2\sigma^2}
+               + \lambda \sum_{cliques} \phi(x_r-x_s) 
+\label{mar_eqn_cr}	       
+\end{eqnarray}
+where $\lambda$ is the regularizing parameter.
+
+\section{Application}
+
+\subsection{Minimization of the prior energy}
+
+The difficulty is to minimize the non quadratic energy $U(\bf x)$.
+From the work of Geman and Reynolds \cite{rest:geman92},
+the minimization of $U(\bf x)$ is equivalent to minimizing $U(\bf x/l)$ such
+as:
+\begin{eqnarray}
+\min_{\bf x}(U({\bf x})) = \min_{\bf x,l}(U({\bf x,l}))
+\end{eqnarray}
+where $\bf l$ is the vector of the line variables $l_c$.
+According to equation (\ref{mar_eqn_vdl}), it follows that $U(\bf x/l)$ can 
+be written
+as:
+\begin{eqnarray} 
+U({\bf x,l}) = \sum_{cliques\,c} l_c (x_r-x_s)^2 + \psi(l_c)
+\label{mar_mar_eqn_eg}
+\end{eqnarray}
+Note that the regularization becomes "half-quadratic" (see \cite{rest:blancferaud96})
+by using equation (\ref{mar_mar_eqn_eg}):
+\begin{itemize}
+\item With $\bf l$ fixed, $U({\bf x,l})$ is quadratic in $\bf x$. The
+minimization in $\bf x$ reduces to the resolution of a linear system.
+\item With $\bf x$ fixed, the minimum $\hat l_c$ is given by the expression
+$\hat l_c=\phi'(u)/2u$ where $u=(x_r-x_s)$.
+\end{itemize}
+We suppose that the variables $\hat l_c$ do not interact with each other.
+In fact, these {\it line variables} map the discontinuities (or the edges) of
+the image $\bf x$. $\hat l_c$ takes a value near zero at the edges and a 
+value $L$
+in homogeneous areas.
+
+\subsection{Line variables system}
+
+For the first order Markov case, a line variable is labeled as an arrow 
+between two horizontal or vertical and adjacent pixels $(x_r,x_s)$.
+Then, each arrow is associated with a first order clique.
+
+
+\begin{picture}(100,120)(0,0)
+\put(50,0){\circle{5}}
+\multiput(0,50)(100,0){2}{\circle{5}}
+\put(50,50){\circle*{5}}
+\put(55,55){(x,y)}
+\put(55,105){(x,y+1)}
+\put(55,5){(x,y-1)}
+\put(105,55){(x+1,y)}
+\put(5,55){(x-1,y)}
+\put(50,100){\circle{5}}
+\put(50,95){\vector(0,-1){40}}
+\put(50,45){\vector(0,-1){40}}
+\put(95,50){\vector(-1,0){40}}
+\put(45,50){\vector(-1,0){40}}
+\put(150,55){FOUR-NEIGHBOR SYSTEM}
+\end{picture}
+
+
+The four neighbor system can be ameliorated by including diagonal adjacencies.
+
+\begin{picture}(100,120)(0,0)
+\multiput(0,0)(50,0){3}{\circle{5}}
+\multiput(0,50)(100,0){2}{\circle{5}}
+\put(50,50){\circle*{5}}
+\multiput(0,100)(50,0){3}{\circle{5}}
+\put(105,105){(x+1,y+1)}
+\put(5,-5){(x-1,y-1)}
+\put(105,-5){(x+1,y-1)}
+\put(5,105){(x-1,y+1)}
+\put(50,95){\vector(0,-1){40}}
+\put(50,45){\vector(0,-1){40}}
+\put(95,50){\vector(-1,0){40}}
+\put(45,50){\vector(-1,0){40}}
+\put(95,95){\vector(-1,-1){40}}
+\put(45,45){\vector(-1,-1){40}}
+\put(95,5){\vector(-1,1){40}}
+\put(45,55){\vector(-1,1){40}}
+\put(150,55){EIGHT-NEIGHBOR SYSTEM}
+\end{picture}
+
+
+\subsection{The potential function}
+
+Concerning the choice of $\phi$, the following convex function proposed in 
+\cite{rest:brette96} is used:
+\begin{eqnarray} 
+\phi_{\delta}(u) = |u/\delta| - \ln(1+|u/\delta|) 
+\label{mar_eqn_phi}
+\end{eqnarray}
+where $u=(x_r-x_s)$ and $\delta$ is a scaling parameter. 
+An example is given for $\delta=500$ in Figure~\ref{fig_mar_phi}. It shows 
+that $\phi$ is quadratic with $u<<\delta$ and linear with $u>>\delta$.
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=mf_phi.ps,bbllx=2.5cm,bblly=13cm,bburx=19.5cm,bbury=25.5cm,width=14cm,height=14cm,clip=}
+}}
+\caption{}
+\label{fig_mar_phi}
+\end{figure}
+The derivative is equal to
+$\phi'_{\delta}(u)=u/\delta(|u|+\delta)$.
+Note that updating the line variables is a simplified operation by using the following
+formula:
+\begin{eqnarray} 
+\hat l_c = \phi'_{\delta}(u)/2u = \frac{1}{2\delta}/(\delta + |u|) 
+\end{eqnarray}
+
+ 
+\subsection{The prior energy formula} 
+ 
+\subsubsection{Four neighbor system}
+
+In the case of the four nearest neighbors, the prior energy is defined as: 
+\begin{eqnarray} 
+U({\bf x}) = \sum_{vertical\, cliques} \phi_{\delta}(I_{y,x}-I_{y+1,x}) +
+\sum_{horizontal\, cliques} \phi_{\delta}(I_{y,x}- I_{y,x+1})
+\label{mar_eqn_e}
+\end{eqnarray}
+where $I_{y,x}$ is the pixel intensity in image $I$ at row $y$ and column $x$.
+
+\subsubsection{Eight neighbor system}
+
+By adding the following expressions to the terms in equation (\ref{mar_eqn_e}), we
+obtain the energy $U({\bf x})$ of the eight neighbor system:
+\begin{eqnarray} 
+\sum_{diagonal\, cliques} \phi_{\delta}(I_{y,x}- I_{y+1,x+1})
+\end{eqnarray}
+and 
+\begin{eqnarray} 
+\sum_{diagonal\, cliques} \phi_{\delta}(I_{y,x}- I_{y-1,x+1})
+\end{eqnarray}
+
+\subsection{Deterministic algorithm}
+
+Instead of using a stochastic approach, we use a single site update algorithm 
+\cite{rest:brette96} in order
+to minimize the half-quadratic criterion (\ref{mar_eqn_cr}).
+The solution is computed by visiting the entire set of pixels in a determined
+fashion (checkerboard) to update each value $x_{ij}$ of the estimated solution
+$\bf x$ at row $i$ and column $j$.
+We know that the energy $U(\bf x)$ is quadratic as a function of $x_{ij}$.
+Its minimum value is reached at $m_{ij}$:
+\begin{eqnarray}
+m_{ij} = x_{ij} + \frac{[{\bf H^ty}]_{ij} - [{\bf H^tHx}]_{ij} - 2\sigma^2\lambda 
+\sum l_c(x_{ij}-x_c)}{[{\bf H^tH}]_{ij,ij} + 2\sigma^2\lambda\sum l_c}
+\label{mar_eqn_corr}
+\end{eqnarray} 
+where the sums extend to the neighborhood of the currently visited pixel $x_{ij}$.
+The algorithm is initialized with an image where all pixels are equal to zero.
+
+\subsection{Parameter estimation}
+
+\subsubsection{Scaling parameter $\delta$}
+
+This parameter allows to fix the threshold under which the smoothness of the
+solution is preserved and above which discontinuities or edges stay in the
+estimated solution.
+The value $\delta$ is estimated from the observed image $\bf y$ by looking at the
+evolution of edges between adjacent pixels. In fact, one method of selecting
+$\delta$
+would be to determine the global maximal difference between two adjacent pixels 
+for all possible cliques of the observed image.
+If $\delta$ is too high, then the estimated solution will be smooth.
+
+\subsubsection{Regularizing parameter $\lambda$}
+
+This parameter balances fidelity to the prior constraints and fidelity to the
+data. In every experiment, $\lambda$ is empirically tuned to obtain 
+visually good results. In fact, since appropriate values for $\delta$ are more or
+less estimated, the value for $\lambda$ is not an evident choice.
+However, if $\lambda$ is too high, the solution is over-regularized and if
+$\lambda$ is too small, the solution is not stabilized.
+
+\section{Use of the program im\_dec\_markov}
+
+\begin{center}
+ USAGE: ${\bf im\_dec\_markov}$ option image\_in psf\_in image\_out
+\end{center}
+where options are: 
+\begin{itemize}
+\item {\bf [-b]} \\
+If this option is set, the support of the image is dilated by using I\_MIRROR to
+obtain a solution with the same support. By default, we use I\_CONT.
+\item {\bf [-d delta]} \\
+Scaling parameter $\delta$. This parameter must be strictly positive. 
+Default is 1 (See Parameter estimation section)
+\item {\bf [-e epsilon]} \\
+Convergence parameter. Default is 0.001
+\item {\bf [-g sigma]} \\
+Gaussian Noise standard deviation. Default is automatically estimated.
+\item {\bf [-i number\_of\_iterations]} \\
+Maximum number of iterations. Default is 500
+\item {\bf [-l lambda]} \\
+Regularizing parameter $\lambda$. This parameter must be strictly positive. 
+Default is 1 (See Parameter estimation section)
+\item {\bf [-o omega]} \\
+Over-relaxation coefficient such as: $1\leq omega<2$. Omega is used to allow faster 
+convergence. Default is 1 
+\item {\bf [-r residual\_file\_name]} \\
+If this option is set, the residual is written to 
+the file of name {\em residual\_file\_name}. By default, the
+residual is not written. The residual is equal to the difference between
+the input image and the solution convolved by the PSF.
+
+The maximum of the PSF must be at the center of its support.
+So, dimensions of the PSF support must be odd.
+\end{itemize}
+\noindent
+
+{\bf Example:}
+\begin{itemize}
+\item im\_dec\_markov -d 100 -i 100 -l 10 -r residu.fits 
+image\_in.fits psf\_in.fits ima\_out.fits \\
+deconvolves an image with $\delta=100$ and $\lambda=10$, assuming
+a Gaussian noise (its standard deviation is automatically estimated).
+\end{itemize}
+
+For each iteration, the following informations will be printed:
+
+...
+
+It 95 D=90674.9 M=537432 V=628106 Ec=75.5482 Fx=9.38398e+07 min=1224.23 max=13732.2
+
+It 96 D=90676.3 M=537430 V=628107 Ec=70.6314 Fx=9.38399e+07 min=1224.23 max=13731.7
+
+It 97 D=90677.5 M=537429 V=628107 Ec=66.1543 Fx=9.38398e+07 min=1224.23 max=13731.3
+
+It 98 D=90678.7 M=537429 V=628107 Ec=61.8843 Fx=9.38399e+07 min=1224.23 max=13730.8
+
+It 99 D=90679.9 M=537428 V=628107 Ec=57.978 Fx=9.38399e+07 min=1224.23 max=13730.4
+ 
+where D=$U({\bf y/x})$, M=$U({\bf x})$ and V=$U({\bf x/y})$ 
+so V=D+M according to equation (\ref{mar_eqn_cr}). 
+
+Ec is the correction energy compared
+to the convergence parameter (epsilon).
+
+Fx is the flux of the estimated
+solution $\bf \hat x$.
+
+Minimum and maximum of the restored image are also printed.
+
+\newpage
+
+\section{Data Simulation}
+
+The original image (the object) is a simulated HST Wide field camera image of 
+a distant cluster 
+of galaxies (see Figure~\ref{fig_convol1}).
+We used a Gaussian PSF (see Figure~\ref{fig_psf}) which has the following properties:
+\begin{itemize}
+\item{Support = 11 x 11 pixels}
+\item{  Min = 2.00418e-08}   
+\item{  Max = 0.0980603}
+\item{  Mean = 0.0082643} 
+\item{  sigma = 0.0183551}
+\item{  Flux = 0.999981} 
+\item{  Energy = 0.0490302}
+\end{itemize}
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=mf_psf.ps,bbllx=2.5cm,bblly=13cm,bburx=19.5cm,bbury=25.5cm,width=16cm,height=16cm,clip=}
+}}
+\caption{Point Spread Function (PSF)}
+\label{fig_psf}
+\end{figure}
+
+The image (see Figure~\ref{fig_convol1}) was blurred with the Gaussian PSF, and Gaussian noise ($\sigma=20$) was
+added.
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=mf_simu256.ps,bbllx=1.8cm,bblly=12.9cm,bburx=14.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+\psfig{figure=mf_data256.ps,bbllx=1.8cm,bblly=12.9cm,bburx=14.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+}}
+\caption{Left: the original image, Right: the blurred image.}
+\label{fig_convol1}
+\end{figure}
+ 
+\section{Results}
+
+\subsection{Visual comparisons} 
+
+The proposed deconvolution method using a Markov model is compared to the 
+basic Richardson-Lucy (RL) 
+algorithm in 
+Figure~\ref{fig_lucy} and to the regularized RL method in Figure~\ref{fig_mr}.
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=mf_Lresultd4.ps,bbllx=1.8cm,bblly=12.9cm,bburx=14.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+\psfig{figure=mf_D100L10.ps,bbllx=1.8cm,bblly=12.9cm,bburx=14.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+}}
+\caption{Left: Deconvolution with RL method, Right: Deconvolution with
+Markov model ($\delta=100$ and $\lambda=10$)}
+\label{fig_lucy}
+\end{figure}
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=mf_Lresultd8.ps,bbllx=1.8cm,bblly=12.9cm,bburx=14.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+\psfig{figure=mf_D100L10.ps,bbllx=1.8cm,bblly=12.9cm,bburx=14.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+}}
+\caption{Left: Deconvolution with regularized RL method, Right: Deconvolution with
+Markov model ($\delta=100$ and $\lambda=10$)}
+\label{fig_mr}
+\end{figure}
+
+\subsection{Flux linearity}
+
+The simulated HST image in Figure~\ref{fig_convol1} provides enough sources 
+to test
+the flux linearity. The procedure followed was to detect all sources 
+respectively 
+in the observed image and also in the image restored by the proposed 
+regularization method.
+Then, the flux of each source before and after deconvolution is 
+displayed in Figure~\ref{fig_flux}.
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fx256.ps,bbllx=1.5cm,bblly=13cm,bburx=20.5cm,bbury=25.5cm,width=15cm,height=15cm,clip=}
+}}
+\caption{FLUX LINEARITY TEST}
+\label{fig_flux}
+\end{figure}
+
+\section{Conclusion}
+
+The problem of image deconvolution has been considered in the context of the
+regularization theory. An example of regularized method is proposed. 
+The approach we have taken involves constraints in the estimated solution 
+that are locally due to the Markov 
+neighbor system. Nevertheless, the choice of parameters $\delta$ and $\lambda$
+is global. Then, it could be interesting to introduce 
+local parameters to open up new experimental directions.
+
+
+
+

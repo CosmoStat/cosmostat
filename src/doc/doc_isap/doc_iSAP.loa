@@ -1,0 +1,16 @@
+\contentsline {algorithm}{\numberline {1}{\ignorespaces The Undecimated Wavelet Transform on the Sphere.}}{39}
+\contentsline {algorithm}{\numberline {2}{\ignorespaces Inverse UWT on the sphere.}}{40}
+\contentsline {algorithm}{\numberline {3}{\ignorespaces Pyramidal wavelet transform on the sphere.}}{42}
+\contentsline {algorithm}{\numberline {4}{\ignorespaces Inverse Pyramidal Wavelet Transform on the sphere.}}{44}
+\contentsline {algorithm}{\numberline {5}{\ignorespaces Curvelet Transform on the sphere.}}{47}
+\contentsline {algorithm}{\numberline {6}{\ignorespaces Pyramidal Curvelet Transform on the sphere.}}{47}
+\contentsline {algorithm}{\numberline {7}{\ignorespaces The combined filtering on the Sphere.}}{58}
+\contentsline {algorithm}{\numberline {8}{\ignorespaces The Morphological Component Analysis algorithm .}}{65}
+\contentsline {algorithm}{\numberline {9}{\ignorespaces The Morphological Component Analysis algorithm for inpainting.}}{70}
+\contentsline {algorithm}{\numberline {10}{\ignorespaces GMCA algorithm.}}{83}
+\contentsline {algorithm}{\numberline {11}{\ignorespaces Fast GMCA algorithm.}}{87}
+\contentsline {algorithm}{\numberline {12}{\ignorespaces MS-VSTS + IUWT Denoising}}{202}
+\contentsline {algorithm}{\numberline {13}{\ignorespaces MS-VSTS + IUWT Denoising + Multiresolution Support Adaptation}}{203}
+\contentsline {algorithm}{\numberline {14}{\ignorespaces MS-VSTS + Curvelets Denoising}}{204}
+\contentsline {algorithm}{\numberline {15}{\ignorespaces MS-VST + IUWT Denoising + Inpainting}}{208}
+\contentsline {algorithm}{\numberline {16}{\ignorespaces MS-VSTS + IUWT Denoising + Background extraction}}{212}

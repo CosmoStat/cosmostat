@@ -1,0 +1,568 @@
+
+
+\chapter{\projmr3 \ Three Dimensional Data Set}
+
+\section{\projmr3 \ Multiresolution}
+
+\subsection{Introduction}
+\subsubsection{The 3D \`a trous Wavelet Transform}
+The 3D \`a trous WT of a cube produces $J$ bands, each one being
+a cube with the same dimension as the input cube.
+The 3D WT of a cube $C(*,*,*)$ is therefore a 4D data set
+$W(*,*,*,0:J-1)$, where $J$ is the number of 
+resolutions used in the decomposition.
+
+\subsubsection{The 3D bi-orthogonal Wavelet Transform}
+
+A one-level 3D sub-band decomposition transforms a cube of $N^3$ pixels into 
+eight sub-cubes, also called bands, of  $({N\over 2})^3$ pixels. 
+One of these bands corresponds to the original cube at a lower resolution
+(smoothed cube), while the seven other bands are the detail 
+information, i.e., 
+information lost between the two resolution levels, original
+and smoothed data resolution level.
+A reconstruction of the original input cube can be performed from the 
+eight sub-bands. The 3D wavelet transform (WT) iterates the decomposition 
+process on the smoothed cube. For a 3D WT with $P$ scales, 
+the final number of bands is equal to $7(P-1) + 1$, i.e., seven  
+detail bands for the first $P-1$ scales, plus the last smoothed array.
+For an $N^3$ pixels cube $D(0..N-1, 0..N-1, 0..N-1)$, the eight bands 
+produced by 
+one-level decomposition (two scales) are stored in the following way:
+\begin{enumerate}
+\item Band 1: $B_1({N\over 2}:N-1,0:{N\over 2}-1,0:{N\over 2}-1)$ is obtained
+by 1D convolution with filters $ g_x, h_y, h_z$.
+\item Band 2: $B_2(0:{N\over 2}-1, {N\over 2}:N-1,0:{N\over 2}-1)$ is obtained
+by  1D convolution with filters $ h_x, g_y, h_z$.
+\item Band 3: $B_3({N\over 2}:N-1, {N\over 2}:N-1,0:{N\over 2}-1)$ is obtained
+by  1D convolution with filters $ g_x, g_y, h_z$.
+\item Band 4: $B_4({N\over 2}:N-1,0:{N\over 2}-1, {N\over 2}:N-1)$ is obtained
+by  1D convolution with filters $ g_x, h_y, g_z$.
+\item Band 5: $B_5(0:{N\over 2}-1, {N\over 2}:N-1,{N\over 2}:N-1)$ is obtained
+by  1D convolution with filters $ h_x, g_y, g_z$.
+\item Band 6: $B_6({N\over 2}:N-1, {N\over 2}:N-1,{N\over 2}:N-1)$ is obtained
+by  1D convolution with filters $ g_x, g_y, g_z$.
+\item Band 7: $B_7( 0:{N\over 2}-1, 0:{N\over 2}-1,{N\over 2}:N-1)$ is obtained
+by  1D convolution with filters $ h_x h_y g_z $.
+\item Band 8: $B_8( 0:{N\over 2}-1, 0:{N\over 2}-1,0:{N\over 2}-1)$ is obtained
+by  1D convolution with filters $ h_x, h_y, h_z$.
+\end{enumerate}
+For the three-scale decomposition, $B_8$ pixels of the 2-scale 
+decomposition are replaced by bands 8 to 15, each having a size of 
+ $({N\over 4})^3$  pixels.
+
+\subsection{Multiresolution transform of cube: mr3d\_trans}
+\index{mr3d\_trans}
+\label{sect_trans3d}
+The program 
+{\em mr3d\_trans} computes the multiresolution transform of a cube by
+the \`a trous WT or a non-redundant transform. 
+The output file which contains the transformation has a 
+suffix, .mr. If the output file name
+given by the user does not contain this suffix, it is automatically
+added. The ``.mr'' file is a FITS format file, and can be manipulated by
+any package dealing with FITS format, or using the 
+{\em mr3d\_extract} program.
+{\bf 
+\begin{center}
+ USAGE: mr3d\_trans option cube\_in multiresolution\_transform\_out
+\end{center}}
+where options are: 
+\begin{itemize} 
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_multiresolution\_transform]}
+{\small 
+\begin{enumerate}
+\item  (bi-) orthogonal wavelet transform.  
+Antonini 7/9 filters ~\cite{wave:antonini92} are used by default, with an 
+$L_1$ normalization. The filters can be changed using the ``-T'' option, and
+an $L_2$ normalization is obtained by the ``-L'' option.
+\item Wavelet transform via lifting scheme 
+\item A trous wavelet transform
+\end{enumerate}}
+Default is 1.
+\item {\bf [-n number\_of\_scales]} \\
+ Number of scales used in the multiresolution transform. \\
+ Default is 4.
+\item {\bf [-T type\_of\_filters]}  
+{\small
+\begin{enumerate}
+\itemsep=0.1truecm
+\item Antonini 7/9 filters. 
+\item Daubechies filter 4. 
+\item Biorthogonal 2/6 Haar filters.
+\item Biorthogonal 2/10 Haar filters.
+\item Odegard 7/9 filters.
+\item User's filters.
+\end{enumerate}}
+Default is Antonini 7/9 filters.
+\item {\bf [-L]} \\
+Use an $L_2$ normalization. Default is $L_1$.
+\item {\bf [-l type\_of\_lifting\_transform]}  
+{\small 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item Lifting scheme: CDF WT. 
+\item Lifting scheme: median prediction.
+\item Lifting scheme: integer Haar WT. 
+\item Lifting scheme: integer CDF WT. 
+\item Lifting scheme: integer (4,2) interpolating transform. 
+\item Lifting scheme:  Antonini 7/9 filters.
+\item Lifting scheme: integer Antonini 7/9 filters. 
+\end{enumerate}}
+ Default is Lifting scheme: integer Haar WT.  
+\item {\bf [-i]} \\
+Print statistical information about each band.
+\end{itemize}
+The result is stored in a file (suffix ``.mr''),
+and cube (or scales) of the transformation can be extracted
+by using the {\em mr3d\_extract} program. \\
+\subsubsection*{Examples:}
+\begin{itemize}
+\itemsep=0.1truecm
+\item mr3d\_trans cube.fits cube\_trans.mr \\
+Apply the wavelet transform transform to a cube, and store the
+result in cube\_trans.mr. 
+\item mr3d\_trans -T 3 -i cube.fits cube\_trans.mr \\
+Same as before, but use Haar filters, and
+  print statistical information.
+\item mr3d\_trans -t 2 -l 1 cube.fits cube\_trans.mr \\
+Apply a wavelet transform via the lifting scheme.
+\end{itemize}
+
+
+\subsection{Extraction of a scale: mr3d\_extract}
+\index{mr3d\_extract}
+\label{sect_extr3d}
+
+The program
+{\em mr3d\_extract} allows the user to extract a  band from
+a multiresolution transform file (suffix ``.mr").
+{\bf
+\begin{center}
+ USAGE: mr3d\_extract options multiresolution\_file  output\_cube
+\end{center}}
+where options are:
+\begin{itemize}
+\itemsep=0.1truecm
+ \item {\bf  [-b band\_number] } \\
+ Band number to extract. Default is 1.
+\end{itemize}
+\subsubsection*{Example:}
+\begin{itemize}
+\item mr3d\_extract -b 2 mr\_file.mr cube\_band\_2.fits \\
+Extract the second band of the wavelet transform, and write as a .fits
+file of name ``cube\_band\_2.d''.  
+\end{itemize}
+
+\subsection{Insertion of an image: mr3d\_insert}
+\index{mr3d\_insert}
+The program
+{\em mr3d\_insert} replaces a band by some cube, by inserting it
+in the multiresolution transform file. The band and the cube
+must have the same size. 
+{\bf
+\begin{center}
+ USAGE: mr3d\_insert options multiresolution\_file input\_cube
+\end{center}}
+where options are:
+\begin{itemize}
+\itemsep=0.1truecm
+\item  {\bf  [-b band\_number] } \\
+ Band number to insert. Default is 1.
+\end{itemize}
+{\em multiresolution\_file} is the file (.mr) which contains 
+the multiresolution transformation, {\em input\_cube} is the cube
+which must replace the band cube. {\em band \_number} specifies
+the band  number to be replaced. Default is 1. \\
+The multiresolution transform is updated. \\
+\subsubsection*{Example:}
+\begin{itemize}
+\item mr3d\_insert -b 3 mr\_file.mr cube.fits \\
+Insert a cube at the third band of the multiresolution file. 
+\end{itemize}
+
+\subsection{Reconstruction: mr3d\_recons}
+\index{mr3d\_recons}
+The program 
+{\em mr3d\_recons}  reconstructs a cube from its multiresolution
+transform.
+{\bf
+\begin{center}
+ USAGE: mr3d\_recons  multiresolution\_file  cube\_out
+\end{center}}
+{\em multiresolution\_file} is the file (.mr) which contains 
+the multiresolution transformation, {\em output\_cube} is  the
+output reconstructed cube.
+
+
+\section{\projmr3 Denoising: mr3d\_filter}
+\index{filtering}
+\subsection{Gaussian noise filtering: mr3d\_filter}
+\index{mr3d\_filter}
+Program {\em mr\_filter} filters a cube. Only Gaussian noise 
+is considered.
+{\bf
+\begin{center}
+ USAGE: mr3d\_filter option cube\_in cube\_out
+\end{center}}
+where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_multiresolution\_transform]}
+{\small 
+\begin{enumerate}
+\item  (bi-) orthogonal wavelet transform.  
+Antonini 7/9 filters ~\cite{wave:antonini92} are used by default, with an 
+$L_1$ normalization. The filters can be changed using the ``-T'' option, and
+an $L_2$ normalization is obtained by the ``-L'' option.
+\item A trous wavelet transform
+\end{enumerate}}
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales used in the multiresolution transform. Default is 4.
+\item {\bf [-T type\_of\_filters]}  \\
+see~\ref{sect_trans3d}.
+\item {\bf [-g sigma]} \\
+ The image contains Gaussian noise, and the standard deviation is
+given by {\em sigma }. The option should be set only if the user
+knows the standard deviation of the noise. 
+\item {\bf [-s NSigma]} \\
+The detection level at each scale is determined by the product
+of the standard deviation of the noise by the {\em NSigma}.
+{\em NSigma} fixes the confidence interval we want. By default,
+{\em NSigma} is equal to 3.
+\item {\bf [-C]} \\
+Correlated noise.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\item mr3d\_filter cube\_in.fits cube\_out.fits \\
+Filters a cube by multiresolution  thresholding, assuming
+Gaussian noise (its standard deviation is automatically estimated).
+\item mr3d\_filter -s 4 -g 10. cube\_in.fits cube\_out.fits \\
+Same as before, but the noise standard deviation is fixed to 10, and
+a  $4\sigma$ thresholding is performed. 
+\item mr3d\_filter -C cube\_in.fits cube\_out.fits \\
+Consider correlated noise instead of Gaussian noise. The noise standard
+deviation is estimated at each scale using the MAD (median absolute
+deviation) estimator.
+\end{itemize}
+
+
+\newpage
+
+\section{3D Point Clouds Analysis}
+We will call {\em Catalog} a set of points in the 3D space, each point 
+being represented by its three coordinates $X,Y,Z$.
+
+\subsubsection*{ASCII Catalog}
+The catalog format is the following: 
+\subsubsection*{Catalogue format}
+\begin{itemize}
+\item the first line must contain the number of points $N$, the
+  dimension $D$ (i.e. 3), and the coordinate system $S$ ($S$ = 1 or
+  2).  The recognized coordinate systems are:
+  \begin{enumerate}
+  \item $X$ and/or $Y$ and/or $Z$ Euclidien system.
+  \item Angular coordinate system (longitude, latitude and/or
+    distance; that could be the equatorial system -- right ascension
+    $\alpha$, declination $\delta$, the galactic coordinate system
+    with galactic longitude $l$, galactic latitude $b$, the
+    supergalactic coordinate system with $SL$ and $SB$).
+  \end{enumerate}
+\item the $D$ following lines must contains three values: the range of
+  variation of the $i-th$ coordinate (min,max) and a flag indicating
+  the generation model for the corresponding coordinate: 0 -- uniform
+  between [min,max], 1 -- bootstrapping the coordinate and 2 -- uniform
+  on sphere between [min,max] in degrees. When the user have supplied
+  its own generated random catalogs, then those three lines are
+  ignored. This last value is used only by programs which need to 
+  simulate data from the input data, and can generally be set to zero.
+\item the $N$ following lines contains the coordinates of the points.
+\end{itemize}
+An example of a 3D catalogue, with 10 points in the Euclidien system,
+each coordinate being defined in the interval $[0,100[$ and random
+catalog coordinates uniform in $[0,100[$ for each axis, is:
+\begin{verbatim}
+       10       3           1
+       0      100.000       0
+       0      100.000       0
+       0      100.000       0
+      42.1782      13.4610      73.7444
+      41.6855      9.82727      75.3605
+      42.3580      14.7867      73.1548
+      42.0255      12.3347      74.2453
+      42.7474      17.6581      71.8777
+      41.9410      11.7113      74.5226
+      65.5637      9.84036      71.3585
+      65.7140      12.6019      70.5645
+      65.5843      10.2196      71.2495
+      65.4521      7.79074      71.9479
+\end{verbatim}
+The file name must have the suffixe ``\.cat''.
+
+\subsection{ASCII Catalog to 3D Cube in FITS Format: mr3d\_cat2fits}
+\index{mr3d\_cat2fits}
+\label{sect_cat2fits}
+
+The program {\em mr3d\_cat2fits} allows the user to convert a catalog
+into a 3D cube in the FITS format using a $B_3$ spline scaling function.
+When using the \`a trous Wavelet Transform, this step corresponds to
+the projection in the $V_0$ space, and garanties that the obtained 
+wavelet coefficients are exactly the scalar products of the input 
+irregularly spaced data with the wavelet function. Assuming Poisson 
+noise, very robust threshold levels can be derived 
+in the wavelet space (program {\em mr\_phisto}), which can be used for the 
+detection of clusters (program {\em mr\_psupport}) or for the
+filtering (program {\em mr\_pfilter}). See \cite{starck:book02} for
+more details.
+
+{\bf
+\begin{center}
+ USAGE: mr3d\_cat2fits options catalog cube\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\itemsep=0.1truecm
+\item {\bf  [-B Bin] } \\
+ Bin gives the resolution. Default is 1. 
+\item {\bf  [-p] } \\
+Do not interpolate the data. By default, a interpolation by a spline
+a degree 3 is performed. It corresponds to the projection in the 
+space $V_0$ in the wavelet theory.
+\end{itemize}
+
+\subsubsection*{Example:}
+\begin{itemize}
+\item mr3d\_cat2fits data.cat cube\_out.fits \\
+Convert a catalog into a 3D fits file.
+\item mr3d\_cat2fits -p -b5 data.cat cube\_out.fits \\
+Ditto, but do not use an interpolation, and take a pixel resolution of 5
+(units are the same as in the input catalog).
+\item mr3d\_transform -t3 cube\_out.fits trans.mr\\
+Wavelet transform of the catalog. The wavelet coefficients in {\em trans.mr}
+are exactly the scalar products of the irregularly spaced data with
+the wavelet function. 
+\end{itemize}
+
+
+\subsection{Wavelet Histogram Autoconvolution: mr3d\_phisto}
+\index{mr3d\_phisto}
+Program {\em mr3d\_phisto} precomputes a set tables which 
+is used by {\em mr3d\_psupport} and
+{\em mr3d\_pfilter}. The tables are saved 
+in the FITS table format. They allows the estimation of the detection
+levels for a wavelet coefficient caculated from $n$ evenements.
+To derive these thresholds, the wavelet funciton histogram must be
+autoconvolved $n$ times.
+The filenames  are:
+\begin{itemize}
+\item \_Aba\_histo.fits: 2D array $H[n, 2049]$, which contains
+$n$ autoconvolutions.   
+\item \_histobin.fits: 2D array $B_1[n, 2]$, where $B_2[n,0]$ is the bin
+for $H[n,*]$ and $B_1[n,1]$ is the number of points where the $H[n,*]$ is 
+ different from zero.
+\item \_histobound.fits: 2D array $B_2[n, 2]$, where 
+$B_2[n,0]$ and $B_2[n,1]$  are respectively 
+the min and the max of the nth histogram.
+\item \_histodistrib.fits: 2D array $D[n, 2049]$,  where $D[n,*]$ is 
+the repartition function of the histogram distribution $H[n,*]$.
+\item \_param.fits: 1D array $P[2]$, where $P[0]$ and $P[0]$
+are respectively the $r$ (rythm variable) and the $n$ 
+(number of calculated histograms) parameters,
+\end{itemize}
+% h = rim('_Aba_histo.fits')
+% b = rim('_histobin.fits')
+% m = rim('_histobound.fits')
+% x = indgen(2049,/float)
+% x = x * b(10,0) + m(10,0)
+% plot,x,h(10,*)
+% d = rim('_histodistrib.fits')
+% plot, x, d(10,*)
+
+
+{\bf
+\begin{center}
+ USAGE: mr3d\_phisto option  
+\end{center}}
+where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-n number\_of\_convolution]} \\
+Total number of calculated histograms. Default is 30
+(the total of the cube must be lower than $2^{n}$).
+\item {\bf [-r rythm]}  \\
+ Parameter relative to the rythm of autoconvolution (default=0).
+The program computes the $2^n$ autoconvolutions of the wavelet histogram. 
+It computes also $2^r$ convolutions between $2^n$ and $2^(n+1)$.
+\item {\bf [-d]}  \\
+Use all default options.
+\item {\bf [-v]}  \\
+Verbose. Default is no.
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\item mr3d\_phisto -d \\
+Estimates the autoconvoled histograms, and calculates the threshold levels.
+\end{itemize}
+
+
+\subsection{Multiresolution Support Calculation: mr3d\_psupport}
+\label{sect_event3D}
+\index{mr3d\_psupport}
+Program 
+{\em mr3d\_psupport} applies a wavelet transform using the \`a trous
+algorithm to 3D data, assuming that the noise follows a Poisson distribution,
+and in the case where we have only few events per pixel \cite{starck:book02}.
+Data can either be given by an ASCII table of coordinates in real values, or
+by a cube in the fits format.  
+{\bf
+\begin{center}
+ USAGE: mr3d\_psupport options  in\_cube  out\_file
+\end{center}}
+where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-F first\_detection\_scale]} \\
+First scale used for the detection. Default is 1.
+\item {\bf [-e minimum\_of\_events]}  \\
+Minimum number of events for a detection. Default is 5. If a wavelet 
+coefficient has been calculated from fewer events than this minimum
+value, it is not considered as significant.
+% \item {\bf [-s SignifStructureAnalysis\_FileName]} \\
+% Analyze the detected wavelet coefficients, and write in the file:
+% \begin{itemize}
+% \baselineskip=0.4truecm
+% \item Number of detected structures per scale
+% \item Percentage of significant wavelet coefficients
+% \item Mean deviation of shape from sphericity
+% \item For each detected structure, its volume, its surface, and
+% \item its deviation of shape from sphericity, 
+% \item its angles, its elongation in the three axis directions
+% \end{itemize}
+% \item {\bf [-t SignifStructureAnalysis\_FileName]} \\
+% Same as -s option, but results are stored in an ASCII table format.
+% The table contains: scale number, structure number, 
+% Max\_x, Max\_y, Max\_z, Volume, Surface, Morpho, 
+% Angle\_Theta, Angle\_Phi, Sigma\_1, Sigma\_2, Sigma\_3. 
+\item {\bf [-p]}  \\
+Detect only positive structure.
+% \item {\bf [-f filename\_filtered\_data]}  \\
+% File with filtered input data.
+\item {\bf [-n number\_of\_scales]}  \\
+Number of scales used in the multiresolution transform.
+Default is 6. The maximum number of scales depends on the 
+cube size. For a $32 \times 32 \times 32$ cube, three scales are allowed (four
+scale for a $64 \times 64 \times 64$ cube, 
+five for a $128 \times 128 \times 128$ cube, \dots).
+\item {\bf [-E epsilon]}  \\
+Value of epsilon used for the threshold (default=1e-3 ).
+\item {\bf [-k]}  \\
+Suppress isolated pixels in the support. Default is no.
+\item {\bf [-R]}  \\
+  Remove the structures near the borders.
+\item {\bf [-B bin]}  \\
+ If the input data is a catalogue, it gives the bin of it (default=1).
+% \item {\bf [-w]]}  \\
+% Write the multiscale support to the disk.
+% \item {\bf [-S]}  \\
+% Read the support already computed.
+\end{itemize}
+
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item mr3d\_phisto -d \\
+Compute a set a table which will be used by {\em mr3d\_psupport}.
+\item mr3d\_psupport -v simcub32.fits w1   \\
+Multiresolution support estimation. \\
+Creates the two files
+w1\_support\_1.fits and w1\_support\_2.fits cor\-res\-pon\-ding
+the support of two wavelet scales. 
+\item mr3d\_psupport -R -k -E1e-4 -v simcub32.fits w1   \\
+Ditto, but remove isolated pixels, structures at the border,
+and increase the detection the level.
+\end{itemize}
+
+\subsection{Data Cube Filtering: mr3d\_pfilter}
+\index{mr3d\_pfilter}
+Program {\em mr3d\_pfilter} filters an image (as does {\em mr3d\_filter})
+assuming  that the noise follows a Poisson distribution and in the case 
+where we have only few events per pixel.
+Data can either be given by an image or by 
+an ASCII table of coordinates in real values.
+As for {\em mr3d\_psupport}, the pre-computed table must exist (i.e.
+the program {\em mr3d\_phisto must be executed.}
+If the ``-c'' option is used, the user gives a second input image file name.
+Then the multiresolution support is estimated from the first image
+(given by option ``-a'' or ``-I''), and the second image is filtered
+using the multiresolution support of the first.
+{\bf
+\begin{center}
+ USAGE: mr3d\_pfilter option image\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-n number\_of\_scales]}  \\
+Number of scales used in the multiresolution transform.
+Default is 6.
+\item {\bf [-F first\_detection\_scale]} \\
+First scale used for the detection. Default is 1.
+\item {\bf [-E epsilon]}  \\
+Value of epsilon used for the threshold (default=1e-3 ).
+\item {\bf [-m minimum\_of\_events]}  \\
+Minimum number of events for a detection. Default is 5. If a wavelet 
+coefficient has been calculated from fewer events than this minimum
+value, it is not considered as significant.
+\item {\bf [-i number\_of\_iterations]}  \\
+ Maximum number of iterations. Default is 0.
+ If this option is set, then an iterative reconstruction method is used to
+ restore the cube.
+\item {\bf [-B bin]}  \\
+ If the input data is a catalogue, it gives the bin of it (default=1).
+\item {\bf [-R]}  \\
+  Remove the structures near the borders.
+\item {\bf [-C]}  \\
+Smoothness constraint. 
+\item {\bf [-p]}  \\
+Detect only positive structure.
+\item {\bf [-w]}  \\
+Write the multiscale support to the disk. Each scale of the multiresolution
+support is written separately in a FITS file, 
+with name ``x\_support\_j.fits'', where ``x'' is the output file name
+and $j$ is the scale number.
+\item {\bf [-S]}  \\
+Read the multiresolution support already computed. When we want to 
+apply the filtering several times with different options, the
+multiresolution can calculated the first time ans saved on the disk
+with the ``-w'' option, and for the other experiments can read the
+pre-computed multiresolution support and do not have to recalculate it.
+\item {\bf [-k]}  \\
+Suppress isolated pixels in the support. Default is no
+\item {\bf [-K]} \\       
+Suppress the last scale.
+\end{itemize}
+
+\noindent
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item mr3d\_phisto -d \\
+Compute a set a table which will be used by {\em mr3d\_pfilter}.
+\item mr3d\_pfilter cube\_in cube\_out \\
+Filtering with all default options.
+\item mr3d\_pfilter -R -k -E1e-4 cube\_in cube\_out \\
+Ditto, but remove isolated pixels and in structures at the border
+the multiresolution support, and increase the detection the level.
+\end{itemize}

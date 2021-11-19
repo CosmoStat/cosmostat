@@ -1,0 +1,390 @@
+\documentclass[11pt,a4paper,titlepage]{book}
+\usepackage[pdftex]{graphicx}
+\usepackage{minitoc}
+\usepackage[nottoc]{tocbibind}
+\usepackage{fancyheadings}
+\usepackage{pdfsync}
+\usepackage[latin1]{inputenc}
+\usepackage{lettrine}
+\usepackage{indentfirst}
+\usepackage{alltt}
+
+\usepackage[square,comma]{natbib}
+\usepackage[french,english]{babel}
+\selectlanguage{english}    % FM, 10.5.2009
+% \usepackage{graphicx}
+% \usepackage{graphics,ulem,rotating}
+
+
+% \def\mtctitle{{\sf\bfseries Contents}}  % On change la police pour le titre ``Sommaire''
+% \def\stctitle{{\sf\bfseries Contents}}  %
+% \def\mtcSfont{\small\sf\bfseries}       % Font des sections : sans serif
+\DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
+
+%\usepackage{calc}
+%\usepackage{setspace}
+%\onehalfspacing
+% \usepackage{dimensions} %gère les marges mais c'est pas top!!
+ \usepackage[intlimits]{amsmath}
+ \usepackage{amsfonts,upgreek,bbm,mathrsfs}
+ \usepackage{amssymb,alltt}
+ \usepackage{latexsym}  
+
+\usepackage[latin1]{inputenc} 
+%\usepackage[sectionbib]{chapterbib}
+\usepackage{abbrevjournaux}
+% Pour des liens hypertextes + navigation dans le pdf
+%\usepackage[backref, pagebackref=true, hyperindex=true, breaklinks=true, colorlinks=true, urlcolor=blue, linkcolor=black, citecolor=blue, citebordercolor=010, pagecolor=red, bookmarks=true, bookmarksopen=true, plainpages=false, pdfpagemode=UseThumbs]{hyperref}
+
+%\usepackage[dvips]{color}
+\usepackage{color}
+% \usepackage{./astron}
+
+\usepackage{longtable,multirow,enumerate,threeparttable}
+ \usepackage{lineno,ulem,cancel}
+\usepackage{theorem,algorithm,algorithmic}
+\usepackage[ruled,vlined,algochapter,algo2e]{algorithm2e}
+\def\newblock{\hskip .11em plus .33em minus .07em}
+
+\bibpunct{(}{)}{;}{a}{}{,}
+
+
+\bibliographystyle{astron}
+% \bibliographystyle{plainnat}
+
+\usepackage{theorem}
+\usepackage{chemarrow}
+ \usepackage{amsfonts,upgreek,bbm,mathrsfs}
+\usepackage{setspace,ulem}
+\usepackage{psfig,epsfig,amssymb,alltt}
+\usepackage{latexsym}
+\usepackage{indentfirst}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\usepackage{fancybox}
+\usepackage{fancyheadings}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{theorem}
+\usepackage{amssymb,amsmath}
+ \usepackage{longtable,multirow,enumerate,threeparttable}
+ \usepackage{amsfonts,upgreek,bbm,mathrsfs}
+\usepackage{lettrine}
+\usepackage[latin1]{inputenc}
+\usepackage{indentfirst}
+\usepackage{alltt}
+\usepackage[french,english]{babel}
+\usepackage{url}
+
+
+
+\usepackage{index}
+\makeindex 
+
+\graphicspath{{./FIG/}}
+
+%----------page-style----------
+\pagestyle{fancyplain}
+\addtolength{\headwidth}{\marginparsep}
+\renewcommand{\chaptermark}[1]{\markboth{\sf\bfseries #1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\sf\bfseries\thesection\ #1}}
+\lhead[\fancyplain{}{\sf\bfseries\thepage}]
+      {\fancyplain{}{\sf\bfseries\rightmark}}
+\rhead[\fancyplain{}{\sf\bfseries\leftmark}]
+      {\fancyplain{}{\sf\bfseries\thepage}}
+\cfoot{}
+
+
+%------ commandes perso ------
+\newcommand{\Argmin}[1]{\underset{#1}{\arg\min}}
+\newcommand{\Argmax}[1]{\underset{#1}{\arg\max}}
+\newcommand{\xbf}[1]{{\bf #1}}
+\newcommand{\nor}[1]{\left\|{#1}\right\|}
+\newcommand{\scal}[2]{\left\langle{#1},{#2}\right\rangle}
+\newcommand{\fre}{\mapsto}
+\newcommand{\act}[2]{#1[#2]}
+\newcommand{\set}[1]{\{{#1}\}}
+\newcommand{\hh}{\mathcal{H}}
+\newcommand{\runo}{\mathbb{R}}
+\newcommand{\cuno}{\mathbb{C}}
+\newcommand{\mug}{\mu_G}
+\newcommand{\muh}{\mu_H}
+%\newcommand{\sem}{\ltimes}	       % ? \ltimes ?  authors'd def.?
+\newcommand{\sem}{\times}
+\newcommand{\intg}[1]{\int_{G}{#1}\,d\mug(g)}
+\newcommand{\inth}[1]{\int_{H}{#1}\,d\muh(h)}
+\newcommand{\norm}[1]{\left\|{#1}\right\|}
+\newcommand{\pds}[2]{\left\langle #1, #2\right\rangle}
+\newcommand{\apds}[2]{\left|\left\langle #1, #2\right\rangle\right|}
+\newcommand{\abs}[1]{\left|#1\right|}
+\newcommand{\opnorm}[1]{|\!|\!|#1|\!|\!|}
+\newcommand{\veps}{{\varepsilon}}
+\newcommand{\Tr}{{\mathrm{T}}}
+\newcommand{\vk}{\mathbf{k}}
+\newcommand{\rn}{{\mathbb{R}^n}}
+\newcommand{\molt}{\runo^+}
+\newcommand{\pair}[2]{{#1}\cdot{#2}}
+\newcommand{\ccc}{\mathbb{C}}
+\newcommand{\vas}{\langle}
+\newcommand{\oik}{\rangle}
+\newcommand{\mezzo}{\frac 12}
+\newcommand{\rmoper}[1]{\text{#1}}	% ? \rmoper ?  authors'd def.?
+\newcommand{\xx}[1]{{ #1}}
+\newcommand{\yy}[1]{{ #1 }}
+\newcommand{\JF}[1]{{#1}}
+
+
+\newcommand{\corr}[1]{{ #1}}
+\newcommand{\var}[1]{{\mathrm{Var}}\left[#1\right]}
+\newcommand{\cov}[1]{{\mathrm{Cov}}\left[#1\right]}
+\newcommand{\parenth}[1]{\left({#1}\right)}
+\newcommand{\crochets}[1]{\left[{#1}\right]}
+\newcommand{\be}{\begin{eqnarray}}
+\newcommand{\ee}{\end{eqnarray}}
+\newcommand{\mmin}{\wedge}
+\newcommand{\mmax}{\vee}  
+\newcommand{\bmmin}{\bigwedge} 
+\newcommand{\bmmax}{\bigvee}   
+ \newcommand{\wave}{{\bf \cal W}}
+\newcommand{\st}{\mathrm{\quad s.t. \quad}}
+% \newcommand{\max}{\mathbf{max}}
+
+\newcommand{\goto}{\rightarrow}
+\newcommand{\bitem}{\begin{itemize}}
+\newcommand{\eitem}{\end{itemize}}
+\newcommand{\pdp}[2]{\big<#1, #2\big>}
+\newcommand{\floor}[1]{\left\lfloor#1\right\rfloor}
+\newcommand{\bE}{\mathbb{E}}
+\newcommand{\bR}{{\bf R}}
+\newcommand{\eps}{{\epsilon}}
+\newcommand{\cR}{{\mathcal R}}
+\newcommand{\cW}{{\mathcal W}}
+\newcommand{\Hm}{\mathcal{H}}
+\newcommand{\Km}{\mathcal{K}}
+\newcommand{\cH}{{\mathcal H}}
+\newcommand{\cC}{{\mathcal C}}
+\newcommand{\cS}{{\mathcal S}}
+\newcommand{\cD}{{\mathcal D}}
+\newcommand{\cT}{{\mathcal T}}
+\newcommand{\cA}{{\mathcal A}}
+\newcommand{\cP}{{\mathcal P}}
+\newcommand{\cN}{{\mathcal N}}
+\newcommand{\sQ}{{\mathscr Q}}  
+\newcommand{\uX}{\underline{X}}
+\newcommand{\utX}{\underline{\tilde X}}
+\newcommand{\bx}{{\mathbf x}}
+\newcommand{\bnu}{{\boldsymbol{\nu}}}
+\newcommand{\bt}{{\mathbf t}}
+\newcommand{\bk}{{\mathbf k}}
+\newcommand{\bZ}{{\mathbb{Z}}}
+\newcommand{\RR}{{\mathbb{R}}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\cM}{{\mathcal M}}
+\newcommand{\cRec}{{\mathcal R}}
+\newcommand{\Ya}{{\boldsymbol  \beta}}
+\newcommand{\Yz}{{\boldsymbol  \zeta}}
+\newcommand{\pdf}{\mathrm{pdf}}
+\newcommand{\balpha}{{\boldsymbol \alpha}}
+ 
+\newcommand{\cQ}{{\mathcal Q}}
+ \newcommand{\<}{\langle}
+\renewcommand{\>}{\rangle}
+% \newcommand{\qed}{\quad\hbox{\vrule width 4pt height 6pt depth 1.5pt}}
+\newcommand{\cL}{{\mathcal L}}
+% \newcommand{\JF}[1]{{\bf JF: #1}}	% My comment command.
+\renewcommand{\em}{\it}
+\newcommand{\sgn}{\mbox{sign}}
+
+
+\newcommand{\fd}{\mathbf{d}}    
+\newcommand{\fs}{\mathbf{s}}
+\newcommand{\fv}{\mathbf{v}} 
+\newcommand{\fx}{\mathbf{x}}
+\newcommand{\fX}{\mathbf{X}}
+
+\newtheorem{remark}{Remark}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{proposition}{Proposition}
+ \newtheorem{property}{Property}
+ \newtheorem{definition}{Definition}
+ \newtheorem{assumption}[theorem]{Assumption}
+ \newtheorem{example}{Example}
+ 
+\def\proof{\noindent\hspace{2em}{\it Proof: }}
+\def\QED{\mbox{\rule[0pt]{1.5ex}{1.5ex}}}
+\def\endproof{\hspace*{\fill}~\QED\par\endtrivlist\unskip}
+
+\newcommand{\bbeta}{{\boldsymbol \beta}}
+\newcommand{\I}{\mathbf{I}}
+\newcommand{\indic}[1]{\mathbf{1}_{#1}}
+\newcommand{\vx}{\mathbf{x}}
+% \newcommand{\hx}{\hat{x}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\bY}{\mathbf{Y}}
+\newcommand{\vy}{\mathbf{y}}
+\newcommand{\vz}{\mathbf{z}}
+\newcommand{\da}{d\mathbf{a}}
+\newcommand{\vi}{\mathbf{v}}
+\newcommand{\U}{\mathcal{U}}
+\newcommand{\R}{\mathbf{R}}
+\newcommand{\W}{{\bf\Phi}}
+\newcommand{\A}{{\mathbf{A}}}
+\newcommand{\F}{{\mathbf{F}}}
+\renewcommand{\H}{{\mathbf{H}}}
+\newcommand{\G}{{\mathbf{G}}}
+\newcommand{\T}{{\mathbf{T}}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Phic}{\mathsf{\Phi}}
+\newcommand{\eqdis}{\overset{D}{=}}
+\newcommand{\ba}{\mathbf{\alpha}}
+\newcommand{\un}{\mathbf{u}_n}
+\newcommand{\wn}{\mathbf{w}_n}
+\newcommand{\An}{\mathbf{A}_n}
+\newcommand{\tn}{\mathbf{t}_n}
+\newcommand{\ib}{\mathbf{i}}
+\newcommand{\niter}{N_\mathrm{iter}}
+%les descripteurs et les regions
+\newcommand{\D}{\mathcal{D}}
+\newcommand{\Din}{k_{in}}
+\newcommand{\Dinn}{k_{n,in}}
+\newcommand{\Dout}{k_{out}}
+\newcommand{\Doutn}{k_{n,out}}
+\newcommand{\Rin}{\Omega_{in}}
+\newcommand{\Rinn}{\Omega_{n,in}}
+\newcommand{\Rout}{\Omega_{out}}
+\newcommand{\Routn}{\Omega_{n,out}}
+\newcommand{\Cn}{\Gamma_n}
+\newcommand{\DC}{k_{b}}
+\newcommand{\DCn}{k_{n,b}}
+%%
+\newcommand{\Ri}{\Omega}
+\newcommand{\Ci}{\Gamma}
+\newcommand{\Di}{k}
+\newcommand{\DCi}{k_{b}}
+%%%
+\newcommand{\Rg}{\Omega}
+\newcommand{\Cg}{\Gamma}
+\newcommand{\Dg}{k}
+%%%
+\newcommand{\RI}{\Omega_I}
+\newcommand{\RIn}{\Omega_{I_n}}
+\newcommand{\Rm}{\Omega_m}
+
+\newcommand{\qed}{\quad\hbox{\vrule width 4pt height 6pt depth 1.5pt}}
+\newcommand{\yo}{{{\mathbf{y}}_\mathrm{obs}}}
+\newcommand{\ymiss}{{{\mathbf{y}}_\mathrm{miss}}}
+\newcommand{\Yo}{{{\mathbf{Y}}_\mathrm{obs}}}
+\newcommand{\Ymiss}{{{\mathbf{Y}}_\mathrm{miss}}}
+\newcommand{\Y}{\mathcal{Y}}
+\newcommand{\M}{\mathbf{M}}
+\renewcommand{\P}{\mathsf{P}}
+\newcommand{\Q}{\mathsf{Q}}
+\DeclareMathOperator{\prox}{prox}
+\DeclareMathOperator{\rprox}{rprox}
+\DeclareMathOperator{\dom}{dom}
+\DeclareMathOperator{\range}{Im}
+
+\DeclareMathOperator{\trace}{\mathrm{trace}}
+\DeclareMathOperator{\diag}{\mathrm{diag}}
+\DeclareMathOperator{\rank}{\mathrm{rank}}
+\DeclareMathOperator{\HT}{\mathrm{HardThresh}}
+\DeclareMathOperator{\ST}{\mathrm{SoftThresh}}
+\DeclareMathOperator{\Thres}{\mathrm{Thresh}}
+
+\newcommand{\lam}{\lambda}
+
+%number of sub-parts in mini-table of contents
+ 
+
+\def\isap{iSAP}
+\def\projmra{iSAP}
+\def\defprojmra{Interactive Sparse astronomical data Analysis  Packages}
+\medskip
+
+\def\mrs{MRS }
+\def\projmrs{MRS/V3.2 }
+\def\defprojmrs{MultiResolution on the Sphere}
+
+\def\pol{SparsePOL}
+\def\projpol{SparsePOL/V1.1 }
+\def\defprojpol{Polarized Spherical Wavelets and Curvelets}
+
+\def\msvsts{MS-VSTS/}
+\def\projmsvsts{MS-VSTS/V1.1 }
+\def\defprojmsvsts{Multi-Scale Variance Stabilizing Transform on the Sphere}
+
+\textwidth 16truecm
+\textheight 23truecm
+\hoffset -1.5truecm
+\voffset -0.5truecm
+
+% \makeindex
+% \input psfig.tex
+
+% \voffset -1.5cm 
+% \hoffset -1.cm
+\evensidemargin 1.truecm
+\oddsidemargin  1.truecm
+
+\title{{\bf \Huge Interactive Sparse astronomical data Analysis  Packages: iSAP V3.0}\\
+\begin{itemize}
+
+ \item{\Large \bf \mbox{MRS -- }} {\large \bf \mbox{MultiResolution on the Sphere:   V3.2}} 
+ \item {\Large \bf \mbox{SparsePOL}} -- {\large \bf \mbox{Polarized Spherical Wavelets and Curvelets:  V1.1}} 
+ \item {\Large \bf \mbox{MS-VSTS}} -- {\large \bf \mbox{Multi-Scale Variance Stabilizing Transform on the Sphere:  V1.1}}
+ \end{itemize}
+ $ $ \\
+ $ $ \\ {\large CEA Technical Report} }
+ \vspace{0.2cm}
+
+\author{CEA-SACLAY/IRFU-AIM}
+ 
+ \date{\begin{figure}[htb]
+\centerline{
+\hbox{
+\includegraphics[width=10.cm]{FIG/fig_ecur.png}
+}}
+\end{figure}}
+
+ 
+\newpage
+
+\includeonly{cover,foreword,install}
+
+\begin{document}
+\include{cover}
+
+\include{foreword}
+\include{install}
+\include{part1}
+\include{intro}  
+\include{multiscale}  
+\include{restore}  
+\include{mrs_sca}
+\include{mrs_ica}  
+\include{fluctu}  
+\include{mrs_idl}  
+
+\include{part2}   
+\include{multiscale_pola}  
+\include{mrsp_idl}  
+
+\include{part3}
+\include{msvst_intro}  
+\include{msvst_info}  
+\include{msvst_denoising}  
+\include{msvst_inpainting}  
+\include{msvst_background}  
+\include{msvst_multichannel}  
+\include{msvst_idl}
+\include{msvst_ccl}
+
+\include{ch_ref}
+\include{ch_index}
+\listof{algorithm}{List of Algorithms}
+\adjustmtc
+ \end{document}

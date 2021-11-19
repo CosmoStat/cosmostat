@@ -1,0 +1,1711 @@
+\chapter{\proj Image Restoration}
+\label{ch_restore}
+\index{restoration}
+\section{Introduction}
+\subsection{Statistical significance test}
+Images generally contain noise. Hence the wavelet coefficients are 
+noisy too. For filtering, it is necessary to know if a
+coefficient is due to signal (i.e.\ it is significant) or to noise. 
+We introduce a statistical significance 
+test for wavelet coefficients. Let $\cal H_0$ be the hypothesis that the 
+image is locally constant at scale $j$.  
+Rejection of hypothesis $\cal H_0$ depends (for a positive coefficient value)
+on:
+\begin{eqnarray*}
+P = Prob(W_N > w_j(x,y))  
+\end{eqnarray*}
+and if the coefficient value is negative 
+\begin{eqnarray*}
+P = Prob(W_N < w_j(x,y))  
+\end{eqnarray*}
+Given a threshold, $\epsilon$, if $P > \epsilon$ the null hypothesis is not
+excluded.  Although non-null, the value of the coefficient could be due to 
+noise.  On the other hand, if $P < \epsilon$, the coefficient value cannot be
+due only to the noise alone, and so the null hypothesis is rejected.  In this
+case, a significant coefficient has been detected.
+ 
+Our noise modeling in the wavelet space is based on the assumption that the
+noise in the data follows a distribution law, which can be: 
+\begin{itemize}
+\baselineskip=0.4truecm
+\item a Gaussian distribution 
+\item a Poisson distribution  
+\item a Poisson + Gaussian  distribution (noise in CCD detectors)
+\item Poisson noise with few events (galaxy counts, X-ray images, 
+point patterns)
+\item Speckle noise
+\item Root Mean Square map: we have a noise standard deviation of each data value.
+\ei
+ 
+If the noise does not  follow any of these distributions, 
+we can derive a noise model
+from any of the following assumptions:
+\bi
+\item it is stationary, and we have a subimage containing 
+a realization of the noise,
+\item it is additive, and non-stationary,
+\item it is multiplicative and stationary,
+\item it is multiplicative, but non-stationary,
+\item it is undefined but stationary,
+\item it is additive, stationary, and correlated.
+\ei
+
+\subsection{Noise modeling}
+We summarize here the different noise modeling 
+strategies implemented in MR/1.
+\label{sect_noise}
+
+\begin{enumerate}
+\item{Gaussian noise} \\
+Given stationary Gaussian noise, it suffices to compare $w_j(x,y)$ to $k \sigma_j$.   
+\begin{eqnarray}
+\begin{array}{l}
+\mbox{ if }  \mid w_j \mid \ \geq \ k \sigma_j \ \ \mbox{ then } w_j \mbox{ is significant } \\ 
+\mbox{ if }  \mid w_j \mid \ < \ k \sigma_j \ \ \mbox{ then } w_j \mbox{ is not significant }
+\end{array}
+\end{eqnarray}
+
+\item{Poisson noise} \\
+If the noise in the data $I$ is Poisson, the transform 
+\begin{eqnarray}
+t(I(x,y)) = 2\sqrt{I(x,y) + \frac{3}{8}}
+\end{eqnarray}
+acts as if the data arose from a
+Gaussian white noise model (Anscombe, 1948), with $\sigma = 1$, under the
+assumption that the mean value of $I$ is large.  
+The image is first transformed, and the same processing is performed
+as in the Gaussian case. This processing works if the number of photons
+per pixel is greater than 30. Otherwise the detection levels will be
+over-estimated, and the case ``Poisson noise with few events" should 
+instead be used.
+
+
+\item{Poisson noise + Gaussian} \\
+The  generalization of the variance stabilizing is:
+\begin{eqnarray*}
+t(I(x,y)) = \frac{2}{\alpha} \sqrt{\alpha I(x,y) + \frac{3}{8} \alpha^2 + \sigma^2 -
+\alpha g}
+ \end{eqnarray*}
+where $\alpha$ is the gain of the detector, and $g$ and $\sigma$ are the mean and
+the standard deviation of the read-out noise.  
+
+\item{Multiplicative noise} \\
+The image is first log-transformed. Then the transformed image is treated 
+as an image with Gaussian additive noise.
+
+\item{Non-stationary additive noise} \\
+The noise is assumed to be locally Gaussian. So we must consider one 
+noise standard deviation per pixel. The Root Mean Square (RMS) map $R_{\sigma}(x,y)$
+can be furnished by the user, or automatically calculated by estimating
+for each pixel the standard deviation in a box around it.
+
+From $R_{\sigma}(x,y)$, we have to compute the noise standard deviation
+$\sigma_j(x,y)$ for any wavelet coefficient $w_j(x,y)$. $w_j(x,y)$ is obtained by
+the correlation product between the image $I$ and a function 
+$g_j$: $w_j(x,y) = \sum_k \sum_l I(x,y)  g_j(x+k,y+l)$.
+ 
+Then we have: $\sigma_j^2(x,y) = \sum_k \sum_l R_{\sigma}^2(x,y) g_j^2(x+k,y+l)$. \\ 
+In the case of the \`a trous algorithm, the coefficients $g_j(x,y)$
+ are not known exactly, but they can easily be computed by taking the
+wavelet transform of a Dirac $w^{\delta}$. The map $\sigma_j^2$ is calculated by 
+correlating the square of the wavelet scale $j$ of  $w^{\delta}$
+ by $R^2_\sigma(x,y)$.
+ 
+\item{Non-stationary multiplicative noise} \\
+The image is first log-transformed. Then the transformed image is treated 
+as an image with non-stationary additive noise.
+
+\item{Undefined stationary noise}\\
+A k-sigma clipping is applied at each scale.
+
+\item{Undefined noise}\\
+The standard deviation is estimated for each wavelet coefficient, 
+by considering a box around it, and the calculation of $\sigma$ is done 
+in the same way as for non-stationary additive noise.  The latter 
+determines a map of variances for the image, and then derives the 
+variances for the wavelet coefficients.  ``Undefined noise'' does not
+assume additivity of the noise, and so calculates the noise from local
+variance in the resolution scales.  
+
+\item{Stationary correlated noise} \\
+The noise is stationary, but correlated. This noise modeling requires
+a noise map, containing a realization of the noise. The threshold 
+at a scale $j$ $S_j$ is found   
+by computing the wavelet transform of the noise map, and using
+the histogram of $S_j$ to derive the noise probability density 
+function, pdf, of $S_j$.       
+ 
+\item{Poisson noise with few events} \\
+This case corresponds to noise with a very small number of photons  
+per pixel (this is the case for instance of X-ray images where the 
+number of photons per pixel is often lower than 1).
+This special case requires more processing time, due to the fact that 
+a set of autoconvolutions of the histogram of the wavelet function must be
+calculated. For faster filtering, the table can be pre-computed using 
+the ``mr\_abaque" program, and then the restoration 
+is carried out using ``mr\_pfilter" 
+(see section~\ref{sect_event}). 
+
+\item{Speckle noise} \\
+See section~\ref{speckle}.
+\end{enumerate}
+ 
+ 
+ 
+\subsection{Filtering Methods}
+\index{filtering}
+\subsubsection*{Hard and Soft Thresholding}
+Many filtering methods have been proposed in the last ten years.
+{\em Hard thresholding} consists of setting to 0 all 
+wavelet coefficients which have an absolute
+value lower than a threshold $T_j$:
+\begin{eqnarray}  \tilde w_{j,k} = 
+\left\{ \begin{array}{ll} w_{j,k} &  \mbox{ if } \mid w_j \mid \geq T_j  \nonumber  \\ 
+
+0 &  \mbox{ otherwise}  \end{array} \right. 
+\end{eqnarray}
+where $w_{j,k}$ is a wavelet coefficient at scale $j$ and at spatial
+position $k$. 
+
+{\em Soft thresholding} consists of replacing each wavelet coefficient
+by the value $\tilde w$ where
+\begin{eqnarray}  \tilde w_{j,k} = 
+\left\{ \begin{array}{ll} sgn(w_{j,k}) ( \mid w_{j,k} \mid - T_j)    &  \mbox{ if } \mid w_j \mid \geq T_j \nonumber  \\ 
+0 &  \mbox{ otherwise}  \end{array} \right. 
+\end{eqnarray} 
+
+When the discrete orthogonal wavelet transform is used, it is interesting 
+to note
+that the hard and soft thresholded estimators are solutions of the following
+minimization problems:
+\begin{eqnarray*}
+  \tilde w  =   \mathrm{arg}_w \min \frac{1}{2} \parallel y - {\cal W}^{-1} w \parallel^2_{l^2} + 
+ \lambda \parallel w \parallel^2_{l^0} & & \mbox{\bf   hard threshold} \nonumber \\
+  \tilde w   =   \mathrm{arg}_w \min \frac{1}{2} \parallel y - {\cal W}^{-1} w \parallel^2_{l^2} + 
+ \lambda \parallel w \parallel^2_{l^2} & & \mbox{\bf   soft threshold}  
+\end{eqnarray*}
+where $y$ is the input data, ${\cal W}$ the wavelet transform operator, and
+$l^0$ indicates the limit of $l^\delta$ when $\delta \rightarrow 0$. This 
+counts in fact the number of non-zero elements in the sequence.
+
+Several approaches have been proposed for deriving the $T_j$ thresholds. 
+
+
+\subsubsection*{k-Sigma Thresholding}
+The k-Sigma approach consists of deriving $T_j$ from the probability 
+of false detection $\epsilon$  
+\begin{eqnarray*}
+Prob(w > T_j) < \epsilon 
+\end{eqnarray*}
+Given stationary Gaussian noise, it suffices to compare $w_{j,k}$ to 
+\index{stationary signal}
+$k \sigma_j$, where $\sigma_j$ is the noise standard deviation in band $j$.  
+Often $k $ is chosen as 3, which corresponds approximately 
+to $\epsilon = 0.002$.   
+
+\subsubsection*{Iterative Filtering}
+When a redundant wavelet transform is used, the result after a simple hard 
+thresholding can still be improved by iterating. Indeed, we want  the
+wavelet transform of our solution $s$ to reproduce the same significant 
+wavelet coefficients (i.e., coefficients larger than $T_j$). This can 
+be expressed in the following way:
+\begin{eqnarray}
+ ({\cal W} s)_{j,k} = w_{j,k} \mbox{ if  } \mid w_{j,k}  \mid > k \sigma_j
+\end{eqnarray}
+where $w_{j,k}$ are the wavelet coefficients of the input data $y$. Denoting
+$M$ the multiresolution support (i.e. $M(j,k) = 1$ if 
+$ \mid w_{j,k}  \mid > k \sigma_j$, and 0 otherwise), we want:
+\begin{eqnarray*}
+ M.{\cal W} s  = M.{\cal W} y
+\end{eqnarray*}
+The solution can be obtained by the following Van Cittert 
+iteration \cite{starck:book98}:
+\begin{eqnarray}
+ s^{n+1} & = & s^n +  {\cal W}^{-1} (M.{\cal W} y - M.{\cal W} s^n)  \nonumber \\
+          & = & s^n +  {\cal W}^{-1} (M.{\cal W} R^n)
+\label{eqn_iter_support}
+\end{eqnarray}
+where $R^n = y- s^n$.
+Another approach consists of minimizing the functional
+\begin{eqnarray}
+ J(s) = \parallel M.{\cal W} y - M.{\cal W} s  \parallel^2
+\label{eqn_iter_gradient}
+\end{eqnarray}
+using a minization method such as the fixed step gradient or the 
+conjugate gradient.
+
+\subsubsection*{Iterative Filtering using Smoothness Constraint}
+This method consists in adding a smoothness constraint ${\cal S}$ when 
+deriving the solution from the significant coefficients.
+We solve the following optimization problem \cite{starck:spie01a}:
+\begin{equation}
+  \label{eq:l1-smooth}
+  \min {\cal S}(\tilde{s}), \quad \mbox{subject to} \quad \tilde{s} \in C,  
+\end{equation}
+where $C$ is the set of vectors $\tilde{s}$ 
+which obey the linear constraints
+\begin{equation}
+\label{eq:constraints1}
+\left\{  \begin{array}{ll}
+  \tilde{s} \ge 0, \\
+  |{\cal W}s - {\cal W} \tilde{s}| \le e; 
+  \end{array}
+  \right. 
+\end{equation}
+Here, the second inequality constraint 
+only concerns the set of significant coefficients.
+We consider two possible functions for ${\cal S}$:  
+\begin{eqnarray}
+   {\cal S}_w (\tilde{s})& = &   \min \|{\cal W}\tilde{s}\|_{\ell_1} \nonumber \\
+   {\cal S}_{tv}(\tilde{s}) & = &   \min \|\tilde{s}\|_{TV}   
+\end{eqnarray}
+where $\|\cdot\|_{TV}$ is the Total Variation norm, i.e. the discrete
+equivalent of the integral of the euclidian norm of the gradient.
+
+\subsubsection*{Universal threshold}
+Universal thresholding consists of using 
+a threshold  \cite{rest:donoho93_1,rest:donoho93_2}
+$T_j =  \sqrt{2\log(n)}\sigma_j$,
+where $n$ is the number of pixels in the input data.
+It ensures with a probability tending to one that all noise is removed.
+The drawback is that it tends to give an oversmoothed estimator.
+
+\subsubsection*{SURE Threshold}
+The SURE threshold minimizes 
+Stein's unbiased risk estimator \cite{wave:donoho95}.
+
+\subsubsection*{MULTI-SURE Thresholding}
+The SURE method is applied independently on each band of the wavelet transform.
+
+\subsubsection*{MAD Thresholding}
+The Median Absolute Deviation (MAD) threshold on a given band $j$ is:
+\[T_j =  k \sigma_{j,m} \] 
+where $\sigma_{j,m}$ is the Median
+Absolute Deviation ($\sigma_{j,m} = \mbox{MED}( \mid w_j \mid ) / 0.6745$,
+where MED is the median function).
+The MAD method does not requires any knowledge about the noise such as the 
+noise standard deviation. Is is considered as a very good method to 
+denoise data contaminated by correlated noise.
+
+\subsubsection*{Multiscale Wiener Filtering}
+A multiresolution Wiener filtering \cite{starck:sta94_4} consists of 
+multiplying all coefficients $w_j$ of a given scale $j$ by 
+\begin{eqnarray}
+\alpha_j = \frac{S_j}{S_j + N_j}
+\end{eqnarray}
+where $S_j$ and $N_j$ are respectively the variance of the signal 
+and of the noise at the scale $j$.
+
+\subsubsection*{Hierarchical Multiscale Wiener Filtering}
+A hierarchical Wiener filtering \cite{starck:sta94_4} tries to 
+introduce a prediction 
+into the estimation of $\tilde w_j$. This prediction is obtained from 
+the coefficient $w_h$ at the same position but at the following scale.
+\begin{eqnarray}
+\tilde w_j = \frac{H_j}{N_j+H_j+Q_j} w_j + \frac{N_j}{N_j+H_j+Q_j} w_h
+\end{eqnarray}
+with:
+\begin{eqnarray}
+Q_j = \frac{H_jN_j}{S_j}
+\end{eqnarray}
+where $H_j$ is the variance of the image obtained by taking the difference
+of the scale $j$ and the following one $j+1)$.
+
+\subsubsection*{Hierarchical thresholding}
+For each wavelet coefficient $w$, the threshold is derived from {\em NSigma} 
+$sigma$ and the signal-to-noise 
+ratio of the wavelet coefficient at the same position but
+at the next scale. 
+The threshold used here, $T_h$ \cite{starck:sta94_4}, is equal 
+to $T_j=k \sigma_j$ if $\mid w_j \mid \ \geq T$,
+and $T_h = T f(\mid\frac{w_h}{S_h}\mid)$ otherwise
+($S_h$ is the standard deviation of $w_h$). The function $f(a)$
+must return a value between 0 and 1. The chosen function $f$ is:
+\begin{itemize}
+\item $f(a) = 0$ if $a \geq k$  
+\item $f(a) = 1 - \frac{1}{k} a$ if $a < k$  
+\end{itemize}
+
+\newpage
+
+\section{Filtering: mr\_filter}
+\index{mr\_filter}
+\label{sect_filter}
+Program 
+{\em mr\_filter} filters an image. Several methods can be used \cite{starck:sta94_4,starck:sta94_5,starck:sta94_1}. Those using
+multiresolution need noise modeling. For the case of Poisson noise with
+few events, the {\em mr\_pfilter} program can also 
+be used (see section~\ref{sect_event}). The case of speckle noise is 
+treated in section~\ref{speckle}.
+{\bf
+\begin{center}
+ USAGE: mr\_filter option image\_in image\_out
+\end{center}}
+where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-f type\_of\_filtering]} 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item Multiresolution Hard k-Sigma Thresholding.
+\item Multiresolution Soft k-Sigma Thresholding.
+\item Iterative Multiresolution Thresholding. \\
+(see equation~\ref{eqn_iter_support}).
+\item Adjoint operator applied to the multiresolution support. \\
+Minimize a functional from the detected wavelet coefficients
+(see equation~\ref{eqn_iter_gradient}). It is the 
+same method as this which is used by {mr\_detect} for individual object 
+reconstruction.
+\item Hierarchical Hard Thresholding.
+\item Hierarchical Wiener filtering.
+\item Multiresolution Wiener filtering.
+\item Median filtering \\
+Standard median filtering
+\item Average filtering \\
+Standard average filtering
+\item B-spline filtering \\
+Convolve the image with a B-spline
+\item  Universal Hard Thresholding.
+\item  Universal Soft Thresholding.
+\item SURE Hard Thresholding.
+\item SURE Soft Thresholding.
+\item MULTI-SURE Hard Thresholding.
+\item MULTI-SURE Soft Thresholding.
+\item Median Absolute Deviation (MAD) Hard Thresholding.
+\item Median Absolute Deviation (MAD) Soft Thresholding. 
+\item Total Variation + Wavelet Constraint 
+\item Wavelet Constraint Iterative Methods 
+\end{enumerate}
+Default is multiresolution thresholding.
+\item {\bf [-t type\_of\_multiresolution\_transform]} 
+\item {\bf [-T type\_of\_filters]}  
+\item {\bf [-u]} 
+\item {\bf [-g sigma]} 
+\item {\bf [-c gain,sigma,mean]} 
+\item {\bf [-m type\_of\_noise]}
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item Gaussian noise \\
+The standard deviation is either provided by the user using the option ``-g''
+or it is automatically calculated.
+\item Poisson noise
+\item Poisson noise + Gaussian noise \\
+Parameter (gain, readout noise, etc.) can be given by the ``-c'' option.
+The generalized Anscombe transform is used.
+\item Multiplicative noise
+\item Non-stationary additive noise \\
+The standard deviation is estimating in a box around each pixel.
+The size of the box can be fixed by the ``-S'' option. By default, the
+standard deviation of the pixel values inside the box is taken as the
+noise standard deviation, but by using the ``-N'' option, 
+the standard deviation
+can be calculated by k-sigma clipping. An alternative with this model is to
+use a pre-defined root mean square map (see option ``-R'').
+\item Non-stationary multiplicative noise
+\item Undefined stationary noise
+\item Undefined noise
+\item Stationary correlated noise \\
+The noise map must be given using the ``-R'' option.  
+Option ``-E'' allows us to fix the confidence interval
+of the detection (this replaces the ``-s'' option used by other noise models).    
+\item Poisson noise with few events \\
+Option ``-E'' allows us to fix the confidence interval
+of the detection (this replaces the ``-s'' option used by other noise models).
+With this noise model, only the \`a trous wavelet transform algorithm can
+be used.
+\end{enumerate}
+Default is Gaussian noise.
+
+\item {\bf [-n number\_of\_scales]} 
+\item {\bf [-s NSigma]} \\
+Only used with {\em type\_of\_filtering} in [1,2,3,4,5,17,18].
+\item {\bf [-e Epsilon]} \\
+Convergence parameter (used only by the filtering method 2). Default is 
+1e-5 in the case of Poisson noise with few events, 
+and 1e-3 in other cases.
+\item {\bf [-i number\_of\_iterations]} \\
+Maximum number of iterations (used only by iterative filtering 
+methods). Default is 10. 
+\item {\bf [-w support\_file\_name]} \\
+If this option is set, two files are created. The first one (``.mr") contains
+the multiresolution support, and the second one contains 
+ an image which is created from the  multiresolution support.
+ Default is not to do this. The suffix must not be specified.
+\item {\bf [-k]} \\
+Suppress isolated pixels in the multiresolution support. Default is no
+suppression.
+\item {\bf [-K]} \\
+Suppress the last scale. The last scale is not used during the restoration
+process. This leads to a 
+filtered image which does not contain a background,
+or extended structures (depending on the number of scales used). 
+Default is no suppression.
+ \item {\bf [-p]} \\
+Detect only positive structures. Wavelet coefficients can be either positive 
+or negative. Using this option, only positive coefficients are considered
+as significant. Default is to take both positive and negative coefficients.
+\item {\bf [-E Epsilon]} \\
+Precision for computing thresholds, used only  in the case of Poisson noise
+ with few events. Default is 1e-3, which is equivalent to a $3.1$ sigma 
+detection in the Gaussian case.
+\item {\bf [-S SizeBlock]} \\
+Size of the  blocks used for local variance estimation. Default is 7.
+\item {\bf [-N NiterSigmaClip]} \\
+Iteration number used for local variance estimation. Default is 1.
+\item {\bf [-F first\_detection\_scale]} \\
+If this option is set, all wavelet coefficients detected at scales lower 
+than {\em first\_detection\_scale} are considered as significant.
+\item {\bf [-R RMS\_Map\_File\_Name]} \\
+Root mean square map. If this option is set, the noise model is 
+automatically fixed to: ``Non-stationary additive noise", 
+and the RMS image is used as the local standard deviations image.
+\item {\bf [-P]} \\
+ By default, a positivity constraint is applied to the solution. This means
+ that the solution is forced to be positive everywhere. By using this option,
+ this constraint is suppressed.
+ \item {\bf [-b]} \\
+Add the maximum level constraint (maximum = 255). For one-byte images
+(GIF, JPEG, etc.), this constraint limits the range values between 0 and 255.
+\item {\bf [-W WindowSize]} \\
+Window size for median and average filtering. Default is 5. This option is
+only valid if {\em type\_of\_filtering} is equal to 4 or 5.
+\item {\bf [-v]} \\
+Verbose.
+\end{itemize}
+
+\noindent
+For median, average, and B-spline filtering, all options (except ``-W")
+have no effect.
+% For transforms 13 to 18, only the thresholding filtering can be used. 
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item mr\_filter image\_in.d ima\_out.d \\
+Filters an image by multiresolution  thresholding, assuming
+Gaussian noise (its standard deviation is automatically estimated).
+\item mr\_filter -t24 image\_in.d ima\_out.d \\
+Hard thresholding using the undecimated bi-orthogonal wavelet transform.
+\item mr\_filter -t24 -u1 image\_in.d ima\_out.d \\
+Hard thresholding using the partially undecimated bi-orthogonal 
+wavelet transform.
+\item mr\_filter -f 3 image\_in.d ima\_out.d \\
+Iterative filtering using the \`a trous algorithm.
+\item mr\_filter -m 2 -s 4 -p image\_in.d ima\_out.d \\
+Same as before, but considering Poisson noise, and the thresholding is done
+ at 4 sigma (instead of 3). All negative coefficients are thresholded.
+\item mr\_filter -K -n 3 -s 7 ngc2997.fits stars.fits \\
+Subtracts from the input image (see Figure~\ref{fig_ngc}) 
+the noise and the last scale. As only three
+scales were used, all large structures disappear (see 
+Figure~\ref{fig_ngc_clean} top). The difference (see 
+Figure~\ref{fig_ngc_clean} bottom) between the 
+input and the output images shows the galaxy, in which all high small-scale
+structures have been removed. 
+\end{itemize}
+
+\subsubsection*{Filtering Strategy:}
+The {\em mr\_filter} programs allows the user to perform a filtering by 
+many methods, and using many different transforms. Depending on the
+application, the optimal filtering method may change. For 
+astronomical applications, for instance, methods 3 and 4 lead to very good
+results, especially for the photometry of the objects. However, some
+general aspects can be noted:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item Directional transforms (i.e., option  ``-t'' in [14,21,24]) are well
+adapted to images which contain edges, lines, etc., while isotropic
+transforms (\`a trous algorithm, etc.) are better adapted for images
+which contain isotropic features.
+\item Redundant transforms do a better job than non-redundant transforms, 
+because they respect the translation invariance property.
+So the undecimated bi-orthogonal wavelet transform (i.e. option  -t 24) for 
+images containing edges, and the \`a trous algorithm (i.e. option  -t 2)
+for images with isotropic features, should always be preferred to decimated
+transforms.
+\item If the computation time is important, or if the image is very large,
+a good trade-off between quality and memory or computation time is to 
+let the first scale remain undecimated, while decimating the others. 
+This is done by using
+the ``-t 24 -u 1'' option for the bi-orthogonal WT, or the ``-t 19'' 
+option for
+the \`a trous algorithm.
+\item The number of scales (i.e., option  -n {\em ScaleNumber}) 
+which can be used
+depends on the image size. The larger the image, the 
+larger the number of scales.
+The user must keep in mind that increasing by 1 the number of scales 
+corresponds
+to adding a new scale in which the number of independent pixels is divided by two.
+In theory, the number of scales could be $n = \log_2(N_s)+1$, where $N_s$ is the
+image size in its smallest direction, but in practice, it is preferable to
+use a lower value ($\log_2(N_s) -2$ or $\log_2(N_s) -3$). 
+\end{itemize}
+
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_ngc_stars.ps,bbllx=1.9cm,bblly=12.6cm,bburx=14.6cm,bbury=25.4cm,width=10cm,height=10cm,clip=}
+}
+\hbox{
+\psfig{figure=fig_ngc_bgr.ps,bbllx=1.9cm,bblly=12.6cm,bburx=14.6cm,bbury=25.4cm,width=10cm,height=10cm,clip=}
+}}}
+\caption{Top, output image produced by {\em mr\_filter}. The noise and the
+large structures of the galaxy have been removed. Bottom,
+difference between NGC2997 and the output image.}
+\label{fig_ngc_clean}
+\end{figure}
+
+\clearpage
+
+
+\section{Image with Speckle Noise}
+\label{speckle}
+\subsection{Speckle noise statistics}
+
+Speckle occurs in all types of coherent imagery such as synthetic aperture radar (SAR) imagery, 
+acoustic imagery and laser illuminated imagery \cite{rest:dainty75}. 
+When an object is illuminated by a coherent source of radiation and the object
+ has a surface that is roughly the order of the wavelength of the incident 
+ radiation, the wave scattered from the surface consists of contributions 
+ from many independent scattering areas. The signal is assumed to be a 
+complex Gaussian distributed noise of zero mean and standard deviation
+ $\sigma$. The value of $\sigma$ is a function of the backscattering 
+coefficient $\sigma_0$ of the observed surface. The modulus $\rho$ of
+ the signal gives  an image (see Figure \ref{fig:im1}) from which one 
+ can derive some properties about the object surface by measuring the local 
+ value of $\sigma$.
+The probability density function (PDF) 
+of the modulus of a homogeneous scene is a Rayleigh distribution:
+\begin{equation}
+p(\rho)=\frac{\rho}{\sigma^2}e^{-\frac{\rho^2}{ 2\sigma^2}}
+\label{eq:2-9}
+\end{equation}
+of mean $M_{\rho}$ and standard deviation $\sigma_{\rho}$:
+\begin{eqnarray}
+M_{\rho} = \sqrt{ \frac{\pi}{2} } \sigma \quad \sigma_{\rho}=\sqrt 
+{\frac{4-\pi}{2}}\sigma
+\end{eqnarray}
+The ratio $\sigma_{\rho}/M_{\rho}$ is a constant of 
+value $\sqrt{\frac{4-\pi}{\pi}}$.
+This means that the speckle is multiplicative noise. 
+For this reason some filtering methods, 
+called homomorphic techniques \cite{rest:frances95}, use a logarithmic 
+transform of the modulus to convert the multiplicative noise into additive 
+noise.  The PDF of the  modulus of log-transformed speckle noise is:
+\begin{eqnarray}
+p(\ell) =  \frac{e^{2\ell}}{ \sigma^2} e^{-\frac{e^{2\ell}}{2 \sigma^2} }
+\label{eq:2-22}
+\end{eqnarray}
+The mean $M_{\ell}$ and the standard deviation $\sigma_{\ell}$ are:
+\begin{eqnarray}
+M_{\ell} = 0.058 + \log(\sigma) \quad \sigma_{\ell}= \sqrt{\frac{\pi^2}{24}} = 0.641
+\end{eqnarray}
+When using the logarithm, the standard deviation is 
+independent of the local value of the signal, but  the 
+estimation of $\sigma_0$ from the filtered image has a 
+bias which is not minimum according to the Cramer-Rao 
+theorem. The minimum variance bound estimator of a Rayleigh 
+distribution is the  energy (i.e.\ the square of the 
+modulus $I=\rho^2$) which is known to have an exponential 
+(i.e.\ Laplace) 
+distribution of parameter $a=2\sigma^2$ \cite{rest:hoekman91}:
+\begin{eqnarray}
+p(I)=\frac{1}{a}e^{-\frac{I}{a}}
+\end{eqnarray}
+With this transformation the noise is still multiplicative, 
+but it has been shown \cite{rest:bijaoui97} that the ratio $R$ 
+between the energy of the image to be filtered and a spatially 
+Laplace-distributed image of local mean value $a(k_x,k_y)$ has a 
+Laplace PDF of mean $1$. In that case,  the filtering algorithm 
+consists of finding the local value of $a$ which is iteratively 
+obtained by rejecting the non-significant wavelet coefficients 
+found in the image ratio $R$ according to a simulated Laplace 
+noise of mean $1$. 
+
+\subsection{Speckle filtering: mr\_rfilter}
+\index{speckle}
+\index{mr\_rfilter}
+
+\subsubsection{General description}
+ The filtering algorithm can be applied on the modulus, the logarithm of 
+ the modulus  or the square of the modulus of the image. 
+ Visually the results are quite similar, but the use of a quadratic 
+ transform allows more accurate radiometric estimation from the filtered image. 
+When using the logarithmic transform the general structure of the algorithm is 
+the following (for more details see \cite{rest:bijaoui97}):
+
+\begin{enumerate}
+\item Simulate a log-Rayleigh noise image model.
+\item Compute the wavelet transform of this simulated image by 
+using the \`a trous algorithm. 
+\item According to the chosen statistical decision 
+level $\epsilon$, compute the corresponding positive and 
+negative thresholds for each scale as shown in Figure \ref{fig:seuil}. 
+\item Compute the logarithm of the original image.
+\item Threshold the wavelet transform of the log-transformed 
+original image according to the thresholds computed with the noise model.
+\item Reconstruct the image from the thresholded wavelet transform.
+\end{enumerate}
+
+If the reconstructed image is correct (i.e.\ the 
+reconstructed image is the filtered image) the residual between 
+this image and the original one must contain only noise.  If not, 
+we have to iterate from step 5 to step 6  to extract the 
+significant structures from the residual and refine the filtered image. \\
+
+For multiplicative noise (i.e.\ Rayleigh or Laplace noise) 
+we have to test the significant part of the ratio $R$ between the 
+original transformed image and a reference image. 
+This reference image is the filtered image if the wavelet transform 
+of the ratio contains no significant wavelet coefficients. 
+The algorithm starts with any approximation of the image to be filtered 
+as the reference image. Generally, the last smooth image of the 
+wavelet transform is used to initialize the first reference image. 
+The reference image is iteratively refined by introducing the significant
+part detected from the ratio $R$ until this  ratio has a  Laplace PDF 
+of parameter $1$. In the case of Rayleigh distributed noise (i.e.\
+no transformation) the test is carried out on the variation of the standard 
+deviation of the residual between two successive iterations. 
+For many reasons (precision of the convergence test, estimation of 
+the scattering parameter $\sigma_0$ from the filtered image) the 
+Laplace noise model (i.e.\ square-transformed Rayleigh noise) gives
+the best results.  
+
+\subsubsection{Thresholding function}
+
+The thresholded wavelet coefficients $\bar{w}(i,k_x,k_y)$ are 
+computed from the original wavelet coefficients ${w}(i,k_x,k_y)$ by 
+applying the following equation: 
+
+\begin{equation}
+\bar w(i,k_x,k_y) = S(w(i,k_x,k_y)) w(i,k_x,k_y) 
+\end{equation}
+where  $S(w)$ is the thresholding function. For hard thresholding 
+ (see Figure \ref{fig:seuil}-a), $S(w)$ is defined by:
+\begin{eqnarray}
+S(w) =
+\left\lbrace
+\begin{array}{l}
+ 0 \quad \mbox{if \quad} w \in [x_n, x_p]\\
+ 1 \quad \mbox{elsewhere}
+\end{array}
+\right.
+\end{eqnarray}
+For soft thresholding (see Figure \ref{fig:seuil}-b) the thresholding 
+function is:
+\begin{eqnarray}
+S(w) =
+\left\lbrace
+\begin{array}{l}
+\hspace*{0.8truecm} 0 \quad  \mbox{\hspace*{0.8truecm}if \quad}  w \in [xn_1, xp_1] \\
+\\
+{\displaystyle { \frac{\; \; w \; -xp_1} {xp_2 \! - xp_1}}} \quad \mbox{if \quad} w \in [xp_1, xp_2]\\
+\\
+{\displaystyle { \frac{\; \; w \; -xn_1} {xn_2 \! - xn_1}}} \quad \mbox{if \quad} w \in [xn_2, xn_1]\\
+\\
+\hspace*{0.8truecm} 1 \quad \mbox{\hspace*{0.8truecm}elsewhere}\\
+\end{array}
+\right.
+\label{eq:fonction_seuillage_ponderee}
+\end{eqnarray}
+
+\begin{figure}[htb]
+\centerline{
+\hbox{\psfig{figure=fig_speckle_1.ps,bbllx=1.5cm,bblly=7cm,bburx=12.5cm,bbury=21cm,height=7cm,width=5.5cm,clip=}}}
+\caption{Threshold determination and thresholding functions; 
+(a) hard thresholding, (b) soft thresholding.}
+\label{fig:seuil}
+\end{figure} 
+
+\subsubsection{Hierarchical thresholding}
+With the hierarchical thresholding,  the thresholded wavelet
+ coefficients at a given scale $i$  are such that: 
+\begin{equation}
+\bar w(i,k_x,k_y) = S(w(i,k_x,k_y)) S(w(i+1,k_x,k_y)) w(i,k_x,k_y) 
+\end{equation}
+This kind of thresholding is generally used  to reduce the number
+ of false detections on the first scale.
+
+\subsubsection{mr\_rfilter}
+\index{mr\_rfilter}
+Program {\em mr\_rfilter} filters an image that contains speckle noise 
+by using a multiscale \`a trous algorithm.
+{\bf 
+\begin{center}
+ USAGE: mr\_rfilter options image\_in image\_out
+\end{center}}
+where options are~:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_noise]} 
+\begin{itemize}
+\baselineskip=0.4truecm
+\item [{\bf 0.} ] {\bf Rayleigh noise:}\\
+The filtering algorithm is applied to the modulus of the image. 
+
+\item [{\bf 1.} ] {\bf Log Rayleigh:}\\
+The  filtering algorithm is applied after a logarithmic transform of the image.
+
+\item [{\bf 2.} ] {\bf  Laplace:}\\
+The filtering algorithm is applied after a quadratic transform of the image.
+
+\end{itemize}
+
+Default is Laplace noise model.
+
+\item {\bf [-n number\_of\_scales]} 
+
+\item {\bf [-i number\_of\_iterations]} \\
+Maximum number of iterations. Default is 10. 
+
+\item {\bf [-e Epsilon]} \\
+Convergence parameter. Default is 0.001.
+
+\item {\bf [-E decision\_level]} \\
+Statistical decision level $\epsilon$ used for each scale. If 0, the 
+value of $\epsilon$  is set interactively for each of the first four 
+scales. If the maximum number of scales (scale\_max) set by the 
+parameter -n is greater than 4, the  statistical decision levels 
+from scale 5 to scale\_max is set to the value of the  
+statistical decision level used for scale 4.\\ 
+Default is 0.001.
+
+
+\item {\bf [-N number\_of\_images]} \\
+If the input image is a multi-look image (i.e.\ the input image  
+is the average of N single-look images).\\
+Default is 1.
+
+\item {\bf [-r Ratio]} \\
+ratio=Epsilon2/Epsilon1 used for soft thresholding. If set, a hierarchical filtering is used for the first scale. The value of Epsilon1 is set with the -E option. If ratio=1, a standard hard thresholding is used for all scales.
+Default is 10.
+\end{itemize}
+
+\subsubsection*{Examples}
+\begin{itemize}
+\baselineskip=0.4truecm
+\item mr\_rfilter -t1 -E.001 -i5  image.fits result\\
+Filter the image {\it image.fits} by considering an additive log-Rayleigh 
+noise model (logarithmic transformation) with 5 iterations and a 
+statistical decision level $\epsilon=0.001$ for all scales. 
+
+\item mr\_rfilter -t1 -E.001 -e0.01 image.fits result\\
+The same as above, but the iterations are stopped when the difference between the standard deviation of the residual and the theoretical value 
+(i.e.\ 0.64 for the log-Rayleigh distribution) is less than $0.01$. 
+
+\item mr\_rfilter -t2 -E0 -i5 -n8 image.fits result\\
+Filter the image {\it image.fits} by considering a multiplicative Laplace  noise model (quadratic transformation) with 5 iterations and 8 scales. The program will ask the user to enter the statistical decision level $Epsilon[i]$ at each scale. Typical values are:\\
+Epsilon[0] = 0.0001\\
+Epsilon[1] = 0.001\\
+Epsilon[2] = 0.01\\
+Epsilon[3] = 0.01\\
+Epsilon[4] = 0.1\\
+The values from Epsilon[5] to Epsilon[8] are automatically set to  0.1.
+
+
+\item mr\_rfilter -t3 -E0 -r10 -i5 -n8  image.fits result\\
+The same as above but a soft thresholding is used with a ratio=10, and a Rayleigh noise model.
+
+\end{itemize}
+
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_speckle_2.ps,bbllx=3.3cm,bblly=10.7cm,bburx=18.5cm,bbury=25.9cm,height=8cm,width=8cm,clip=}
+}
+\hbox{
+\psfig{figure=fig_speckle_3.ps,bbllx=3.3cm,bblly=10.7cm,bburx=18.5cm,bbury=25.9cm,height=8cm,width=8cm,clip=}
+}}}
+\caption{{\small Top, raw synthetic aperture radar (SAR) image from the
+ERS1 satellite  (CNES image).  
+Bottom, image produced by {\it mr\_rfilter} -t2 -n6 -i5 -E0 -r10, 
+with Epsilon[1]=Epsilon[2]=0.0001 and Epsilon[3] to Epsilon[6]=0.001.}}
+\label{fig:im1}
+\end{figure}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_speckle_4.ps,bbllx=3.3cm,bblly=10.7cm,bburx=18.5cm,bbury=25.9cm,height=8cm,width=8cm,clip=}
+}
+\hbox{
+\psfig{figure=fig_speckle_5.ps,bbllx=3.3cm,bblly=10.7cm,bburx=18.5cm,bbury=25.9cm,height=8cm,width=8cm,clip=}
+}}}
+\caption{Top, multi-look image generated by averaging 7 raw SAR images. Bottom,  output image produced by {\em mr\_rfilter} -t2 -N7 -n6 -i5 -E0 -r10, with Epsilon[1]=Epsilon[2]=0.0001 and Epsilon[3] to Epsilon[6]=0.001.}
+\label{fig:im1f}
+\end{figure}
+
+\clearpage
+\newpage
+
+
+\section{Sparse Images: \`a trous Algorithm}
+
+In this section we are concerned with the 
+restoration of images with few photons or counts by the \`a trous algorithm.
+
+
+\subsection{Initialization: mr\_abaque}
+\index{mr\_abaque}
+\label{sect_event}
+Program 
+{\em mr\_abaque} precomputes a table which is used by {\em mr\_psupport} and
+{\em mr\_pfilter}. This table contains the threshold levels for a wavelet
+coefficient with a confidence interval $\epsilon$. These levels are a 
+function of the number of events used for
+the calculation of the wavelet coefficient. The table is saved by default 
+in the FITS table format. The levels are calculated from the autoconvolution of
+the histogram of the wavelet function. The algorithm first calculates the
+histogram, then performs the autoconvolution, derives the probability 
+distribution
+of a wavelet coefficient (depending on the number of events), the 
+distribution function, and finally derives the thresholds for a confidence 
+interval equal to {\em Epsilon}.
+{\bf
+\begin{center}
+ USAGE: mr\_abaque option file\_out
+\end{center}}
+where options are: 
+\begin{itemize}
+\baselineskip=0.4truecm
+\item {\bf [-e Epsilon]} \\
+Epsilon = confidence level. Default is 1e-3. The correspondence between
+the confidence level and N$\sigma$ detection in the Gaussian case is as 
+shown in Table~\ref{corrtable}.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{cc}\hline \hline
+ Espilon & NSigma \\ \hline
+ $1e^{-1}$ & 1.28160 \\ 
+ $1e^{-2}$ &  2.32630 \\ 
+ $1e^{-3}$ &  3.09020 \\ 
+ $1e^{-4}$ & 3.71900 \\ 
+ $1e^{-5}$ & 4.26490 \\ 
+ $1e^{-6}$ &  4.75340 \\ 
+ $1e^{-7}$ & 5.19930 \\ 
+ $1e^{-8}$ & 5.61200 \\ 
+ $1e^{-9}$ & 5.99780 \\ \hline \hline
+\end{tabular}
+\end{center}
+\caption{Correspondence between confidence level and Gaussian detection
+level.}
+\label{corrtable}
+\end{table}
+
+\item {\bf [-n Number]} \\
+Number = Number of events in the data, given as an integer 
+power of 2. Default is 25 (i.e.\ $2^{25}$). 
+\item {\bf [-w]} \\
+Write the following files:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item Aba\_histo.fits: contains all histograms \\
+                    h(3*i) = histogram values \\
+                    h(3*i+1) = reduced coordinates \\
+                    h(3*i+2) = histogram values for reduced coordinates \\
+% \item Aba\_distrib.fits: density functions \\
+%                     F(3*i) = reduced coordinates  \\
+%                    F(3*i+1) = function values \\
+%                    F(3*i+2) = function values for reduced coordinates \\
+%\item Aba\_log\_distrib.fits: log transformation of F \\
+%                    L(3*i) = function values \\
+%                    L(3*i+1) = real coordinates \\
+%                    L(3*i+2) = reduced coordinates \\
+%\item Aba\_mean.d: contains the mean real values of the autoconvolved histograms
+%\item Aba\_sigma.d: contains the sigma real values of the autoconvolved histograms
+\item Aba\_bspline.d: contains the 1D B-spline used 
+\item Aba\_wavelet.d: contains the 2D wavelet used 
+\end{itemize}
+\item {\bf [-d]}  \\
+Use all default parameters.
+\end{itemize}
+\subsubsection*{Example:}
+\begin{itemize}
+\item mr\_abaque -d \\
+Creates the table (with filename ``Abaque.fits") with all default options.
+The table is saved in an image format with 26 lines and 2 columns (by default).
+$Abaque(i,0)$ corresponds to the negative detection level for a wavelet 
+coefficient calculated from $2^i$ events  (photons), and $Abaque(i,1)$ corresponds to the positive threshold.
+\item mr\_abaque -e 1e-04 \\
+Creates the table for a detection with a confidence interval of 1e-04. 
+\end{itemize}
+
+
+
+\subsection{Support creation: mr\_psupport}
+\index{mr\_psupport}
+\label{set_psup}
+Program 
+{\em mr\_psupport} applies a wavelet transform using the \`a trous
+algorithm to data, assuming that the noise follows a Poisson distribution,
+and in the case where we have only few events per pixel 
+\cite{starck:pie98,starck:sta98_1,rest:slezak93,rest:slezak94,starck:mur98_1}.
+Data can either be given by an ASCII table of coordinates in real values, or
+by an image. In the first case, the data must begin with a line containing
+the size (number of rows and number of columns separated by a space) 
+of the image in which the events can be inserted, 
+and all other rows must contain
+one position (real coordinates separated by a space). The wavelet 
+transform is then thresholded and stored in the output multiresolution file
+(``.mr"). If the option ``-s'' or ``-t'' is set, an analysis of the detected 
+structures is performed. Results are stored in a file.
+{\bf
+\begin{center}
+ USAGE: mr\_psupport option mr\_file\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item {\bf [-a ascii\_file\_in]}  \\
+Read the input data from an ASCII table. An example of a table with three
+events in an image of size 10 $\times$ 10 is: \\
+10 10 \\
+2.5 3.8 \\
+4. 4. \\
+0.3 9.2 \\
+The first coordinates must all have values
+ between 0 and the number of rows minus $0.5$,
+and the second coordinate must have values  
+between 0 and the number of columns minus $0.5$.
+\item {\bf [-I image\_file\_in]}  \\
+Read the input data from an image.
+\item {\bf [-F first\_detection\_scale]} \\
+First scale used for the detection. Default is 1.
+\item {\bf [-e minimum\_of\_events]}  \\
+Minimum number of events for a detection. Default is 4. If a wavelet 
+coefficient has been calculated from fewer events than this minimum
+value, it is not considered as significant.
+\item {\bf [-w]}  \\
+write the following file \\
+xx\_Wavelet.mr: contains the wavelet transform of the image.
+\item {\bf [-s SignifStructureAnalysis\_FileName]} \\
+Write in xx\_Segment.mr the segmented scales. \\
+Analyze the detected wavelet coefficients, and write in the file:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item Number of detected structures per scale
+\item Percentage of significant wavelet coefficients
+\item Mean deviation of shape from sphericity
+\item For each detected structure, its surface area, its perimeter, and
+\item its deviation of shape from sphericity, 
+\item its angle, its elongation in both axis directions.
+\end{itemize}
+\item {\bf [-t SignifStructureAnalysis\_FileName]} \\
+Same as -s option, but results are stored in an ASCII table format.
+The table contains: scale number, structure number, 
+Max\_x, Max\_y, Surface, Perimeter, Morpho, Angle, Sigma\_X, Sigma\_Y. 
+\item {\bf [-p]}  \\
+Detect only positive structure.
+\item {\bf [-q abaque\_file]}  \\
+Default is Abaque.d
+\item {\bf [-n number\_of\_scales]}  \\
+Number of scales used in the multiresolution transform.
+Default is 6.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\item mr\_psupport -a tabevent.ascii support.mr\\
+Read the table, create the associated image, apply the wavelet
+transform, and threshold the non-significant wavelet coefficients.
+\item mr\_psupport -a tabevent.ascii -s analysis.txt support.mr\\ 
+Same as before, but also apply a segmentation to each scale. Results
+of the segmentation are stored in ``xx\_Segment.mr", and each region is
+analyzed. Results of this analysis are saved in ``analysis.txt".
+\end{itemize}
+
+
+\subsection{Filtering: mr\_pfilter}
+\index{mr\_pfilter}
+Program {\em mr\_pfilter} filters an image (as does {\em mr\_filter})
+assuming  that the noise follows a Poisson distribution and in the case 
+where we have only few events per pixel.
+Data can either be given by an image or by 
+an ASCII table of coordinates in real values.
+As for {\em mr\_psupport}, the pre-computed table must exist. By default,
+the program searches for a file of name ``Abaque.fits".
+If the ``-c'' option is used, the user gives a second input image file name.
+Then the multiresolution support is estimated from the first image
+(given by option ``-a'' or ``-I''), and the second image is filtered
+using the multiresolution support of the first.
+{\bf
+\begin{center}
+ USAGE: mr\_pfilter option image\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-a ascii\_file\_in]}  \\
+See section \ref{set_psup}.
+\item {\bf [-I image\_file\_in]} 
+\item {\bf [-c ImageFileName]}  \\
+Image to be filtered using the multiresolution support
+derived from the image given by option ``-a'' or ``-I''.
+By default, the image to filter is the same as the image
+used for the multiresolution support calculation.
+\item {\bf [-w]}  \\
+write the following files \\
+xx\_Wavelet.mr: contains the wavelet transform of the image. \\
+xx\_Support.mr: contains the thresholded  wavelet transform.
+\item {\bf [-p]}  \\
+Detect only positive structure.
+\item {\bf [-F first\_detection\_scale]} \\
+First scale used for the detection. Default is 1.
+\item {\bf [-q abaque\_file]}  \\
+Default is Abaque.d
+\item {\bf [-n number\_of\_scales]}  \\
+Number of scales used in the multiresolution transform.
+Default is 6.
+\item {\bf [-e minimum\_of\_events]}  \\
+Minimum number of events for a detection. Default is 4.
+\item {\bf [-f type\_of\_filtering]}  
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item Iterative multiresolution thresholding 
+\item Adjoint operator applied to the multiresolution support  
+\item Multiresolution Hard K-Sigma Thresholding 
+\end{enumerate}
+Default is Iterative multiresolution thresholding.
+\item {\bf [-l]} \\
+Dilate the support. 
+\item {\bf [-k]} \\
+ Suppress isolated pixels in the support.
+\item {\bf [-K]} \\       
+Suppress the last scale.
+% \item {\bf [-E Epsilon]} \\ 
+% Convergence parameter. Default is 1e-05. 
+\item {\bf [-i number\_of\_iterations]}  \\
+ Maximum number of iterations. Default is 50.
+\end{itemize}
+
+\noindent
+The a and I options cannot be used together, and one of them must be set.
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item mr\_abaque -e 1e-4 \\
+Creates the table (file=Abaque.fits) for a confidence interval of 1e-4.
+\item mr\_pfilter -a tabevent.ascii filter\_imag.fits\\
+Read the table, create the associated image, and apply
+the filtering using the multiresolution support.
+\item mr\_pfilter  -I inpu\_image.fits -f 2 -i 10 -F 3 -p output\_image.fits \\
+Filtering using the second method, with 10 iterations, without taking
+account of negative wavelet coefficients, and starting the 
+detection at the third
+scale.
+\end{itemize}
+
+\newpage
+\section{Images with Poisson Noise: Haar Transform}
+
+In this section, we are concerned with 
+restoration of Images with Poisson noise by the Haar Transform.
+
+\subsection{Introduction}
+Several authors 
+\cite{wave:kolac97,wave:kolac99,wave:timmermann99,wave:nowak99,wave:jammal99} 
+have recently suggested independently that the 
+Haar wavelet transform was
+very well suited to treat data with Poisson noise. Indeed, 
+since a Haar wavelet coefficient
+is just the difference between two random variables following a Poisson
+distribution, it is easier to derive mathematical tools to remove the 
+noise than with other wavelet methods. 
+
+The means used to filter the noise is however different following 
+different authors.
+In \cite{wave:nowak99}, a kind of Wiener filter has been implemented.
+Timmermann and Nowak \cite{wave:timmermann99} have used
+a Bayesian approach with an a priori model on the original signal.
+Kolaczyk \cite{wave:kolac97} proposed to use the Haar transform 
+for gamma-ray burst detection
+in a one-dimensional signal, and has extended his 
+method to images \cite{wave:kolac99}. In his method, the thresholds are 
+calculated from the PDF of the wavelet coefficients. A similar approach
+has been developed by Jammal and Bijaoui \cite{wave:jammal99} for medical
+image filtering.
+
+As far back as 1910, Haar described the following function as providing
+an orthonormal basis.  The analyzing
+wavelet of a continuous variable is a step function.
+
+\[\begin{array}{ll}
+\psi(x)  = 1               & \mbox{ if } 0 \leq x < \frac{1}{2} \\
+\psi(x) = -1               & \mbox{ if } \frac{1}{2} \leq x < 1 \\
+\psi(x) = 0                & \mbox{ otherwise}
+\end{array}\]
+
+The Haar wavelet constitutes an orthonormal basis.  Two Haar wavelets of the 
+same scale (i.e.\ value of $m$) never overlap, so we have scalar product 
+$<\psi_{m,n}, \psi_{m,n'}> $ $= \delta_{n,n'} $ (the Kronecker delta,
+equal to 1 when the subscripts are the same, otherwise equal to zero).  
+Overlapping supports are
+possible if the two wavelets have different scales, e.g.\ 
+$\psi_{1,1}$ and $\psi_{3,0}$ (see \cite{wave:daube92}, 
+pp.\ 10--11).  However, if 
+$m < m'$, then the support of $\psi_{m,n}$ lies wholly in the region where
+$\psi_{m',n'}$ is constant.  It follows that $<\psi_{m,n}, \psi_{m',n'}>$
+is proportional to the integral of $\psi_{m,n}$, i.e.\ zero.
+
+\subsection{Poisson noise and Haar wavelet coefficients}
+\subsubsection*{Thresholding assuming a uniform background}
+
+Assuming a constant background with a background rate $\lambda$,
+Kolaczyk and Dixon \cite{wave:kolac99} proposed to use the 
+normalized Haar transform (L2-normalization) with the following threshold,
+corresponding a false detection rate of $\alpha$:
+\be
+t_j = 2^{-(j+1)} [ z^2_{\alpha/2} 
++ \sqrt{ z^4_{\alpha/2} + 4\lambda_j z^2_{\alpha/2}}]
+\ee
+where $j$ is the scale level ($j=1..J$, $J$ being the number of scales),
+$\lambda_j = 2^{2j} \lambda$ is the background rate over $n_j=2^{2j}$
+pixels, and $z{\alpha/2}$ is the point under the Gaussian density function
+for which there falls $\alpha/2$ mass in the tails beyond each $z{\alpha/2}$.
+An upper bound limit for the threshold limit, valid also with other
+filters, is \cite{wave:kolac99}:
+\be
+t_j = 2^{-(j+1)} \log(n_j) 
++ \sqrt{  \log^2(n_j) + 2\lambda_j \log(n_j)}]
+\ee 
+This formula results from substituting $z= \sqrt{2\log(n_j)}$ in the
+previous equation.
+
+Jammal and Bijaoui \cite{wave:jammal99} have calculated the 
+probability density function of an unnormalized wavelet coefficient 
+which is given by
+\be
+p(w_j=\nu) = e^{-2^{2j}\lambda} I_\nu(2^{2j}\lambda)
+\ee
+where $I_\nu(x)$ is the modified Bessel function of integer order $\nu$.
+For a given false detection rate $\alpha$,
+the threshold $t_j$ can be derived from this PDF.
+
+\subsubsection*{Thresholding with non-uniform background}
+\label{bgr_sect}
+In many cases, the background cannot be considered to be constant, and an
+estimation of $\lambda_{j,k,l}$ (the background rate at scale $j$ and position
+$k,l$) is necessary. 
+Several approaches can be used to take into account the  background 
+variation:
+\begin{itemize}
+\item Image model: if a model image $M$ can be provided by the user,
+then  $\lambda_{j,k,l}$ is easily obtained by integrating $M$ over the
+correct surface area.
+\item Lower resolution: the filtering must be started from the coarser scale 
+$S_{N}$. The solution is refined scale by scale in order to obtain $S_{N-1},
+S_{N-2},...,S_{1},S_{0}$. The $\lambda_{j,k,l}$ values are obtained from
+$\lambda_{j,k,l}$ ($\lambda_{j,k,l} = \frac{\lambda_{j,k/2,l/2}}{4}$).
+\item iterative procedure: a filtering can first be performed assuming a 
+constant background (with rate equal to the mean of the image), and the
+filtered image can be used as a model image. This process can repeated 
+several times until convergence.
+\end{itemize}
+
+\subsubsection*{Reconstruction}
+The Haar transform is known to produce block-artifacts. Two approaches
+may be used to resolve this problem
+\begin{itemize}
+\item Cycle-spinning method \cite{rest:donoho95}.
+\item Iterative constraint reconstruction \cite{compress:bobichon97}.
+\end{itemize}
+The cycle-spinning method precedes the restoration algorithm (Haar transform
++ thresholding + reconstruction) at every version of the original
+image data obtainable by combinations of left-right and upwards-downwards
+translations. The final image is simply the average of all images resulting
+from each set of translation sequence.
+
+The iterative constraint reconstruction consists of considering the 
+reconstruction as an inverse problem, where the solution must 
+respect some constraints. Constraints on the solution are:
+\begin{itemize}
+\item The positivity.  
+\item The range of variation of the Haar coefficients. 
+\item The smoothness at all resolution levels.
+\end{itemize}
+If $w_{j,k,l}$ and $s_{j,k,l}$ are respectively 
+a Haar coefficient at the scale $j$ and at position $k,l$ of the
+data and the solution, then $s_{j,k,l}$ must verify:
+\be
+\left\{
+\begin{array}{ll}
+s_{j,k,l} \in [-t_j, 0] & \mbox{ if } w_{j,k,l} \in  [-t_j, 0]  \\
+s_{j,k,l} \in [0, t_j, ] & \mbox{ if } w_{j,k,l} \in  [0, t_j] \\
+s_{j,k,l} \in [w_{j,k,l}-t_j/2), w_{j,k,l}+t_j/2] & \mbox{ if } \mid w_{j,k,l} \mid  > t_j
+\end{array}
+\right.
+\ee
+The smoothness constraint consists of minimizing the gradient of the solution
+$S_j$ at the scale $j$ in both vertical and horizontal directions:
+\be
+C(S) = \parallel D_x S(x,y) \parallel^2 + \parallel D_y S(x,y) \parallel^2
+\ee 
+where $D_x$ and $D_y$ are the gradient operators in both directions.
+A full description of the algorithm can be found in \cite{compress:bobichon97}.
+
+\subsubsection*{MMI model}
+The Multiscale Multiplicative Innovations (MMI) model was proposed
+in \cite{wave:timmermann99}, and introduces a prior model $f_\Lambda$, which
+is a beta-mixture density functions of the form:
+\be
+f(\delta) = \sum_{i=1}^{M} p_i \frac{ (1-\delta^2)^{s_i-1)} }{ B (s_i,s_i)2^{2s_i-1}}
+\ee
+for $-1 \le \delta le 1$, where $B$ is the Euler beta function, $-1 \le p_i le 1$
+is the weight of the i-th beta density $\frac{ (1-\delta^2)^{s_i-1)}}{ B (s_i,s_i)2^{2s_i-1}}$
+with parameter $s_i \ge 1$, and $\sum_{i=1}^{M} p_i = 1$.
+The final algorithm consists of multiplying each wavelet 
+coefficient $w_{j,k,l}$ by a term which is derived from the model.
+
+\subsubsection*{PRESS-optimal filter}
+The PRESS-optimal filter shrinks the noisy wavelet coefficient toward
+zero according to the estimated signal to signal-plus-noise ratio.
+The PRESS-optimal filter is given by:
+\be
+h_{j,k,l} = \frac{\tilde w_{j,k,l}^2 }{ \tilde w_{j,k,l}^2 + \sigma_{j,k,l}^2}
+\ee 
+where $\sigma_{j,k,l}^2$ and $\tilde w_{j,k,l}$ are the 
+the noise and signal power.
+The noise power is proportional to an estimate of the local intensity of the image
+falling under the support of the Haar coefficient $w_{j,k,l}$. The signal 
+power can estimated from a model, or directly from the data by:
+\be
+\tilde w_{j,k,l}^2 = w_{j,k,l}^2 - \sigma_{j,k,l}^2
+\ee 
+
+\subsection{Filtering: mr\_hfilter}
+\index{mr\_hfilter}
+Program {\em mr\_hfilter} filters an image using the undecimated 
+Haar wavelet transform assuming  that the noise follows a Poisson 
+distribution.
+{\bf
+\begin{center}
+ USAGE: mr\_hfilter option image\_in image\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-n  number\_of\_scales]} \\
+ Number of scales used in the multiresolution transform. By default,
+ the number of scales is calculated from the image size by the relation:
+\begin{eqnarray}
+Nscale = \log_2( MIN(Nl,Nc)) - 2
+\end{eqnarray}
+\item {\bf [-s Nsigma]} \\
+False detection rate. The false detection rate for a detection is given
+\begin{eqnarray}
+\epsilon =  \mbox{erfc}( NSigma / \sqrt{2})
+\end{eqnarray}
+{\em Nsigma} parameter allows us to express the false detection rate
+as if it were Gaussian noise. \\
+Default is 3.
+\item {\bf [-F first\_detection\_scale]} \\
+First scale used for the detection. Default is 1.
+\item {\bf [-M BackgroundModel]} 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item  Flat background 
+\item  Multiresolution background estimation 
+\item  Background image model 
+\item  Iterative background estimation 
+\end{enumerate}
+Default is 2.
+\item {\bf [-T ThresholdingMethod]} 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item Kolaczyk-Dixon threshold.  
+\item Kolaczyk-Dixon upper bound threshold.   
+\item Jammal-Bijaoui threshold. \\
+Using this method, the $\epsilon$ false detection rate must be in 
+the interval in $[10^{-6},10^{-2}]$.
+\item PRESS-optimal filter
+\end{enumerate}
+Default is 1.
+\item {\bf [-h Haar\_FilterBank]} 
+\begin{enumerate}
+\item Haar filter 
+\item Biorthogonal 2/6 Haar filters 
+\item Biorthogonal 2/10 Haar filters 
+\end{enumerate}
+Default is Biorthogonal 2/6 Haar filters.
+\item {\bf [-B FileName]} \\
+Background Image Model File Name. Only valid if the
+{\em BackgroundModel} is set to 3 (Background image model).
+% \item {\bf [-i NiterScale]} \\
+% Number of iteration for the constraint reconstruction. \\
+% Default is 4.
+\item {\bf [-I NiterBgr]} \\
+ Number of iteration for the iterative background estimation. Only valid if the
+{\em BackgroundModel} is set to 4 (Iterative background estimation). \\
+Default is 4.
+\item {\bf [-S]} \\
+Apply a soft thresholding instead of a hard-thresholding.
+\item {\bf [-L LambdaValue]} \\
+Lambda Value. Only valid if the
+{\em BackgroundModel} is set to 1 (Flat background). \\
+Default value is set to mean of the input image.
+\item {\bf [-P PsfInFile]} \\
+Input Point Spread Function.
+If set, a deconvolution is performed.
+\item {\bf [-G RegulParam]} \\
+Regularization parameter for the deconvolution.
+\end{itemize}
+When using PRESS-optimal filter, options ``s,F,M,B,I,S,L'' have no effect.
+
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item mr\_hfilter imag.fits filter\_imag.fits\\
+Image filtering using all default options.
+\item mr\_hfilter -T 3  image.fits output\_image.fits \\
+Filtering using the Jammal-Bijaoui Threshold.
+\item mr\_hfilter -T 3 -M 4 image.fits output\_image.fits \\
+Filtering using the Jammal-Bijaoui Threshold, and an iterative 
+background estimation.
+\end{itemize}
+
+\subsection*{Experiments}
+From our experiments on astronomical images, we found that:
+\begin{itemize}
+\item the \`a trous algorithm is significantly better than any of 
+the Haar-based methods.
+\item PRESS-optimal filter is not optimal at all!
+\item The lower resolution furnishes a good estimation of the background.
+Iterating does not improve significantly the results.
+\item The Jammal-Bijaoui threshold is a little better than the Kolaczyk 
+one for compact source detection, and is equivalent for more extended sources.
+But the Kolaczyk threshold requires less computation time and is 
+easier to implement.
+\end{itemize}
+Such  study shows clearly that the Haar transform is less efficient for 
+restoring X-ray astronomical images than the \`a trous algorithm. But its
+simplicity, and the time computation, may be attractive in many cases.
+
+\clearpage
+\newpage
+
+\section{Image deconvolution}
+\label{sect_deconv}
+\index{deconvolution}
+\subsection{Introduction}
+See chapter~\ref{ch_deconv}.
+
+\subsection{Standard methods: im\_deconv}
+\index{im\_deconv}
+Program 
+{\em im\_deconv} deconvolves an image, assuming a space 
+invariant point spread
+function (PSF). The PSF is automatically centered in the image, and
+its flux is renormalized to unity. The output resolution to achieve can 
+be limited using the concept of ICF (Intrinsic Correlation Function),
+either by selecting a Gaussian ICF function (and fixing its full-width
+at half maximum with the ``-f'' option), or by giving an image ICF file name
+(option ``-I''). The main 
+methods are iterative, and some of them can be optimized
+using the ``-O'' option, which activates the automatic convergence parameter
+calculation. For iterative methods, there is a stopping criterion,
+which can be modified using the ``-e'' option. A fixed number of iterations
+can be specified by the options ``-e 0 -i NIter''.
+For MEM methods, the regularization parameter ``-G'' controls the smoothness
+of the solution. Increasing ``-G'' produces a smoother image. In order to
+avoid divergence for large values, it is recommended to decrease at the 
+same time the convergence parameter by use of the ``-C'' option.
+
+{\bf
+\begin{center}
+ USAGE: im\_deconv option image\_in psf\_in image\_out
+\end{center}}
+where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-d type\_of\_deconvolution]}
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item  Deconvolution by Van Cittert's algorithm \\
+Standard Van Cittert algorithm
+\item  Deconvolution by gradient algorithm \\
+Minimization of a functional by the fixed step gradient method.
+\item  Deconvolution by division in Fourier space \\
+Divides the Fourier transform of the image by the Fourier transform
+of the PSF. If the ``-f'' option is set, the solution is convolved with a 
+Gaussian.
+\item  Deconvolution by Richardson-Lucy algorithm \\
+Standard Richardson-Lucy (Shepp-Vardi, maximum likelihood 
+expectation-maximization, EM) algorithm. This method fails
+when the input image contains negative values.
+\item  Deconvolution by CLEAN algorithm \\
+Standard CLEAN algorithm. The ``-G'' option fixes the loop gain factor, and
+the ``-f'' option 
+fixes the size of the clean beam (full-width at half-maximum).
+By default, the residual map is not added to the clean map, and the user
+can get it using the ``-r resi\_filename'' command. Criteria  
+used for stopping the CLEAN loop are 
+\begin{enumerate}
+\item the maximum of the residual map is lower than the average 
+value plus NSigma $\times$ Noise.
+{\em NSigma} and {\em Noise} can be modified  using ``-s'' and ``-g'' options,
+\item the maximum number of iterations is reached.
+\end{enumerate}
+\item Deconvolution by the MEM method (Frieden entropy)
+\item Deconvolution by the MEM method (Gull entropy)
+\item Deconvolution using Tikhonov regularization 
+\item Deconvolution using MAP method
+\item Deconvolution by the Gradient algorithm + Markov Random Field Regularization 
+\item Deconvolution by Lucy's algorithm + Markov Random Field Regularization 
+\end{enumerate}
+Default is deconvolution by the gradient algorithm.
+\item {\bf [-i number\_of\_iterations]} \\
+Maximum number of iterations. Default is 1e6 for CLEAN and 500 for other
+deconvolution methods.
+\item {\bf [-P]} \\ 
+ Suppress the positivity constraint.
+\item {\bf [-G RegulParam]} \\
+Regularization parameter. Only used with methods 5 to 8, and 10, 11.
+Default is $0.1$.
+\item {\bf [-C ConvergParam]} \\
+Convergence parameter. \\ 
+Default is 1.
+\item {\bf [-f ICF\_Fwhm]} \\
+Fwhm = full-width at half-maximum.  
+\item {\bf [-I ICF\_FileName]} \\
+Intrinsic correlation function file.
+\item {\bf [-F First\_Guess]} \\
+Input solution file name. This image is the starting point of the
+iterative methods. This option has no effect with deconvolution methods
+3 and 5.
+\item {\bf [-O]} \\
+Optimization. The iteration parameter is calculated at each iteration in
+order to optimize the minimization of the functional. Only used with 
+deconvolution methods 2, 4, and 8. For method 4, the optimization is done
+under the assumption of Poisson noise, and for methods 2 and 8  
+under the assumption of Gaussian noise.
+\item {\bf [-M Model\_Image]} \\
+Input model file name for MEM method. Only used with method 7.
+\item {\bf [-r residual\_file\_name]} \\
+If this option is set, the residual is written to 
+the file of name {\em residual\_file\_name}. By default, the
+residual is not written. The residual is equal to the difference between
+the input image and the solution convolved with the PSF.
+\item {\bf [-e epsilon]} \\
+Convergence parameter. Default is $1e-3$.
+\item {\bf [-S]} \\
+Do not shift automatically the maximum of the PSF to the center.
+\item {\bf [-v]} \\
+Verbose.
+\end{itemize}
+\noindent
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\item im\_deconv -d 3 image\_in.d psf\_in.d ima\_out.d \\
+Deconvolves an image by the regularized Richardson-Lucy algorithm, assuming
+ Gaussian noise (its standard deviation is automatically estimated).
+ \item im\_deconv -d 3 -f 2. image\_in.d psf\_in.d ima\_out.d \\
+ Ditto, but limit the resolution to achieve. The solution will be the 
+ convolution product of a hidden solution by a Gaussian of full-width at
+ half maximum equal to 2.
+ \item im\_deconv -F InputSol.d image\_in.d psf\_in.d ima\_out.d \\
+ Deconvolves an image by the gradient method. The program uses the image
+ given by option ``-F'' as entry point to the iteration.
+ \item im\_deconv -d 5 -G 0.1 -r residual.d -f 3 image\_in.d psf\_in.d ima\_out.d \\
+    im\_op ima\_out.d + residual.d clean\_map.d \\
+ Use the CLEAN algorithm. The loop-gain parameter is set to $0.1$, the 
+ clean beam has a FWHM equal to 3. The residual is added to the output
+ in order to form the clean map.
+ \item im\_deconv -d 6 -G 40 -C 0.1 image\_in.d psf\_in.d ima\_out.d \\
+ Deconvolution by MEM method. The regularization parameter is set to 40,
+ and the iteration parameter to $0.1$.
+  \item im\_deconv -d 7 -G 1 -C 0.5 -M ModelFileName image\_in.d psf\_in.d ima\_out.d \\
+ Deconvolution by MEM method, using the Gull and Skilling entropy function.
+ The model image (i.e.\ normally close to the background level) is given
+ using ``-M'' option.
+ \item im\_deconv -d 8 -G 0.1 image\_in.d psf\_in.d ima\_out.d \\
+ Deconvolves an image by the  Tikhonov method. Regularization parameter is
+  set to 0.1.
+\end{itemize}
+
+
+\subsection{Multiresolution methods: mr\_deconv}
+\index{mr\_deconv}
+Program 
+{\em mr\_deconv} deconvolves an image using the multiresolution
+support, assuming a space invariant point spread
+function (PSF) \cite{starck:sta94_3,starck:sta94_2,starck:pan96,starck:sta02_2}.
+{\bf
+\begin{center}
+ USAGE: mr\_deconv option image\_in psf\_in image\_out
+\end{center}}
+where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\item {\bf [-d type\_of\_deconvolution]}
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item  Deconvolution by multiresolution Van Cittert algorithm \\
+Regularization of Van Cittert's algorithm using the multiresolution support.
+if ``-G'' is set, a Total Variation smothness constraint is added. 
+\item  Deconvolution by multiresolution gradient algorithm \\
+Regularization of fixed step gradient algorithm using the multiresolution support.
+if ``-G'' is set, a Total Variation smothness constraint is added. 
+\item  Deconvolution by multiresolution Richardson-Lucy algorithm \\
+Regularization of Richardson-Lucy algorithm using the multiresolution support.
+if ``-G'' is set, a Total Variation smothness constraint is added. 
+\item  Deconvolution by multiresolution MAP algorithm \\
+Regularization of MAP  algorithm using the multiresolution support.
+\item  Deconvolution by the division in Fourier space + Wavelet filtering \\
+This method is also called Wavelet-Waguelette decomposition. It consists of
+first dividing the image by the PSF in Fourier space, and then
+applying spatial filtering using the wavelet transform, and considering
+the correct noise behavior. Indeed, afting the division, the noise is not
+white anymore.
+\end{enumerate}
+Default is deconvolution by the multiresolution Lucy algorithm (3).
+
+\item {\bf [-t type\_of\_multiresolution\_transform]} \\
+See \ref{sect_trans}. Transforms 1 to 24 are available.
+\item {\bf [-T type\_of\_filters]}  
+\item {\bf [-u]} 
+\item {\bf [-g sigma]} 
+\item {\bf [-c gain,sigma,mean]} 
+\item {\bf [-m type\_of\_noise]} 
+\item {\bf [-n number\_of\_scales]}
+\item {\bf [-s NSigma]} 
+\item {\bf [-i number\_of\_iterations]} \\
+Maximum number of iterations. Default is  500.
+\item {\bf [-e Epsilon]} \\
+Convergence parameter. \\
+Default is 1e-3.
+\item {\bf [-R RMS\_Map\_File\_Name]} 
+\item {\bf [-f ICF\_Fwhm]} \\
+Intrinsic correlation function. \\
+Fwhm = Full Width at Half Maximum.
+\item {\bf [-P]} \\ 
+ Suppress the positivity constraint.
+\item {\bf [-I ICF\_FileName]} \\
+Intrinsic correlation function file.
+\item {\bf [-F First\_Guess]} \\
+Input solution file name.
+\item {\bf [-r residual\_file\_name]} \\
+If this option is set, the residual is written to 
+the file of name {\em residual\_file\_name}. By default, the
+residual is not written. The residual is equal to the difference between
+the input image and the solution convolved with the PSF.
+\item {\bf [-S]} \\
+Do not shift automatically the maximum of the PSF to the center.
+\item {\bf [-p]} \\
+Detect only positive structure. Default is no.
+% \item {\bf [-N NiterSigmaClip]} 
+\item {\bf [-k]} \\
+Suppress isolated pixels in the support. Default is no.
+\item {\bf [-K]} \\
+Suppress the last scale.  
+This option is available only for deconvolution methods 1 and 2. \\
+Default is no.
+\item {\bf [-O]} \\
+Optimization. Only for deconvolution methods 1 to 3. \\
+Default is no.
+\item {\bf [-G RegulParam]} \\
+ Regularization parameter (only valid for deconvolution methods 1,2 and 3).
+ Default is 0. 
+\item {\bf [-v]} \\
+Verbose.
+\end{itemize}
+\noindent
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\item mr\_deconv image\_in.d psf\_in.d ima\_out.d \\
+Deconvolves an image by the regularized Richardson-Lucy algorithm, assuming
+ Gaussian noise (its standard deviation is automatically estimated).
+\item mr\_deconv -F image\_in.d image\_in.d psf\_in.d ima\_out.d \\
+Ditto, but the used entry point is the data (it is a flat image by default). 
+The solution will contain
+the noise present in the raw data, while the solution is smooth in
+the previous example.
+\item mr\_deconv -i 50 -e 0 image\_in.d psf\_in.d ima\_out.d \\
+Ditto, but force the number of iterations to be equal to 50.
+\item mr\_deconv -K -d 2 -m 2 -r resi.d image\_in.d psf\_in.d ima\_out.d \\
+Deconvolves an image by the regularized gradient method. The deconvolved
+image will be background free. Noise is assumed to be Poisson. The residual
+is saved in the file ``resi.d''.
+\item mr\_deconv -d 1 -s 5 -p -r resi.d image\_in.d psf\_in.d ima\_out.d \\
+im\_op ima\_out.d + resi.d clean\_map.d \\
+Run the deconvolution by the regularized Van Cittert method. Only positive
+wavelet coefficients are used, and the detection is done at $5\sigma$, assuming
+Gaussian noise.
+\end{itemize}
+
+
+\subsection{Wavelet CLEAN: mr\_mrc}
+\index{mr\_mrc}
+Program {\em mr\_mrc} deconvolves an image using the Wavelet 
+CLEAN method \cite{starck:book98,starck:book02}.
+{\bf
+\begin{center}
+ USAGE: mr\_mrc option image\_in psf\_in image\_out
+\end{center}}
+where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\item {\bf [-g sigma]}
+\item {\bf [-m type\_of\_noise]}
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item Gaussian noise.
+\item Undefined stationary noise.
+\item Stationary correlated noise.
+\end{enumerate}
+Default is Gaussian noise.
+\item {\bf [-n number\_of\_scales]}
+\item {\bf [-s NSigma]} 
+\item {\bf [-i number\_of\_iterations]} \\
+Maximum number of iterations. Default is  500.
+\item {\bf [-e Epsilon]} \\
+Convergence parameter. \\
+Default is 1e-4.
+\item {\bf [-R RMS\_Map\_File\_Name]} 
+\item {\bf [-f ICF\_Fwhm]} \\
+Intrinsic correlation function. \\
+Fwhm = Full Width at Half Maximum.
+\item {\bf [-G LoopGain]} \\ 
+Loop Gain parameter. Default is 0.01.
+\item {\bf [-E]} \\
+Use the Dirty Map instead of the Energy Dirty Map. 
+\item {\bf [-L]} \\
+Apply CLEAN also on the last scale. Default is Van-Cittert.
+\item {\bf [-A]} \\
+Do not add the residual to the CLEAN map. 
+\item {\bf [-r residual\_file\_name]} \\
+If this option is set, the residual is written to 
+the file of name {\em residual\_file\_name}. By default, the
+residual is not written. The residual is equal to the difference between
+the input image and the solution convolved with the PSF.
+\item {\bf [-K]} \\
+Suppress the last scale.  
+Default is no.
+\item {\bf [-v]} \\
+Verbose.
+\end{itemize}
+\noindent
+\subsubsection*{Example:}
+\begin{itemize}
+\item mr\_mrc image\_in.d psf\_in.d ima\_out.d \\
+Deconvolves an image by the Wavelet-CLEAN method, assuming
+ Gaussian noise (its standard deviation is automatically estimated).
+\end{itemize}

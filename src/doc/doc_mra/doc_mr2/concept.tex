@@ -1,0 +1,334 @@
+
+
+
+\section{Entropy from Noise Modeling}
+\index{multiscale entropy}
+\subsection{Information and wavelet coefficient}
+In the case of signal restoration, the noise is the main problem. This 
+means that we should not consider the probability of appearance of 
+a pixel value in an image, but rather its probability of being due to the
+signal (or to the noise). 
+If we consider a variable $x$ which follows a probability distribution 
+$p(x)$, we
+can define the information in $x$ by $- \ln(p(x))$, and a signal $S$ can
+be considered as a set of individual variables $x_k$ (pixels), each of which 
+follows the same probability distribution. 
+Then the information contained in the data 
+can be measured by $- \sum_{k=1}^N \ln(p(x_k))$. If $X$ follows a Gaussian 
+distribution with zero mean, we have
+\begin{eqnarray}
+H(X) = \sum_{k=1}^N \frac{x_k^2}{2 \sigma^2} + \rm{Cst}
+\end{eqnarray}
+The energy gives a good measurement of information. But many of the required
+criteria are not fulfilled by using such an entropy (correlation between 
+pixels, background-independence, etc.). It seems difficult to derive
+a good probability distribution from the pixel values which fulfill the 
+entropy requirements.
+
+This is not so for transformed data, especially when using  
+the wavelet transform. 
+This has  already been done, in fact,
+for finding threshold levels in filtering 
+methods by means of wavelet coefficient thresholding 
+\cite{starck:sta95_1,rest:moulin99,rest:donoho93_1,rest:krim92,wave:chipman97,wave:amato97}. 
+Thus we must introduce the concept of multiresolution into our entropy.
+We will now consider that the information contained in some dataset
+is the sum of the information at different resolution levels $j$.
+The wavelet transform $W$ of a signal by a fast algorithm contains a set
+of coefficients $w_{j,k}$ ($j$ being the scale index), and a set 
+of coefficients $c_{k}$ representing the signal at a very low resolution 
+(see \cite{ima:mallat98,starck:book98} for more information about the
+wavelet transform). If the number of scales is enough large,
+we can assume that the coefficients $c_{k}$ furnish information only
+about the background, and not on the signal of interest. The entropy of $X$
+must be measured only from the
+wavelet coefficients $w_{j,k}$.
+
+% Choosing the \`a trous wavelet transform (see \cite{starck:sta95_1} 
+% for a description of this wavelet transform algorithm), a signal $X$ can 
+% be represented by:
+% \begin{eqnarray}
+% X_k = \sum_{j=1}^{l} w_{j,k} + c_{l,k}
+% \end{eqnarray}
+% where $k$ is the pixel index, $w_j$ are the wavelet coefficients of $S$, 
+% $j$ the resolution
+% level, and $c_l$ is smoothed version of $S$. 
+Due to the properties of
+the wavelet transform, the set $w_{j}$ for all $j$ has a zero mean. From 
+noise modeling, we can derive the probability distribution in the 
+wavelet space of a wavelet coefficient, assuming it is due to the noise. 
+The entropy becomes
+\begin{eqnarray}
+H(X) = \sum_{j=1}^{l} \sum_{k=1}^{N_j}  h(w_{j,k}) 
+\end{eqnarray}
+with $h(w_{j,k})  = - \ln p(w_{j,k})$. We will note in the following 
+$h$ for the entropy (or information) relative to a wavelet coefficient, 
+and $H$ for the multiscale entropy (MSE) of a signal or an image.
+For Gaussian noise, we get
+\begin{eqnarray}
+H(X) =  \sum_{j=1}^{l}  \sum_{k=1}^{N_j} \frac{w_{j,k}^2}{2 \sigma_j^2}+ \rm{Cst}
+\end{eqnarray}
+where $\sigma_j$ is the noise at scale $j$. We see that 
+the information is proportional
+to the energy of the wavelet coefficients.
+The higher a wavelet coefficient, then the lower will be the  probability, and the 
+higher will
+be the information furnished by this wavelet coefficient. As the constant
+has no effect in the solution calculation in restoration problems, 
+we take the liberty to remove it in the following. 
+ 
+We can see
+easily that this entropy fulfills all the requirements of 
+section~\ref{sect_entr}.
+If we consider two signals $S_1$, $S_2$, derived from a third one $S_0$ by 
+adding noise:
+\begin{eqnarray}
+S_1 & = & S_0 + N_1(\sigma_1) \nonumber \\ 
+S_2 & = & S_0 + N_2(\sigma_2)
+\end{eqnarray}
+then we have:
+\begin{eqnarray}
+\mbox{if } \sigma_1 < \sigma_2 \mbox{ then } H(S_1) > H(S_2)
+\end{eqnarray}
+and a flat image has zero entropy. 
+
+Our entropy definition is completely dependent on the noise modeling.
+If we consider a signal $S$, and we assume that the noise is Gaussian, with 
+a  standard deviation equal to $\sigma$, we won't measure the same
+information compared to  the case when we consider that the noise has 
+another standard deviation
+value, or if the noise follows another distribution.
+As for the Shannon
+entropy, the information increases with the entropy, and using such an
+entropy leads to a Minimum Entropy Method.
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_multi_memscale.ps,bbllx=2.5cm,bblly=13cm,bburx=19.5cm,bbury=25.5cm,width=14cm,height=7cm,clip=}
+}}
+\caption{Multiscale entropy of the saturn image (continuous curve), 
+and multiscale
+entropy of the scrambled image (dashed curve).}
+\label{fig_multi_memscale}
+\end{figure}
+Figure~\ref{fig_multi_memscale} shows the information measure at each
+scale for both the saturn image and its scrambled version. The global 
+information is the addition of the information at each scale. We see
+that for the scrambled image (dashed curve), the 
+information-versus-scale 
+curve is flat, while for the unscrambled saturn image,
+it increases with the scale.  
+
+\subsection{Signal information and noise information}
+
+In the previous section, we have seen how it was possible to measure
+the information $H$ related to a wavelet coefficient. 
+Assuming the signal $X$ is still composed of the three elements $S$,$B$,$N$ 
+(X=$S+F+B$, signal of interest, background, and noise),
+$H$ is independent of $B$. But some of this information 
+is spurious and undesirable and has been introduced via the noise $N$. 
+To get the useful information, we must subtract out this spurious portion.
+Trying to decompose our information measure
+into two components, one ($H_S$) corresponding to the non-corrupted part, and
+another  ($H_N$) to the corrupted part, we have
+\begin{eqnarray}
+H(X) = H_S(X) + H_N(X)
+\end{eqnarray}
+We will define in the following $H_S$ as the signal information, and $H_N$
+as the noise information. It must be clear that noise does not 
+contain any information, and what we call noise information is a quantity
+which is measured as information by the multiscale entropy, and which is 
+probably not informative to us.
+
+If a wavelet coefficient is small, its value can be due to noise, 
+and the information $h$ relative to this single wavelet coefficient
+should be assigned to $H_N$.
+If the wavelet coefficient is high, compared to the noise standard
+deviation, its value cannot be due to the noise, and $h$ should be assigned to $H_S$.
+$h$ can be distributed as $H_N$ or $H_S$ based on  the probability $P_n(w_{j,k})$
+that the wavelet coefficient is due to noise, or the probability 
+$P_s(w_{j,k})$ that it is due to 
+signal.  We have $P_s(w_{j,k}) = 1 - P_n(w_{j,k})$. 
+For the Gaussian noise case, we estimate $P_n(w_{j,k})$ that a wavelet 
+coefficient is due to the noise by
+\begin{eqnarray*}
+P_n(w_{j,k}) = \mathrm{Prob}(W > \mid w_{j,k} \mid)  & =  & \frac{2}{\sqrt{2 \pi} 
+\sigma_j} \int_{\mid w_{j,k} \mid}^{+\infty} \exp(-W^2/2\sigma^2_j) dW \nonumber \\ 
+ & = & \mbox{erfc}(\frac{\mid w_{j,k} \mid }{\sqrt{2}\sigma_j})
+\end{eqnarray*}
+For each wavelet coefficient $w_{j,k}$, we have to estimate now the fractions
+$h_n$ and $h_s$ of $h$ which should be assigned to $H_n$ and $H_s$.
+Hence  signal information and  noise information are defined by
+\begin{eqnarray}
+H_s(X) & = & \sum_{j=1}^{l} \sum_{k=1}^{N_j} h_s(w_{j,k})   \nonumber  \\  
+H_n(X) & = & \sum_{j=1}^{l} \sum_{k=1}^{N_j} h_n(w_{j,k})     
+\label{eq_entrop_result_2}
+\end{eqnarray}
+Note that $H_s(X) + H_n(X)$ is always equal to $H(X)$. 
+
+
+\subsubsection{N1-MSE}
+A first approach for deriving $h_s$ and $h_n$ from $P_s$ and $P_n$ is to
+just consider $P_s$ and $P_n$ as weights on the information $h$. Then we
+have:
+\begin{eqnarray}
+h_s( w_{j,k}) & = & P_s(w_{j,k})  h(w_{j,k})    \nonumber \\  
+h_n( w_{j,k}) & = & P_n(w_{j,k})  h(w_{j,k})     
+\label{eq_mse1}
+\end{eqnarray}
+and the noise and signal information in a signal are
+\begin{eqnarray}
+H_s(X) & = & \sum_{j=1}^{l} \sum_{k=1}^{N_j} h_s(w_{j,k})    \nonumber \\  
+H_n(X) & = & \sum_{j=1}^{l} \sum_{k=1}^{N_j} h_n(w_{j,k})     
+\label{eq_entrop_result_1}
+\end{eqnarray}
+which leads for a Gaussian noise to:
+\begin{eqnarray}
+H_s(X) &= & \sum_{j=1}^{l}  \sum_{k=1}^{N_j}  \frac{w_{j,k}^2}{2\sigma_j^2} 
+\mbox{erf}(\frac{\mid w_{j,k} \mid }{\sqrt{2}\sigma_j}) \nonumber \\ 
+H_n(X) &= & \sum_{j=1}^{l}  \sum_{k=1}^{N_j}  \frac{w_{j,k}^2}{2\sigma_j^2} 
+\mbox{erfc}(\frac{\mid w_{j,k} \mid }{\sqrt{2}\sigma_j}) 
+\label{eq_entrop_gauss_result_1} 
+\end{eqnarray}
+We will refer to these functions by the name N1-MSE in the following.
+
+\subsubsection{N2-MSE}
+
+By the previous  entropy measure, information relative to high wavelet coefficients is  
+completely assigned to the signal. For a restoration, this allows us 
+also to exclude
+wavelet coefficients with high signal-to-noise ratio (SNR)
+from the regularization.
+It leads to perfect fit of the solution with the data at scales and
+ positions with high SNR. If we want to consider the information due
+to noise, even for significant wavelet coefficients, the noise information
+relative to a wavelet coefficient must be estimated differently.
+ The idea for deriving $h_s$ and $h_n$ is the following: we imagine that  the
+information $h$ relative to a wavelet coefficient 
+is a sum of small information components $dh$, each of them
+having a probability of being noise information, or signal 
+information \cite{starck:sta98_2}. 
+For example, 
+for two coefficients  $u$ and  $w$ ($w > u$), with a Gaussian noise
+($\sigma=1$), the information relative to $w$ is $h(w)=w^2$, and by
+varying  $u$ from $0$  to $w$ with a step $du$, the information $h(u)$ 
+increases until it is equal to $h(w)$. 
+ When $u$ becomes closer to $w$,
+the difference $w - u$ can be due to the noise, and the added information  
+$dh(u) = h(u+du) - h(u)$ is contaminated by the noise. The idea is to weight
+$dh(u)$ with the probability that $w - u$ is due to the noise.
+Hence, $h_n$ and $h_n$ are calculated by:
+\begin{eqnarray}
+h_n(w_{j,k}) =  \int_{0}^{\mid w_{j,k} \mid } P_n(\mid w_{j,k} \mid - u) (\frac{\partial h(x)}{\partial x})_{x=u} du
+\end{eqnarray}
+is the noise information relative to a single wavelet coefficient, and 
+\begin{eqnarray}
+h_s(w_{j,k}) =  \int_{0}^{\mid w_{j,k} \mid } P_s(\mid w_{j,k} \mid - u) 
+                                   (\frac{\partial h(x)}{\partial x})_{x=u} du
+\end{eqnarray}
+is the signal information relative to a single wavelet coefficient. 
+For Gaussian noise, we have
+\begin{eqnarray}
+h_n(w_{j,k}) & = &  \frac{1}{\sigma_j^2} \int_{0}^{\mid w_{j,k} \mid} u 
+         \mbox{ erfc}(\frac{\mid w_{j,k} \mid -u}{\sqrt{2} \sigma_j}) du \nonumber \\
+h_s(w_{j,k}) & = &  \frac{1}{\sigma_j^2} \int_{0}^{\mid w_{j,k} \mid} u 
+         \mbox{ erf}(\frac{\mid w_{j,k} \mid -u}{\sqrt{2} \sigma_j})
+\label{eqn_hn2}
+\end{eqnarray}
+and the noise and signal information in a signal are
+\begin{eqnarray}
+H_s(X) & = & \sum_{j=1}^{l} \sum_{k=1}^{N_j} h_s(w_{j,k})   \nonumber \\  
+H_n(X) & = & \sum_{j=1}^{l} \sum_{k=1}^{N_j} h_n(w_{j,k})     
+\label{eq_entrop_gauss_result_2}
+\end{eqnarray}
+We will refer to these functions by the name N2-MSE in the following.
+
+Equations~\ref{eq_mse1} and  %\ref{eq_entrop_result_2} 
+\ref{eq_entrop_result_2}
+lead to two
+different ways to regularize a signal. The first requires that we use
+all the information which is furnished in high wavelet coefficients, and 
+leads to an exact preservation of the flux in a structure. If the signal
+presents high discontinuities, artifacts can appear in the solution 
+due to the fact that the wavelet coefficients located at the discontinuities
+are not noisy, but have been modified like noise. The second equation 
+doesn't have this drawback, but a part of the flux of a structure
+(compatible with noise amplitude) can be lost in the restoration process. 
+It is however not as effective as in the standard maximum entropy methods.
+
+\subsubsection{LOG-MSE}
+The multiscale entropy function used in \cite{starck:pan96} (we call it LOG-MSE
+in the following) can be considered in our framework if $h$ is defined by:
+\begin{eqnarray}
+h(w_{j,k}) = {\sigma_j \over \sigma_X^2} [w_{j,k} - M_j - 
+       \mid w_{j,k} \mid \log( {\mid w_{j,k} \mid \over K_m \sigma_j})]
+\label{eqn_logmse}
+\end{eqnarray}
+where $\sigma_X$ is the noise standard deviation in the data.
+And $h_n$ is defined by:
+\begin{eqnarray}
+h_n(w_{j,k}) = A(p_n(w_{j,k})) h(w_{j,k})
+\end{eqnarray}
+where $A$ is a function which takes the values 0 or 1 depending on $p_n(w_{j,k})$:
+\begin{eqnarray}
+A(p_n(w_{j,k}))  = \left\{
+  \begin{array}{ll}
+  \mbox{ 1 } & \mbox{ if }  p_n(w_{j,k}) > \epsilon   \\
+  \mbox{ 0 } & \mbox{ if }  p_n(w_{j,k}) \leq \epsilon
+  \end{array}
+  \right.
+\label{eqn_mressupp}
+\end{eqnarray}
+
+Wavelet coefficients which are significant will impose $A(p_n(w_{j,k}))$ to
+be equal to 0 (because    their probabilities of being due to noise is 
+very small), and do not contribute to $H_n$. This means that using $H_n$ in
+a regularization process will have an effect only on scales and positions
+where no significant wavelet coefficient is detected.
+
+In practice we prefer N1-MSE and N2-MSE for several reasons. First the way
+the model is used in equation~\ref{eqn_logmse} is a bit artificial, and  
+there is an undetermination when the wavelet coefficient is equal to 0.
+Furthermore, LOG-MSE seems difficult to generalize to other classes of noise,
+which is not the case for N1-MSE and N2-MSE. N2-MSE has the advantage of 
+estimating the corrupted part in the measured information $h$, even for large
+wavelet coefficients.
+
+
+\subsection{Conclusion}
+
+In practice we prefer N1-MSE and N2-MSE for several reasons. First the way
+the model is used in equation~\ref{eqn_logmse} is a bit artificial, and  
+there is an undetermination when the wavelet coefficient is equal to 0.
+Furthermore, LOG-MSE seems difficult to generalize to other classes of noise,
+which is not the case for N1-MSE and N2-MSE. N2-MSE has the advantage of 
+estimating the corrupted part in the measured information $h$, even for large
+wavelet coefficients.
+Concerning the five points, cited in section~\ref{sect_5pt}:
+\begin{enumerate}
+\item {\em The information in a flat signal is zero}: \\
+ It is true for N1-MSE and N2-MSE. IN the case of LOG-MSE, it is true
+if we take $\sigma=0$.
+\item {\em The amount of information in a signal is independent 
+of the background}: \\
+It is always true because the last scale of the wavelet transform is
+never taken into account in the entropy calculation.
+\item {\em The amount of information is dependent on the noise}: \\
+Whatever the method, it is normalized coefficients which are used, so it
+is always true.
+\item {\em The entropy must work in the same way for a pixel which
+has a value $B + \epsilon$, and
+for a pixel which has a value $B - \epsilon$}: \\
+For N1-MSE and N2-MSE, it is true because the entropy is calculated
+from the absolute values or the square of the wavelet coefficients.
+For LOG-MSE, this point is not verified because a $w_{j,k}$ appears.
+But it has no effect on the solution, because it is the 
+derivated of the entropy which is used in the calculations,
+and this term becomes constant.
+\item {\em The amount of information is dependent on the correlation in the signal.
+If the signal $S$  presents large features above the noise, it contains
+a lot of information}: \\
+As the entropy is calculated from the wavelet coefficients, this point 
+is always verified.
+\end{enumerate}

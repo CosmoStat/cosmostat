@@ -1,0 +1,440 @@
+\contentsline {chapter}{Contents}{1}
+\contentsline {part}{I\hspace {1em}MR/1 : The Multiresolution Environment}{11}
+\contentsline {chapter}{\numberline {1}Introduction}{13}
+\contentsline {chapter}{\numberline {2}MR/1 Image Processing Tools}{17}
+\contentsline {section}{\numberline {2.1}Introduction}{17}
+\contentsline {subsection}{\numberline {2.1.1}License manager: cea\_lm}{17}
+\contentsline {subsection}{\numberline {2.1.2}JAVA interface}{17}
+\contentsline {subsection}{\numberline {2.1.3}IDL routines}{18}
+\contentsline {section}{\numberline {2.2}Image Format}{19}
+\contentsline {section}{\numberline {2.3}Large Image Manipulation}{19}
+\contentsline {section}{\numberline {2.4}Image Manipulation Tools}{21}
+\contentsline {subsection}{\numberline {2.4.1}Image conversion: im\_convert}{21}
+\contentsline {subsection}{\numberline {2.4.2}Image information: im\_info}{22}
+\contentsline {subsection}{\numberline {2.4.3}Image information: im\_snr}{23}
+\contentsline {subsection}{\numberline {2.4.4}Extract a subimage: im\_get}{24}
+\contentsline {subsection}{\numberline {2.4.5}Insert a subimage: im\_put}{24}
+\contentsline {subsection}{\numberline {2.4.6}Operation on two images: im\_op}{25}
+\contentsline {subsection}{\numberline {2.4.7}Create a noise map: im\_random}{25}
+\contentsline {subsection}{\numberline {2.4.8}Image simulation: im\_simu}{26}
+\contentsline {subsection}{\numberline {2.4.9}Image segmentation: im\_segment}{27}
+\contentsline {subsection}{\numberline {2.4.10}Image mirror extension: im\_mirror}{27}
+\contentsline {subsection}{\numberline {2.4.11}Image thresholding: im\_threshold}{27}
+\contentsline {subsection}{\numberline {2.4.12}Image rotation: im\_rot}{28}
+\contentsline {subsubsection}{Examples:}{29}
+\contentsline {section}{\numberline {2.5}Fourier analysis}{30}
+\contentsline {subsection}{\numberline {2.5.1}Introduction}{30}
+\contentsline {subsection}{\numberline {2.5.2}Fourier transform (float): fft\_f\_2d}{31}
+\contentsline {subsection}{\numberline {2.5.3}Fourier transform (complex): fft\_cf\_2d}{31}
+\contentsline {subsection}{\numberline {2.5.4}Cosine transform: im\_dct}{32}
+\contentsline {subsection}{\numberline {2.5.5}Sinus transform: im\_dst}{32}
+\contentsline {section}{\numberline {2.6}Mathematical morphology}{33}
+\contentsline {subsection}{\numberline {2.6.1}Introduction}{33}
+\contentsline {subsection}{\numberline {2.6.2}Erosion: im\_erode}{34}
+\contentsline {subsection}{\numberline {2.6.3}Dilation: im\_dilate}{34}
+\contentsline {subsection}{\numberline {2.6.4}Opening: im\_opening}{35}
+\contentsline {subsection}{\numberline {2.6.5}Closing: im\_closing}{35}
+\contentsline {subsection}{\numberline {2.6.6}Morphological skeleton: im\_thin}{35}
+\contentsline {section}{\numberline {2.7}Principal component analysis}{36}
+\contentsline {subsection}{\numberline {2.7.1}Introduction}{36}
+\contentsline {subsection}{\numberline {2.7.2}Transform: im\_pca}{36}
+\contentsline {subsubsection}{Examples:}{37}
+\contentsline {subsection}{\numberline {2.7.3}Transform: im\_pca\_rec}{37}
+\contentsline {subsubsection}{Examples:}{37}
+\contentsline {chapter}{\numberline {3}MR/1 Multiresolution}{39}
+\contentsline {section}{\numberline {3.1}Multiscale Transform}{39}
+\contentsline {subsection}{\numberline {3.1.1}Introduction}{39}
+\contentsline {subsection}{\numberline {3.1.2}Methods}{40}
+\contentsline {section}{\numberline {3.2}Multiresolution object}{42}
+\contentsline {subsection}{\numberline {3.2.1}Multiresolution transform of image: mr\_transform}{42}
+\contentsline {subsection}{\numberline {3.2.2}How to select a filter bank?}{47}
+\contentsline {subsection}{\numberline {3.2.3}Extraction of a scale: mr\_extract}{50}
+\contentsline {subsection}{\numberline {3.2.4}Insertion of an image: mr\_insert}{50}
+\contentsline {subsection}{\numberline {3.2.5}Reconstruction: mr\_recons}{51}
+\contentsline {section}{\numberline {3.3}Multiresolution tools}{51}
+\contentsline {subsection}{\numberline {3.3.1}Visualization: mr\_visu}{51}
+\contentsline {subsection}{\numberline {3.3.2}Multiresolution support creation: mr\_support}{52}
+\contentsline {subsection}{\numberline {3.3.3}Statistical information: mr\_info}{54}
+\contentsline {subsubsection}{Examples:}{55}
+\contentsline {subsection}{\numberline {3.3.4}Multiresolution segmentation: mr\_segment}{55}
+\contentsline {subsection}{\numberline {3.3.5}Noise analysis: mr\_sigma}{56}
+\contentsline {subsection}{\numberline {3.3.6}Background subtraction: mr\_background}{57}
+\contentsline {subsection}{\numberline {3.3.7}Image comparison: mr\_compare}{57}
+\contentsline {chapter}{\numberline {4}MR/1 Image Restoration}{61}
+\contentsline {section}{\numberline {4.1}Introduction}{61}
+\contentsline {subsection}{\numberline {4.1.1}Statistical significance test}{61}
+\contentsline {subsection}{\numberline {4.1.2}Noise modeling}{62}
+\contentsline {subsection}{\numberline {4.1.3}Filtering Methods}{63}
+\contentsline {section}{\numberline {4.2}Filtering: mr\_filter}{67}
+\contentsline {section}{\numberline {4.3}Image with Speckle Noise}{72}
+\contentsline {subsection}{\numberline {4.3.1}Speckle noise statistics}{72}
+\contentsline {subsection}{\numberline {4.3.2}Speckle filtering: mr\_rfilter}{73}
+\contentsline {subsubsection}{General description}{73}
+\contentsline {subsubsection}{Thresholding function}{73}
+\contentsline {subsubsection}{Hierarchical thresholding}{74}
+\contentsline {subsubsection}{mr\_rfilter}{74}
+\contentsline {section}{\numberline {4.4}Sparse Images: \`a trous Algorithm}{78}
+\contentsline {subsection}{\numberline {4.4.1}Initialization: mr\_abaque}{78}
+\contentsline {subsection}{\numberline {4.4.2}Support creation: mr\_psupport}{79}
+\contentsline {subsection}{\numberline {4.4.3}Filtering: mr\_pfilter}{80}
+\contentsline {section}{\numberline {4.5}Images with Poisson Noise: Haar Transform}{82}
+\contentsline {subsection}{\numberline {4.5.1}Introduction}{82}
+\contentsline {subsection}{\numberline {4.5.2}Poisson noise and Haar wavelet coefficients}{82}
+\contentsline {subsection}{\numberline {4.5.3}Filtering: mr\_hfilter}{84}
+\contentsline {section}{\numberline {4.6}Image deconvolution}{87}
+\contentsline {subsection}{\numberline {4.6.1}Introduction}{87}
+\contentsline {subsection}{\numberline {4.6.2}Standard methods: im\_deconv}{87}
+\contentsline {subsection}{\numberline {4.6.3}Multiresolution methods: mr\_deconv}{89}
+\contentsline {subsection}{\numberline {4.6.4}Wavelet CLEAN: mr\_mrc}{91}
+\contentsline {chapter}{\numberline {5}MR/1 Image Compression}{93}
+\contentsline {section}{\numberline {5.1}Introduction}{93}
+\contentsline {section}{\numberline {5.2}Compression Methods}{95}
+\contentsline {section}{\numberline {5.3}Large Image Visualization Environment: LIVE}{96}
+\contentsline {section}{\numberline {5.4}Compression/Decompression Programs}{99}
+\contentsline {subsection}{\numberline {5.4.1}Image Compression: wcomp}{99}
+\contentsline {subsection}{\numberline {5.4.2}Noisy image Compression: mr\_comp}{100}
+\contentsline {subsection}{\numberline {5.4.3}Compression: mr\_lcomp}{103}
+\contentsline {subsection}{\numberline {5.4.4}Compression strategies}{104}
+\contentsline {subsection}{\numberline {5.4.5}Decompression: mr\_decomp}{105}
+\contentsline {subsection}{\numberline {5.4.6}Decompression: mr\_upresol}{106}
+\contentsline {chapter}{\numberline {6}MR/1 Object Detection}{109}
+\contentsline {section}{\numberline {6.1}Multiscale Vision Model}{109}
+\contentsline {subsection}{\numberline {6.1.1}Introduction}{109}
+\contentsline {subsection}{\numberline {6.1.2}Definition}{109}
+\contentsline {subsection}{\numberline {6.1.3}Reconstruction}{110}
+\contentsline {section}{\numberline {6.2}Detection and Deconvolution}{111}
+\contentsline {subsection}{\numberline {6.2.1}Object reconstruction using the PSF}{111}
+\contentsline {subsection}{\numberline {6.2.2}The algorithm}{111}
+\contentsline {section}{\numberline {6.3}Object Detection: mr\_detect}{113}
+\contentsline {section}{\numberline {6.4}Examples and Strategies}{117}
+\contentsline {subsection}{\numberline {6.4.1}Choice of multiscale transform}{117}
+\contentsline {chapter}{\numberline {7}MR/1 Geometric Registration}{121}
+\contentsline {section}{\numberline {7.1}Introduction}{121}
+\contentsline {section}{\numberline {7.2}Deformation model}{122}
+\contentsline {section}{\numberline {7.3}Image registration: mr\_fusion}{122}
+\contentsline {chapter}{\numberline {8}MR/1 Edge Detection}{129}
+\contentsline {section}{\numberline {8.1}Introduction}{129}
+\contentsline {section}{\numberline {8.2}First Order Derivative Edge Detection}{129}
+\contentsline {subsection}{\numberline {8.2.1}Gradient}{129}
+\contentsline {subsection}{\numberline {8.2.2}Gradient mask operators}{130}
+\contentsline {subsection}{\numberline {8.2.3}Compass operators}{130}
+\contentsline {subsection}{\numberline {8.2.4}Derivative of Gaussian}{133}
+\contentsline {subsection}{\numberline {8.2.5}Thinning the contour}{133}
+\contentsline {section}{\numberline {8.3}Second Order Derivative Edge Detection}{133}
+\contentsline {section}{\numberline {8.4}Edge Detection Program: im\_edge}{134}
+\contentsline {section}{\numberline {8.5}Wavelets and Edge Detection}{136}
+\contentsline {subsection}{\numberline {8.5.1}Multiscale first derivative}{136}
+\contentsline {subsection}{\numberline {8.5.2}Image reconstruction from its multiscale edges}{136}
+\contentsline {section}{\numberline {8.6}Multiscale Edge Detection Program}{137}
+\contentsline {subsection}{\numberline {8.6.1}First derivative: mr\_edge}{137}
+\contentsline {subsection}{\numberline {8.6.2}Second derivative: mr\_at\_edge}{138}
+\contentsline {subsection}{\numberline {8.6.3}Image reconstruction: mr\_rec\_edge}{138}
+\contentsline {section}{\numberline {8.7}Contrast Enhancement}{139}
+\contentsline {subsection}{\numberline {8.7.1}Introduction}{139}
+\contentsline {subsection}{\numberline {8.7.2}Multiscale Edge Enhancement}{139}
+\contentsline {subsubsection}{Gray Images}{139}
+\contentsline {subsection}{\numberline {8.7.3}The LOG-Wavelet Representation of Gray Images}{140}
+\contentsline {subsection}{\numberline {8.7.4}Contrast Enhancement Program: mr\_contrast}{140}
+\contentsline {chapter}{\numberline {9}MR/1 1D Data}{143}
+\contentsline {section}{\numberline {9.1}1D Tools}{143}
+\contentsline {subsection}{\numberline {9.1.1}Conversion: im1d\_convert}{143}
+\contentsline {subsection}{\numberline {9.1.2}Statistical information: im1d\_info}{143}
+\contentsline {subsection}{\numberline {9.1.3}Tendency estimation: im1d\_tend}{145}
+\contentsline {section}{\numberline {9.2}Wavelet Transform}{146}
+\contentsline {subsection}{\numberline {9.2.1}Multiresolution transform: mr1d\_trans}{146}
+\contentsline {subsection}{\numberline {9.2.2}Reconstruction: mr1d\_recons}{149}
+\contentsline {section}{\numberline {9.3}Filtering: mr1d\_filter}{149}
+\contentsline {section}{\numberline {9.4}Band Detection: mr1d\_detect}{151}
+\contentsline {section}{\numberline {9.5}Modulus Maxima Representation}{153}
+\contentsline {subsection}{\numberline {9.5.1}Modulus maxima detection: mr1d\_max}{153}
+\contentsline {subsection}{\numberline {9.5.2}Reconstruction: mr1d\_maxrecons}{153}
+\contentsline {section}{\numberline {9.6}Wavelet Analysis of Time Series}{155}
+\contentsline {subsection}{\numberline {9.6.1}Introduction}{155}
+\contentsline {subsection}{\numberline {9.6.2}The redundant Haar wavelet transform}{155}
+\contentsline {subsection}{\numberline {9.6.3}Autoregressive Multiscale Prediction}{156}
+\contentsline {subsubsection}{Stationary signal}{156}
+\contentsline {subsubsection}{Non-stationary signal}{157}
+\contentsline {subsubsection}{AR order determination}{158}
+\contentsline {subsection}{\numberline {9.6.4}Wavelets and autocorrelation function: mr1d\_acor}{158}
+\contentsline {subsection}{\numberline {9.6.5}Transition detection: mr1d\_nowcast}{158}
+\contentsline {subsection}{\numberline {9.6.6}Prediction: mr1d\_fcast}{159}
+\contentsline {section}{\numberline {9.7}Time-Frequencies Analsysis}{161}
+\contentsline {subsection}{\numberline {9.7.1}The Short Term Fourier Transform: im1d\_stf}{161}
+\contentsline {subsection}{\numberline {9.7.2}Time-Frequency Distribution: im1d\_tfreq}{163}
+\contentsline {chapter}{\numberline {10}MR/1 Wavelet and Multifractal Analysis}{165}
+\contentsline {section}{\numberline {10.1}Fractal}{165}
+\contentsline {subsection}{\numberline {10.1.1}Introduction}{165}
+\contentsline {subsection}{\numberline {10.1.2}The Hausdorff and Minkowski measure}{165}
+\contentsline {subsection}{\numberline {10.1.3}The Hausdorff and Minkowski dimension}{166}
+\contentsline {section}{\numberline {10.2}Multifractality}{167}
+\contentsline {subsection}{\numberline {10.2.1}Definition}{167}
+\contentsline {subsection}{\numberline {10.2.2}Generalized fractal dimension}{168}
+\contentsline {section}{\numberline {10.3}Wavelets and Multifractality}{168}
+\contentsline {subsection}{\numberline {10.3.1}Singularity analysis}{168}
+\contentsline {subsection}{\numberline {10.3.2}Wavelet transform of multifractal signals }{169}
+\contentsline {subsection}{\numberline {10.3.3}Numerical applications of WWTM method}{170}
+\contentsline {section}{\numberline {10.4}Program}{173}
+\contentsline {subsection}{\numberline {10.4.1}Devil's Staircase: mf1d\_create\_ds}{173}
+\contentsline {subsection}{\numberline {10.4.2}Chain maxima wavelet coefficients: mf1d\_chain}{173}
+\contentsline {subsection}{\numberline {10.4.3}Partition function: mf1d\_repart}{174}
+\contentsline {subsection}{\numberline {10.4.4}Multifractal analysis: mf\_analyse}{174}
+\contentsline {subsection}{\numberline {10.4.5}Examples}{175}
+\contentsline {chapter}{\numberline {11}IDL Routines}{177}
+\contentsline {section}{\numberline {11.1}Introduction}{177}
+\contentsline {section}{\numberline {11.2}IDL Tools}{177}
+\contentsline {subsection}{\numberline {11.2.1}del\_pattern}{177}
+\contentsline {subsection}{\numberline {11.2.2}block\_trans}{177}
+\contentsline {subsection}{\numberline {11.2.3}delete}{178}
+\contentsline {subsection}{\numberline {11.2.4}im\_smooth}{178}
+\contentsline {subsection}{\numberline {11.2.5}Tikhonov}{178}
+\contentsline {section}{\numberline {11.3}Noise Related Routines}{179}
+\contentsline {subsection}{\numberline {11.3.1}poisson\_image}{179}
+\contentsline {subsection}{\numberline {11.3.2}poisson\_to\_gauss}{179}
+\contentsline {subsection}{\numberline {11.3.3}sigma\_clip}{180}
+\contentsline {subsection}{\numberline {11.3.4}get\_noise}{180}
+\contentsline {section}{\numberline {11.4}Display}{180}
+\contentsline {subsection}{\numberline {11.4.1}tvlut}{180}
+\contentsline {subsection}{\numberline {11.4.2}xdisp}{181}
+\contentsline {subsection}{\numberline {11.4.3}x3d}{181}
+\contentsline {subsection}{\numberline {11.4.4}xdump}{182}
+\contentsline {section}{\numberline {11.5}Multiresolution Routines (1D)}{182}
+\contentsline {subsection}{\numberline {11.5.1}mr1d\_atrou}{182}
+\contentsline {subsection}{\numberline {11.5.2}mr1d\_pavemed}{182}
+\contentsline {subsection}{\numberline {11.5.3}mr1d\_minmax}{183}
+\contentsline {subsection}{\numberline {11.5.4}mr1d\_pyrmed}{183}
+\contentsline {subsection}{\numberline {11.5.5}mr1d\_paverec}{183}
+\contentsline {subsection}{\numberline {11.5.6}mr1d\_pyrrec}{183}
+\contentsline {subsection}{\numberline {11.5.7}mr1d\_pyrinterp}{184}
+\contentsline {subsection}{\numberline {11.5.8}mr1d\_tabcoef}{184}
+\contentsline {subsection}{\numberline {11.5.9}mr1d\_trans}{184}
+\contentsline {subsection}{\numberline {11.5.10}mr1d\_recons}{185}
+\contentsline {subsection}{\numberline {11.5.11}mr1d\_filter}{186}
+\contentsline {section}{\numberline {11.6}Spectral Analysis}{186}
+\contentsline {subsection}{\numberline {11.6.1}mr1d\_continuum}{186}
+\contentsline {subsection}{\numberline {11.6.2}mr1d\_optical\_depth}{186}
+\contentsline {subsection}{\numberline {11.6.3}mr1d\_detect}{187}
+\contentsline {section}{\numberline {11.7}Multiresolution Routines (2D)}{187}
+\contentsline {subsection}{\numberline {11.7.1}mr\_transform}{187}
+\contentsline {subsection}{\numberline {11.7.2}xmr\_transform}{188}
+\contentsline {subsection}{\numberline {11.7.3}mr\_info}{188}
+\contentsline {subsection}{\numberline {11.7.4}mr\_extract}{188}
+\contentsline {subsection}{\numberline {11.7.5}mr\_read}{188}
+\contentsline {subsection}{\numberline {11.7.6}mr\_compare}{189}
+\contentsline {subsection}{\numberline {11.7.7}mr\_background}{190}
+\contentsline {subsection}{\numberline {11.7.8}mr\_filter}{190}
+\contentsline {subsection}{\numberline {11.7.9}im\_deconv}{190}
+\contentsline {subsection}{\numberline {11.7.10}mr\_deconv}{190}
+\contentsline {subsection}{\numberline {11.7.11}mr\_detect}{191}
+\contentsline {subsection}{\numberline {11.7.12}xlive}{192}
+\contentsline {chapter}{Appendix A: The Lifting Scheme}{193}
+\contentsline {chapter}{Appendix B: Wavelet Packets}{197}
+\contentsline {chapter}{Appendix C: Pyramidal Wavelet Transform (PMWT)}{199}
+\contentsline {chapter}{Appendix D: Half Pyramidal Wavelet Transform}{201}
+\contentsline {part}{II\hspace {1em}MR/2 : Multiscale Entropy and Applications}{203}
+\contentsline {chapter}{\numberline {12}Multiscale Entropy Theory}{205}
+\contentsline {section}{\numberline {12.1}Entropy and Image Restoration}{205}
+\contentsline {subsection}{\numberline {12.1.1}Introduction}{205}
+\contentsline {subsection}{\numberline {12.1.2}The concept of entropy}{208}
+\contentsline {subsection}{\numberline {12.1.3}Conclusion}{211}
+\contentsline {section}{\numberline {12.2}Entropy from Noise Modeling}{213}
+\contentsline {subsection}{\numberline {12.2.1}Information and wavelet coefficient}{213}
+\contentsline {subsection}{\numberline {12.2.2}Signal information and noise information}{214}
+\contentsline {subsubsection}{N1-MSE}{215}
+\contentsline {subsubsection}{N2-MSE}{216}
+\contentsline {subsubsection}{LOG-MSE}{216}
+\contentsline {subsection}{\numberline {12.2.3}Conclusion}{217}
+\contentsline {chapter}{\numberline {13}Multiscale Entropy Applied to Filtering}{219}
+\contentsline {section}{\numberline {13.1}Introduction}{219}
+\contentsline {section}{\numberline {13.2}Multiresolution and Filtering}{219}
+\contentsline {subsection}{\numberline {13.2.1}The choice of the multiresolution transform}{219}
+\contentsline {subsection}{\numberline {13.2.2}Filtering in wavelet space}{220}
+\contentsline {section}{\numberline {13.3}Multiscale Entropy Filtering}{223}
+\contentsline {subsection}{\numberline {13.3.1}Filtering}{223}
+\contentsline {subsection}{\numberline {13.3.2}The regularization parameter}{223}
+\contentsline {subsection}{\numberline {13.3.3}The use of a model}{224}
+\contentsline {subsection}{\numberline {13.3.4}The multiscale entropy filtering algorithm}{226}
+\contentsline {subsection}{\numberline {13.3.5}Derivative calculation of $h_s$ and $h_n$ for N2-MSE}{227}
+\contentsline {subsubsection}{Gaussian case}{227}
+\contentsline {subsection}{\numberline {13.3.6}General Case}{230}
+\contentsline {subsection}{\numberline {13.3.7}Optimization}{230}
+\contentsline {section}{\numberline {13.4}Examples}{231}
+\contentsline {subsection}{\numberline {13.4.1}1D data filtering}{231}
+\contentsline {subsection}{\numberline {13.4.2}Image filtering}{231}
+\contentsline {section}{\numberline {13.5}Comparison with Other Methods from Simulations}{237}
+\contentsline {subsection}{\numberline {13.5.1}Simulation descriptions}{237}
+\contentsline {section}{\numberline {13.6}Simulation Analysis}{238}
+\contentsline {subsubsection}{Noise treatment strategies}{238}
+\contentsline {section}{\numberline {13.7}Conclusion: Toward Combined Filtering}{239}
+\contentsline {chapter}{\numberline {14}Multiscale Entropy Applied to Deconvolution}{245}
+\contentsline {section}{\numberline {14.1}Introduction to Deconvolution}{245}
+\contentsline {section}{\numberline {14.2}Non-Regularized Deconvolution Methods}{245}
+\contentsline {section}{\numberline {14.3}Tikhonov Regularization}{247}
+\contentsline {section}{\numberline {14.4}The CLEAN Approach}{248}
+\contentsline {subsection}{\numberline {14.4.1}The CLEAN algorithm}{248}
+\contentsline {subsection}{\numberline {14.4.2}Multiresolution CLEAN}{249}
+\contentsline {subsection}{\numberline {14.4.3}CLEAN and wavelets}{250}
+\contentsline {subsubsection}{The wavelet transform chosen.}{250}
+\contentsline {subsubsection}{Deconvolution by CLEAN in wavelet space.}{250}
+\contentsline {subsubsection}{Improvements to multiresolution CLEAN.}{251}
+\contentsline {section}{\numberline {14.5}Regularization from the Multiresolution Support}{253}
+\contentsline {subsection}{\numberline {14.5.1}Noise suppression based on the wavelet transform}{253}
+\contentsline {subsection}{\numberline {14.5.2}Noise suppression based on the multiresolution support}{253}
+\contentsline {subsubsection}{The multiresolution support}{253}
+\contentsline {subsubsection}{Regularization}{254}
+\contentsline {subsubsection}{Regularization of Van Cittert's Algorithm}{255}
+\contentsline {subsubsection}{Regularization of the One-Step Gradient Method}{255}
+\contentsline {subsubsection}{Regularization of the Richardson-Lucy Algorithm}{255}
+\contentsline {subsubsection}{Convergence}{255}
+\contentsline {section}{\numberline {14.6}Regularization using a Markov Model}{255}
+\contentsline {subsection}{\numberline {14.6.1}Introduction}{255}
+\contentsline {subsubsection}{Posterior modeling}{257}
+\contentsline {subsection}{\numberline {14.6.2}Application}{258}
+\contentsline {section}{\numberline {14.7}Multiscale Entropy Deconvolution}{261}
+\contentsline {subsection}{\numberline {14.7.1}The principle}{261}
+\contentsline {subsection}{\numberline {14.7.2}The parameters}{262}
+\contentsline {subsubsection}{The Intrinsic Correlation Function}{263}
+\contentsline {subsubsection}{ICF calculation}{263}
+\contentsline {chapter}{\numberline {15}Multiscale Entropy applied to Background Fluctuation Analysis}{265}
+\contentsline {chapter}{\numberline {16}MR/2 Programs}{269}
+\contentsline {section}{\numberline {16.1}Probability in wavelet space: mw\_proba}{269}
+\contentsline {section}{\numberline {16.2}Entropy of an image: mw\_entrop}{269}
+\contentsline {section}{\numberline {16.3}Filtering}{270}
+\contentsline {subsection}{\numberline {16.3.1}1D filtering: mw1d\_filter}{270}
+\contentsline {subsection}{\numberline {16.3.2}2D filtering: mw\_filter}{271}
+\contentsline {subsection}{\numberline {16.3.3}2D combined filtering: mw\_comb\_filter}{272}
+\contentsline {section}{\numberline {16.4}Deconvolution: mw\_deconv}{273}
+\contentsline {section}{\numberline {16.5}IDL Routines}{276}
+\contentsline {subsection}{\numberline {16.5.1}Introduction}{276}
+\contentsline {subsection}{\numberline {16.5.2}mw1d\_filter}{276}
+\contentsline {subsection}{\numberline {16.5.3}mw1d\_predict}{276}
+\contentsline {subsection}{\numberline {16.5.4}mw\_filter}{276}
+\contentsline {subsection}{\numberline {16.5.5}mw\_deconv}{277}
+\contentsline {chapter}{Appendix A: The ``\`A Trous'' Wavelet Transform Algorithm}{279}
+\contentsline {chapter}{Appendix B: Noise Modeling the Wavelet Space}{281}
+\contentsline {chapter}{Appendix C: Derivative Needed for the Minimization}{285}
+\contentsline {chapter}{Appendix D: Generalization of Derivative Needed for Minimization}{289}
+\contentsline {part}{III\hspace {1em}MR/3 : Multichannel Data}{291}
+\contentsline {chapter}{\numberline {17}MR/3 \ Data Processing Tools}{293}
+\contentsline {section}{\numberline {17.1}Introduction}{293}
+\contentsline {section}{\numberline {17.2}3D-Image Manipulation Tools}{293}
+\contentsline {subsection}{\numberline {17.2.1}Image conversion: im3d\_convert}{293}
+\contentsline {subsection}{\numberline {17.2.2}Image information: im3d\_info}{294}
+\contentsline {subsection}{\numberline {17.2.3}Extract a subcube: im3d\_get}{294}
+\contentsline {subsection}{\numberline {17.2.4}Insert a subcube: im3d\_put}{295}
+\contentsline {subsection}{\numberline {17.2.5}Operation on two cubes: im3d\_op}{295}
+\contentsline {subsection}{\numberline {17.2.6}Image simulation: im3d\_simu}{295}
+\contentsline {section}{\numberline {17.3}Multi-Temporal Images}{296}
+\contentsline {subsection}{\numberline {17.3.1}Introduction}{296}
+\contentsline {subsection}{\numberline {17.3.2}Image Coaddition: im3d\_coadd}{296}
+\contentsline {subsection}{\numberline {17.3.3}Deconvolution: im3d\_deconv}{298}
+\contentsline {subsubsection}{Introduction}{298}
+\contentsline {subsubsection}{Deconvolution Program}{298}
+\contentsline {section}{\numberline {17.4}Color Images}{300}
+\contentsline {subsection}{\numberline {17.4.1}Introduction}{300}
+\contentsline {subsection}{\numberline {17.4.2}Color Image Filtering: col\_filter}{301}
+\contentsline {subsection}{\numberline {17.4.3}Color Image Compression: col\_comp}{301}
+\contentsline {subsection}{\numberline {17.4.4}Color Image Decompression: col\_decomp}{302}
+\contentsline {subsection}{\numberline {17.4.5}Color Image Enhancement: col\_contrast}{304}
+\contentsline {chapter}{\numberline {18}MR/3 \ Three Dimensional Data Set}{309}
+\contentsline {section}{\numberline {18.1}MR/3 \ Multiresolution}{309}
+\contentsline {subsection}{\numberline {18.1.1}Introduction}{309}
+\contentsline {subsubsection}{The 3D \`a trous Wavelet Transform}{309}
+\contentsline {subsubsection}{The 3D bi-orthogonal Wavelet Transform}{309}
+\contentsline {subsection}{\numberline {18.1.2}Multiresolution transform of cube: mr3d\_trans}{310}
+\contentsline {subsection}{\numberline {18.1.3}Extraction of a scale: mr3d\_extract}{311}
+\contentsline {subsection}{\numberline {18.1.4}Insertion of an image: mr3d\_insert}{311}
+\contentsline {subsection}{\numberline {18.1.5}Reconstruction: mr3d\_recons}{312}
+\contentsline {section}{\numberline {18.2}MR/3 Denoising: mr3d\_filter}{312}
+\contentsline {subsection}{\numberline {18.2.1}Gaussian noise filtering: mr3d\_filter}{312}
+\contentsline {section}{\numberline {18.3}3D Point Clouds Analysis}{313}
+\contentsline {subsection}{\numberline {18.3.1}ASCII Catalog to 3D Cube in FITS Format: mr3d\_cat2fits}{313}
+\contentsline {subsection}{\numberline {18.3.2}Wavelet Histogram Autoconvolution: mr3d\_phisto}{314}
+\contentsline {subsection}{\numberline {18.3.3}Multiresolution Support Calculation: mr3d\_psupport}{315}
+\contentsline {subsection}{\numberline {18.3.4}Data Cube Filtering: mr3d\_pfilter}{316}
+\contentsline {chapter}{\numberline {19}MR/3 \ Multi-Channel Data Set}{319}
+\contentsline {section}{\numberline {19.1}Introduction}{319}
+\contentsline {section}{\numberline {19.2}The Wavelet-Karhunen-Lo\`eve transform}{319}
+\contentsline {subsection}{\numberline {19.2.1}Definition}{319}
+\contentsline {subsection}{\numberline {19.2.2}Correlation matrix and noise modeling}{321}
+\contentsline {subsection}{\numberline {19.2.3}Scale and Karhunen-Lo\`eve transform}{321}
+\contentsline {subsection}{\numberline {19.2.4}The WT-KLT transform}{322}
+\contentsline {subsection}{\numberline {19.2.5}The WT-KLT reconstruction algorithms}{322}
+\contentsline {subsection}{\numberline {19.2.6}WT-KLT Transform of 1D Multichannel Data: wk1d\_trans}{322}
+\contentsline {subsection}{\numberline {19.2.7}WT-KLT Reconstruction of 1D Multichannel Data: wk1d\_trec}{323}
+\contentsline {subsection}{\numberline {19.2.8}WT-KLT Transform of 2D Multichannel Data: wk\_trans}{324}
+\contentsline {subsection}{\numberline {19.2.9}WT-KLT Reconstruction of 2D Multichannel Data: wk\_trec}{326}
+\contentsline {section}{\numberline {19.3}Noise Modeling in the WT-KLT Space}{327}
+\contentsline {subsection}{\numberline {19.3.1}Non-Gaussian noise}{327}
+\contentsline {subsection}{\numberline {19.3.2}Noise level on WT-KLT coefficients}{327}
+\contentsline {section}{\numberline {19.4}Multichannel Data Filtering}{327}
+\contentsline {subsection}{\numberline {19.4.1}Introduction}{327}
+\contentsline {subsection}{\numberline {19.4.2}Reconstruction from a subset of eigenvectors}{328}
+\contentsline {subsection}{\numberline {19.4.3}WT-KLT Coefficient Thresholding}{328}
+\contentsline {subsection}{\numberline {19.4.4}Multiscale Entropy}{328}
+\contentsline {subsection}{\numberline {19.4.5}WT-KLT Filtering of 1D Multichannel Data: wk1d\_filter}{329}
+\contentsline {subsection}{\numberline {19.4.6}WT-KLT Filtering of 2D Multichannel Data: wk\_filter}{330}
+\contentsline {subsection}{\numberline {19.4.7}WT-KLT Filtering of 2D Multichannel Data by the Multiscale Entropy Method: wk\_memfilter}{331}
+\contentsline {section}{\numberline {19.5}Filtering using the Haar-Multichannel Transform}{333}
+\contentsline {subsection}{\numberline {19.5.1}Definition}{333}
+\contentsline {subsection}{\numberline {19.5.2}WT-KLT Filtering of 2D Multichannel Data by the Multiscale Haar Transform: ww\_filter}{333}
+\contentsline {section}{\numberline {19.6}Independent Component Analysis}{335}
+\contentsline {subsection}{\numberline {19.6.1}JADE-ICA IDL Programs}{335}
+\contentsline {subsubsection}{JADE}{335}
+\contentsline {subsubsection}{JADE1D}{335}
+\contentsline {subsubsection}{JADE2D}{336}
+\contentsline {part}{IV\hspace {1em}MR/4 : Ridgelets and Curvelets}{341}
+\contentsline {chapter}{\numberline {20}The Curvelet Transform}{343}
+\contentsline {section}{\numberline {20.1}Introduction}{343}
+\contentsline {section}{\numberline {20.2}Continuous Ridgelet Transform}{345}
+\contentsline {subsection}{\numberline {20.2.1}The Radon Transform}{346}
+\contentsline {subsection}{\numberline {20.2.2}Ridgelet Pyramids}{346}
+\contentsline {section}{\numberline {20.3}Digital Ridgelet Transform}{347}
+\contentsline {subsection}{\numberline {20.3.1}The RectoPolar Ridgelet transform}{347}
+\contentsline {subsubsection}{A Polar Sampling Scheme for Digital Data}{348}
+\contentsline {subsubsection}{Interpolation to Rectopolar Grid}{348}
+\contentsline {subsubsection}{Exact Reconstruction and Stability}{349}
+\contentsline {subsubsection}{One-dimensional Wavelet Transform}{350}
+\contentsline {subsubsection}{Combining the Pieces}{351}
+\contentsline {subsection}{\numberline {20.3.2}The Orthonormal Finite Ridgelet Transform}{351}
+\contentsline {subsection}{\numberline {20.3.3}The Slant Stack Ridgelet Transform}{353}
+\contentsline {section}{\numberline {20.4}Local Ridgelet Transforms}{353}
+\contentsline {section}{\numberline {20.5}Digital Curvelet Transform}{355}
+\contentsline {subsection}{\numberline {20.5.1}Discrete Curvelet Transform of Continuum Functions}{355}
+\contentsline {subsection}{\numberline {20.5.2}Digital Realization}{356}
+\contentsline {subsection}{\numberline {20.5.3}Algorithm}{356}
+\contentsline {chapter}{\numberline {21}Filtering}{359}
+\contentsline {section}{\numberline {21.1}Curvelet Coefficient Thresholding}{359}
+\contentsline {section}{\numberline {21.2}Filtering Experiments}{360}
+\contentsline {subsubsection}{Recovery of Linear Features}{360}
+\contentsline {subsubsection}{Recovery of Curves}{361}
+\contentsline {subsubsection}{Denoising of a Color Image}{361}
+\contentsline {subsubsection}{Saturn Rings}{361}
+\contentsline {subsubsection}{Supernova with Poisson noise}{362}
+\contentsline {chapter}{\numberline {22}The Combined Filtering Method}{367}
+\contentsline {section}{\numberline {22.1}Introduction}{367}
+\contentsline {section}{\numberline {22.2}The Combined Filtering Principle}{368}
+\contentsline {section}{\numberline {22.3}The Minimization Method}{368}
+\contentsline {section}{\numberline {22.4}Experiments}{369}
+\contentsline {section}{\numberline {22.5}Discussion}{370}
+\contentsline {chapter}{\numberline {23}Contrast Enhancement}{373}
+\contentsline {section}{\numberline {23.1}Introduction}{373}
+\contentsline {section}{\numberline {23.2}Contrast Enhancement by the Cur\discretionary {-}{}{}ve\discretionary {-}{}{}let Trans\discretionary {-}{}{}form}{374}
+\contentsline {section}{\numberline {23.3}Examples}{376}
+\contentsline {section}{\numberline {23.4}Discussion}{377}
+\contentsline {chapter}{\numberline {24}MR/4 Programs}{381}
+\contentsline {section}{\numberline {24.1}Ridgelet Transform}{381}
+\contentsline {subsection}{\numberline {24.1.1}im\_radon}{381}
+\contentsline {subsection}{\numberline {24.1.2}rid\_trans}{382}
+\contentsline {subsection}{\numberline {24.1.3}rid\_stat}{383}
+\contentsline {subsection}{\numberline {24.1.4}rid\_filter}{384}
+\contentsline {section}{\numberline {24.2}Curvelet Transform}{385}
+\contentsline {subsection}{\numberline {24.2.1}cur\_trans}{385}
+\contentsline {subsection}{\numberline {24.2.2}cur\_stat}{386}
+\contentsline {subsection}{\numberline {24.2.3}cur\_filter}{386}
+\contentsline {subsection}{\numberline {24.2.4}cur\_colfilter}{387}
+\contentsline {subsection}{\numberline {24.2.5}cur\_contrast}{388}
+\contentsline {subsection}{\numberline {24.2.6}cur\_colcontrast}{389}
+\contentsline {section}{\numberline {24.3}Combined Filtering}{390}
+\contentsline {subsection}{\numberline {24.3.1}cb\_filter}{390}
+\contentsline {part}{Bibliography}{392}
+\contentsline {part}{Index}{405}

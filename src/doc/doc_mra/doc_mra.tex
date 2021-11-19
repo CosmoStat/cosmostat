@@ -1,0 +1,239 @@
+% \NeedsTeXFormat{LaTeX2e}
+%-----------------------------------------------------------------------------
+% To run master file, doc_mra.tex: 
+% rm *.aux (to remove previous links/cross-references)
+%
+% comments INC 2 and INC 3, and uncomment INC 1
+% latex doc_mra
+% comments INC 1 and INC 3, and uncomment INC 2
+% latex doc_mra
+% comments INC 1 and INC 2, and uncomment INC 3
+% latex doc_mra
+
+% Apply bibtex
+% bibtex doc_mra
+
+% comments INC 2 and INC 3, and uncomment INC 1
+% latex doc_mra
+% latex doc_mra
+% dvips doc_mra -l 193 -o doc_vol1.ps
+% comments INC 1 and INC 3, and uncomment INC 2
+% latex doc_mra
+% latex doc_mra
+% dvips doc_mra -p 195 -o  doc_vol2.ps
+% comments INC 1 and INC 2, and uncomment INC 3
+% latex doc_mra
+% latex doc_mra
+% dvips doc_mra -o doc_vol3.ps
+%
+% Problem index: when compile parts of the documentation, the \makeindex command
+% remove the file doc_mra.idx which contains the index  relative to the 
+% other part of the documentation:
+% A solution:
+% ----------
+%   Compile Part 1: and save makeindex doc_mra.idx  in I1
+%   Compile Part 2: and save makeindex doc_mra.idx  in I2
+%   Compile Part 3: and save makeindex doc_mra.idx  in I3
+%   mv I1 doc_mra.idx
+%   cat I2 >> doc_mra.idx
+%   cat I3 >> doc_mra.idx
+%   comments the line  \makeindex in this file
+%   recompile the three parts
+
+% J.-L. Starck, APRIL 1999
+%-----------------------------------------------------------------------------
+
+\documentclass[11pt,a4paper,titlepage]{book}
+% \usepackage{psfig,amstex,amssymb,alltt,makeidx}
+\usepackage{psfig}
+\usepackage{amssymb,alltt}
+\usepackage{amsmath}
+\usepackage{latexsym}
+\usepackage{graphicx}
+\usepackage{makeidx}
+% \usepackage{supertab}
+% \usepackage{longtable}
+% \usepackage{amssymb,alltt,makeidx}
+% \usepackage{chapterbib}
+% \usepackage{bibunits}
+
+% \makeindex
+
+\newcommand{\mr}{./doc_mr1}
+\newcommand{\mw}{./doc_mr2}
+\newcommand{\psdir}{/home/starck/tex/report/FIG}
+\newcommand{\mc}{./doc_mr3}
+\newcommand{\cur}{./doc_mr4}
+
+\psfigurepath{\psdir/deconv:\psdir/prediction:\psdir/filter_xima:\psdir/contrast:\psdir/curvelet:\psdir/cf_ana:\psdir/mchannel:\psdir/mr1:\psdir/demo:\psdir/cours:\psdir/edge:\psdir/compress:\psdir/fractal:\psdir/detect:\psdir/book98:\psdir/entropy:\psdir/iso:\psdir/cours}
+
+\def\aa{{A\&A } }
+\def\aj{{AJ} }
+\def\apj{{ApJ\ }}
+\def\va{{ Vistas in Astronomy}}
+\def\pasp{{ PASP\ }}
+
+\def\projmra{MR}
+\def\defprojmra{The Multiresolution Analysis Software}
+
+\medskip
+
+\def\proj{MR/1 }
+\def\defproj{The Multiresolution Environment}
+
+\def\projmw{MR/2 }
+\def\defprojmw{Multiscale Entropy and Applications}
+
+\def\projmc{MR/3 }
+\def\projmr3{MR/3 }
+\def\defprojmc{Multichannel Data}
+
+\def\projcur{MR/4 }
+\def\defprojcur{Ridgelets and Curvelets}
+
+\newcommand{\be}{\begin{eqnarray}}
+\newcommand{\ee}{\end{eqnarray}}
+\newcommand{\bn}{\begin{enumerate}}
+\newcommand{\en}{\end{enumerate}}
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+\newcommand{\mmin}{\wedge}
+\newcommand{\mmax}{\vee}  
+\newcommand{\bmmin}{\bigwedge} 
+\newcommand{\bmmax}{\bigvee}   
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}[theorem]{Definition}
+\newcommand{\goto}{\rightarrow}
+\newcommand{\bitem}{\begin{itemize}}
+\newcommand{\eitem}{\end{itemize}}
+\newcommand{\bR}{{\bf R}}
+\newcommand{\eps}{{\epsilon}}
+\newcommand{\cR}{{\cal R}}
+\newcommand{\cQ}{{\cal Q}}
+\newcommand{\cW}{{\mathcal W}}
+\newcommand{\cA}{{\mathcal A}}
+\newcommand{\cP}{{\mathcal P}}
+\newcommand{\cS}{{\mathcal S}}
+\newcommand{\bZ}{{\bf Z}}
+\newcommand{\cM}{{\cal M}}
+\newcommand{\<}{\langle}
+\renewcommand{\>}{\rangle}
+\newcommand{\qed}{\quad\hbox{\vrule width 4pt height 6pt depth 1.5pt}}
+\newcommand{\cH}{{\cal H}}
+\newcommand{\cL}{{\cal L}}
+
+
+\textwidth 16truecm
+\textheight 23truecm
+\hoffset -1.5truecm
+\voffset -0.5truecm
+
+
+% \makeindex
+% \input psfig.tex
+
+% \voffset -1.5cm
+% \hoffset -1.cm
+\evensidemargin 1.truecm
+\oddsidemargin  1.truecm
+
+%\title{{\bf \Huge \projmra: \defprojmra }  \\
+%\title{{\bf \Huge The Multiresolution Analysis Software: }\\
+%$ $ \\
+%  {\Large \bf \mbox{MR/1 -- Environment:   version 4.0}}  
+%%  {\Large \bf \mbox{MR/2 -- Entropy:       version 1.2}}  
+%  {\Large \bf \mbox{MR/3 -- 3D and Multi-channel: version 2.0}}
+%  {\Large \bf \mbox{MR/4 -- Ridgelet-Curvelet: version 1.0}}}
+% $ $ \\
+% $ $ \\ {\large Technical Report} }
+% \vspace{0.2cm}
+
+\author{CEA-SACLAY/SEDI-SAP}
+ 
+ \date{  \begin{figure}[hb]
+\centerline{
+\hbox{
+% \psfig{figure=fig_ngc.ps,bbllx=1.9cm,bblly=12.6cm,bburx=14.6cm,bbury=25.4cm,width=9cm,height=9cm,clip=}
+\psfig{figure=ch2_wave_synt.ps,bbllx=3cm,bblly=10.6cm,bburx=18.6cm,bbury=26.3cm,width=10cm,height=10cm,clip=}
+}}
+\end{figure}
+} 
+
+ 
+% \includeonly{part1,cover,\mr/ch1_intro,\mr/ch3_prog,\mr/ch4_wave,\mr/ch_restore,\mr/ch_compress,\mr/ch_detect,\mr/ch_register,\mr/ch_edge,\mr/ch_1d,\mr/ch_time,\mr/ch_fractal,\mr/ch5_idl,\mr/annex_lifting,\mr/annex_packet,\mr/annex_wavemed}
+% \includeonly{part2,\mw/intro,\mw/concept,\mw/filter,\mw/deconv,\mw/fluctu,\mw/prog,\mw/mr2_idl,\mw/annexA,\mw/annex_noise,\mw/annex_deriv1,\mw/annex_deriv2}
+% \includeonly{part3,\mc/mc_tools,\mc/data_3d,\mc/mc_3d}
+% \includeonly{part4,\cur/ch_curvelet,\cur/ch_curfilter,\cur/ch_combfilter,\cur/ch_curcontrast,\cur/ch_curprog,partbib}
+
+\begin{document}
+
+\include{cover}
+
+\include{part1}
+\include{\mr/ch1_intro}
+% \include{ch2_install}
+\include{\mr/ch3_prog}
+\include{\mr/ch4_wave}
+\include{\mr/ch_restore}
+\include{\mr/ch_compress}
+\include{\mr/ch_detect}
+\include{\mr/ch_register}
+
+\include{\mr/ch_edge}
+\include{\mr/ch_1d}
+\include{\mr/ch_time}
+\include{\mr/ch_fractal}
+\include{\mr/ch5_idl}
+ 
+\include{\mr/annex_lifting}
+\include{\mr/annex_packet}
+\include{\mr/annex_wavemed}
+
+\include{part2}
+\include{\mw/intro}
+\include{\mw/concept}
+% \include{\mw/infomut}
+\include{\mw/filter}
+\include{\mw/deconv}
+\include{\mw/fluctu}
+\include{\mw/prog}
+\include{\mw/mr2_idl}
+
+\include{\mw/annexA}
+\include{\mw/annex_noise}
+\include{\mw/annex_deriv1}
+\include{\mw/annex_deriv2}
+
+\include{part3}
+\include{\mc/mc_tools}
+
+\include{\mc/data_3d}
+
+\include{\mc/mc_3d}
+
+
+\include{part4}
+\include{\cur/ch_curvelet}
+\include{\cur/ch_curfilter}
+\include{\cur/ch_combfilter}
+% \include{\cur/ch_combdeconv}
+\include{\cur/ch_curcontrast}
+% \include{\cur/ch_mga}
+\include{\cur/ch_curprog}
+
+\include{partbib} 
+
+% \include{ch_cf}
+% \include{partiso}
+% \include{iso}
+% \include{preti}
+% \include{prog_iso}
+
+\end{document}
+
+
+
+\include{markov}

@@ -1,0 +1,839 @@
+
+\chapter{\projmr3 Catalog Analysis by the Two--Point Correlation Funciton}
+
+\section{Definition}
+\subsection{Introduction}
+The two--point correlation function $\xi(r)$ has been the primary tool
+for quantifying large--scale cosmic structure\cite{cf:peebles80}.
+Assuming that the galaxy distribution in the Universe is a realization
+of a stationary random process of density $\rho$, the two--point
+correlation function can be defined from the probability $P$ to find
+an object within a volume element $\delta v$ at distance $r$ from a
+randomly chosen object or position inside the volume: 
+\begin{equation} 
+\delta P = n(1 + \xi(r))\delta v,
+\end{equation} 
+where $n$ is the mean density of objects.  The $\xi(r)$ function
+measures the clustering properties of objects in a given volume. It is
+zero for a uniform random distribution, positive (resp.  negative) for
+a more (resp. less) concentrated distribution. For a hierarchical
+gravitational clustering or fractal processus, $\xi(r)$ has a power
+law behavior 
+\begin{equation} 
+\xi(r) \sim r^{-\gamma}.
+\end{equation}
+
+In an unbounded volume embedded in a three-dimensional Euclidean
+space, we can compute $\xi(r)$ by considering a large number of points
+$N$ and calculate the average
+\begin{equation} 
+1 + \xi(r) = {N(r) \over N_{p}(r)}
+\end{equation} 
+where $N(r)$ is the number of pairs of points with a separation in the
+interval $[r-\Delta r, r+\Delta r]$, and $N_{p}(r)$ is the number of
+pairs for a Poisson distribution in the same volume. As $N_{p}(r) =
+4\pi r^2 n dr$, we have
+\begin{equation} 
+1 + \xi(r) = {1 \over N} \sum_{i=1}^N {N_i(r) \over 4\pi r^2 n dr} 
+\end{equation} 
+where $N_i(r)$ is the number of points lying in a shell of thickness
+$dr$, with radius $r$, and centered at the point labeled $i$.
+However, when the calculation has to be performed on a finite volume,
+the effect of the edges has to be seriously considered.  For this
+reason, other estimators have been proposed, which consider the
+estimation of the volume around each data point by means of Monte
+Carlo random catalog generations. We present in this report a
+description of the most used estimators, and show the results obtained
+for some samples with well-known or well-studied clustering
+properties.
+
+
+ 
+\subsection{The 2-points correlation function determination}
+\subsubsection*{Standard method}
+Given a catalogue containing $N_d$ points, we introduce a random
+catalog with $N_R$ points, and note
+\begin{itemize}
+\item $DD(r)$ = number of pairs in the interval $(r \pm dr/2)$ in the
+  data catalog.
+\item $RR(r)$ = number of pairs in the interval $(r \pm dr/2)$ in the
+  random catalog.
+\end{itemize}
+The two--point correlation function $\xi(r)$ is derived from
+\begin{equation}
+\tilde \xi(r) =  {N_R(N_R-1) \over N_D(N_D-1)} {DD(r) \over RR(r)} -1,
+\label{std_method}
+\end{equation}
+where $N_R(N_R-1)/2$ and $ N_D(N_D-1)/2$ are the number of pairs in
+the random and data catalog. The ratio of this two values is a
+normalization term.
+
+\subsubsection*{Davis-Peebles method}
+Davis and Peebles \cite{cf:davis83} have proposed a more robust
+estimator, by introducing $DR$, the number of pairs between the data
+and the random sample within the same interval.
+\begin{equation}
+\tilde \xi_{DP}(r) =  2{N_R \over N_D-1} {DD(r) \over DR(r)} -1
+\label{dp_method}
+\end{equation}
+
+\subsubsection*{Hamilton method}
+Another possibility is to use Hamilton approach \cite{cf:hamilton93},
+which corrects for a presence in the data of large-scale artificial
+correlation due to some periodicity caused by the volume boundaries or 
+by some selection effects.
+
+\begin{equation}
+\tilde \xi_{HAM}(r) =   {DD(r) RR(r) \over [DR(r)]^2} -1
+\label{ham_method}
+\end{equation}
+
+\subsubsection*{Landy-Szalay method}
+Landy-Szalay estimator \cite{cf:landy93} was introduced with the goal
+to produce a minimum variance estimator and also like Hamilton
+estimator is not affected by large-scale correlations:
+\begin{equation}
+\tilde \xi_{LS}(r) =  c_1 {  DD(r) \over  RR(r)}  -  c_2 { DR(r) \over 
+RR(r)}
+\label{ls_method}
+\end{equation}
+with
+\begin{eqnarray}
+c_1 & = & {N_R(N_R-1)\over   N_D(N_D-1)} \nonumber \\  
+c_2 & = &  {2 N_R(N_R-1) \over N_D N_R}
+\end{eqnarray}
+
+
+
+\subsection{Error analysis}
+
+Assuming the errors in the correlation function are distributed
+normally (which is not completely true having in mind the
+cross-correlation in the different separation bins) we can estimate the
+uncertainty as a Poisson statistics for the corresponding errors in
+bins:
+\begin{equation}
+\Delta_{P} \tilde \xi(r) = {1 + \tilde  \xi(r) \over \sqrt{DD(r)}}
+\label{eq_pois}
+\end{equation}
+
+If $C$ random catalogs $R_1, ..., R_C$ are created instead of one,
+then $\tilde \xi(r)$ can be estimated $C$ times, and our final
+estimate is:
+\begin{equation}
+\tilde \xi(r) = {1 \over C }\sum_{i=1}^C \tilde \xi_i(r)
+\end{equation}
+and the error is obtained by
+\begin{equation} 
+\Delta_{STD} \tilde \xi(r) = \sqrt{ (\tilde \xi_i(r) -
+  \tilde \xi(r))^2 \over C-1} 
+\label{eq_std}
+\end{equation}
+
+Finally, a third approach is also popular, and consists in using a
+bootstrap method \cite{cf:efron86}. $C$ bootstrap samples $B_1,..,B_C$
+are created by taking randomly with replacement the same number of
+points that form the original sample. Then the bias-corrected 68\%
+bootstrap confidence interval is
+$[\xi_{boot}(0.16),\xi_{boot}(0.84)]$, where
+\begin{equation} \xi_{boot}(t) = G^{-1}\left\{\Phi\left[\Phi^{-1}(t) +
+      2\Phi^{-1}\left[G(\xi_0)\right]\right]\right\}.  
+\label{eq_boot}
+\end{equation} 
+
+Here $G$ is the cumulative distribution function (CDF) of the $\xi(r)$
+values, for a given bin $r \pm \Delta r$, for all bootstrap
+resamplings, $\Phi$ is the CDF of the normal distribution, $\Phi^{-1}$
+is its inverse function and $\xi_0$ is the estimated $\xi(r)$ taken
+from other than the bootstrap resampling results (e.g. from random
+catalog generations). Note that $\Phi(0.16) = -1.0$ and $\Phi(0.84) =
+1.0$.
+
+This confidence estimator, as the authors \cite{cf:efron86} claim, is
+valid when $G$ is not Gaussian. However, this method requires a large
+number of bootstrap resamplings (usually more than 100) and for large
+datasets with tens of thousands of points it becomes quite time
+consuming.
+
+Note that we can take also the $\Delta^{boot}_{STD}$ for the bootstrap
+resamplings and then it can be simply written --
+$[\xi_{boot}(0.16),\xi_{boot}(0.84)] = \xi_0 \pm \sigma_{\xi}$,
+where
+\begin{equation} 
+\sigma_{\xi} = \sqrt{ (\xi^{i}_{boot}(r) - \xi_{0}(r))^2 \over B-1}.
+\end{equation} 
+
+
+\subsection{Correlation length determination}
+
+The two-point correlation function for the gravitational clustering or 
+fractal distribution can be given as a power low:
+\begin{eqnarray}
+ \xi(r) = A r^{-\gamma}
+\end{eqnarray}
+Where $A$ is the amplitude and $\gamma$ is the power low index.
+
+The correlation length $r_c$ is defined by
+\begin{eqnarray}
+ \xi(r) = ({r\over r_c}) ^{-\gamma},
+\end{eqnarray}
+and it is the separation at which the correlation is 1. This scale in
+principle divides the regime of strong, non-linear clustering ($\xi >> 
+1$) from linear clustering.
+
+It is easy to connect $r_c$ with $A$ and $\gamma$ by:
+\begin{eqnarray}
+r_c = \exp^{-{A \over \gamma}}
+\end{eqnarray}
+
+
+
+\section{Application}
+\subsection{Simulation of Cox process}
+
+The segment Cox point process \cite{cf:pons99} is a clustering process
+for which an analytical expression of its 2--point correlation
+function is known and therefore can be used as a test to check the
+accuracy of the $\xi$--estimators.  segments of length $l$ are
+randomly scattered inside a cube $W$ and on these segments points are
+randomly distributed.  Let $L_V$ be the length density of the system
+of segments, $L_V=\lambda_{\rm{s}}l$, where $\lambda_{\rm{s}}$ is the
+mean number of segments per unit volume. If $\lambda_l$ is the mean
+number of points on a segment per unit length, then the intensity
+$\lambda$ of the resulting point process is
+
+\begin{equation}
+\lambda=\lambda_lL_V=\lambda_l\lambda_{\rm{s}}l\,.
+\end{equation}
+
+For this point field the correlation function can be easily calculated
+taking into account that the point field has a driving random measure
+equal to the random length measure of the system of segments. It has
+been shown \cite{cf:stoyan95} that
+  \begin{equation}
+\xi_{\rm {Cox}}(r)=\frac{1}{2\pi r^2L_V}-\frac{1}{2\pi rlL_V} \label{skm}
+\end{equation}
+for $r \le l$ and vanishes for larger $r$. The expression is
+independent of the intensity $\lambda_l$.  Figure~\ref{fig_cox_cube}
+show the simulation of a Cox process with 6000 points.
+Figure~\ref{fig_cox_curve} shows the analytical $\xi_{\rm {Cox}}(r)$
+curve (continuous line), and the estimated two--point correlation
+function overplotted. The Landy-Szalay method has been used with 10000
+random points. The errors are the results from 20 random Cox process
+realizations.
+ 
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_cox.ps,bbllx=2.5cm,bblly=13.5cm,bburx=18.5cm,bbury=25cm,width=14cm,height=14cm,clip=}
+}}
+\caption{Simulation of a Cox process with 6000 points.}
+\label{fig_cox_cube}
+\end{figure}
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_coxcurve.ps,bbllx=2.cm,bblly=1cm,bburx=18cm,bbury=17cm,width=10cm,height=8cm,clip=}
+}}
+\caption{Analytical $\xi_{\rm {Cox}}(r)$ curve (continuous line), and
+  two--point correlation function of the Cox process with 6000 points
+  overplotted, using the Landy-Szalay method.  The error bars are
+  obtained from the minimum and maximum of twenty realizations.}
+\label{fig_cox_curve}
+\end{figure}
+
+
+% \section{Limitation}
+% \begin{itemize}
+% \item the evaluation of ${\cal \epsilon}$ depends on the size of the
+%   sampled volume.
+% \end{itemize}
+ 
+\subsection{Two--point correlation of astronomical catalogues}
+
+\subsubsection{Introduction}
+Usually the catalogues of the extragalactic objects contain the
+angular coordinates of the objects (galaxies, groups, clusters,
+superclusters, voids) on the sky -- in equatorial coordinate system
+they are right ascension ($\alpha$) and declination ($\delta$),
+galactic longitude ($l$) and galactic latitude ($b$) in galactic
+coordinates and supergalactic longitude ($SL$) and supergalactic
+latitude ($SB$) in supergalactic coordinates. The recent
+extragalactic catalogues could contain many objects with their
+respective redshift $z$ so in principle it is possible to transform
+the angular coordinates + redshift to a rectangular coordinates
+system. To do this one has to assume a cosmological model ($H_0,\ 
+q_0$) in order to transform the redshift to the distance in Mpc and
+also to choose which distance measure to use (e.g. ``luminosity
+distance'', ``angular diameter distance'', ``comoving distance'').
+
+The choice for the angular coordinate system depends on the problem
+and it is convenient to use that system for which the catalogue
+boundaries could be most easily defined. For the distance, the
+situation in the literature is quite confused with various authors
+using various distance measures. 
+
+Also all the methods for estimation of the correlation function could
+work also for the particular case of having only angular positions on
+the sky. This is the case for example in catalogs from radio
+observations where there is no information for the distance. Then
+usually the correlation function, denoted $w(\theta)$ is a function on 
+the angular separation $\theta$.
+
+
+\subsubsection{Creation of random catalogs}
+One of the crucial steps in estimation of the correlation function is
+the random catalogue creation. The catalogues contain data which is
+subject to various selection effects and incompleteness. Not taking
+them into account could lead to false correlation. The major effects
+are the distance selection function -- the number of objects as a
+function of the distance, and the galactic latitude
+selection function. 
+
+The first effect is caused by the geometry of space-time and the
+detection of only the strongest objects at a great distances. For
+uniform distribution of points in 3D Euclidean space $N(R) \sim
+R^{-3}$.  
+
+The second effect is caused by light absorption from our Galaxy and it 
+depends on the galactic latitude. Usually it is modeled as a cosec 
+function and in terms of probability density function it could be
+given:
+\begin{equation}
+P(b) = 10^{\alpha(1-cosec|b|)}.
+\end{equation}
+
+These two effects after their correct treatment from the data
+catalogue must be included in the random catalogue generation.
+
+As the different catalogs of objects are subject to different
+selections, it is not possible to make one single procedure for random
+catalog generations. We have supplied however versions for some
+interesting particular cases.
+
+
+
+
+\subsubsection{Application to IRAS data}
+
+We present in this section the two points correlation function
+analysis of the IRAS 1.2 Jy Redshift Survey \cite{cf:fisher95} for a
+volume limited subsample.
+
+In order to create a volume limited subsample from the IRAS catalog,
+we applied the following steps:
+
+\begin{itemize}
+\item Extract from the catalog the Right Ascension $\alpha$ (hh,mm,ss,1950), 
+the declination $\delta$ (sign,dg,mm,ss,1950), and the velocity $Hvel$ (km/s).
+\item Convert $\alpha,\ \delta$ to galactic coordinates $l,b$ (in radians)
+  because the catalog boundaries ($|b| > 5 \deg$) are most easily
+  defined in this system.
+\item Convert velocity to redshift ($z= Hvel/c$).
+\item Assuming $H_0=100$ and $\Omega=1$, calculate the distance $d$ by the
+luminosity distance formulae proposed by Ue-Li Pen (astro-ph/9904172):
+\begin{eqnarray}
+d_L & = & {c \over H_0}(1+z) [ F(1,\Omega_0) - F({1 \over 1 + z}, \Omega_0)] \nonumber  \\
+F(a,\Omega_0) & = & 2 \sqrt{s^3+1} 
+[ {1 \over a^4} - 0.1540 {s \over a^3} + 0.4302 {s^2 \over  a^2} +  
+        0.19097*{s^3 \over a} + 0.066941 s^4 ]^{-{1\over 8}}  \nonumber  \\
+ s^3 & = & {1 - \Omega_0 \over \Omega_0 }
+\end{eqnarray}
+\item Select galaxies (statusflag in [O,H,Z,F,B,D,L]) with 
+distance $ d < 100$ Mpc, and flux $F_{60\mu m} > 1.2$ Jy in the galaxy rest
+frame. So the luminosity of a galaxy is given by:
+\begin{eqnarray}
+  L = 4\pi d^2 F_{60\mu m} 
+  \end{eqnarray}
+  and the luminosity of a galaxy at the limiting distance (100 Mpc)
+  with the limiting flux (1.2 Jy) is
+  \begin{eqnarray}
+  L_{limit} = 4\pi 100^2 1.2 
+  \end{eqnarray}
+  We select all the galaxies with $L$ larger than $L_{limit}$.
+\item Calculate the coordinates in a cube:
+\begin{eqnarray}
+ X  & = & d \cos(b) \cos(l) \nonumber \\
+ Y  & = & d \cos(b) \sin(l) \nonumber \\
+ Z  & = & d \sin(b)
+\end{eqnarray}
+\item Creates the catolog IRAS in the correct format (see program section).
+\end{itemize}
+
+
+Figure~\ref{fig_iras} shows the galaxies positions.
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_iras.ps,bbllx=4.5cm,bblly=2.5cm,bburx=19cm,bbury=10cm,width=15cm,height=8cm,clip=}
+}}
+\caption{Aitoff equal-area projection in galactic coordinates of 
+  IRAS galaxies with $F_{60\mu m} > 1.2$ Jy and distance $<$
+  100 Mpc. Their total number is 710.}
+\label{fig_iras}
+\end{figure}
+
+The result for the redshift space correlation function for the
+combined north+south IRAS catalog is presented on
+fig.~\ref{fig_iras2}. The result is quite consistent with published
+results for this catalog \cite{cf:fisher95}:
+\begin{eqnarray}
+r_0 = 4.27^{+0.66}_{-0.81} \mbox{ and } \gamma = 1.68^{+0.36}_{-0.29}
+\end{eqnarray}
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_iras_lin.ps,bbllx=2cm,bblly=1cm,bburx=18cm,bbury=17cm,width=8cm,height=8cm,clip=}
+}}
+\caption{Correlation function of the IRAS galaxies in linear bins with 
+  the corresponding linear least square fit for the data in separation
+  range 1 -- 20 Mpc.}
+\label{fig_iras2}
+% \end{figure}
+
+% \begin{figure}[hb]
+\centerline{
+\hbox{
+\psfig{figure=fig_iras_log.ps,bbllx=2cm,bblly=1cm,bburx=18cm,bbury=17cm,width=8cm,height=8cm,clip=}
+}}
+\caption{Correlation function of the IRAS galaxies in logarithmic bins with 
+  the corresponding linear least square fit for the data in separation 
+  range 1 -- 20 Mpc.}
+\label{fig_iras3}
+\end{figure}
+For comparison we present the correlation function for the same data
+catalog but in logarithmic separation bins. As it is clear from
+fig.~\ref{fig_iras3}, the strong fluctuations for the correlation
+function for large separations is quite smoothed.
+
+
+\subsubsection{Application to numerical simulations -- $\Lambda$CDM
+  model}
+
+For cosmological studies it is very important to test the predictions
+of various cosmological models for the clustering properties of the
+matter and to put constraints on various parameters by analyzing the
+results from numerical simulations and their correspondence to what is
+observed. Because in simulations we have all the parameter space of
+the objects (coordinates, velocities, masses ...) it is a natural to
+examine the clustering properties by means of various statistical
+tools used in the analysis of the observational data: correlation
+functions, power spectrum analysis, ...
+
+We will present here the results for the correlation function for one
+cosmological model ($\Lambda CDM,\ h = 0.7,\ \Omega_0 = 0.3,\
+\Omega_\Lambda = 0.7$) from a Hubble volume simulation. The data
+are available at the following address: \\
+http://www.physics.lsa.umich.edu/hubble-volume \\
+
+We have extracted a
+volume limited slice with objects with redshift less than 0.4 (for the
+cosmological model this corresponds to 1550 Mpc). The view of the data
+is presented on fig.~\ref{fig_lcdm1} for XY plane and on
+fig.~\ref{fig_lcdm2} for XZ plane. All the points represent groups or
+clusters of galaxies with masses greater than $\sim 6.6 \times 10^{13}
+M_{*}$.
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_lcdm_xy.ps,bbllx=2cm,bblly=1cm,bburx=18cm,bbury=17cm,width=8cm,height=8cm,clip=}
+}}
+\caption{The XY plane view of the $\Lambda CDM$ slice used for the
+  correlation function analysis. The opening angle is 45 deg. and the
+  total number of objects is 6002.}
+\label{fig_lcdm1}
+\end{figure}
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_lcdm_xz.ps,bbllx=2cm,bblly=1cm,bburx=18cm,bbury=17cm,width=8cm,height=8cm,clip=}
+}}
+\caption{The XZ plane view of the $\Lambda CDM$ slice.}
+\label{fig_lcdm2}
+\end{figure}
+
+The results with the corresponding linear least squares fit are
+presented on fig.~\ref{lcdm_fig3} for linear separation bins and on
+fig.~\ref{lcdm_fig4} for logarithmic.
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_lcdm_lin.ps,bbllx=2cm,bblly=1cm,bburx=18cm,bbury=17cm,width=8cm,height=8cm,clip=}
+}}
+\caption{The correlation function of $\Lambda CDM$ model for linear
+  separation bins. The fit is done in 1--50 Mpc separations and the
+  error bars are the standard deviations of 5 random catalog
+  generations (the second method for estimating the uncertainty of the 
+  correlation function -- $\Delta_R$).}
+\label{lcdm_fig3}
+\end{figure}
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_lcdm_log.ps,bbllx=2cm,bblly=1cm,bburx=18cm,bbury=17cm,width=8cm,height=8cm,clip=}
+}}
+\caption{Same as fig.~\ref{lcdm_fig3} but for logarithmic separation bins.}
+\label{lcdm_fig4}
+\end{figure}
+
+The results are consistent with the normalization used in the
+simulations -- the clustering properties of the simulation should
+correspond to the observed clustering for redshift of 0 ($r_0 \approx
+15,\ \gamma \approx 1.8$).
+
+\clearpage
+\newpage
+
+\section{Program}
+
+\subsection{Catalogue format}
+The catalogue format is the following:
+\begin{itemize}
+\item the first line must contain the number of points $N$, the
+  dimension $D$ (1,2, or 3), and the coordinate system $S$ ($S$ = 1 or
+  2).  The recognized coordinate systems are:
+  \begin{enumerate}
+  \item $X$ and/or $Y$ and/or $Z$ Euclidien system.
+  \item Angular coordinate system (longitude, latitude and/or
+    distance; that could be the equatorial system -- right ascension
+    $\alpha$, declination $\delta$, the galactic coordinate system
+    with galactic longitude $l$, galactic latitude $b$, the
+    supergalactic coordinate system with $SL$ and $SB$ etc.).
+  \end{enumerate}
+\item the $D$ following lines must contains three values: the range of
+  variation of the $i-th$ coordinate (min,max) and a flag indicating
+  the generation model for the corresponding coordinate: 0 -- uniform
+  between [min,max], 1 -- bootstrapping the coordinate and 2 -- uniform
+  on sphere between [min,max] in degrees. When the user have supplied
+  its own generated random catalogs, then those three lines are
+  ignored.
+\item the $N$ following lines contains the coordinates of the points.
+\end{itemize}
+
+An example of a 3D catalogue, with 10 points in the Euclidien system,
+each coordinate being defined in the interval $[0,100]$ and random
+catalog coordinates uniform in [0,100] for each axis, is:
+\begin{verbatim}
+       10       3           1
+       0      100.000       0
+       0      100.000       0
+       0      100.000       0
+      42.1782      13.4610      73.7444
+      41.6855      9.82727      75.3605
+      42.3580      14.7867      73.1548
+      42.0255      12.3347      74.2453
+      42.7474      17.6581      71.8777
+      41.9410      11.7113      74.5226
+      65.5637      9.84036      71.3585
+      65.7140      12.6019      70.5645
+      65.5843      10.2196      71.2495
+      65.4521      7.79074      71.9479
+\end{verbatim}
+
+
+\subsection{Random catalogue simulations}
+
+There is one random catalog simulation incorporated inside the main
+procedure and it is using the header information from the data
+catalog. In that case the user must supply the min, max and type of
+the corresponding coordinate generation, e.g. uniform from min,max
+etc. as described in the previous section.
+
+However, this simple case is not applicable for the real observed
+catalogs, which in all cases are subject to selections and occupy
+different volumes with complicated geometry. That's why it is quite
+impossible to implement a dedicated procedure for this task. We have
+implemented however a possibility for user to create his own set of
+random catalogs and to feed them to the correlation analysis
+procedure. The only required information for the random catalogs
+(aside from the coordinates of the random points) should be given on
+the first line: number of random points, number of dimensions and the
+type of the coordinate system.
+
+We givem as an examplem in the IDL routine section two such procedures 
+for the data presented in the report:
+
+
+\subsection{two--point correlation function: cf\_ana}
+Program {\em cf\_ana} estimates the two--point correlation function of
+a 1D,2D, or a 3D data set between two points separations, {\em SepMin} and
+{\em SepMax}, and with a given step (separation bin width). \\
+
+The output file (fits format) contains a 2D array $T$, with:
+\begin{itemize}
+\item $T(*,0) = $ distance
+\item $T(*,1) = $ two--point correlation function using the standard
+  method.
+\item $T(*,2) = $ Poisson error (eq.~\ref{eq_pois}).
+\item $T(*,3) = $ standard deviation error (eq.~\ref{eq_std}).
+\item $T(*,4) = $ bootstrap error (eq.~\ref{eq_boot}).
+\end{itemize}
+The bootstrap catalogs are created and bootstrap errors are calculated
+only if the number of realization is larger or equal than 20.  If the
+"-A" option is set, all estimators are used and the second dimension
+of $T$ is 17 instead of 5. Data from $T(*,1)$ to $T(*,4)$ concern the
+first method (standard one), $T(*,5)$ to $T(*,8)$ the second
+(Davis-Peebles one), $T(*,9)$ to $T(*,12)$ the third, and $T(*,13)$ to
+$T(*,16)$ the last one (Landy-Szalay).
+
+By default, random catalogues are calculated, but they can be read
+from the disk using the "-r {\em Prefix\_FileName}" option.  In this
+case, files must have the correct names, {\em PREFIX\_rnd\_i.dat},
+where is $i$ the simulation number.  This option has the advantage to
+allows the user to use its own random catalog simulations.
+
+\begin{center}
+  USAGE: cf\_ana options catalog.dat cf.fits
+\end{center}
+where options are 
+\begin{itemize}
+\item {\bf [-I InitRandomVal]} \\
+  Value used for random value generator initialization. \\
+  Default is 100.
+\item {\bf [-n NbrRnd]} \\
+  Number of random points used in the random realization.  Default is
+  the number of data points.
+\item {\bf [-g NbrSimu]} \\
+  Number of realizations used to calculate the random error
+  and the bootstrap error. \\
+  Default is 20.
+\item {\bf [-L]} \\
+  Use logarithmic steps. Default is no.
+\item {\bf [-s Step]} \\
+  Pair separations bin size. Default is 1.
+\item {\bf [-m SepMin]}  \\
+  Pair separations min. Must be set.
+\item {\bf [-M SepMax]}  \\
+  Pair separations max. Must be set.
+\item {\bf [-C CF\_Method]} \\
+  Two-points correlation function calculation method
+\begin{enumerate}
+\item Standard method (eq.\ref{std_method})
+\item Davis-Peebles method (eq.\ref{dp_method})
+\item Hamilton method (eq.\ref{ham_method}) 
+\item Landy-Szalay method (eq.\ref{ls_method})  
+\end{enumerate}             
+Default is Landy-Szalay method.
+\item {\bf  [-r Prefix\_FileName]} \\
+ Read from the disk the simulated random catalogue files.
+ Default is no. 
+\item {\bf [-w prefix\_file\_name]} \\
+  Write to the disk intermediate files. It is mainly for
+  cross-checking and debugging. In addition to the random and
+  bootstrap catalogues, five files are written:
+\begin{enumerate}
+\item prefix\_cf\_data\_data.fits: contains the 1D $DD$ data set, the number
+  of pairs in the data catalog in each bin.
+\item prefix\_cf\_rnd\_rnd.fits: contains the 2D $RR$ data set, the number of
+  pairs for each realization in the random catalogue.
+\item prefix\_cf\_data\_rnd.fits: contains the 2D $DR$ data set, the number of
+  pairs for each realization of the random catalogue between the data
+  and random points.
+\item prefix\_cf\_boot\_boot.fits: contains the 2D $DD$ data set, the number
+  of pairs for each realization in the bootstrap catalogue.
+\item prefix\_cf\_boot\_rnd.fits: contains the 2D $DR$ data set, the number
+  of pairs for each realization of the random catalogue between the
+  bootstrap and the random catalogue.
+\end{enumerate}
+Default is no writing. 
+\item {\bf [-A]} \\
+Apply all methods. The two point--correlation function is calculated
+for all four methods.  
+ \item {\bf [-v]} \\
+Verbose
+\end{itemize}
+Examples:
+\begin{itemize}
+\item {\tt cf\_ana -v -g 5 -s 0.5 -m 0 -M 10 -n 10000 -C 2 input.dat
+    result.fits}\\ Calculates the two--point correlation function of
+  the input data, with number of random points equal to $10^4$ using
+  Davis-Peebles estimator, for distance between 0 and 10, with a bin
+  size equal to 0.5 and 5 generations of random catalogs generated by
+  the supplied model for each coordinate generation in the input.dat 4
+  header lines.
+\item {\tt cf\_ana -g 5 -v -s 0.5 -m 0 -M 10 -n 10000 -A -r random
+    input.dat result.fits}\\ Ditto, but all estimators are calculated
+  and the random catalogs named random\_rnd\_0.fits \dots
+  random\_rnd\_5.fits (generated by the user) are read from disk.
+\end{itemize}
+
+\subsection{IDL routines}
+
+\subsubsection{IDL Cox Process routine: cox\_data}
+Program {\em cox\_data} creates a Cox process. 
+\begin{center}
+     USAGE:  COX\_DATA, length=length, np=np, nseg=nseg, lcube=lcube,x, y, z, 
+randval=rndval, file=file
+\end{center}
+where
+\begin{itemize}
+\item {\em length} = length of the segments. Default is 10.
+\item {\em np } = number of points per segment. Default is 6.
+\item {\em nseg} = number of segments. Default is 1000.
+\item {\em lcube } = the length of the cube volume. Default is 100.
+\item {\em file } = file name. If set, the data are printed in a ascii
+  file
+\item {\em randval } = parameter for the random value generator.
+\item {\em X,Y,Z} = output 1D vector of the same size containing the
+  coqordinate values of the points.
+\end{itemize}
+
+\subsubsection{IDL Cox plot routine: plot\_cox}
+Program {\em plot\_cox} plots the result of the two point correlation
+function analysis of a Cox process. If input parameter is not given,
+this routine just plots the COX process.
+\begin{center}
+PLOT\_COX, Result, method=method, err=err
+\end{center}
+where
+\begin{itemize}
+\item {\em method }= int: if the -A option was used when running cf\_ana,
+several methods are available for estimation the two points correlation function:
+\begin{enumerate}
+\item Standard method ($DD/RR-1$)  
+\item Davis-Peebles method ($DD/DR-1$) 
+\item Hamilton method ($DD*RR/(DR^2) - 1$) 
+\item Landy-Szalay method ($DD/RR - DR/(2RR)$)  
+\end{enumerate}
+Default is 1.
+
+\item {\em err }= int: For each method the error is calculated by different
+ways:
+\begin{enumerate}
+\item Poisson error.
+\item From the standard deviation.
+\item From the bootstrap bias-corrected interval.
+\end{enumerate}
+Default is 1.
+\end{itemize}
+
+
+\subsubsection{IDL 3D plot routine: plot\_xyz}
+Program {\em plot\_xyz} plots a set of points in a cube.  If the
+filename keyword is specified, the data are plotted in a postcript
+file.z=0 is at the bottom of the cube.
+\begin{center}
+  USAGE: PLOT\_XYZ, X,Y,Z, col=col, filename=filename, land=lan
+\end{center}
+where
+\begin{itemize}
+\item {\em X,Y,Z} = input 1D vector of the same size containing the
+  coordinate values of the points.
+\item {\em  col } =  color value of the axes. Default is no color.
+\item {\em filename} = if set, the plot is printed in a postcript
+  file.
+\item {\em land }= int: if set, and filename is set, the lanscape
+  mode is activated.
+\end{itemize}
+
+\subsubsection{IDL correlation function plot routine: plot\_cf}
+
+Program {\em plot\_cf} plots the result of the two point correlation 
+function analysis (see program {em cf\_ana}).
+
+\begin{center}
+PLOT\_CF, Result, method=method, err=err, last=last, XR=XR, YR=YR
+\end{center}
+where
+\begin{itemize}
+\item {\em method }= int: if the -A option was used when running cf\_ana,
+several methods are available for estimation the two points correlation function:
+\begin{enumerate}
+\item Standard method ($DD/RR-1$)  
+\item Davis-Peebles method ($DD/DR-1$) 
+\item Hamilton method ($DD*RR/(DR^2) - 1$) 
+\item Landy-Szalay method ($DD/RR - DR/(2RR)$)  
+\end{enumerate}
+Default is 1.
+
+\item {\em err }= int: For each method the error is calculated by different
+ways:
+\begin{enumerate}
+\item Poisson error
+\item From the standard deviation.
+\item From the bootstrap bias-corrected interval.
+\end{enumerate}
+Default is 1.
+\item {\em last }= int: Do not plot the last N points.
+\item {\em XR }= int[2]: Xrange. Default is  $[0.1, 100]$
+\item {\em YR }= int[2]: Yrange. Default is  $[0.01, 100]$
+\end{itemize}
+
+\subsubsection{IDL luminosity distance calculation routine: ldist}
+Program {\em ldist}  calculates the luminosity distance 
+from any given redshift for any 
+cosmological model with $H_0$ and  $\Omega_0$
+(Source: Ue-Li Pen, astro-ph/9904172).
+\begin{center}
+    Result = LDIST(z, omega0=omega0, h0=h0)
+\end{center}
+where
+\begin{itemize}
+\item {\em  omega0 }= float: $\Omega_0$ value. Default is 1.
+\item {\em  h0}= float: $H_0$ value  Default is 100.
+\end{itemize}
+
+
+\subsubsection{IRAS random catalog creation}
+Program {\em iras\_random} creates random 
+catalogs for the IRAS 1.2 Jy survey. It creates in the current directory 
+{\em ngen} number of files named "prfx\_rnd\_\#\.dat", each one containing 
+one random realization with one header line describing the number of points,
+the dimensions and the coordinate system type.
+\begin{center}
+    iras\_random,input\_catalog,nran=nran,ngen=ngen,ver=ver,prfx=prfx,seed=seed,boot=boot
+\end{center}
+\begin{itemize}
+\item {\em  input\_catalog }= string: the name of the IRAS 1.2Jy catalog with the
+                       required 4 header lines. The last 3 ignored for 
+                       this particular case. 
+\item {\em  nran }= int: the number of random points. If not set, then it is
+              equal to the number of data points in the input catalog.
+\item {\em  ngen }= int: the number of random catalog generations. Default to
+              10.
+\item {\em  ver}= int: which version of random catalog creation: 
+\begin{itemize}
+\item {ver=1} - IRAS 1.2 Jy north
+\item {ver=2} - IRAS 1.2 Jy south
+\item {ver=3} - IRAS 1.2 Jy north+south.
+\end{itemize}
+The default is ver=3.
+\item {\em  prfx}= string: the prefix of the files created. The full name 
+will be "prfx\_rnd\_\#\.dat", where \# is the generation number. The
+default prefix is "random".
+\item {\em  seed }= int:  the random seed.
+\end{itemize}
+
+\subsubsection{$\Lambda$CDM random catalog creation}
+Program {\em lcdm\_random} creates random catalogs 
+for the LCDM numerical simulation.
+It creates in the current directory 
+{\em ngen} number of files named "prfx\_rnd\_\#\.dat", each one containing 
+one random realization with one header line describing the number of points,
+the dimensions and the coordinate system type.
+  
+\begin{center}
+    lcdm\_random,input\_catalog,nran=nran,ngen=ngen,prfx=prfx,seed=seed
+\end{center}
+\begin{itemize}
+\item {\em  input\_catalog }= string: the name of the LCDM simulation data 
+                       with the required 4 header lines. The last 3 ignored 
+		       for this particular case. 
+\item {\em  nran }= int: the number of random points. If not set, then it is
+              equal to the number of data points in the input catalog.
+\item {\em  ngen }= int: the number of random catalog generations. Default to
+              10.
+ \item {\em  prfx}= string: the prefix of the files created. The full name 
+will be "prfx\_rnd\_\#\.dat", where \# is the generation number. The
+default prefix is "random".
+\item {\em  seed }= int:  the random seed.
+\end{itemize}
+ 
+ 
+

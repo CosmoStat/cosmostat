@@ -1,0 +1,306 @@
+\chapter{Contrast Enhancement}
+\section{Introduction}
+Because some features are hardly detectable by eye in an image, we
+often transform it before display. Histogram equalization is
+one the most well-known methods for contrast enhancement.
+Such an approach is generally useful for images
+with a poor  intensity distribution. Since edges play a fundamental 
+role in image understanding, a way to enhance the contrast is to 
+enhance the edges. For example, we can add to the original image its Laplacian
+($I^{'}= I + \gamma \Delta I$, where $\gamma$ is a parameter). Only
+features at the finest scale are enhanced (linearly). For a high 
+$\gamma$ value, only the high frequencies are visible.
+Multiscale edge enhancement \cite{col:velde99} can be seen 
+as a generalization of this approach to all resolution levels.  
+ 
+In color images, objects can exhibit variations in color saturation
+with little or no correspondence in luminance variation. 
+Several methods have been proposed in the past for color image
+enhancement \cite{col:toet92}.
+  The retinex concept was introduced by Land \cite{col:land86} as a model
+for human color constitancy. 
+The single scale retinex (SSR) method \cite{col:jobson97a} consists of
+applying the following transform to each band $i$ of the color image:
+\begin{eqnarray}
+R_i(x,y) = \log( I_i(x,y)) - \log(F(x,y) * I_i(x,y)) 
+\end{eqnarray}
+where $R_i(x,y)$ is the retinex output, $I_i(x,y)$ is the image 
+distribution in the $i$th spectral band, and $F$ is a Gaussian function.
+A gain/offset is applied to the retinex output which clips the highest and
+lowest signal excursions. This can be done by a k-sigma clipping.
+The retinex method is efficient for dynamic range compression, but does not provide good
+tonal rendition \cite{col:rahman96}. 
+The Multiscale Retinex (MSR) combines several SSR outputs to produce 
+a single output image which has both good dynamic range compression and
+color constancy, and good tonal rendition \cite{col:jobson97b}.
+The MSR can be defined by:
+\begin{eqnarray}
+R_{MSR_i} = \sum_{j=1}^N w_j R_{i,j}
+\end{eqnarray}
+with 
+\begin{eqnarray}
+R_{i,j}(x,y) = \log( I_i(x,y)) - \log(F_j(x,y) * I_i(x,y)) 
+\end{eqnarray}
+$N$ is the number of scales, $R_{i,j}$ is the $i$th spectral
+component of the MSR output, and $w_j$ is the weight associated with
+the scale $j$. The Gaussian $F_j$ is given by:
+\begin{eqnarray}
+F_j(x,y) = K \exp{- {r^2 \over c_j^2}}
+\end{eqnarray}
+$c_j$ defines the width of the Gaussian.
+In \cite{col:jobson97b}, three scales were recommended with $c_j$ values
+equal respectively to 15,80,250, and all weights $w_j$ fixed to ${1 \over N}$.
+The Multiscale Retinex introduces the concept of multiresolution for
+contrast enhancement. Velde \cite{col:velde99} has explicitly introduced
+the wavelet transform and has proposed an algorithm which modifies the 
+wavelet coefficients in order to amplify faint features.
+% \section{Contrast Enhancement using the Wavelet Transform}
+% Velde \cite{col:velde99} proposed  to use the wavelet transform
+% for edge enhancement.
+ The idea is to first transform the image
+using the dyadic wavelet transform (two directions per scale).
+The gradient $G_{j,k}$ at scale $j$ and at pixel location $k$
+is calculated at each scale $j$ from
+the wavelet coefficients $w_{j,k}^{(h)}$ and  $w_{j,k}^{(v)}$ relative to
+the horizontal and vertical wavelet bands: 
+$G_{j,k} = \sqrt{ (w_{j,k}^{(h)})^2 + (w_{j,k}^{(v)})^2}$. Then the two 
+wavelet coefficients at scale $j$ and at position $k$   
+are multiplied by  $y(G_{j,k})$, where $y$ is defined by:
+\begin{eqnarray}
+  y(x) & = & ({m \over c})^p \mbox{ if } \mid x \mid < c \nonumber \\
+  y(x) & = & ({m \over \mid x \mid })^p  \mbox{ if } c \le \mid x \mid < m \nonumber \\
+  y(x) & = & 1  \mbox{ if } \mid x \mid \ge m
+\label{eqn_velde}
+\end{eqnarray}
+\begin{figure}[htb]
+\vbox{
+\centerline{  
+\hbox{
+\psfig{figure=fig_velde.ps,bbllx=3cm,bblly=13cm,bburx=20cm,bbury=25.cm,width=6.5cm,height=4cm,clip=}
+}}
+}
+\caption{Enhanced coefficients versus  original coefficients.  
+Parameters are m=30, c=3 and p=0.5.
+}
+\label{fig_velde}
+\end{figure}
+Three parameters are needed: $p$, $m$ and $c$. 
+$p$ determines the degree of non-linearity in the nonlinear rescaling
+of the luminance, and must be in $]0,1[$.  
+Coefficients larger than $m$ are not modified by the algorithm.
+The $c$ parameter corresponds to the noise level.  
+Figure~\ref{fig_velde} shows the modified wavelet coefficients versus
+the original wavelet coefficients for a given set of parameters 
+($m=30$, $c=3$ and $p=0.5$). 
+Finally, the enhanced image is obtained by the inverse wavelet transform
+from the modified wavelet coefficients. 
+For color images, a similar method can be used, but by calculating 
+the multiscale gradient $\Gamma_{j,k}$ from the multiscale gradient of 
+the three $L$, $u$, $v$ components: $\Gamma_j(i) = \sqrt{ \parallel G_{j,k}^L \parallel^2 + 
+                     \parallel G_{j,k}^u \parallel^2 +
+		     \parallel G_{j,k}^v \parallel^2 }$.
+All wavelet coefficients at scale $j$ and at position $k$ 
+are multiplied by $y(\Gamma_{j,k})$,  the enhanced $\tilde L$, $\tilde u$, $\tilde v$ components are reconstructed 
+from the modified wavelet coefficients, and 
+the ($\tilde L$,$\tilde u$,$\tilde v$) image is transformed into
+an RGB image. More details can be found in \cite{col:velde99}.
+
+Wavelet bases present some limitations,
+because they are not adapted to the detection of highly anisotropic elements,
+such as alignments in an image, or sheets in a cube. 
+Recently, other multiscale
+systems like ridgelets \cite{Harmnet} and 
+curvelets \cite{Curvelets-StMalo,starck:sta01_3}    
+which are very different from wavelet-like systems have been developed. 
+Curvelets and ridgelets take  the form of basis elements which 
+exhibit very high directional sensitivity and are highly anisotropic. 
+The curvelet transform uses the ridgelet transform in its digital 
+implementation. We first describe the ridgelet and the curvelet 
+transform, then we show how contrast enhancement can be obtained 
+from the curvelet coefficients.
+
+\section{Contrast Enhancement by the Cur\-ve\-let Trans\-form}
+
+Since the curvelet transform is well-adapted to represent images containing edges,
+it is a good candidate for edge enhancement \cite{starck:capri02,starck:sta02_4}. 
+Curvelet coefficients
+can be modified in order to enhance edges in an image. A function $y_c$
+must be defined which modifies the values of the curvelet 
+coefficients. It could be a function similar to the one defined for the 
+wavelet coefficients \cite{col:velde99} (see equation~\ref{eqn_velde}).
+This function presents however the drawback of amplifying the noise (linearly)
+as well as the signal of interest. We introduce explicitly the noise standard 
+deviation $\sigma$ in the equation:
+\begin{eqnarray}
+  y_c(x, \sigma) & = & 1 \mbox{ if }   x < c \sigma \nonumber \\
+  y_c(x, \sigma) & = & \frac{x-c\sigma}{c \sigma}(\frac{m}{c \sigma})^p + \frac{2c\sigma-x}{c \sigma}  \mbox{ if } x < 2c \sigma \nonumber \\
+  y_c(x, \sigma) & = & (\frac{m}{x})^p  \mbox{ if } 2c\sigma \le x < m \nonumber \\
+  y_c(x, \sigma) & = & (\frac{m}{x})^s \mbox{ if }x \ge m
+\label{eqn_velde_curve}
+\end{eqnarray}
+
+\begin{figure}[htb]
+\centerline{  
+\hbox{
+\psfig{figure=fig_velde_mod.ps,bbllx=3cm,bblly=13cm,bburx=20cm,bbury=25.cm,width=6.5cm,height=4cm,clip=}
+\psfig{figure=fig_velde_mod_sat.ps,bbllx=3cm,bblly=13cm,bburx=20cm,bbury=25cm,width=6.5cm,height=4cm,clip=}
+}}
+\caption{Enhanced coefficients versus  original coefficients. Left, 
+parameters are m=30,c=0.5,s=0, and p=0.5. Right, 
+parameters are m=30,c=0.5,s=0.7,p=0.9.
+}
+\label{fig_velde_cur_enhance}
+\end{figure}
+
+We have fixed $m=c=p=0.5$ and $s=0$ in all our experiments. $p$ determines 
+the
+degree of non-linearity and $s$ introduces a saturation.
+$c$ becomes a normalized parameter, and a $c$ value larger than $3$ 
+guaranties that the noise 
+will not be amplified. The $m$ parameter can be defined either from
+the noise standard deviation ($m = K_m \sigma$) or from the maximum curvelet
+coefficient $M_c$ of the relative band ($m = l M_c$, with $l < 1$). The first
+choice allows the user to define the coefficients to amplify as a function
+of their signal-to-noise ratio, while the second one gives an easy    
+and general way to fix the $m$ parameter independently of the range of the
+pixel values. Figure~\ref{fig_velde_cur_enhance} shows the curve representing
+the enhanced coefficients versus the original coefficients for two
+sets of parameters. In the second case, a saturation is added.
+
+The curvelet enhancement method for grayscale images consists of 
+the following steps:
+\begin{enumerate}
+\item Estimate the noise standard deviation $\sigma$ in the input
+image $I$.
+\item Calculate the curvelet transform of the input image. We get a set 
+of bands $w_{j}$, each band $w_j$ contains $N_j$ coefficients 
+and corresponds to a given resolution level. 
+\item Calculate the noise  standard deviation $\sigma_j$ for each
+band $j$ of the curvelet transform (see \cite{starck:sta01_3} more
+details on this step).
+\item For each band $j$ do
+\begin{itemize}
+\item Calculate the maximum $M_j$ of the band.
+\item Multiply each curvelet coefficient $w_{j,k}$ by $y_c(\mid w_{j,k} \mid ,\sigma_j)$.
+\end{itemize}
+\item Reconstruct the enhanced image from the modified curvelet coefficients.
+\end{enumerate}
+
+For color images, we apply first the curvelet transform on the
+three components $L,u,v$. For each cur\-velet coef\-fi\-cient, we  
+cal\-cu\-la\-te $e = \sqrt{ c_L^2 + c_u^2 + c_v^2}$, where $(c_L, c_u, c_v)$
+are respectively the curvelet coefficients of the three components,
+and the mo\-di\-fied coef\-fi\-cients are obtained by:
+$(\tilde c_L, \tilde  c_u, \tilde c_v) = 
+(y_c(e, \sigma)c_L , y_c(e, \sigma)c_u, y_c(e, \sigma)c_v)$. 
+
+Values in the enhanced components can be larger than the 
+authorized upper limit (in general $255$),
+and we found it necessary to add a final step to our method, which is
+a sigma-clipping saturation.
+
+\section{Examples}
+\subsubsection*{Saturn Image}
+\begin{figure}[htb]
+\centerline{  
+\vbox{
+\hbox{
+\psfig{figure=fig_sat512.ps,bbllx=1.8cm,bblly=12.7cm,bburx=14.5cm,bbury=25.4cm,width=8cm,height=8cm,clip=}
+\psfig{figure=fig_sat_contrast_histo.ps,bbllx=1.8cm,bblly=12.7cm,bburx=14.5cm,bbury=25.4cm,width=8cm,height=8cm,clip=}
+}
+\hbox{
+\psfig{figure=fig_sat_contrast_wedge.ps,bbllx=1.8cm,bblly=12.7cm,bburx=14.5cm,bbury=25.4cm,width=8cm,height=8cm,clip=}
+\psfig{figure=fig_sat_contrast_cur.ps,bbllx=1.8cm,bblly=12.7cm,bburx=14.5cm,bbury=25.4cm,width=8cm,height=8cm,clip=}
+}}
+}
+\caption{Top, Saturn image and its histogram equalization. Bottom,
+enhancement image by the wavelet transform and the curvelet transform.}
+\label{fig_saturn_cur_enhance}
+\end{figure}
+
+Figure~\ref{fig_saturn_cur_enhance} shows respectively from left to right
+and from top to bottom 
+the Saturn image, the histogram equalized image, the wavelet multiscale
+edge enhanced image and the curvelet multiscale
+edge enhanced image (parameters were $s=0$, $p=0.5$, $c=3$, and $l=0.5$). 
+The curvelet multiscale edge enhanced image shows clearly better the 
+rings and edges of Saturn.
+
+\subsubsection*{Satellite Image}
+\begin{figure}[htb]
+\centerline{  
+\vbox{
+\hbox{
+\psfig{figure=fig_marseille.ps,bbllx=1.9cm,bblly=12.8cm,bburx=14.6cm,bbury=25.5cm,width=10.cm,height=10cm,clip=}
+}
+\hbox{
+\psfig{figure=fig_cur_marseille.ps,bbllx=1.9cm,bblly=12.8cm,bburx=14.6cm,bbury=25.5cm,width=10.cm,height=10cm,clip=}
+}}
+}
+\caption{Top, grayscale image, and bottom,
+curvelet enhanced image.}
+\label{fig_marseille_bw_cur_enhance}
+\end{figure}
+ 
+\begin{figure}[htb]
+\centerline{  
+\vbox{
+\hbox{
+\psfig{figure=kodak140501.ps,bbllx=5.9cm,bblly=8.1cm,bburx=15cm,bbury=21.7cm,width=5.5cm,height=8cm,clip=}
+\psfig{figure=kodak140501_ret.ps,bbllx=5.9cm,bblly=8.1cm,bburx=15cm,bbury=21.7cm,width=5.5cm,height=8cm,clip=}
+}
+\hbox{
+\psfig{figure=kodak140501_mret.ps,bbllx=5.9cm,bblly=8.1cm,bburx=15cm,bbury=21.7cm,width=5.5cm,height=8cm,clip=}
+\psfig{figure=kodak140501_cur.ps,bbllx=5.9cm,bblly=8.1cm,bburx=15cm,bbury=21.7cm,width=5.5cm,height=8cm,clip=}
+}}
+}
+\caption{Top, color image (Kodak picture of the day 14/05/02) and retinex
+method. Bottom, multiscale retinex method and multiscale edge enhancement.}
+\label{fig_kodak_col_wt_enhance}
+\end{figure}
+
+\begin{figure}[htb]
+\centerline{  
+\vbox{
+\hbox{
+\psfig{figure=K111201.ps,bbllx=4.3cm,bblly=10.8cm,bburx=16.7cm,bbury=19.1cm,width=12.5cm,height=8.2cm,clip=}
+}
+\hbox{
+\psfig{figure=K111201_cur.ps,bbllx=4.3cm,bblly=10.8cm,bburx=16.7cm,bbury=19.1cm,width=12.5cm,height=8.2cm,clip=}
+}}
+}
+\caption{Left, color image (Kodak picture of the day 11/12/01), and right,
+curvelet enhanced image.}
+\label{fig_kodak2_col_cur_enhance}
+\end{figure}
+
+Figure~\ref{fig_marseille_bw_cur_enhance}  
+shows the results for the enhancement of a grayscale satellite image, and
+Figure~\ref{fig_kodak_col_wt_enhance}  
+shows the results for the enhancement of a color image (Kodak image of
+the day 14/05/01) by the retinex,
+the multiscale retinex and the curvelet multiscale edge enhancement methods.
+ Figure~\ref{fig_kodak2_col_cur_enhance} 
+shows the results for the enhancement of a color image (Kodak image of
+the day 11/12/01).
+
+\section{Discussion}
+A number of properties, respected by the curvelet filtering 
+described here, are important for contrast stretching:
+\begin{enumerate}
+\item Noise must not be amplified in enhancing edges.
+\item Colors should not be unduly modified.  In multiscale retinex,
+for example, a tendancy towards increased grayness is seen.  This is 
+not the case using curvelets.
+\item It is very advantageous if block effects do not occur. 
+Block overlapping is usually not necessary in curvelet-based contrast
+enhancement, unlike in the case of noise filtering.  
+\end{enumerate}
+% A range of further examples can be seen at \\
+% http://www-stat.stanford.edu/$\sim$jstarck/contrast.html.
+
+% \clearpage
+% \newpage
+
+
+
