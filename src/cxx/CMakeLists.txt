@@ -41,8 +41,29 @@ link_directories(${Python_LIBRARY_DIRS})
 find_pkg(CFITSIO cfitsio)
 
 # Locate HEALPix
-find_pkg(HEALPIX healpix_cxx)
+#find_pkg(HEALPIX healpix_cxx)
+pkg_check_modules(HEALPIX healpix_cxx>=3.80)
+
 include_directories(${HEALPIX_INCLUDE_DIRS})
+if (HEALPIX_FOUND)
+  include_directories(${HEALPIX_INCLUDE_DIRS})
+  include_directories(${HEALPIX_INCLUDE_DIRS})
+  include_directories(/usr/local/Cellar/healpix/3.80/include/healpix_cxx)
+  link_directories(${HEALPIX_LIBRARY_DIRS})
+
+  message("HEALPIX package: == YES == ")
+  message("DIRLIB = ${HEALPIX_LINK_LIBRARIES}")
+  message("INCLIB = ${HEALPIX_INCLUDE_DIRS}")
+  message("${HEALPIX_LIBRARIES}")
+else(HEALPIX_FOUND)
+  if(DO_NOT_COMPILE_HEALPIX_BIN MATCHES "0")
+    message("======================================================")
+    message("NO HEALPIX package. MRS binaries will not be compiled.")
+    message("======================================================")
+  endif(DO_NOT_COMPILE_HEALPIX_BIN MATCHES "0")
+#  set(DO_NOT_COMPILE_HEALPIX_BIN 1)
+endif(HEALPIX_FOUND)
+
 
 # Locate FFTW
 find_package(FFTW3 QUIET)
@@ -177,29 +198,29 @@ install(TARGETS ${gma_all_targets} DESTINATION bin)
 
 
 # ------------- #
-# MS-VST & MWIR #
+# MWIR #
 # ------------- #
 
-option(BUILD_MSVST "Build MSVST library" OFF)
-message(STATUS "MSVST Build: ${BUILD_MSVST}")
+option(BUILD_MWIR "Build MWIR library" ON)
+message(STATUS "MWIR Build: ${BUILD_MWIR}")
 
-if(BUILD_MSVST)
+if(BUILD_MWIR)
 
 # Build misc libs
-set(mwir_libs mvst-mwir)
+set(mwir_libs mwir)
 foreach(library ${mwir_libs})
   build_lib(${library} mr cc h)
 endforeach()
-set(mwir_alllibs ${misc_libs} ${mr_libs} ${mwir_libs})
+set(mwir_alllibs ${misc_libs} ${mwir_libs})
 
 # Find all mrs targets
-find_targets(mwir_targets mr/msvstmain cc)
+find_targets(mwir_targets mr/mwirmain cc)
 
 set(mwir_all_targets  ${mwir_targets})
 
 # Build  binaries
 foreach(program ${mwir_all_targets})
-  build_bin(${program} "${mwir_alllibs}" mr/msvstmain cc)
+  build_bin(${program} "${mwir_alllibs}" mr/mwirmain cc)
 endforeach(program)
  
 # Install libraries
@@ -210,11 +231,65 @@ install(TARGETS ${mwir_all_targets} DESTINATION bin)
 
 endif()
 
+# ------------------- #
+# DICTIONARY LEARNING #
+# ------------------- #
+
+# ISSUE NEED TO INCLUDE GSL LIBRARY
+
+option(BUILD_DICLEARN "Build Dictionary Learning library" ON)
+message(STATUS "BUILD_DICLEARN Build: ${BUILD_DICLEARN}")
+
+if(BUILD_DICLEARN)
+
+  # Locate GSL using pkg-config
+  pkg_check_modules(GSL gsl)
+  if (GSL_FOUND)
+      message(STATUS "GSL_FOUND: ${BUILD_DICLEARN}")
+      include_directories(${GSL_INCLUDE_DIRS})
+      link_directories(${GSL_LIBRARY_DIRS})
+  endif()
+  # Locate the Armadillo library
+  find_package(Armadillo)
+  if (ARMADILLO_FOUND)
+     message(STATUS "ARMADILLO_FOUND: ${ARMADILLO_FOUND} ${GSL_LIBRARIES} ${ARMADILLO_LIBRARIES} ")
+     include_directories(${ARMADILLO_INCLUDE_DIRS})
+  endif (ARMADILLO_FOUND)
+
+ if (GSL_FOUND)
+  if (ARMADILLO_FOUND)
+
+    # Build misc libs
+    set(learn_libs diclearn)
+    foreach(library ${learn_libs})
+        build_lib(${library} mr cc h)
+    endforeach()
+    set(learn_alllibs ${misc_libs} ${learn_libs} ${GSL_LIBRARIES} ${ARMADILLO_LIBRARIES} )
+
+    # Install libraries
+    install(TARGETS ${learn_libs} DESTINATION lib)
+    
+    # Find all mrs targets
+    find_targets(learn_targets mr/diclearnmain cc)
+
+    set(learn_all_targets  ${learn_targets})
+
+    # Build  binaries
+    foreach(program ${learn_all_targets})
+        build_bin(${program} "${learn_alllibs}" mr/diclearnmain cc)
+    endforeach(program)
+
+    # Install binaraies
+    install(TARGETS ${learn_all_targets} DESTINATION bin)
+
+    endif()
+  endif(GSL_FOUND)
+endif()
 
 # --- #
 # MRS #
 # --- #
-option(BUILD_MRS "Build MRS library" OFF)
+option(BUILD_MRS "Build MRS library" ON)
 message(STATUS "MRS Build: ${BUILD_MRS}")
 
 if(BUILD_MRS)
@@ -251,12 +326,13 @@ endif()
 # -------- #
 # Astro WL #
 # -------- #
-option(BUILD_ASTRO "Build ASTRO library" OFF)
-message(STATUS "ASTRO Build: ${BUILD_ASTRO}")
+option(BUILD_ASTRO_WL "Build ASTRO WL library" ON)
+message(STATUS "ASTRO WL Build: ${BUILD_ASTRO_WL}")
 
-if(BUILD_ASTRO)
+if(BUILD_ASTRO_WL)
+if(BUILD_MRS)
 
-# Set path to astro weaklensing
+# Set path to astro WEAKLENSING
 set(astro_wl_path astro/weaklensing)
 
 # Build astro weaklensing libs
@@ -289,11 +365,47 @@ install(TARGETS ${astro_wl_libs} DESTINATION lib)
 install(TARGETS ${astro_wl_all_targets} DESTINATION bin)
 
 endif()
+endif()
+
+# -------- #
+
+option(BUILD_ASTRO_GAL "Build ASTRO GAL library" ON)
+message(STATUS "ASTRO GAL Build: ${BUILD_ASTRO_GAL}")
+
+if(BUILD_ASTRO_GAL)
+
+# Set path to astro Galaxies
+set(astro_gal_path astro/galaxies)
+
+# Build astro galaxies libs
+set(astro_gal_libs gal)
+foreach(library ${astro_gal_libs})
+  build_lib(${library} ${astro_gal_path} cc h)
+  add_dependencies(${library} ${misc_libs} ${mr_libs})
+endforeach()
+set(astrogal_alllibs ${misc_libs} ${astro_gal_libs})
+
+# Find all astro gal targets
+find_targets(astro_gal_targets ${astro_gal_path}/galmain cc)
+set(astro_gal_all_targets ${astro_gal_targets})
+
+# Build astro gal binaries
+foreach(program ${astro_gal_targets})
+  build_bin(${program} "${astrogal_alllibs}" ${astro_gal_path}/galmain cc)
+endforeach(program)
+
+# Install libraries
+install(TARGETS ${astro_gal_libs} DESTINATION lib)
+
+# Install binaraies
+install(TARGETS ${astro_gal_all_targets} DESTINATION bin)
+
+endif()
 
 # --------------- #
 # Python Bindings #
 # --------------- #
-option(BUILD_BINDING "Build BINDING library" OFF)
+option(BUILD_BINDING "Build BINDING library" ON)
 message(STATUS "BINDING Build: ${BUILD_BINDING}")
 
 if(BUILD_BINDING)

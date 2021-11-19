@@ -11,8 +11,8 @@ void jacobi(float **a, int n, float *d, float **v, int *nrot)
 	int j,iq,ip,i;
 	float tresh,theta,tau,t,sm,s,h,g,c,*b,*z;
 
-	b=vector(1,n);
-	z=vector(1,n);
+	b=fvector(1,n);
+	z=fvector(1,n);
 	for (ip=1;ip<=n;ip++) {
 		for (iq=1;iq<=n;iq++) v[ip][iq]=0.0;
 		v[ip][ip]=1.0;
