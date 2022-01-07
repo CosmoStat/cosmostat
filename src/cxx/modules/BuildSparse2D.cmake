@@ -3,7 +3,7 @@
 #=================#
 
 # Set Sparse2D Version
-set(Sparse2DVersion v2.1.5)
+set(Sparse2DVersion v2.1.6)
 
 # Set Sparse2D source dir
 set(SPARSE2D_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/sparse2d)

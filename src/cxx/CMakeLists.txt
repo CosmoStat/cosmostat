@@ -41,29 +41,7 @@ link_directories(${Python_LIBRARY_DIRS})
 find_pkg(CFITSIO cfitsio)
 
 # Locate HEALPix
-#find_pkg(HEALPIX healpix_cxx)
-pkg_check_modules(HEALPIX healpix_cxx>=3.80)
-
-include_directories(${HEALPIX_INCLUDE_DIRS})
-if (HEALPIX_FOUND)
-  include_directories(${HEALPIX_INCLUDE_DIRS})
-  include_directories(${HEALPIX_INCLUDE_DIRS})
-  include_directories(/usr/local/Cellar/healpix/3.80/include/healpix_cxx)
-  link_directories(${HEALPIX_LIBRARY_DIRS})
-
-  message("HEALPIX package: == YES == ")
-  message("DIRLIB = ${HEALPIX_LINK_LIBRARIES}")
-  message("INCLIB = ${HEALPIX_INCLUDE_DIRS}")
-  message("${HEALPIX_LIBRARIES}")
-else(HEALPIX_FOUND)
-  if(DO_NOT_COMPILE_HEALPIX_BIN MATCHES "0")
-    message("======================================================")
-    message("NO HEALPIX package. MRS binaries will not be compiled.")
-    message("======================================================")
-  endif(DO_NOT_COMPILE_HEALPIX_BIN MATCHES "0")
-#  set(DO_NOT_COMPILE_HEALPIX_BIN 1)
-endif(HEALPIX_FOUND)
-
+find_pkg(HEALPIX healpix_cxx>=3.80)
 
 # Locate FFTW
 find_package(FFTW3 QUIET)
@@ -81,153 +59,124 @@ set(CMAKE_CXX_FLAGS_RELEASE
 )
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
-# --- #
-# MR #
-# --- #
+# ---- #
+# MISC #
+# ---- #
 
-# Build misc libs
+# Build libs
 set(misc_libs misc1d misc2d misc3d)
-foreach(library ${misc_libs})
-  build_lib(${library} misc cc h)
-endforeach()
-set(mr_libs mr1d mr2d)
-foreach(library ${mr_libs})
-  build_lib(${library} mr cc h)
-endforeach()
-set(mr_alllibs ${misc_libs} ${mr_libs})
+build_libs_cch("${misc_libs}" misc)
 
-# Find all mrs targets
+# Find all targets
 find_targets(misc_targets misc/main2d cc)
-find_targets(misc3d_targets misc/main3d cc)
+find_targets(misc_3d_targets misc/main3d cc)
+
+# Build binaries
+build_bins_cc("${misc_targets}" "${misc_libs}" misc/main2d)
+build_bins_cc("${misc_3d_targets}" "${misc_libs}" misc/main3d)
+
+# Install libraries and binaries
+install(TARGETS ${misc_libs} DESTINATION lib)
+install(TARGETS ${misc_targets} DESTINATION bin)
+
+# -- #
+# MR #
+# -- #
+
+# Build libs
+set(mr_libs mr1d mr2d)
+build_libs_cch("${mr_libs}" mr)
+
+# Set list of all required libs
+set(mr_all_libs ${mr_libs} ${misc_libs})
+
+# Find all targets
 find_targets(mr1d_targets mr/mrmain1d cc)
 find_targets(mr2d_targets mr/mrmain2d cc)
 find_targets(mr3d_targets mr/mrmain3d cc)
 
-set(misc_all_targets ${misc_targets} ${misc3d_targets} ${mr1d_targets} ${mr2d_targets} ${mr3d_targets})
+# Build binaries
+build_bins_cc("${mr1d_targets}" "${mr_all_libs}" mr/mrmain1d)
+build_bins_cc("${mr2d_targets}" "${mr_all_libs}" mr/mrmain2d)
+build_bins_cc("${mr3d_targets}" "${mr_all_libs}" mr/mrmain3d)
 
-# Build  binaries
-foreach(program ${misc_targets})
-  build_bin(${program} "${misc_libs}" misc/main2d cc)
-endforeach(program)
-foreach(program ${misc3d_targets})
-  build_bin(${program} "${misc_libs}" misc/main3d cc)
-endforeach(program)
-foreach(program ${mr1d_targets})
-  build_bin(${program} "${mr_alllibs}" mr/mrmain1d cc)
-endforeach(program)
-foreach(program ${mr2d_targets})
-  build_bin(${program} "${mr_alllibs}" mr/mrmain2d cc)
-endforeach(program)
-foreach(program ${mr3d_targets})
-  build_bin(${program} "${mr_alllibs}" mr/mrmain3d cc)
-endforeach(program)
-
-# Install libraries
-install(TARGETS ${misc_libs} DESTINATION lib)
+# Install libraries and binaries
 install(TARGETS ${mr_libs} DESTINATION lib)
+install(TARGETS ${mr1d_targets} ${mr2d_targets} ${mr3d_targets} DESTINATION bin)
 
-# Install binaraies
-install(TARGETS ${misc_all_targets} DESTINATION bin)
-
-# --- #
+# -- #
 # MC #
-# --- #
+# -- #
 
-# Build misc libs
+# Build libs
 set(mc_libs mc1d mc2d)
-foreach(library ${mc_libs})
-  build_lib(${library} mr cc h)
-endforeach()
-set(mc_alllibs ${misc_libs} ${mr_libs} ${mc_libs})
+build_libs_cch("${mc_libs}" mc)
 
-# Find all mrs targets
-find_targets(mc1d_targets mr/mcmain1d cc)
-find_targets(mc2d_targets mr/mcmain2d cc)
+# Set list of all required libs
+set(mc_all_libs ${mc_libs} ${mr_libs} ${misc_libs})
 
-set(mc_all_targets  ${mc1d_targets} ${mc2d_targets} )
+# Find all targets
+find_targets(mc1d_targets mc/mcmain1d cc)
+find_targets(mc2d_targets mc/mcmain2d cc)
 
-# Build  binaries
-foreach(program ${mc1d_targets})
-  build_bin(${program} "${mc_alllibs}" mr/mcmain1d cc)
-endforeach(program)
-foreach(program ${mc2d_targets})
-  build_bin(${program} "${mc_alllibs}" mr/mcmain2d cc)
-endforeach(program)
- 
-# Install libraries
+# Build binaries
+build_bins_cc("${mc1d_targets}" "${mc_all_libs}" mc/mcmain1d)
+build_bins_cc("${mc2d_targets}" "${mc_all_libs}" mc/mcmain2d)
+
+# Install libraries and binaries
 install(TARGETS ${mc_libs} DESTINATION lib)
-
-# Install binaraies
-install(TARGETS ${mc_all_targets} DESTINATION bin)
+install(TARGETS ${mc1d_targets} ${mc2d_targets} DESTINATION bin)
 
 # --- #
 # MGA #
 # --- #
 
-# Build misc libs
+# Build libs
 set(mga_libs mga1d mga3d)
-foreach(library ${mga_libs})
-  build_lib(${library} mga cc h)
-endforeach()
+build_libs_cch("${mga_libs}" mga)
 
-set(mga_alllibs ${misc_libs} ${mr_libs} ${mc_alllibs} ${mga_libs})
+# Set list of all required libs
+set(mga_all_libs ${mga_libs} ${mc_libs} ${mr_libs} ${misc_libs})
 
-# Find all mrs targets
+# Find all targets
 find_targets(mga1d_targets mga/mgamain1d cc)
 find_targets(mga2d_targets mga/mgamain2d cc)
 find_targets(mga3d_targets mga/mgamain3d cc)
 
-set(gma_all_targets  ${mga1d_targets} ${mga2d_targets} ${mga3d_targets})
+# Build binaries
+build_bins_cc("${mga1d_targets}" "${mga_all_libs}" mga/mgamain1d)
+build_bins_cc("${mga2d_targets}" "${mga_all_libs}" mga/mgamain2d)
+build_bins_cc("${mga3d_targets}" "${mga_all_libs}" mga/mgamain3d)
 
-# Build  binaries
-foreach(program ${mga1d_targets})
-  build_bin(${program} "${mga_alllibs}" mga/mgamain1d cc)
-endforeach(program)
-foreach(program ${mga2d_targets})
-  build_bin(${program} "${mga_alllibs}" mga/mgamain2d cc)
-endforeach(program)
-foreach(program ${mga3d_targets})
-  build_bin(${program} "${mga_alllibs}" mga/mgamain3d cc)
-endforeach(program)
+# Install libraries and binaries
+install(TARGETS ${mga_libs} DESTINATION lib)
+install(TARGETS ${mga1d_targets} ${mga2d_targets} ${mga3d_targets} DESTINATION bin)
 
-# Install libraries
-install(TARGETS ${mga_alllibs} DESTINATION lib)
-
-# Install binaraies
-install(TARGETS ${gma_all_targets} DESTINATION bin)
-
-
-# ------------- #
+# ---- #
 # MWIR #
-# ------------- #
+# ---- #
 
 option(BUILD_MWIR "Build MWIR library" ON)
 message(STATUS "MWIR Build: ${BUILD_MWIR}")
 
 if(BUILD_MWIR)
 
-# Build misc libs
-set(mwir_libs mwir)
-foreach(library ${mwir_libs})
-  build_lib(${library} mr cc h)
-endforeach()
-set(mwir_alllibs ${misc_libs} ${mwir_libs})
+  # Build libs
+  set(mwir_libs mwir)
+  build_libs_cch("${mwir_libs}" mwir)
 
-# Find all mrs targets
-find_targets(mwir_targets mr/mwirmain cc)
+  # Set list of all required libs
+  set(mwir_all_libs ${mwir_libs} ${misc_libs})
 
-set(mwir_all_targets  ${mwir_targets})
+  # Find all targets
+  find_targets(mwir_targets mwir/mwirmain cc)
 
-# Build  binaries
-foreach(program ${mwir_all_targets})
-  build_bin(${program} "${mwir_alllibs}" mr/mwirmain cc)
-endforeach(program)
- 
-# Install libraries
-install(TARGETS ${mwir_libs} DESTINATION lib)
+  # Build binaries
+  build_bins_cc("${mwir_targets}" "${mwir_all_libs}" mwir/mwirmain)
 
-# Install binaraies
-install(TARGETS ${mwir_all_targets} DESTINATION bin)
+  # Install libraries and binaries
+  install(TARGETS ${mwir_libs} DESTINATION lib)
+  install(TARGETS ${mwir_targets} DESTINATION bin)
 
 endif()
 
@@ -235,170 +184,119 @@ endif()
 # DICTIONARY LEARNING #
 # ------------------- #
 
-# ISSUE NEED TO INCLUDE GSL LIBRARY
+# ISSUE: Need to to include GSL and Armadillo libraries
 
 option(BUILD_DICLEARN "Build Dictionary Learning library" ON)
 message(STATUS "BUILD_DICLEARN Build: ${BUILD_DICLEARN}")
 
 if(BUILD_DICLEARN)
 
-  # Locate GSL using pkg-config
-  pkg_check_modules(GSL gsl)
-  if (GSL_FOUND)
-      message(STATUS "GSL_FOUND: ${BUILD_DICLEARN}")
-      include_directories(${GSL_INCLUDE_DIRS})
-      link_directories(${GSL_LIBRARY_DIRS})
-  endif()
-  # Locate the Armadillo library
-  find_package(Armadillo)
-  if (ARMADILLO_FOUND)
-     message(STATUS "ARMADILLO_FOUND: ${ARMADILLO_FOUND} ${GSL_LIBRARIES} ${ARMADILLO_LIBRARIES} ")
-     include_directories(${ARMADILLO_INCLUDE_DIRS})
-  endif (ARMADILLO_FOUND)
+  # Locate GSL
+  find_pkg(GSL gsl)
 
- if (GSL_FOUND)
-  if (ARMADILLO_FOUND)
+  # Locate Armadillo
+  find_pkg(Armadillo Armadillo)
 
-    # Build misc libs
-    set(learn_libs diclearn)
-    foreach(library ${learn_libs})
-        build_lib(${library} mr cc h)
-    endforeach()
-    set(learn_alllibs ${misc_libs} ${learn_libs} ${GSL_LIBRARIES} ${ARMADILLO_LIBRARIES} )
+  # Build libs
+  set(learn_libs diclearn)
+  build_libs_cch("${diclearn_libs}" diclearn)
 
-    # Install libraries
-    install(TARGETS ${learn_libs} DESTINATION lib)
-    
-    # Find all mrs targets
-    find_targets(learn_targets mr/diclearnmain cc)
+  # Set list of all required libs
+  set(diclearn_all_libs ${diclearn_libs} ${misc_libs} ${GSL_LIBRARIES} ${ARMADILLO_LIBRARIES})
 
-    set(learn_all_targets  ${learn_targets})
+  # Find all targets
+  find_targets(diclearn_targets diclearn/diclearnmain cc)
 
-    # Build  binaries
-    foreach(program ${learn_all_targets})
-        build_bin(${program} "${learn_alllibs}" mr/diclearnmain cc)
-    endforeach(program)
+  # Build binaries
+  build_bins_cc("${diclearn_targets}" "${diclearn_all_libs}" diclearn/diclearnmain)
 
-    # Install binaraies
-    install(TARGETS ${learn_all_targets} DESTINATION bin)
+  # Install libraries and binaries
+  install(TARGETS ${diclearn_libs} DESTINATION lib)
+  install(TARGETS ${diclearn_targets} DESTINATION bin)
 
-    endif()
-  endif(GSL_FOUND)
 endif()
 
 # --- #
 # MRS #
 # --- #
-option(BUILD_MRS "Build MRS library" ON)
-message(STATUS "MRS Build: ${BUILD_MRS}")
 
-if(BUILD_MRS)
-
-# Build mrs libs
+# Build libs
 set(mrs_libs mrs mrsp)
-foreach(library ${mrs_libs})
-  build_lib(${library} mrs cc h)
-endforeach()
+build_libs_cch("${mrs_libs}" mrs)
 
-# Find all mrs targets
+# Find all targets
 find_targets(mrs_targets mrs/mainmrs cc)
 find_targets(mrsp_targets mrs/mainmrsp cc)
-set(mrs_all_targets ${mrs_targets} ${mrsp_targets})
 
-# Build MRS binaries
-foreach(program ${mrs_targets})
-  build_bin(${program} "${mrs_libs}" mrs/mainmrs cc)
-endforeach(program)
+# Build binaries
+build_bins_cc("${mrs_targets}" "${mrs_libs}" mrs/mainmrs)
+build_bins_cc("${mrsp_targets}" "${mrs_libs}" mrs/mainmrsp)
 
-# Build MRSP binariess
-foreach(program ${mrsp_targets})
-  build_bin(${program} "${mrs_libs}" mrs/mainmrsp cc)
-endforeach(program)
-
-# Install libraries
+# Install libraries and binaries
 install(TARGETS ${mrs_libs} DESTINATION lib)
-
-# Install binaraies
-install(TARGETS ${mrs_all_targets} DESTINATION bin)
-
-endif()
+install(TARGETS ${mrs_targets} ${mrsp_targets} DESTINATION bin)
 
 # -------- #
 # Astro WL #
 # -------- #
+
 option(BUILD_ASTRO_WL "Build ASTRO WL library" ON)
 message(STATUS "ASTRO WL Build: ${BUILD_ASTRO_WL}")
 
 if(BUILD_ASTRO_WL)
-if(BUILD_MRS)
 
-# Set path to astro WEAKLENSING
-set(astro_wl_path astro/weaklensing)
+  # Set path to astro weak lensing
+  set(astro_wl_path astro/weaklensing)
 
-# Build astro weaklensing libs
-set(astro_wl_libs divcurlwt wl wls)
-foreach(library ${astro_wl_libs})
-  build_lib(${library} ${astro_wl_path} cc h)
-  add_dependencies(${library} ${mrs_libs})
-endforeach()
-set(astro_wl_mrs_libs ${astro_wl_libs} ${mrs_libs})
+  # Build libs
+  set(astro_wl_libs divcurlwt wl wls)
+  build_libs_cch("${astro_wl_libs}" ${astro_wl_path})
 
-# Find all astro wl targets
-find_targets(astro_wl_targets ${astro_wl_path}/mainwl cc)
-find_targets(astro_wls_targets ${astro_wl_path}/mainwls cc)
-set(astro_wl_all_targets ${astro_wl_targets} ${astro_wls_targets})
+  # Set list of all required libs
+  set(astro_wl_all_libs ${astro_wl_libs} ${mrs_libs})
 
-# Build astro wl binaries
-foreach(program ${astro_wl_targets})
-  build_bin(${program} "${astro_wl_libs}" ${astro_wl_path}/mainwl cc)
-endforeach(program)
+  # Find all targets
+  find_targets(astro_wl_targets ${astro_wl_path}/mainwl cc)
+  find_targets(astro_wls_targets ${astro_wl_path}/mainwls cc)
 
-# Build astro wls binaries
-foreach(program ${astro_wls_targets})
-  build_bin(${program} "${astro_wl_mrs_libs}" ${astro_wl_path}/mainwls cc)
-endforeach(program)
+  # Build binaries
+  build_bins_cc("${astro_wl_targets}" "${astro_wl_all_libs}" ${astro_wl_path}/mainwl)
+  build_bins_cc("${astro_wls_targets}" "${astro_wl_all_libs}" ${astro_wl_path}/mainwls)
 
-# Install libraries
-install(TARGETS ${astro_wl_libs} DESTINATION lib)
-
-# Install binaraies
-install(TARGETS ${astro_wl_all_targets} DESTINATION bin)
+  # Install libraries and binaries
+  install(TARGETS ${astro_wl_libs} DESTINATION lib)
+  install(TARGETS ${astro_wl_targets} ${astro_wls_targets} DESTINATION bin)
 
 endif()
-endif()
 
-# -------- #
+# --------- #
+# Astro Gal #
+# --------- #
 
 option(BUILD_ASTRO_GAL "Build ASTRO GAL library" ON)
 message(STATUS "ASTRO GAL Build: ${BUILD_ASTRO_GAL}")
 
 if(BUILD_ASTRO_GAL)
 
-# Set path to astro Galaxies
-set(astro_gal_path astro/galaxies)
+  # Set path to astro galaxies
+  set(astro_gal_path astro/galaxies)
 
-# Build astro galaxies libs
-set(astro_gal_libs gal)
-foreach(library ${astro_gal_libs})
-  build_lib(${library} ${astro_gal_path} cc h)
-  add_dependencies(${library} ${misc_libs} ${mr_libs})
-endforeach()
-set(astrogal_alllibs ${misc_libs} ${astro_gal_libs})
+  # Build libs
+  set(astro_gal_libs gal)
+  build_libs_cch("${astro_gal_libs}" ${astro_gal_path})
 
-# Find all astro gal targets
-find_targets(astro_gal_targets ${astro_gal_path}/galmain cc)
-set(astro_gal_all_targets ${astro_gal_targets})
+  # Set list of all required libs
+  set(astro_gal_all_libs ${astro_gal_libs} ${misc_libs})
 
-# Build astro gal binaries
-foreach(program ${astro_gal_targets})
-  build_bin(${program} "${astrogal_alllibs}" ${astro_gal_path}/galmain cc)
-endforeach(program)
+  # Find all targets
+  find_targets(astro_gal_targets ${astro_gal_path}/galmain cc)
 
-# Install libraries
-install(TARGETS ${astro_gal_libs} DESTINATION lib)
+  # Build binaries
+  build_bins_cc("${astro_gal_targets}" "${astro_gal_all_libs}" ${astro_gal_path}/galmain)
 
-# Install binaraies
-install(TARGETS ${astro_gal_all_targets} DESTINATION bin)
+  # Install libraries and binaries
+  install(TARGETS ${astro_gal_libs} DESTINATION lib)
+  install(TARGETS ${astro_gal_targets} DESTINATION bin)
 
 endif()
 
@@ -410,19 +308,19 @@ message(STATUS "BINDING Build: ${BUILD_BINDING}")
 
 if(BUILD_BINDING)
 
-# Include Pybind11 headers
-if(NOT DEFINED PYBIND11_INCLUDE_DIR)
-  message(FATAL_ERROR "Path to Pybind11 headers must be specified.")
-else()
-  include_directories(${PYBIND11_INCLUDE_DIR})
-endif()
+  # Include Pybind11 headers
+  if(NOT DEFINED PYBIND11_INCLUDE_DIR)
+    message(FATAL_ERROR "Path to Pybind11 headers must be specified.")
+  else()
+    include_directories(${PYBIND11_INCLUDE_DIR})
+  endif()
 
-# Define binding targets
-set(binding_targets pymrs)
+  # Define binding targets
+  set(binding_targets pymrs)
 
-# Build bindings
-foreach(program ${binding_targets})
-  build_pybind(${program} python_binding cpp)
-endforeach(program)
+  # Build bindings
+  foreach(program ${binding_targets})
+    build_pybind(${program} python_binding cpp)
+  endforeach(program)
 
 endif()
