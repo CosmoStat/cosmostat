@@ -191,18 +191,26 @@ message(STATUS "BUILD_DICLEARN Build: ${BUILD_DICLEARN}")
 
 if(BUILD_DICLEARN)
 
-  # Locate GSL
-  find_pkg(GSL gsl)
-
-  # Locate Armadillo
-  find_pkg(Armadillo Armadillo)
+  # Locate GSL using pkg-config
+  pkg_check_modules(GSL gsl)
+  if (GSL_FOUND)
+      message(STATUS "GSL_FOUND: ${BUILD_DICLEARN}")
+      include_directories(${GSL_INCLUDE_DIRS})
+      link_directories(${GSL_LIBRARY_DIRS})
+  endif()
+  # Locate the Armadillo library
+  find_package(Armadillo)
+  if (ARMADILLO_FOUND)
+     message(STATUS "ARMADILLO_FOUND: ${ARMADILLO_FOUND} ${GSL_LIBRARIES} ${ARMADILLO_LIBRARIES} ")
+     include_directories(${ARMADILLO_INCLUDE_DIRS})
+  endif (ARMADILLO_FOUND)
 
   # Build libs
-  set(learn_libs diclearn)
+  set(diclearn_libs diclearn)
   build_libs_cch("${diclearn_libs}" diclearn)
 
   # Set list of all required libs
-  set(diclearn_all_libs ${diclearn_libs} ${misc_libs} ${GSL_LIBRARIES} ${ARMADILLO_LIBRARIES})
+  set(diclearn_all_libs ${misc_libs} ${mr_libs} ${diclearn_libs} ${GSL_LIBRARIES} ${ARMADILLO_LIBRARIES} )
 
   # Find all targets
   find_targets(diclearn_targets diclearn/diclearnmain cc)
