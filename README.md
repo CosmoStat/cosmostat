@@ -1,6 +1,16 @@
 # cosmostat
 Software package for cosmostatistics
 
+## Requirements
+
+- Armadillo
+- CFITSIO
+- CMake
+- FFTW
+- GSL
+- HEALPix
+- OpenMP
+- Python
 
 ## Install
 
