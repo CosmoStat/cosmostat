@@ -18,7 +18,7 @@ To install the package requirements it is recommended to use [Homebrew](https://
 
 ```bash
 brew tap sfarrens/sf
-brew install armadillo bigmac cfitsio fftw gsl healpix libomp
+brew install armadillo bigmac cfitsio cmake fftw gsl healpix libomp
 ```
 
 ## Install
