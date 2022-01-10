@@ -12,6 +12,15 @@ Software package for cosmostatistics
 - OpenMP
 - Python
 
+### macOS Set Up
+
+To install the package requirements it is recommended to use [Homebrew](https://brew.sh/).
+
+```bash
+brew tap sfarrens/sf
+brew install armadillo bigmac cfitsio fftw gsl healpix libomp
+```
+
 ## Install
 
 To install without thinking:
