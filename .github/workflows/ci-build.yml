@@ -40,6 +40,7 @@ jobs:
         shell: bash -l {0}
         if: runner.os == 'macOS'
         run: |
+          brew tap sfarrens/sf
           brew install armadillo bigmac cfitsio fftw gsl healpix libomp
 
       - name: Install Dependencies
