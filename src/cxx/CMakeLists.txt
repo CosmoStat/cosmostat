@@ -13,6 +13,9 @@ include(ExternalProject)
 include(FindPkgConfig)
 
 # Load custom CMake function
+# - find_pkg
+# - build_package
+# - build_pybind_list
 include(functions)
 
 # Set build type
@@ -59,98 +62,110 @@ set(CMAKE_CXX_FLAGS_RELEASE
 )
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
+# Set basic package dependency list including Sparse2D, CFITSIO and FFTW
+set(basic_libs ${sparse2d_libs} ${CFITSIO_LIBRARIES} ${fftw_libs})
+
+# -------------- #
+# Build packages #
+# -------------- #
+
 # ---- #
 # MISC #
 # ---- #
 
-# Build libs
+# List package libs
 set(misc_libs misc1d misc2d misc3d)
-build_libs_cch("${misc_libs}" misc)
-
-# Find all targets
-find_targets(misc_targets misc/main2d cc)
-find_targets(misc_3d_targets misc/main3d cc)
-
-# Build binaries
-build_bins_cc("${misc_targets}" "${misc_libs}" misc/main2d)
-build_bins_cc("${misc_3d_targets}" "${misc_libs}" misc/main3d)
-
-# Install libraries and binaries
-install(TARGETS ${misc_libs} DESTINATION lib)
-install(TARGETS ${misc_targets} DESTINATION bin)
+# List package mains
+set(misc_mains main2d main3d)
+# List package dependencies
+# - Sparse2D
+# - CFITSIO
+# - FFTW
+set(misc_deps ${basic_libs})
+# Build package
+build_package(
+  "${misc_mains}"       #List of mains
+  "${misc_libs}"        #List of libs
+  "${misc_deps}"        #List of dependencies
+  misc                  #Path to package
+  cc                    #Source extension
+  h                     #Header extension
+)
 
 # -- #
 # MR #
 # -- #
 
-# Build libs
+# List package libs
 set(mr_libs mr1d mr2d)
-build_libs_cch("${mr_libs}" mr)
-
-# Set list of all required libs
-set(mr_all_libs ${mr_libs} ${misc_libs})
-
-# Find all targets
-find_targets(mr1d_targets mr/mrmain1d cc)
-find_targets(mr2d_targets mr/mrmain2d cc)
-find_targets(mr3d_targets mr/mrmain3d cc)
-
-# Build binaries
-build_bins_cc("${mr1d_targets}" "${mr_all_libs}" mr/mrmain1d)
-build_bins_cc("${mr2d_targets}" "${mr_all_libs}" mr/mrmain2d)
-build_bins_cc("${mr3d_targets}" "${mr_all_libs}" mr/mrmain3d)
-
-# Install libraries and binaries
-install(TARGETS ${mr_libs} DESTINATION lib)
-install(TARGETS ${mr1d_targets} ${mr2d_targets} ${mr3d_targets} DESTINATION bin)
+# List package mains
+set(mr_mains mrmain1d mrmain2d mrmain3d)
+# List package dependencies
+# - MISC
+# - Sparse2D
+# - CFITSIO
+# - FFTW
+set(mr_deps ${misc_libs} ${basic_libs})
+# Build package
+build_package(
+  "${mr_mains}"         #List of mains
+  "${mr_libs}"          #List of libs
+  "${mr_deps}"          #List of dependencies
+  mr                    #Path to package
+  cc                    #Source extension
+  h                     #Header extension
+)
 
 # -- #
 # MC #
 # -- #
 
-# Build libs
+# List package libs
 set(mc_libs mc1d mc2d)
-build_libs_cch("${mc_libs}" mc)
-
-# Set list of all required libs
-set(mc_all_libs ${mc_libs} ${mr_libs} ${misc_libs})
-
-# Find all targets
-find_targets(mc1d_targets mc/mcmain1d cc)
-find_targets(mc2d_targets mc/mcmain2d cc)
-
-# Build binaries
-build_bins_cc("${mc1d_targets}" "${mc_all_libs}" mc/mcmain1d)
-build_bins_cc("${mc2d_targets}" "${mc_all_libs}" mc/mcmain2d)
-
-# Install libraries and binaries
-install(TARGETS ${mc_libs} DESTINATION lib)
-install(TARGETS ${mc1d_targets} ${mc2d_targets} DESTINATION bin)
+# List package mains
+set(mc_mains mcmain1d mcmain2d)
+# List package dependencies
+# - MR
+# - MISC
+# - Sparse2D
+# - CFITSIO
+# - FFTW
+set(mc_deps ${mr_libs} ${misc_libs} ${basic_libs})
+# Build package
+build_package(
+  "${mc_mains}"         #List of mains
+  "${mc_libs}"          #List of libs
+  "${mc_deps}"          #List of dependencies
+  mc                    #Path to package
+  cc                    #Source extension
+  h                     #Header extension
+)
 
 # --- #
 # MGA #
 # --- #
 
-# Build libs
+# List package libs
 set(mga_libs mga1d mga3d)
-build_libs_cch("${mga_libs}" mga)
-
-# Set list of all required libs
-set(mga_all_libs ${mga_libs} ${mc_libs} ${mr_libs} ${misc_libs})
-
-# Find all targets
-find_targets(mga1d_targets mga/mgamain1d cc)
-find_targets(mga2d_targets mga/mgamain2d cc)
-find_targets(mga3d_targets mga/mgamain3d cc)
-
-# Build binaries
-build_bins_cc("${mga1d_targets}" "${mga_all_libs}" mga/mgamain1d)
-build_bins_cc("${mga2d_targets}" "${mga_all_libs}" mga/mgamain2d)
-build_bins_cc("${mga3d_targets}" "${mga_all_libs}" mga/mgamain3d)
-
-# Install libraries and binaries
-install(TARGETS ${mga_libs} DESTINATION lib)
-install(TARGETS ${mga1d_targets} ${mga2d_targets} ${mga3d_targets} DESTINATION bin)
+# List package mains
+set(mga_mains mgamain1d mgamain2d mgamain3d)
+# List package dependencies
+# - MC
+# - MR
+# - MISC
+# - Sparse2D
+# - CFITSIO
+# - FFTW
+set(mga_deps ${mc_libs} ${mr_libs} ${misc_libs} ${basic_libs})
+# Build package
+build_package(
+  "${mga_mains}"        #List of mains
+  "${mga_libs}"         #List of libs
+  "${mga_deps}"         #List of dependencies
+  mga                   #Path to package
+  cc                    #Source extension
+  h                     #Header extension
+)
 
 # ---- #
 # MWIR #
@@ -161,22 +176,25 @@ message(STATUS "MWIR Build: ${BUILD_MWIR}")
 
 if(BUILD_MWIR)
 
-  # Build libs
+  # List package libs
   set(mwir_libs mwir)
-  build_libs_cch("${mwir_libs}" mwir)
-
-  # Set list of all required libs
-  set(mwir_all_libs ${mwir_libs} ${misc_libs})
-
-  # Find all targets
-  find_targets(mwir_targets mwir/mwirmain cc)
-
-  # Build binaries
-  build_bins_cc("${mwir_targets}" "${mwir_all_libs}" mwir/mwirmain)
-
-  # Install libraries and binaries
-  install(TARGETS ${mwir_libs} DESTINATION lib)
-  install(TARGETS ${mwir_targets} DESTINATION bin)
+  # List package mains
+  set(mwir_mains mwirmain)
+  # List package dependencies
+  # - MISC
+  # - Sparse2D
+  # - CFITSIO
+  # - FFTW
+  set(mwir_deps ${misc_libs} ${basic_libs})
+  # Build package
+  build_package(
+    "${mwir_mains}"       #List of mains
+    "${mwir_libs}"        #List of libs
+    "${mwir_deps}"        #List of dependencies
+    mwir                  #Path to package
+    cc                    #Source extension
+    h                     #Header extension
+  )
 
 endif()
 
@@ -184,7 +202,7 @@ endif()
 # DICTIONARY LEARNING #
 # ------------------- #
 
-# ISSUE: Need to to include GSL and Armadillo libraries
+# NOTE: Need to to include GSL and Armadillo libraries
 
 option(BUILD_DICLEARN "Build Dictionary Learning library" ON)
 message(STATUS "BUILD_DICLEARN Build: ${BUILD_DICLEARN}")
@@ -193,34 +211,40 @@ if(BUILD_DICLEARN)
 
   # Locate GSL using pkg-config
   pkg_check_modules(GSL gsl)
-  if (GSL_FOUND)
-      message(STATUS "GSL_FOUND: ${BUILD_DICLEARN}")
-      include_directories(${GSL_INCLUDE_DIRS})
-      link_directories(${GSL_LIBRARY_DIRS})
-  endif()
+  find_pkg(GSL gsl)
+
   # Locate the Armadillo library
   find_package(Armadillo)
-  if (ARMADILLO_FOUND)
-     message(STATUS "ARMADILLO_FOUND: ${ARMADILLO_FOUND} ${GSL_LIBRARIES} ${ARMADILLO_LIBRARIES} ")
-     include_directories(${ARMADILLO_INCLUDE_DIRS})
-  endif (ARMADILLO_FOUND)
+  include_directories(${ARMADILLO_INCLUDE_DIRS})
 
-  # Build libs
+  # List package libs
   set(diclearn_libs diclearn)
-  build_libs_cch("${diclearn_libs}" diclearn)
-
-  # Set list of all required libs
-  set(diclearn_all_libs ${misc_libs} ${mr_libs} ${diclearn_libs} ${GSL_LIBRARIES} ${ARMADILLO_LIBRARIES} )
-
-  # Find all targets
-  find_targets(diclearn_targets diclearn/diclearnmain cc)
-
-  # Build binaries
-  build_bins_cc("${diclearn_targets}" "${diclearn_all_libs}" diclearn/diclearnmain)
-
-  # Install libraries and binaries
-  install(TARGETS ${diclearn_libs} DESTINATION lib)
-  install(TARGETS ${diclearn_targets} DESTINATION bin)
+  # List package mains
+  set(diclearn_mains diclearnmain)
+  # List package dependencies
+  # - MR
+  # - MISC
+  # - GSL
+  # - Armadillo
+  # - Sparse2D
+  # - CFITSIO
+  # - FFTW
+  set(diclearn_deps
+    ${mr_libs}
+    ${misc_libs}
+    ${GSL_LIBRARIES}
+    ${ARMADILLO_LIBRARIES}
+    ${basic_libs}
+  )
+  # Build package
+  build_package(
+    "${diclearn_mains}"   #List of mains
+    "${diclearn_libs}"    #List of libs
+    "${diclearn_deps}"    #List of dependencies
+    diclearn              #Path to package
+    cc                    #Source extension
+    h                     #Header extension
+  )
 
 endif()
 
@@ -228,21 +252,25 @@ endif()
 # MRS #
 # --- #
 
-# Build libs
+# List package libs
 set(mrs_libs mrs mrsp)
-build_libs_cch("${mrs_libs}" mrs)
-
-# Find all targets
-find_targets(mrs_targets mrs/mainmrs cc)
-find_targets(mrsp_targets mrs/mainmrsp cc)
-
-# Build binaries
-build_bins_cc("${mrs_targets}" "${mrs_libs}" mrs/mainmrs)
-build_bins_cc("${mrsp_targets}" "${mrs_libs}" mrs/mainmrsp)
-
-# Install libraries and binaries
-install(TARGETS ${mrs_libs} DESTINATION lib)
-install(TARGETS ${mrs_targets} ${mrsp_targets} DESTINATION bin)
+# List package mains
+set(mrs_mains mainmrs mainmrsp)
+# List package dependencies
+  # - HEALPix
+  # - Sparse2D
+  # - CFITSIO
+  # - FFTW
+set(mrs_deps ${HEALPIX_LIBRARIES} ${basic_libs})
+# Build package
+build_package(
+  "${mrs_mains}"        #List of mains
+  "${mrs_libs}"         #List of libs
+  "${mrs_deps}"         #List of dependencies
+  mrs                   #Path to package
+  cc                    #Source extension
+  h                     #Header extension
+)
 
 # -------- #
 # Astro WL #
@@ -255,25 +283,26 @@ if(BUILD_ASTRO_WL)
 
   # Set path to astro weak lensing
   set(astro_wl_path astro/weaklensing)
-
-  # Build libs
+  # List package libs
   set(astro_wl_libs divcurlwt wl wls)
-  build_libs_cch("${astro_wl_libs}" ${astro_wl_path})
-
-  # Set list of all required libs
-  set(astro_wl_all_libs ${astro_wl_libs} ${mrs_libs})
-
-  # Find all targets
-  find_targets(astro_wl_targets ${astro_wl_path}/mainwl cc)
-  find_targets(astro_wls_targets ${astro_wl_path}/mainwls cc)
-
-  # Build binaries
-  build_bins_cc("${astro_wl_targets}" "${astro_wl_all_libs}" ${astro_wl_path}/mainwl)
-  build_bins_cc("${astro_wls_targets}" "${astro_wl_all_libs}" ${astro_wl_path}/mainwls)
-
-  # Install libraries and binaries
-  install(TARGETS ${astro_wl_libs} DESTINATION lib)
-  install(TARGETS ${astro_wl_targets} ${astro_wls_targets} DESTINATION bin)
+  # List package mains
+  set(astro_wl_mains mainwl mainwls)
+  # List package dependencies
+  # - MRS
+  # - HEALPix
+  # - Sparse2D
+  # - CFITSIO
+  # - FFTW
+  set(astro_wl_deps ${mrs_libs} ${HEALPIX_LIBRARIES} ${basic_libs})
+  # Build package
+  build_package(
+    "${astro_wl_mains}"   #List of mains
+    "${astro_wl_libs}"    #List of libs
+    "${astro_wl_deps}"    #List of dependencies
+    ${astro_wl_path}      #Path to package
+    cc                    #Source extension
+    h                     #Header extension
+  )
 
 endif()
 
@@ -286,33 +315,36 @@ message(STATUS "ASTRO GAL Build: ${BUILD_ASTRO_GAL}")
 
 if(BUILD_ASTRO_GAL)
 
-  # Set path to astro galaxies
+  # Set path to astro weak lensing
   set(astro_gal_path astro/galaxies)
-
-  # Build libs
+  # List package libs
   set(astro_gal_libs gal)
-  build_libs_cch("${astro_gal_libs}" ${astro_gal_path})
-
-  # Set list of all required libs
-  set(astro_gal_all_libs ${astro_gal_libs} ${misc_libs})
-
-  # Find all targets
-  find_targets(astro_gal_targets ${astro_gal_path}/galmain cc)
-
-  # Build binaries
-  build_bins_cc("${astro_gal_targets}" "${astro_gal_all_libs}" ${astro_gal_path}/galmain)
-
-  # Install libraries and binaries
-  install(TARGETS ${astro_gal_libs} DESTINATION lib)
-  install(TARGETS ${astro_gal_targets} DESTINATION bin)
+  # List package mains
+  set(astro_gal_mains galmain)
+  # List package dependencies
+  # - MISC
+  # - Sparse2D
+  # - CFITSIO
+  # - FFTW
+  set(astro_gal_deps ${misc_libs} ${basic_libs})
+  # Build package
+  build_package(
+    "${astro_gal_mains}"  #List of mains
+    "${astro_gal_libs}"   #List of libs
+    "${astro_gal_deps}"   #List of dependencies
+    ${astro_gal_path}     #Path to package
+    cc                    #Source extension
+    h                     #Header extension
+  )
 
 endif()
 
 # --------------- #
 # Python Bindings #
 # --------------- #
-option(BUILD_BINDING "Build BINDING library" ON)
-message(STATUS "BINDING Build: ${BUILD_BINDING}")
+
+option(BUILD_BINDING "Build Python Bindings" ON)
+message(STATUS "Bindings Build: ${BUILD_BINDING}")
 
 if(BUILD_BINDING)
 
@@ -325,10 +357,25 @@ if(BUILD_BINDING)
 
   # Define binding targets
   set(binding_targets pymrs)
-
+  # List binding dependencies
+  # - MRS
+  # - HEALPix
+  # - OpenMP
+  # - Sparse2D
+  # - CFITSIO
+  # - FFTW
+  set(pybind_deps
+    ${mrs_libs}
+    ${HEALPIX_LIBRARIES}
+    ${OpenMP_CXX_LIBRARIES}
+    ${basic_libs}
+  )
   # Build bindings
-  foreach(program ${binding_targets})
-    build_pybind(${program} python_binding cpp)
-  endforeach(program)
+  build_pybind_list(
+    "${binding_targets}"  #List of bindings
+    "${pybind_deps}"      #List of binding depdendencies
+    python_binding        #Path to bindings
+    cpp                   #Source extension
+  )
 
 endif()
