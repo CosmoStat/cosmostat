@@ -1,0 +1,105 @@
+This is BibTeX, Version 0.99c (Web2C 7.3.1)
+The top-level auxiliary file: doc_mra.aux
+A level-1 auxiliary file: cover.aux
+A level-1 auxiliary file: part1.aux
+A level-1 auxiliary file: ./doc_mr1/ch1_intro.aux
+A level-1 auxiliary file: ./doc_mr1/ch3_prog.aux
+A level-1 auxiliary file: ./doc_mr1/ch4_wave.aux
+A level-1 auxiliary file: ./doc_mr1/ch_restore.aux
+A level-1 auxiliary file: ./doc_mr1/ch_compress.aux
+A level-1 auxiliary file: ./doc_mr1/ch_detect.aux
+A level-1 auxiliary file: ./doc_mr1/ch_register.aux
+A level-1 auxiliary file: ./doc_mr1/ch_edge.aux
+A level-1 auxiliary file: ./doc_mr1/ch_1d.aux
+A level-1 auxiliary file: ./doc_mr1/ch_time.aux
+A level-1 auxiliary file: ./doc_mr1/ch_fractal.aux
+A level-1 auxiliary file: ./doc_mr1/ch5_idl.aux
+A level-1 auxiliary file: ./doc_mr1/annex_lifting.aux
+A level-1 auxiliary file: ./doc_mr1/annex_packet.aux
+A level-1 auxiliary file: ./doc_mr1/annex_wavemed.aux
+A level-1 auxiliary file: part2.aux
+A level-1 auxiliary file: ./doc_mr2/intro.aux
+A level-1 auxiliary file: ./doc_mr2/concept.aux
+A level-1 auxiliary file: ./doc_mr2/filter.aux
+A level-1 auxiliary file: ./doc_mr2/deconv.aux
+A level-1 auxiliary file: ./doc_mr2/fluctu.aux
+A level-1 auxiliary file: ./doc_mr2/prog.aux
+A level-1 auxiliary file: ./doc_mr2/mr2_idl.aux
+A level-1 auxiliary file: ./doc_mr2/annexA.aux
+A level-1 auxiliary file: ./doc_mr2/annex_noise.aux
+A level-1 auxiliary file: ./doc_mr2/annex_deriv1.aux
+A level-1 auxiliary file: ./doc_mr2/annex_deriv2.aux
+A level-1 auxiliary file: part3.aux
+A level-1 auxiliary file: ./doc_mr3/mc_tools.aux
+A level-1 auxiliary file: ./doc_mr3/data_3d.aux
+A level-1 auxiliary file: ./doc_mr3/mc_3d.aux
+A level-1 auxiliary file: part4.aux
+A level-1 auxiliary file: ./doc_mr4/ch_curvelet.aux
+A level-1 auxiliary file: ./doc_mr4/ch_curfilter.aux
+A level-1 auxiliary file: ./doc_mr4/ch_combfilter.aux
+A level-1 auxiliary file: ./doc_mr4/ch_curcontrast.aux
+A level-1 auxiliary file: ./doc_mr4/ch_curprog.aux
+A level-1 auxiliary file: partbib.aux
+The style file: plain.bst
+Reallocated field_info (elt_size=4) to 10037 items from 5000.
+Database file #1: pred.bib
+Database file #2: candes.bib
+Database file #3: color.bib
+Database file #4: curvelet.bib
+Database file #5: starck.bib
+Database file #6: wave.bib
+Database file #7: restore.bib
+Database file #8: compress.bib
+Database file #9: iso.bib
+Database file #10: reg.bib
+Database file #11: ima.bib
+Database file #12: edge.bib
+Database file #13: fractal.bib
+Database file #14: entropy.bib
+Database file #15: markov.bib
+Database file #16: astro.bib
+Database file #17: mc.bib
+Database file #18: cf_ana.bib
+Warning--empty title in compress:hannaford93
+You've used 219 entries,
+            2118 wiz_defined-function locations,
+            1749 strings with 36184 characters,
+and the built_in function-call counts, 71119 in all, are:
+= -- 7173
+> -- 3056
+< -- 28
++ -- 1216
+- -- 970
+* -- 4754
+:= -- 11941
+add.period$ -- 684
+call.type$ -- 219
+change.case$ -- 1091
+chr.to.int$ -- 0
+cite$ -- 220
+duplicate$ -- 2689
+empty$ -- 5758
+format.name$ -- 970
+if$ -- 14867
+int.to.chr$ -- 0
+int.to.str$ -- 219
+missing$ -- 227
+newline$ -- 1098
+num.names$ -- 475
+pop$ -- 1052
+preamble$ -- 1
+purify$ -- 901
+quote$ -- 0
+skip$ -- 1817
+stack$ -- 0
+substring$ -- 5019
+swap$ -- 443
+text.length$ -- 28
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 825
+warning$ -- 1
+while$ -- 753
+width$ -- 222
+write$ -- 2402
+(There was 1 warning)

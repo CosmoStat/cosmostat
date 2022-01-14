@@ -1,0 +1,1079 @@
+ 
+
+\chapter{\proj Multiresolution}
+\label{ch_wave}
+% \chapterhead{Programs}
+\markright{Programs}
+
+\section{Multiscale Transform}
+\index{Multiscale}
+\subsection{Introduction}
+The Morlet-Grossmann definition \cite{wave:grossmann89}   
+of the continuous wavelet
+transform for a 1-dimensional signal $f(x)\in L^2(R)$, the space of all
+square integrable functions, is:
+\index{wavelet transform, continuous}
+\index{continuous wavelet transform}
+\index{wavelet transform, Morlet-Grossman}
+\begin{eqnarray}
+W(a,b)=\frac{1}{\sqrt a}\int_{-\infty}^{+\infty}f(x) \psi^* \left( 
+\frac{x-b}{a} \right) dx
+\label{eqn_wave}
+\end{eqnarray}
+where:
+\begin{itemize}
+\item $W(a,b)$ is the wavelet coefficient of the function $f(x)$
+\item $\psi(x)$ is the analyzing wavelet
+\item $a$ ($>0$) is the scale parameter
+\item $b$ is the position parameter
+\end{itemize}
+Many discrete wavelet transform algorithms have been described 
+\cite{starck:book98}. The most widely-known one  
+is certainly the orthogonal one, 
+proposed by Mallat \cite{wave:mallat89} and its bi-orthogonal version.
+Using the orthogonal wavelet transform (OWT), a signal $s$ can
+be decomposed by:
+\begin{eqnarray}
+ s(l) = \sum_{k} c_{J,k} \phi_{J,l}(k) 
+       +  \sum_{k} \sum_{j=1}^J \psi_{j,l}(k) w_{j,k}
+\end{eqnarray}
+with $\phi_{j,l}(x) = 2^{-j} \phi(2^{-j}x-l)$ and  $\psi_{j,l}(x) = 2^{-j} \psi(2^{-j}x-l)$,
+where $\phi$ and $\psi$ are respectively 
+the scaling function and the wavelet function. 
+$J$ is the number of resolutions used in the decomposition, 
+$w_{j}$ the wavelet (or details) coefficients at scale $j$, and
+$c_{J}$ is a coarse or smooth version of the original signal $s$.
+Thus, the algorithm outputs $J+1$ subband arrays.
+The indexing is such that,
+here, $j = 1$ corresponds to the finest scale (high frequencies).
+Coefficients $c_{j,k}$ and $w_{j,k}$ are obtained by means of the filters
+$h$ and $g$:
+\begin{eqnarray}
+c_{j+1,l} & = & \sum_k h(k-2l) c_{j,k} \nonumber \\
+w_{j+1,l} & = & \sum_k g(k-2l) c_{j,k}
+\end{eqnarray}
+where $h$ and $g$ verify:
+\begin{eqnarray}
+\frac{1}{2} \phi(\frac{x}{2}) & = &  \sum_k h(k) \phi(x-k) \nonumber \\
+\frac{1}{2} \psi(\frac{x}{2}) & = & \sum_k g(k) \phi(x-k)
+\end{eqnarray}
+and the reconstruction of the signal is performed with:
+\begin{eqnarray}
+c_{j,l} = 2 \sum_k [ \tilde h(k+2l) c_{j+1,k}  + \tilde g(k+2l) w_{j+1,k}  ]
+\end{eqnarray}
+where the filters $\tilde h$ and $\tilde g$ must verify the conditions of
+dealiasing and exact reconstruction:
+\begin{eqnarray}
+\hat{h}(\nu+\frac{1}{2}) \hat{\tilde h}(\nu) + \hat{g}(\nu+\frac{1}{2}) \hat{\tilde g}(\nu)  & = & 0 \nonumber \\
+\hat{h}(\nu) \hat{\tilde h} + \hat{g}(\nu) \hat{\tilde g}(\nu)  & = & 1  
+\end{eqnarray}
+By this algorithm, the transformation of an image is an image. 
+
+
+\subsection{Methods}
+The application of the OWT to image compression and filtering
+has lead to impressive results compared to previous methods.
+However some problems related to the OWT may impact on their 
+use in some applications, and include the following.
+\begin{enumerate}
+\item Edge representation: If the OWT performs better than
+the FFT at representing edges in an image, it is still not optimal.
+There is only a fixed number of directional elements independent of scale,
+and there is no highly anisotropic element \cite{cur:candes99_1}. 
+For instance, the Haar 2D 
+wavelet transform is optimal for finding features with a  
+ratio $length/width = 2$, and a horizontal, vertical, or diagonal 
+orientation.
+\item Isotropic feature representation:
+the 2D OWT \cite{wave:mallat89} leads to a wavelet
+transform with three wavelet functions (at each scale there are
+three wavelet coefficient sub-images) which does not simplify the analysis and
+the interpretation of the wavelet coefficients. An isotropic transform
+seems more appropriate for images containing features or objects with 
+no favored orientation (such as astronomical or medical images).
+\item Negative values:
+By definition, the wavelet coefficient mean is zero. Every time we have
+a positive structure at a scale, we have negative values surrounding it. These
+negative values often create artifacts during the restoration process, or
+complicate the analysis.
+\item Point artifacts: For example, cosmic ray hits in optical astronomy
+can ``pollute'' all
+the scales of the wavelet transform. The wavelet transform is non-robust
+relative to such real or detector faults. 
+\item Integer values: The OWT produce floating values which are not 
+easy to handle for lossless image compression. 
+\end{enumerate}
+These problems have lead to the development of other multiscale 
+representations. Some of the other algorithms do not produce an image, 
+but a pyramid, or cube.
+So we separate the different multiscale transform algorithms into classes, 
+depending on the output data type. Other multiscale methods, which are
+nonlinear can also be categorized in this way. We distinguish between
+fives classes of multiscale transform: 
+\bn
+\item transforms which produce {\em cubes}
+\item transforms which produce  {\em pyramids}
+\item transforms which produce  {\em half pyramids}
+\item transforms which produce {\em images} (non-redundant transforms)
+\item transforms which produce directional {\em cubes}
+\en
+The first three, and the last,  are redundant 
+(i.e.\ there are more pixels in the transformation
+than in the input data).
+
+\subsection*{Cube transform}
+For the first class, the input image $I$ can be expressed
+as \cite{starck:bij94_1,starck:mur95_1,starck:mur95_3}:
+\begin{eqnarray}
+I(x,y) =  c_p (x,y) + \sum_{j=1}^{p} w_j(x,y)
+\end{eqnarray}
+$w_j$ (for $j=1 \dots p$) and $c_p$ represent the transformation of $I$.
+$c_p$ is a very smoothed version of the image $I$, and $w_j$ is
+the image which contains information at scale $j$. The transformation
+is defined by $n=p+1$ images ($n = $ number of scales). The $p$
+images have zero mean (or approximately zero, for nonlinear transforms).
+Each of them corresponds to the information at a given scale, i.e.\
+structure of a given size in the input image. Compact structures
+(with size of one or two pixels) will be found at the first scale ($j=1$).
+For this class of transformation, which is very redundant, the amount 
+of data is multiplied by the number of scales $n$. Therefore this
+takes a lot of memory, but the multiresolution coefficients ($w_j(x,y)$)
+are easy to interpret. 
+
+\subsection*{Pyramidal transform}
+
+The second class of transformation is 
+less redundant. The first scale has the same size as the image, but
+for the other scales, the number of pixels is reduced by four at
+each resolution. Thus, if $N^2$ is the number of pixels of $I$, the 
+number of pixels of the transformation is $4/3N^2$. 
+
+\subsection*{Half-pyramidal transform}
+This transform \cite{wave:bijaoui97} is relatively close to the previous one, but the two first
+scales are not decimated (i.e.\ they have the same size as the input image).
+See Appendix~D for more details.
+
+
+\subsection*{Non-redundant transform}
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_mallat.ps,bbllx=5.5cm,bblly=9.5cm,bburx=16cm,bbury=20cm,height=10cm,width=10cm,clip=}
+}}
+\caption{Mallat wavelet transform representation of an image.}
+\index{Mallat's multiresolution}
+\label{fig_mallat}
+\end{figure}
+
+The last class is completely non-redundant, and the number of pixels
+ is the same as in the input image. This means that it is an image. 
+Figure~\ref{fig_mallat}
+shows the representation of an image using the Mallat transform \cite{wave:mallat89,wave:antonini92,wave:daube88}. At a 
+given resolution, the image is shared between four parts. Three subimages
+correspond to details of the image in the horizontal, vertical, and 
+diagonal directions, and the last part corresponds to the image at a lower
+resolution. The process can then be repeated on the image at the
+lower resolution. The Haar wavelet transform, lifting scheme transform,
+and the G transform (which is a nonlinear transform based on the minimum and 
+the maximum) produce the same kind of representation.  
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_feauveau.ps,bbllx=5.5cm,bblly=9.5cm,bburx=16cm,bbury=20cm,height=12cm,width=12cm,clip=}
+}}
+\caption{Feauveau wavelet transform representation of an image.}
+\label{fig_feauveau}
+\end{figure}
+The Feauveau transform \cite{wave:feauveau} (see Figure~\ref{fig_feauveau}) is not redundant, 
+but the representation is different.
+There is no prioritized direction, and we have an intermediate 
+resolution (half resolution). 
+
+\subsection*{Directional cube transform}
+In this case, just as for the orthogonal Mallat transform, the 
+analysis is directional, but there
+is no decimation. This means that the number of output bands is equal to
+the number of scales multiplied by the number of directions, and each band
+has the same number 
+of pixels as the input image. The dyadic wavelet transform
+uses two directions (vertical and horizontal), and the undecimated 
+wavelet transform uses three directions (vertical, horizontal, and diagonal).
+
+\subsection*{Algorithms}
+Since the output differs following the chosen algorithm, we will define
+the term {\em band} as a subimage included in a given dyadic scale.
+For the cube and pyramid transforms, the number of bands is equal to the 
+number of scales. For the Mallat algorithm and the undecimated 
+bi-orthogonal wavelet transform, we have three bands per scale.
+For the Feauveau and the dyadic wavelet transform, we have two bands
+per scale. Table~\ref{tab_algo} indicates for each \proj \ algorithm its
+class, the number of bands per scale, and if it is redundant and linear.
+
+\begin{table}
+{\centering \begin{tabular}{|l|c|c|c|c|}
+\hline 
+Multiscale algorithm & Class & Redund- &  Bands  & Linear\\
+                     &       & ant         & per scale  &  \\
+\hline 
+\hline 
+1: linear WT & Cube & Yes & 1 & Yes \\ \hline 
+2: B-spline WT & Cube & Yes & 1 & Yes \\ \hline 
+3: wavelet transform in Fourier space & Cube & Yes & 1 & Yes \\ \hline
+4: morphological median transform (MT) & Cube & Yes & 1 & No \\ \hline
+5: morphological minmax transform & Cube & Yes & 1 & No \\ \hline
+6: pyramidal linear WT & Pyramid & Yes & 1 & Yes \\ \hline
+7: pyramidal B-spline WT & Pyramid & Yes & 1 & Yes \\ \hline
+8: pyramidal WT in Fourier space: alg.\ 1  & Pyramid & Yes & 1 & Yes \\ \hline
+9: pyramidal WT in Fourier space: alg.\ 2   & Pyramid & Yes & 1 & Yes \\ \hline
+10: pyramidal median transform  & Pyramid & Yes & 1 & No \\ \hline
+11: pyramidal Laplacian  & Pyramid & Yes & 1 & No \\ \hline
+12: morph.\ pyramidal minmax transform  & Pyramid & Yes & 1 & No \\ \hline
+13: decomposition on scaling function & Pyramid & Yes & 1 & No \\ \hline
+14: (bi-) orthogonal wavelet transform & Image & No & 3 & Yes \\ 
+14-1: Antonini 7/9 filter             &        &     &   &    \\
+14-2: Daubechies filter 4             &        &     &   &    \\
+14-3: Biorthogonal 2/6 Haar filters   &        &     &   &    \\
+14-4: Biorthogonal 2/10 Haar filters  &        &     &   &     \\
+14-5: Odegard 7/9 filters             &        &     &   &     \\
+14-6: User's filters                  &        &     &   &     \\ \hline
+15: Feauveau WT & Image & No & 2 & Yes \\ \hline
+16: Feauveau WT without undersampling & Cube & Yes & 2 & Yes \\ \hline
+17: G transform (morph.\ min-max alg.)  & Image & No & 3 & No \\ \hline
+18: Haar wavelet transform & Image & No & 3 & Yes \\ \hline
+19: Half-pyramidal transform & Half-Pyramid & Yes & 1 & Yes \\ \hline
+20: Mixed Half-pyramidal and MT  &  Half-Pyramid & Yes & 1 & No  \\ \hline
+21: Dyadic wavelet transform   &  Dir. Cube & Yes & 2 & Yes  \\ \hline
+22: Mixed WT and PMT method  & Pyramid & Yes & 1 & No \\ \hline
+23: Undecimated Haar transform  & Dir. Cube & Yes & 1 & Yes \\ \hline
+24: Undecimated bi-orthog. wavelet trans. & Dir. Cube & Yes & 3 & Yes \\ 
+\ \ \ \ (filters 14-1 to 14-6 are available) &           &     &    &  \\ \hline
+25: Wavelet transform via lifting scheme & Image & No & 3 &    \\ 
+25-1: CDF WT                             &       &    &   &  Yes \\
+25-2: Median prediction                  &       &    &   &  No \\
+25-3: integer Haar WT                    &       &    &   &  No \\ 
+25-4: integer CDF WT                     &       &    &   &  No \\ 
+25-5: integer (4,2) interpolating transform &       &    &   &  No \\  
+25-6: Antonini 7/9 filter                &       &    &   &  Yes \\  
+25-7: integer  Antonini 7/9 filter       &       &    &   &  No \\ \hline
+\hline 
+\end{tabular}\par}
+\caption{Multiscale transform algorithms.}
+\label{tab_algo}
+\end{table}
+\vspace{0.3cm}
+
+\section{Multiresolution object}
+
+\subsection{Multiresolution transform of image: mr\_transform}
+\label{sect_trans}
+\index{mr\_transform}
+The program 
+{\em mr\_transform} computes the multiresolution transform of an image.
+This transform can be a linear transform (wavelet transform) or
+a morphological transform (based on the median, or the minimum 
+and the maximum).  
+The output file which contains the transformation has a 
+suffix, .mr. If the output file name
+given by the user does not contain this suffix, it is automatically
+added. The ``.mr'' file is a FITS format file, and can be manipulated by
+any package dealing with FITS format, or using the 
+{\em mr\_extract} program.
+{\bf
+\begin{center}
+ USAGE: mr\_transform option image\_in multiresolution\_transform\_out
+\end{center}}
+where options are: 
+\begin{itemize} 
+\baselineskip=0.4truecm
+\item {\bf [-t type\_of\_multiresolution\_transform]}
+{\small 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item linear wavelet transform: \`a trous algorithm 
+\item B-spline wavelet transform: \`a trous algorithm 
+\item wavelet transform in Fourier space 
+\item morphological median transform 
+\item morphological minmax transform 
+\item pyramidal linear wavelet transform 
+\item pyramidal B-spline wavelet transform 
+\item pyramidal wavelet transform in Fourier space: 
+                     wavelet =  between two resolutions 
+\item  pyramidal wavelet transform in Fourier space: 
+                     wavelet = difference between the square of two resolutions
+\item  pyramidal median transform 
+\item  pyramidal Laplacian 
+\item  morphological pyramidal minmax transform 
+\item  decomposition on scaling function 
+\item  (bi-) orthogonal wavelet transform. \\ 
+Antonini 7/9 filters ~\cite{wave:antonini92} are used by default, with an 
+$L_1$ normalization. The filters can be changed using the ``-T'' option, and
+an $L_2$ normalization is obtained by ``-L'' option.
+\item  Feauveau wavelet transform 
+\item  Feauveau wavelet transform without undersampling 
+\item  G transform (non-redundant morphological min-max algorithm)
+\item Haar wavelet transform (L2 normalization).
+\item Half-pyramidal wavelet transform (HPWT)
+\item Mixed HPWT and Median method
+\item dyadic wavelet transform 
+\item Mixed WT and PMT method (WT-PMT) 
+\item Undecimated Haar transform: \`a trous algorithm
+\item Undecimated (bi-) orthogonal wavelet transform. \\
+Antonini 7/9 filters ~\cite{wave:antonini92} are used by default, with an 
+$L_1$ normalization. The filters can be changed using the ``-T'' option, and
+an $L_2$ normalization is obtained by ``-L'' option.
+\item Wavelet transform via lifting scheme 
+\end{enumerate}}
+Default is 2.
+\item {\bf [-T type\_of\_filters]}  
+{\small
+\begin{enumerate}
+\item Antonini 7/9 filters. 
+\item Daubechies filter 4. 
+\item Biorthogonal 2/6 Haar filters.
+\item Biorthogonal 2/10 Haar filters.
+\item Odegard 7/9 filters.
+\item User's filters.
+\end{enumerate}}
+Default is Antonini 7/9 filters. \\
+ This option is only available if the chosen transform method is
+ the (bi-) orthogonal transform (-t 14 or -t 24).
+\item {\bf [-L]} \\
+Use an $L_2$ normalization. Default is $L_1$.
+\item {\bf [-u]} \\
+Number of undecimated scales used in the undecimated wavelet transform.
+Default is all scales.
+\item {\bf [-l type\_of\_lifting\_transform]}  
+{\small 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item Lifting scheme: CDF WT. 
+\item Lifting scheme: median prediction.
+\item Lifting scheme: integer Haar WT. 
+\item Lifting scheme: integer CDF WT. 
+\item Lifting scheme: integer (4,2) interpolating transform. 
+\item Lifting scheme:  Antonini 7/9 filters.
+\item Lifting scheme: integer Antonini 7/9 filters. 
+\end{enumerate}}
+ Default is Lifting scheme: integer Haar WT. \\
+ This option is only available if the chosen transform method is
+ the lifing scheme (-t 24).
+\item {\bf [-n number\_of\_scales]} \\
+ Number of scales used in the multiresolution transform.
+ Default is 4.
+\item {\bf [-x]} \\
+ Write all bands separately as images with prefix ``band\_j'', j=1,..,NbrBand
+ (j being the band number). Note also that $j=1$ corresponds to 
+ the smallest scale (highest frequency band), and j increases for larger
+ scales.
+\item {\bf [-B]} \\
+ Same as x option, but interpolate the bands by block in order to
+ have the same size as the original image.
+% \item {\bf [-i]} \\
+% Same as x option, but interpolate the bands by a B$_3$-spline.
+% This option is valid only if the chosen multiresolution 
+%  transform belongs to the pyramidal class.
+\item {\bf [-c iter]} \\
+An exact reconstruction cannot be achieved from all 
+pyramidal transformations, and a few iterations may be necessary to refine
+the result. 
+Therefore, for transformations (6,7,8,9,10,12), this option
+is valid, and {\em iter} sets the  number of iterations. Generally,
+three is enough. Default is no iteration.
+\item {\bf [-u number\_of\_undecimated\_scales]} \\
+Number of undecimated scales used in the undecimated wavelet 
+transform (-t 24).
+By default, all scales are undecimated.
+\end{itemize}
+
+The distribution of the transforms into classes is the following:
+\bn
+\item cube: transform 1 to 5, and 16, and 23.
+\item pyramid: transforms 6 to 13, 22.
+\item half-pyramid: transform 19,20.
+\item image: 14, 15, 17, 18, 25.
+\item directional cube: 21,24.
+\en
+
+Options ``-x'' and ``-B'' are mutually
+exclusive. If one of these
+options is set, the second parameter is used also as prefix for the 
+creation of the band-images.  \\
+Option ``-u'' is only valid if the undecimated wavelet transform (-t 24)
+is selected. \\
+Wavelet transforms using the Fourier transform require the input
+image to be a square image, with a number of pixels which is an integer 
+power of 2. \\
+The result is stored in a file (suffix ``.mr"),
+and images (or bands) of the transformation can be extracted
+by using the {\em mr\_extract} program. \\
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\item mr\_transform -t 10 image.d pyr\_trans.mr \\
+Apply the pyramidal median transform to an image, and store the
+result in pyr\_trans.mr. 
+\item mr\_transform -t 10 -x image.d pyr\_trans.mr \\
+Same as before, but write all scales separately
+in files: \\
+ (band\_1\_pyr\_trans.d, band\_2\_pyr\_trans.d, etc.).
+\item mr\_transform -t 8 -B image.d pyr\_wave.mr \\
+Apply a pyramidal wavelet transform, and each scale is interpolated
+to the input image size before being saved in a file of name 
+``band\_j\_pyr\_wave.d'', where j is the scale number.
+\item mr\_transform -t 14 -T 4 image.d bio\_wave.mr \\
+Bi-orthogonal wavelet transform using Odegard 7/9 filters.
+\item mr\_transform -t 25 -l 3 image.d bio\_wave.mr \\
+Integer Haar wavelet transform.
+\end{itemize}
+Figure~\ref{fig_ngc} shows the galaxy NGC2997, and 
+Figure~\ref{pl_pave_gala} its
+wavelet transform using the \`a trous algorithm with four scales (three 
+wavelet scales, and the last smooth array). Each scale has the same size
+as the original image.
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_ngc.ps,bbllx=1.9cm,bblly=12.6cm,bburx=14.6cm,bbury=25.4cm,width=11cm,height=11cm,clip=}
+}}
+\caption{Galaxy NGC2997.}
+\label{fig_ngc}
+\end{figure}
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=ch1_pave_gala.ps,bbllx=2cm,bblly=9.5cm,bburx=19cm,bbury=27cm,height=11cm,width=11cm,clip=}
+}}
+\caption{Wavelet transform of NGC 2997 by the \`a trous algorithm.}
+\label{pl_pave_gala}
+\end{figure}
+
+
+\subsection{How to select a filter bank?}
+The (bi-) orthogonal wavelet transform (OWT) and the 
+undecimated wavelet transform (UWT) allow the user to select between
+five different filter banks (see Table~\ref{tab_algo}, from 14-1 to 14-5), 
+or to use one's own filter bank. In this case, a file must contain the 
+coefficient values of the filters $h$ and $\tilde h$. 
+The file format is the Bath Wavelet Warehouse file format 
+(see \\
+http://dmsun4.bath.ac.uk/wavelets/warehouse.html \\
+for more information).
+The file is an ASCII file, with the ``.wvf'' extension, 
+and the general format for describing wavelet filter coefficients is 
+the following:
+\begin{verbatim}
+[Range low] [Range high]
+[Analysis LP filter coefficients]
+.
+.
+.
+[Range low] [Range high]
+[Synthesis LP filter coefficients]
+.
+.
+.
+\end{verbatim}
+For example, the Daubechies filter 4 is (the filename is dau4.wvf):
+\begin{verbatim}
+0 3
+0.4829629131445341
+0.8365163037378079
+0.2241438680420134
+-0.1294095225512604
+0 3
+0.4829629131445341
+0.8365163037378079
+0.2241438680420134
+-0.1294095225512604
+\end{verbatim}
+More than thirty different filters are available at the  
+Bath Wavelet Warehouse.
+In the \proj programs, when the option ``-t 14'' (for the OWT) or ``-t 24''
+(for the UWT) are chosen, the option ``-T 6'' or  ``-T 6,filename'' is used 
+for defining a user filter. If no file is given, the \proj programs first
+check if the default filename {\bf ``mr1.wvf''} exits in the current 
+directory, and if it does not exist,
+the environment variable {\bf CEA\_FILTER} \index{CEA\_FILTER} is tested. 
+Examples of command line syntax for the wavelet transform program are:
+\begin{itemize}
+\item mr\_transform -t 14 -T 6,dau4 image.d dwt\_trans.mr \\
+Bi-orthogonal wavelet transform, using the filters defined in
+the file ``dau4.wvf''.  
+\item mr\_transform -t 24 -T 6 image.d uwt\_trans.mr\\
+Undecimated wavelet transform, using the file {\bf ``mr1.wvf''} if it
+exists, otherwise using the file name contained in the environment 
+variable {\bf CEA\_FILTER}.
+\end{itemize}
+
+
+\clearpage
+
+\subsection{Extraction of a scale: mr\_extract}
+\label{sect_extr}
+\index{mr\_extract}
+The program {\em mr\_extract} allows the user to extract a scale or a band from
+a multiresolution transform file (suffix ``.mr").
+{\bf
+\begin{center}
+ USAGE: mr\_extract options multiresolution\_file  output\_image
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf  [-b band\_number] } \\
+ Band number to extract. Default is 1.
+\item {\bf  [-s scale\_number] } \\
+ Scale number to extract. Default is 1.
+\item {\bf  [-x]} \\
+Extract all the bands. The second parameter is used
+as a prefix. If this option is set, the second parameter {\bf must} only
+contain the file name, and not the complete path of the file.
+\item {\bf   [-B]} \\
+Interpolate the scale by block, in order to have the same
+size as the original image. For scale extraction, 
+this option is valid only if the 
+ multiresolution transform is pyramidal, and is always valid for
+ band extraction.
+%  \item {\bf   [-i]} \\  
+% Interpolate the scale with a B$_3$-spline, in order to have the same
+% size as the original image.  This option is valid only if
+%  the multiresolution transform is pyramidal.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item mr\_extract -s 1 mr\_file.mr scale\_1.d \\
+Extract the first scale of the wavelet transform, and write as a .d
+image of name ``scale\_1.d''. If the transform is an orthogonal transform,
+it will contain all of the transform.
+\item mr\_extract -b 1 mr\_file.mr band\_1.d \\
+Extract the first band of the wavelet transform, and write as a .d
+image of name ``band\_1.d''. If the transform is an orthogonal transform,
+it will contain only the first band (in one single direction)
+of the transform.
+\item mr\_extract -x  mr\_file.mr toto.d\\
+Creates the files ``toto\_band\_1.d'', ..., ``toto\_band\_j.d''. 
+\end{itemize}
+
+\subsection{Insertion of an image: mr\_insert}
+\index{mr\_insert}
+The program
+{\em mr\_insert} replaces a scale or a band by some image, by inserting it
+in the multiresolution transform file. The scale (or the band) and the image
+must have the same size. 
+
+{\bf \begin{center}
+ USAGE: mr\_insert options multiresolution\_file input\_image
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item  {\bf  [-b band\_number] } \\
+ Band number to insert. Default is 1.
+\item  {\bf  [-s scale\_number] } \\
+ Scale number to insert. Default is 1.
+\end{itemize}
+ {\em multiresolution\_file} is the file (.mr) which contains 
+the multiresolution transformation. \\
+ {\em input\_image} is the image
+which must replace the band image. \\
+ {\em band\_number} specifies
+the band number to be replaced. Default is 1.  
+The multiresolution transform is updated. \\
+\subsubsection*{Example:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item mr\_insert -b 3 mr\_file.mr image.d \\
+Insert an image at the third scale of the multiresolution file. 
+\end{itemize}
+
+\subsection{Reconstruction: mr\_recons}
+\index{mr\_recons}
+The program 
+{\em mr\_recons}  reconstructs an image from its multiresolution
+transform.
+{\bf 
+\begin{center}
+ USAGE: mr\_recons  multiresolution\_file  image\_out
+\end{center}}
+{\em multiresolution\_file} is the file (.mr) which contains 
+the multiresolution transformation, {\em output\_image} is  the
+output reconstructed image.
+
+\section{Multiresolution tools}
+\subsection{Visualization: mr\_visu}
+\index{mr\_visu}
+All scales of the multiresolution transform are normalized to 1, and inserted
+in one image, which can be
+visualized by a graphics tool  (xv, IDL, etc.). 
+The input
+file can either be an image or a multiresolution file. In the second case 
+options ``-t, -n", which define the type of transformation and the number of
+scales, are not used. By default the output image is represented in graylevel,
+with each scale normalized to 255. The normalization can be avoided using 
+the ``-c"
+option. Two other representations are also available, the perspective one
+(all scales are represented in a 3-dimensional way), and the contour one.
+In the contour representation, one contour is plotted per scale. The contour
+level is determined from the standard deviation of the first scale and the {\em nsigma}
+parameter (which can be modified by the ``-s" option). Non-isotropic 
+transforms cannot be used for perspective or contour representation. 
+
+%The output can
+%be also saved in a Postscript file by the "-w" option.
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=ch1_wave_3D.ps,bbllx=1.7cm,bblly=5.3cm,bburx=19.3cm,bbury=23.3cm,height=18cm,width=15cm,clip=}
+}}
+\caption{3D perspective view of NGC 2997 wavelet scales.}
+\index{wavelet transform}
+\label{fig_wave_3D}
+\end{figure}
+Figure~\ref{fig_wave_3D} shows the wavelet transform of the galaxy NGC2997,
+with five scales, and using a perspective representation.
+
+{\bf
+\begin{center}
+ USAGE: mr\_visu image\_in\_or\_MRfile  image\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_multiresolution\_transform]} \\
+  see \ref{sect_trans}.
+\item {\bf [-T type\_of\_filters]}  \\
+  see \ref{sect_trans}.
+\item {\bf [-L]} \\
+  see \ref{sect_trans}.
+\item {\bf [-n number\_of\_scales]} \\
+  see \ref{sect_trans}.
+\item {\bf [-V Type\_Visu]}
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item Graylevel
+\item Contour
+\item Perspective
+\end{enumerate}
+ Default is 1.
+\item {\bf [-b]} \\
+ Save output image as bi-level.  Only used if {\em Type\_Visu} is 
+equal to 2 or 3.
+ Default is not to save.
+\item {\bf [-c]} \\
+ Do not apply a normalization on the multiresolution coefficient.
+Only used if {\em Type\_Visu} is equal to 1.
+% \item {\bf [-w PS\_FileName]} \\
+% Save also the result in a Postscript file.
+ \item {\bf [-i Increment]} \\
+ Number of lines of the image which will be used. \\
+ If Increment = 3, only one line out of 3 is used. \\
+ Only used if  {\em Type\_Visu} is equal to 3. \\
+The default value is 1.
+\item {\bf [-s nsigma]} \\
+Plot contour at {\em nsigma}$*$Sigma if  {\em Type\_Visu} equal to 2. \\
+Threshold value upper nsigma$*$Sigma if  {\em Type\_Visu} equal to 3. \\
+Default is 3. 
+\end{itemize}
+
+
+\subsection{Multiresolution support creation: mr\_support}
+\label{sect_support}
+\index{mr\_support}
+\index{multiresolution support}
+The multiresolution support of an image describes in a
+logical or boolean way if an image $I$ contains information at a 
+given scale $j$ and at a given position $(x,y)$ \cite{starck:sta95_1,starck:mur95_2,starck:mur93}.
+If $M^{(I)}(j,x,y) = 1$ (or {\it true}), then $I$ contains information at 
+scale $j$ and at the position $(x,y)$.
+$M$ depends on several parameters:
+\begin{itemize}
+\item The input image.
+\item The algorithm used for the multiresolution decomposition.
+\item The noise.
+\item All constraints we additionally want the support to satisfy.
+\end{itemize}
+Such a support results from the data, the treatment (noise
+estimation, etc.), and from knowledge on our part of the objects contained
+in the data (size of objects, linearity, etc.). In the most general case, 
+a priori information is not available to us.
+
+The multiresolution support of an image is computed in several steps:
+\begin{itemize}
+\item Step 1 is to compute the wavelet transform of the image.
+\item Binarization of each scale leads to the multiresolution support.
+\item A priori knowledge can be introduced by modifying the support.
+\end{itemize}
+ 
+The last step depends on the knowledge we have of our images.
+For instance, if we know there is no interesting object smaller or larger 
+than a
+given size in our image, we can suppress, in the support, anything which is
+due to that kind of object. This can often be done conveniently by  the use of 
+mathematical morphology. Negative detections can sometimes be suppressed too.
+In the most general setting, we naturally have
+no information to add to the multiresolution support.
+
+A complete description of how to derive the multiresolution support from
+the multiresolution coefficients is given in \cite{starck:sta95_1,starck:book98}. Several types
+of noise are taken into account:
+\begin{enumerate}
+\item Gaussian noise (default case).
+\item Poisson noise.
+\item Poisson and Gaussian noise
+\end{enumerate}
+For the last two transforms, a variance stabilization transform is applied
+to the input image, which allows us to obtain a transformed image which
+contains  Gaussian noise with a standard deviation equal to one. After
+transformation of the image (or the variance stabilized image), each
+wavelet coefficient $w_j(x,y)$ is compared to the standard deviation at 
+the scale $j$, $\sigma_j$ multiplied by a coefficient $N_\sigma$. 
+This coefficient specifies 
+the confidence interval we want. If $\mid w_j(x,y) \mid \ 
+> N_\sigma \sigma_j$, the
+probability that $w_j(x,y)$ is due to noise is less than 1\%.
+
+\begin{center}
+ USAGE: mr\_support options image\_in multiresolution\_file\_out
+\end{center}
+ where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_multiresolution\_transform]} \\
+  see \ref{sect_trans}.
+\item {\bf [-T type\_of\_filters]}  \\
+  see \ref{sect_trans}.
+\item {\bf [-L]} \\
+  see \ref{sect_trans}.
+\item {\bf [-u]} \\
+  see \ref{sect_trans}.
+\item {\bf [-g sigma]} \\
+ The image contains Gaussian noise, and the standard deviation is
+given by {\em sigma }. The option should be set only if the user
+knows the standard deviation of the noise. 
+\item {\bf [-p]} \\
+ If this option is set, the image is assumed to contain Poisson noise.
+ The default is Gaussian noise, and its standard 
+ deviation is automatically estimated. 
+\item {\bf [-c gain,sigma,mean]} \\
+The noise is composed of a Gaussian and Poisson component.  This is the 
+case for a CCD detector. \\
+noise = Poisson noise and read-out noise \\
+gain = inverse of the CCD gain (unit: $DN/e^{-}$) \\
+sigma = standard deviation of the read-out noise (unit: DN) = CCD RON / CCD Gain\\
+mean = mean of the read-out noise \\
+If this option is set, \\
+Noise = Poisson and Gaussian read-out noise \\
+This is generally the case with a CCD. \\
+Note: these parameters must be separated by a comma without spaces. \\
+Example: -c 0.133,1.733,0. \\
+If the mean, or sigma and the mean, are omitted, default values are 0. \\
+The gain cannot be omitted if parameter -c is used.
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales used in the multiresolution transform. Default is 4.
+\item {\bf [-s NSigma]} \\
+The detection level at each scale is determined by the product
+of the standard deviation of the noise by the {\em NSigma}.
+{\em NSigma} fixes the confidence interval we want. By default,
+{\em NSigma} is equal to 3.
+\item {\bf [-k]} \\
+If this option is set, isolated pixels in the multiresolution support
+are suppressed. If the PSF is large, then isolated pixels are 
+certainly residual noise, or spurious impulse noise objects,  
+or artifacts. Then
+we can suppress these pixels in the support. This option
+can only be used with transformations of class 1 and 2 (which
+produce cubes and pyramids). Default is not to do this.
+\item {\bf [-l]} \\
+If this option is set, the morphological dilation operator is
+applied on each scale of the multiresolution support. This option
+can only be used with transformations of class 1 and 2 (which
+produce cubes and pyramids). Default is not to do this.
+\item {\bf [-w support\_file\_name]} \\
+ If this option is set, a synthetic image is created from the 
+multiresolution support. Default is not to do this.
+\end{itemize}                 
+\subsubsection*{Examples:}
+\begin{itemize}
+\item mr\_support -w support.d -t 14 image.d  mr\_file.mr  \\
+Creates the multiresolution support of an image, assuming the noise is
+Gaussian (its standard deviation is automatically estimated). A .d image
+is created from the support.
+\item mr\_support -w support.d -p image.d  mr\_file.mr  \\
+Creates the multiresolution support  of an image, assuming the noise follows
+a Poisson distribution. The chosen multiresolution transform 
+is the default one 
+(\`a trous algorithm). A~.d image is created from the support. This is not
+a boolean image as in the previous example, because it is obtained by
+addition of all boolean scales of the multiresolution support.
+\end{itemize}
+
+
+\subsection{Statistical information: mr\_info}
+\index{mr\_info}
+Program 
+{\em mr\_info} gives statistical multiresolution information for an image
+(min, max, sigma, mean, skewness and kurtosis at each scale). 
+If the transform belongs to 
+class 1 or 2
+(output is a cube or a pyramid), then additional options allow the 
+significant coefficients to be analyzed, and furnish 
+\begin{itemize}
+\item the percentage of significant coefficients at each scale,
+\item the number of maxima at each scale,
+\item the number of structures detected at each scale,
+\item the size in pixels of the largest  detected structure at each scale.
+\end{itemize}
+If an output file name is given, a 2D array containing statistical information
+is saved on the disk in the FITS format. The output file is a 
+fits file containing a two dimensional array $T[J-1,5]$ ($J$ being the
+number of bands), with the following the syntax:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item $T[j,0] = $ standard deviation of the jth ridgelet band.
+\item $T[j,1] = $ skewness of the jth ridgelet band.
+\item $T[j,2] = $ kurtosis of the jth ridgelet band.
+\item $T[j,3] = $ minimum of the jth ridgelet band.
+\item $T[j,4] = $ maximum of the jth ridgelet band.
+\end{itemize}
+
+{\bf 
+\begin{center}
+ USAGE: mr\_info option image\_in [out\_statfile]
+\end{center}}
+ where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_multiresolution\_transform]} 
+\item {\bf [-T type\_of\_filters]}  
+\item {\bf [-L]} 
+\item {\bf [-u]} 
+\item {\bf [-p]} 
+\item {\bf [-g sigma]} 
+\item {\bf [-c gain,sigma,mean]} 
+\item {\bf [-n number\_of\_scales]} 
+\item {\bf [-s NSigma]} 
+\item {\bf [-k]} 
+\item {\bf [-l]}
+\item {\bf [-a]} \\
+Significant structures analysis. Default is not to do this.
+\end{itemize}
+Options [t,T,L,u,p,g,c,n,s,k,l] are the same as those described in 
+section~\ref{sect_support}. \\
+Options [a,p,g,c,s,k,l] are not
+allowed for transforms producing images (class 4). \\
+If any of
+the options [a,p,g,c,s,k,l] is set, a significant structures
+analysis is performed.
+\subsubsection{Examples:}
+\begin{itemize}
+\item mr\_info image.d  \\
+Writes on the standard output the minimum value, the maximum value,
+the mean value, and the standard deviation of each scale.
+\item mr\_info -a  image.d \\
+Same as before, but computes also the percentage of significant
+pixels per scale, and the number of maxima, the number of
+structures, and the size (in pixels) of the bigger structures.
+\end{itemize}
+
+\subsection{Multiresolution segmentation: mr\_segment}
+\index{mr\_segment}
+Program 
+{\em mr\_segment} binarizes all the scales of the wavelet 
+transform of an image, and applies tp each one 
+a segmentation procedure. 
+Each scale of the output multiresolution file contains 
+an image in which values are ranged between 0 and $R_j$,
+where $R_j$ is the number of regions found at this scale.
+{\bf
+\begin{center}
+ USAGE: mr\_segment option image\_in mr\_file\_out
+\end{center}}
+where {\em mr\_file\_out} is the multiresolution file (``.mr")
+which contains the segmented scales. Options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_multiresolution\_transform]} 
+\item {\bf [-T type\_of\_filters]}  
+\item {\bf [-L]} 
+\item {\bf [-u]} 
+\item {\bf [-p]} 
+\item {\bf [-g sigma]} 
+\item {\bf [-c gain,sigma,mean]} 
+\item {\bf [-n number\_of\_scales]} 
+\item {\bf [-s NSigma]} 
+\item {\bf [-k]} 
+\item {\bf [-l]}
+\end{itemize}
+These options are the same as those described in 
+section \ref{sect_support}.
+\subsubsection*{Example:}
+\begin{itemize}
+\item mr\_segment -g 1. image.d  mr\_file\\
+Applies the default multiresolution transform (\`a trous algorithm)
+to the input image, thresholds the scale assuming Gaussian noise
+with a standard deviation equal to 1, and applies a segmentation
+on each scale.
+\end{itemize}
+
+\subsection{Noise analysis: mr\_sigma}
+\index{mr\_sigma}
+Program 
+{\em mr\_sigma} estimates the standard deviation of  Gaussian 
+noise in an image \cite{starck:sta98_3}. Several methods can 
+be used. One of them 
+(Multiresolution support) is based on the multiresolution.
+If the option ``-p" is set, the noise is considered to be 
+a combination of both Gaussian and Poisson noise. In this 
+case, the program seeks the standard deviation of the Gaussian
+component of the noise using the generalized Anscombe transform.
+{\bf
+\begin{center}
+ USAGE: mr\_sigma options image 
+\end{center}}
+where options are:
+ \begin{itemize}
+ \baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-m type\_of\_methods]}
+{\small 
+\begin{enumerate}
+ \item 3\_sigma\_clipping 
+ \item Median + 3\_sigma\_clipping  
+ \item Bspline + 3\_sigma\_clipping 
+ \item Multiresolution support 
+ \item Block method 
+ \item MAD method (Median of Absolute Deviation) 
+\end{enumerate}
+}
+Default is 2.
+\item {\bf [-n number\_of\_scales]}
+Number of scales used in the multiresolution transform.
+Default is 4.
+\item {\bf [-p gain]} \\
+Computes the standard deviation of the Gaussian part of the 
+noise (RON), knowing the gain, in the case where the noise is
+composed of Poisson and Gaussian noise.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\item mr\_sigma image.d  \\
+Computes the standard deviation of the Gaussian noise contained in the
+input image, using the default method.
+\item mr\_sigma -p 1 image.d  \\
+Computes the standard deviation of the read-out noise, assuming a gain
+equal to 1.
+\end{itemize}
+
+\subsection{Background subtraction: mr\_background}
+\index{mr\_background}
+
+\label{sect_bgr}
+ Program 
+{\em mr\_background} subtracts the background from an image. The
+background is considered as being the last scale of the pyramidal
+median transform. The number of scales is automatically calculated in order
+to have the last scale with a size lower than or equal to 16 $\times$ 
+16 pixels. 
+This value of 16 can 
+be modified by the ``-n" option.
+{\bf
+\begin{center}
+ USAGE: mr\_background option image\_in image\_out
+\end{center}}
+where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-n number\_of\_pixels]} \\
+Number of pixels used for background estimation. Default is 16.
+\item {\bf [-w background\_file\_name]} \\
+Creates the background image and writes it on disk.
+\item {\bf [-W MedianWindowSize]} \\
+Median window size using in the Pyramidal Median Transform.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item mr\_background image.d  im\_bgr\_free.d\\
+Computes the pyramidal median transform of the input image, 
+interpolates the last scale to the image, and subtracts it from
+the input image.
+\item mr\_background -n 32 -w bgr.d image.d  \\
+The number of scales is calculated so that the last scale
+will have less than 32 pixels in at least one dimension.
+\end{itemize}
+
+\subsection{Image comparison: mr\_compare}
+\index{mr\_compare}
+Program 
+{\em mr\_compare} compares a set of images to a reference image.
+These comparisons are performed both in the direct space and in the
+wavelet space. By default, only structures above the noise are considered
+for the comparison. If the {\em NSigma} parameter is set to zero, then
+all wavelet coefficients are taken into account. If the {\em number\_of\_scales}
+parameter is set to 1, then the comparison is only done in the direct space.
+For all images, the minimum, the maximum, the mean and standard deviation are
+printed. For each image {\em ima\_i}, the wavelet transform of {\em ima\_i} and
+{\em ima\_error (= ref\_image -- ima\_i)} is calculated. For each scale, 
+several results are given:
+\begin{itemize}
+\item the percentage of significant wavelet coefficients of {\em ima\_i}.
+\item the correlation between the wavelet coefficients of {\em ima\_i}
+and {\em ref\_image}.
+\item the standard deviation of absolute values of the wavelet coefficients of {\em ima\_error}.
+\item the root mean square (RMS) of the wavelet coefficients of {\em ima\_error}.
+\item the minimum value of the wavelet coefficients of {\em ima\_error}.
+\item the maximum value of the wavelet coefficients of {\em ima\_error}.
+\item the signal-to-noise ratio (SNR) using the wavelet coefficients of the
+reference image and those of the error image: 
+\[ SNR = \frac{\sigma^2(W_{ImaRef})}{\sigma^2(W_{Error})}  \]
+\item the signal-to-noise ratio in dB (SNRb)
+\[ SNRb = 10 log_{10}(SNR) \]
+\end{itemize}
+{\bf
+\begin{center}
+USAGE: mr\_compare option ref\_ima ima1 [ima2, [ima3, ...]]
+\end{center}}
+where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_multiresolution\_transform]} \\
+See \ref{sect_trans}. But only transforms 1 to 13 
+(isotropic transforms) are available.
+\item {\bf [-p]} \\
+\item {\bf [-g sigma]} \\
+\item {\bf [-c gain,sigma,mean]} \\
+\item {\bf [-n number\_of\_scales]} 
+\item {\bf [-s NSigma]} 
+\end{itemize}
+These options are the same as those described in 
+section \ref{sect_support}.
+\subsubsection*{Examples:}
+\begin{itemize}
+\item mr\_compare -n 1 image\_ref.d ima\_1.d ima\_2.d \\
+Computes the images {\em ima\_1} and {\em ima\_2} to {\em image\_ref}
+\  in the direct space only.
+\item mr\_compare -s 0. image\_ref.d ima\_1.d ima\_2.d  \\
+Computes the images {\em ima\_1} and {\em ima\_2} to {\em image\_ref}
+\ taking into account all wavelet coefficients.
+\end{itemize}
+
+
+ 
+

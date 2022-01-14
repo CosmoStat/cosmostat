@@ -1,0 +1,209 @@
+\section*{Annex A: Wavelet transform  using the Fourier Transform}
+\addcontentsline{toc}{section}{Appendix A: Wavelet transform  using the Fourier Transform}
+
+We start with the set of scalar products $c_0(k)=<f(x),\phi(x-k)>$. If
+$\phi(x)$ has a cut-off frequency $\nu_c\le {1\over 2}$
+(\cite{starck:sta94_3,starck:sta94_4,starck:book98}), 
+the data are
+correctly sampled. The data at resolution $j=1$ are:
+\begin{eqnarray}
+c_1(k)=<f(x),\frac{1}{2}\phi(\frac{x}{2}-k)>
+\end{eqnarray}
+and we can  compute the set $c_{1}(k)$ from $c_0(k)$ with a discrete 
+filter $\hat h(\nu)$:
+\begin{eqnarray}
+\hat h(\nu)= \left\{
+  \begin{array}{ll}
+  {\hat{\phi}(2\nu)\over \hat{\phi}(\nu)} & \mbox{if } \mid \nu \mid < \nu_c \\
+0 & \mbox{if } \nu_c  \leq \mid \nu \mid < {1\over 2} 
+  \end{array}
+  \right.
+\end{eqnarray}
+and
+\begin{eqnarray}
+\forall \nu, \forall n \mbox{    } & \hat h(\nu + n) = \hat h(\nu)
+\end{eqnarray}
+where $n$ is an integer.
+So:
+\begin{eqnarray}
+\hat{c}_{j+1}(\nu)=\hat{c}_{j}(\nu)\hat{h}(2^{j}\nu)
+\end{eqnarray}
+The cut-off frequency is reduced by a factor $2$ at each step, allowing  a
+reduction of the number of samples by this factor.
+
+The wavelet coefficients at scale $j+1$ are:
+\begin{eqnarray}
+w_{j+1}(k)=<f(x),2^{-(j+1)}\psi(2^{-(j+1)}x-k)>
+\end{eqnarray}
+and they can be computed directly from $c_j(k)$ by:
+\begin{eqnarray}
+\hat{w}_{j+1}(\nu)=\hat{c}_{j}(\nu)\hat g(2^{j}\nu)
+\end{eqnarray}
+where $g$ is the following  discrete filter:
+\begin{eqnarray}
+\hat g(\nu)= \left\{
+  \begin{array}{ll}
+  {\hat{\psi}(2\nu)\over \hat{\phi}(\nu)} & \mbox{if } \mid \nu \mid < \nu_c \\
+1 & \mbox{if } \nu_c  \leq \mid \nu \mid < {1\over 2} 
+  \end{array}
+  \right.
+\end{eqnarray}
+and
+\begin{eqnarray}
+\forall \nu, \forall n \mbox{    } & \hat g(\nu + n) = \hat g(\nu)
+\end{eqnarray}
+
+The frequency band is also reduced by a factor $2$ at each step.
+Applying the sampling theorem, we can build a pyramid  of
+\index{pyramid}
+ $N+{N\over 2}+\ldots+1=2N$ elements.
+For an image analysis the number of elements is ${4\over 3}N^2$. The
+overdetermination is not very high.
+
+The B-spline functions are compact in direct space. They
+correspond to the autoconvolution of a square function. In
+Fourier space we have:
+\index{Fourier transform}
+\begin{eqnarray}
+\hat B_l(\nu)=({\sin\pi\nu\over\pi\nu})^{l+1}
+\end{eqnarray}
+$B_3(x)$ is a set of $4$ polynomials of degree $3$.
+We choose the scaling function $\phi(\nu)$ which has a
+$B_3(x)$ profile in Fourier space:
+\begin{eqnarray}
+\hat{\phi}(\nu)={3\over 2}B_3(4\nu)
+\end{eqnarray}
+In direct space we get:
+\begin{eqnarray}
+\phi(x)={3\over 8}[{\sin{\pi x\over 4}\over {\pi x\over
+4}}]^4
+\end{eqnarray}
+This function is quite similar to a Gaussian and converges
+rapidly to $0$. For 2-dimensions the scaling function is defined by
+$\hat \phi(u,v) = {3\over 2}B_3(4r)$, with $r = \sqrt(u^2+v^2)$.
+This is an isotropic function.
+
+The wavelet transform algorithm with $n_p$ scales is the following:
+\index{wavelet transform}
+\begin{enumerate}
+\item Start with a $B_3$-spline scaling function and derive $\psi$, $h$ and
+$g$ numerically.
+\item Compute the corresponding FFT image. 
+Name the resulting complex array $T_0$.
+\item Set $j$ to $0$. Iterate:
+\item Multiply  $T_j$ by $\hat g(2^ju,2^jv)$. We get the complex array
+$W_{j+1}$. The inverse FFT
+gives the wavelet coefficients at scale $2^j$;
+\item Multiply  $T_j$ by $\hat h(2^ju,2^jv)$. We get the array
+$T_{j+1}$. Its inverse FFT gives the image at scale $2^{j+1}$.
+The frequency band is reduced by a factor $2$.
+\item Increment $j$.
+\item If $j \leq  n_p$, go back to 4.
+\item The set $\{w_1, w_2, \dots, w_{n_p}, c_{n_p}\}$ describes the
+wavelet transform.
+\end{enumerate}
+If the wavelet is the difference between two resolutions, i.e.
+\begin{eqnarray}
+\hat \psi(2\nu) = \hat \phi(\nu) - \hat \phi(2\nu)
+\end{eqnarray}
+and:
+\begin{eqnarray}
+\hat g(\nu) = 1 - \hat h(\nu)
+\end{eqnarray}
+then the wavelet coefficients $\hat w_j(\nu)$ can be computed by 
+$\hat c_{j-1}(\nu) - \hat c_j(\nu)$.
+
+\subsubsection*{Reconstruction.}
+If the wavelet is the difference between two resolutions,
+an evident reconstruction for a wavelet transform 
+${\cal W} = \{w_1,\dots, w_{n_p}, c_{n_p}\}$ is:
+\begin{eqnarray}
+\hat c_0(\nu) = \hat c_{n_p}(\nu) + \sum_j \hat w_j(\nu)
+\end{eqnarray}
+But this is a particular case, and other alternative wavelet functions can be
+chosen. The reconstruction can be made step-by-step, starting from
+the lowest resolution. At each scale, we have the relations:
+\begin{eqnarray}
+\hat c_{j+1} = \hat h(2^j \nu) \hat c_j(\nu) \\
+\hat w_{j+1} = \hat g(2^j \nu) \hat c_j(\nu) 
+\end{eqnarray}
+We look for $c_j$ knowing $c_{j+1}$, $w_{j+1}$, $h$ and $g$.
+We restore $\hat c_j(\nu)$ based on a least mean square estimator:
+\begin{eqnarray}
+\hat p_h(2^j\nu) \mid \hat c_{j+1}(\nu)-\hat h(2^j\nu)\hat c_j(\nu) \mid^2 + 
+\nonumber \\
+\hat p_g(2^j\nu) \mid \hat w_{j+1}(\nu)-\hat g(2^j\nu)\hat c_j(\nu) \mid^2
+\end{eqnarray}
+is to be minimum. $\hat p_h(\nu)$ and $\hat p_g(\nu)$ are weight
+functions which permit a general solution to the
+restoration of $\hat c_j(\nu)$. From the derivation of $\hat c_j(\nu)$  we get:
+\begin{eqnarray}
+\hat{c}_{j}(\nu)=\hat{c}_{j+1}(\nu) \hat{\tilde h}(2^{j}\nu)
+                +\hat{w}_{j+1}(\nu) \hat{\tilde g}(2^{j}\nu)
+\label{restauration}
+\end{eqnarray} 
+where the conjugate filters have the expression:
+\begin{eqnarray}
+\hat{\tilde h}(\nu) & = {\hat{p}_h(\nu) \hat{h}^*(\nu)\over \hat{p}_h(\nu)
+\mid \hat{h}(\nu)\mid^2 + \hat{p}_g(\nu)\mid \hat{g}(\nu)\mid^2} \label{eqnht} \\ 
+\hat{\tilde g}(\nu) & = {\hat{p}_g(\nu) \hat{g}^*(\nu)\over \hat p_h(\nu)
+\mid \hat{h}(\nu)\mid^2 + \hat{p}_g(\nu)\mid \hat{g}(\nu)\mid^2}
+\label{eqngt}
+\end{eqnarray}
+
+In this analysis, the
+Shannon sampling condition is always respected and no aliasing
+exists.
+
+The denominator is reduced if we choose:
+\[\hat{g}(\nu) = \sqrt{1 - \mid\hat{h}(\nu)\mid^2}\]
+This corresponds to the case where the wavelet is the difference between
+the square of two resolutions:
+\begin{eqnarray}
+\mid \hat \psi(2\nu)\mid^2  \ = \ \mid \hat \phi(\nu)\mid^2  - \mid  \hat
+\phi(2\nu)\mid^2 
+\end{eqnarray}
+
+% \begin{figure}[htb]
+% \centerline{
+% \hbox{
+% \psfig{figure=ch1_diff_uv_phi_psi.ps,bbllx=0.5cm,bblly=13.5cm,bburx=20.5cm,bbury=27cm,height=6cm,width=14.cm,clip=}
+% }}
+% \caption{On the left, the interpolation function $\hat{\phi}$ and, on the 
+% right, the wavelet  $\hat{\psi}$.}
+% \label{fig_diff_uv_phi_psi}
+% \end{figure}
+
+% \begin{figure*}[htb]
+% \centerline{
+% \hbox{
+% \psfig{figure=ch1_diff_uv_ht_gt.ps,bbllx=0.5cm,bblly=13.5cm,bburx=20.5cm,bbury=27cm,height=5cm,width=14.5cm,clip=}
+% }}
+% \caption{On the left, the filter $\hat{\tilde{h}}$, and on the right the 
+% filter $\hat{\tilde{g}}$.}
+% \label{fig_diff_uv_ht_gt}
+% \end{figure*}
+
+% In Fig.\ \ref{fig_diff_uv_phi_psi} the chosen scaling function 
+% derived from a B-spline of degree 
+% 3, and its resulting wavelet function, are plotted in frequency space.
+ 
+The reconstruction algorithm is:
+\begin{enumerate}
+\item Compute  the FFT of the image at the low resolution.
+\item Set $j$ to $n_p$. Iterate:
+\item Compute the FFT of the wavelet coefficients at scale $j$.
+\item Multiply  the wavelet coefficients $\hat{w}_j$ by $\hat{\tilde{g}}$.
+\item Multiply   the image at the lower resolution $\hat{c}_j$ by 
+$\hat{\tilde{h}}$.
+\item The inverse Fourier transform of the addition of  
+$\hat{w}_j\hat{\tilde{g}}$ and $\hat{c}_j\hat{\tilde{h}}$ gives the 
+image $c_{j-1}$.
+\item Set $j = j - 1$ and return to 3.
+\end{enumerate}
+\index{Fourier transform}
+
+The use of a scaling function with a cut-off frequency
+allows a reduction of sampling at each scale, and limits the  
+computing time and the memory size. 
+

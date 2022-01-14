@@ -1,0 +1,1019 @@
+
+\chapter{Sparse Blind Source Separation}
+\minitoc 
+
+\label{ch_gmca}
+
+% \minitoc \vskip1cm
+     
+\section{Introduction}
+\index{blind source separation}
+\index{independent component analysis}
+\index{BSS}
+\index{ICA}
+
+Over the past few years, the development of multi-channel sensors has motivated interest in methods for the coherent processing of multivariate data. Areas of application include biomedical engineering, medical imaging, speech processing, astronomical imaging, remote sensing, communication systems, seismology, geophysics, econometrics.
+
+Consider a situation where there is a collection of signals emitted by some physical objects or sources. These physical sources could be, for example, different brain areas emitting electrical signals; people speaking in the same room (the classical cocktail party problem), thus emitting speech signals; or radiation sources emitting their electromagnetic waves. Assume further that there are several sensors or receivers. These sensors are in different positions, so that each records a mixture of the original source signals with different weights. It is assumed that the mixing weights are unknown, since knowledge of that entails knowing all the properties of the physical mixing system, which is not accessible in general. Of course, the source signals are unknown as well, since the primary problem is that they cannot be recorded directly. The {\textit{blind source separation}} (BSS) problem is to find the original signals from their observed mixtures, without prior knowledge of the mixing weights, and by knowing very little about the original sources. In the classical example of the cocktail party, the BSS problem amounts to recovering the voices of the different speakers, from the mixtures recorded at several microphones. 
+\index{BSS}
+\index{blind source separation}
+
+There has been much recent research activity on BSS. Some specific issues have already been addressed using a blend of heuristic ideas and rigorous derivations. This is testified to by the extensive literature on the subject. As clearly emphasized by previous work, it is fundamental that the sources to be retrieved present some quantitatively measurable diversity (e.g.\ decorrelation, independence, morphological diversity, etc.). Recently, sparsity and morphological diversity have emerged as a novel and effective source of diversity for BSS. 
+
+In the blind source separation setting, the instantaneous linear mixture model assumes that we are given $N_c$ observations or channels 
+$\parenth{y_1,\cdots, y_{N_c}}$ where each $y_i$ is a vector of length $N$ (an image or higher-dimensional data is treated by reordering its samples in a 1D vector of length $N$); each measurement is the linear mixture of $N_s$ vectors $\parenth{s_1,\cdots, s_{N_s}}$ called sources, each one having the same length $N$. In the noisy case, this reads
+\begin{equation}
+\label{eq:bss_model}
+y_i[l] = \sum_{j=1}^{N_s} \A[i,j] s_j[l] + \veps_i[l], \quad \forall i\in\{1,\cdots,N_c\},\forall l\in\{1,\cdots, N\} ~,
+\end{equation}
+where $\A$ is the $N_c \times N_s$ mixing matrix whose columns will be denoted $a_i$, and $\veps_i$ is the noise vector in channel $i$ supposed to be bounded. ${\A}$ defines the contribution of each source to each measurement. As the measurements are $N_c$ different mixtures, source separation techniques aim at recovering the original sources $\parenth{s_i}_{i=1\cdots,N_s}$ by taking advantage of some information contained in the way the signals are mixed in the observed channels. This mixing model is conveniently rewritten in matrix form:
+\begin{equation}
+\label{eq:mix_model}
+{\bY} = {\bf{AS}} + {\bf E} ~,
+\end{equation}
+where ${\bY}$ is the $N_c \times N$ measurement matrix whose rows are $y_i^\Tr, i=1,\cdots,N_c$ (i.e.\ observed data), and $\bf S$ is the $N_s \times N$ source matrix with rows $s_i^\Tr, i=1,\cdots,N_s$. The $N_c \times N$ matrix $\bf E$, with rows $\veps_i^\Tr$, is added to account for instrumental noise and/or model imperfections. In this chapter, we will discuss the overdetermined case, which corresponds to $N_c \ge N_s$ (i.e.\ we have more channels than sources); the converse underdetermined case ($N_c  < N_s$) is an even more difficult problem (see \citet{JRY00} or \citet{ica:cichocki} for further details).
+
+In the BSS problem, both the mixing matrix $\A$ and the sources $\bf S$ are unknown and must be estimated jointly. In general, without further a priori knowledge, decomposing a rectangular matrix $\bY$ into a linear combination of $N_s$ rank-one matrices is clearly ill-posed. The goal of BSS is to understand the different cases in which this or that additional prior constraint allows us to reach the land of well-posed inverse problems and to devise separation methods that can handle the resulting models. 
+
+
+\index{independent component analysis!JADE}
+\index{independent component analysis!FastICA}
+
+Source separation is overwhelmingly a question of contrast and diversity to disentangle the sources. Depending on the way the sources are distinguished, most BSS techniques can be categorized into two main classes:
+\begin{itemize}
+\item{Statistical approaches -- ICA:} the well-known independent component analysis (ICA) methods assume that the sources $\parenth{s_i}_{i=1,\cdots,N_s}$ (modeled as random processes) are statistically independent and non-Gaussian. These methods (for example JADE, \citet{ica:jade}; FastICA and its derivatives, \citet{miki:Aapo}; and \citet{koldo06}, Infomax) already provided successful results in a wide range of applications. Moreover, even if the independence assumption is strong, it is in many cases physically plausible. Theoretically, \citet{lee98unifying} focus on the equivalence of most ICA techniques with mutual information minimization processes. Then, in practice, ICA algorithms are about devising adequate contrast functions which are related to approximations of mutual information. In terms of discernibility, statistical independence is a ``source of diversity" between the sources.
+\item{{Sparsity and morphological diversity:}}   \citet{ica:zibu_pearl} introduced a  BSS method that focuses on sparsity to distinguish the sources.
+ They assumed that the sources are sparse in a particular basis $\W$ (for instance, the wavelet orthobasis). The sources $\bf S$ and the mixing matrix $\A$ are estimated by minimizing a maximum a posteriori criterion with a sparsity-promoting prior on the sources in $\W$. They showed that sparsity clearly enhances the diversity between the sources. The extremal sparse case assumes that the sources have mutually disjoint supports in the original or transform domain (see \citep{JRY00,ica:cicho06_1}). Nonetheless this simple case requires highly sparse signals. Unfortunately this is not the case for large classes of signals and especially in image processing.
+\end{itemize}
+
+Another approach based on the concept of morphological diversity developed in the previous chapter has been proposed in \citet{starck:bobin06} which assumes that the $N_s$ sources $\parenth{s_i}_{i=1,\cdots,N_s}$ are sparse in different dictionaries. For instance, a piecewise smooth source $s_1$ (e.g. cartoon image) is well-sparsified in a curvelet tight frame while a warped globally oscillating source $s_2$ (oscillating texture) is better represented using the local DCT or the waveatom dictionary. This model takes advantage of the fact that the sources are morphologically distinct to differentiate between them with accuracy. The method has been extended to the more general case where each source $s_i$ is the sum of several components ($\forall i, ~ s_i = \sum_{k=1}^K x_{i,k}$), each of which is sparse in a given dictionary $\W_k$ \citep{starck:bobin07}. This in fact generalizes the MCA framework of Section~\ref{sec:mca} to multichannel data. This sparsity and morphological diversity-based model has been shown to enjoy several advantages such as enhanced separation quality and robustness to noise.
+
+In this chapter, we give some new and essential insights into the use of sparsity in BSS and we highlight the central role played by morphological diversity as a source of contrast between the sources. We provide fast and practical algorithms, and we describe extensions for analyzing hyperspectral data, as well as applications to denoising and inpainting.
+
+ 
+% In Section~\ref{sec:ICA}, we give an overview of BSS methods that use statistical independence as the key assumption for separation. 
+% Recently, sparsity has emerged as being a very effective way to distinguish the sources. These new approaches are introduced in Section~\ref{sec:bss_sparse}.
+% We described how the morphological data analysis (MCA) concept (see Chapter~\ref{ch_mca}) can be extended to multichannel
+% data. Then we show how the Generalized Morphological Component Analysis  method (GMCA) takes advantages of both morphological diversity and sparsity, using recent sparse overcomplete or redundant signal representations. GMCA is a  fast and efficient blind source separation method. 
+
+
+%=============
+
+\section{Independent Component Analysis}
+\label{sec:ICA}
+\index{ICA}
+\index{independent component analysis}
+
+\subsection{Independence as a Contrast Principle}
+Throughout this section, we consider the noiseless instantaneous linear mixture model assuming that $\xbf{Y} = \xbf{AS}$. This can be written equivalently in the following form:
+\begin{equation}
+\label{eq:bss}
+{\bY} = \sum_{i=1}^{N_s}   {\bY}^{(i)}  = \sum_{i=1}^{N_s}  a_i s_i^\Tr ~ ,
+\end{equation}
+where ${\bY}^{(i)}$ is the contribution of the source $s_i$ to the data $\bY$. Thus, BSS is equivalent to decomposing the matrix $\bY$ of rank $N_s$ into a sum of $N_s$ rank-one matrices $\{{\bY}^{(i)} = a_i s_i^\Tr\}_{i=1,\cdots,N_s}$. Obviously, there is no unique way to achieve such a decomposition. Further information is required to disentangle the sources.
+
+Let us assume that the sources are random vectors (of zero mean without loss of generality). These may be known a priori to be different in the sense of being simply decorrelated. A separation scheme will then look for sources $(s_i)_{i=1,\cdots,N_s}$ such that their covariance matrix ${\boldsymbol \Sigma_{\bf S}}$ is diagonal. Unfortunately, the covariance matrix ${\boldsymbol \Sigma_{\bf S}}$ is invariant to orthonormal transformations such as rotations. Therefore an effective BSS method has to go beyond decorrelation (see \citet{ica:jade} for further reflections about the need for stronger a priori constraints going beyond the decorrelation assumption).
+ 
+The seminal work by \citet{ica:comon94} paved the way for the outgrowth of \textit{Independent Component Analysis} (ICA). 
+In the ICA framework, the sources are assumed to be independent random variables which is true if and only if the joint probability density function (PDF) $\pdf_{\bf S}$ obeys
+\begin{equation}
+\label{eq:bss_indep}
+\pdf_{\bf S}(s_1,\cdots,s_{N_s}) = \prod_{i=1}^{N_s}   \pdf_{s_i}(s_i) ~ .
+\end{equation}
+%Disentangling between sources requires a way to measure how separable sources are different. 
+As statistical independence is a property to be verified by the PDF of the sources, devising a good measure of independence is not trivial. In this setting, ICA then boils down to finding a multichannel representation/basis on which the estimated sources $\tilde{\xbf{S}}$ are as independent as possible. Equivalently, ICA looks for a \textit{separating/demixing} matrix $\xbf{B}$ such that the estimated sources $\tilde{\xbf{S}} = \xbf{BAS}$ are independent. Until the end of this section devoted to ICA, we will assume that the mixing matrix $\A$ is square and invertible.
+
+We could ask if independence makes the sources identifiable. Under mild conditions, the Darmois theorem \citep{darmois53} shows that statistical independence means separability \citep{ica:comon94}. 
+It states that if at most one of the sources is generated from a Gaussian distribution then, if the entries of $\tilde{\xbf{S}} = \xbf{BAS}$ are independent, $\bf B$ is a separating matrix and $\tilde{\bf S}$ is equal to $\bf S$ up to a scale factor (multiplication by a diagonal matrix with strictly positive diagonal entries) and permutation. As a consequence, if at most one source is Gaussian, maximizing independence between the estimated sources leads to perfect estimation of $\bf S$ and $\A = \xbf{B}^{-1}$. The Darmois theorem then motivates the use of independence in BSS.
+ 
+\subsection{Independence and Gaussianity}
+The Kullback-Leibler (KL) divergence between two densities is defined as
+\be
+\mathrm{KL}\parenth{\pdf_{1}\big{\|}\pdf_{2}} = \int_\xbf{u} \pdf_{1}(\xbf{u}) \log \left( \frac{\pdf_{1}(\xbf{u})}{\pdf_{2}(\xbf{u})} \right) d\xbf{u}~ .
+\ee
+The mutual information (MI) in the form of the KL divergence between the joint density $\pdf_{\bf S}(s_1,\cdots,s_{N_s})$ and the product of the marginal densities $\pdf_{s_i}(s_i)$ is a popular measure of statistical independence:
+\index{Kullback-Leibler}
+\index{mutual information}
+\begin{eqnarray}
+\label{eq:KL_indep}
+\mathrm{MI} \left(\xbf{S}\right) & = \mathrm{KL}\parenth{\pdf_{\bf S}\big{\|}\prod_{i=1}^{N_s}  \pdf_{s_i}} ~,
+\end{eqnarray}
+which is nonnegative and vanishes if and only if the sources $s_i$ are mutually independent. Using the Pythagorean identity of the KL divergence, the mutual information can be equivalently written \citep{ica:geomindep,ica:comon94}:
+\begin{multline}
+\label{eq:KL_decomp}
+\mathrm{MI} \left( \xbf{S} \right)  =  \mathrm{KL}\parenth{\upphi\left(\cdot;0,{{\boldsymbol \Sigma_{\bf S}}}\right)\big{\|} \upphi\left(\cdot;0,\diag\left({{\boldsymbol \Sigma_{\bf S}}}\right)\right)} \\ - \sum_{i=1}^{N_s} \mathrm{KL}\parenth{\mathrm{pdf}_{s_i}\big{\|} \upphi\left(\cdot;0,\sigma_{s_i}^2 \right)} + \mathrm{KL}\parenth{\mathrm{pdf}_{\xbf{S}}\big{\|}\upphi\left(\cdot;0,{{\boldsymbol \Sigma_{\bf S}}}\right)} ~ ,
+\end{multline}
+where $\sigma_{s_i}^2={{\boldsymbol \Sigma_{\bf S}}}[i,i]$ is the variance of $s_i$, and $\upphi\left(.;0,\boldsymbol{\Sigma}\right)$ is the multivariate Gaussian PDF with zero mean and covariance $\boldsymbol{\Sigma}$. The first term in \eqref{eq:KL_decomp} vanishes when the sources are decorrelated. The second term measures the marginal non-Gaussianity of the sources. The last term measures the joint non-Gaussianity of the sources, and is invariant under affine transforms. As ICA looks for a demixing matrix $\xbf{B}$ which minimizes $\mathrm{MI}( \tilde{\bf S} = \xbf{B Y})$, this term is a constant independent of all $\xbf{B}$. Consequently, maximizing independence of the estimated sources $\tilde{\bf S}$ is equivalent to minimizing the correlation between the sources and maximizing their non-Gaussianity. Note that, with a taste of the Central Limit Theorem, intuition tells us that mixing independent signals should lead to a kind of Gaussianization. It then seems natural that demixing leads to processes that deviate from Gaussian processes.
+\index{Gaussianity}
+
+\subsection{ICA Algorithms}
+\label{subsec:ICAHOS}
+
+\index{independent component analysis!InfoMax}
+\index{independent component analysis!higher order statistics}
+
+% In the ICA setting, the mixing matrix is square and invertible. Solving a BSS problem is equivalent to looking 
+% for a demixing matrix $\bf B$ that maximizes the independence of the estimated sources: $\tilde{\bf S} = \xbf{BX}$. 
+% As we have just seen, maximizing the independence of the estimated sources is equivalent to maximizing their non-Gaussianity. 
+Since the seminal paper of  \citet{ica:comon94}, a variety of ICA algorithms have been proposed. They all merely differ in the way they devise assessable measures of independence. 
+Some popular approaches have given the following measures of independence:
+\begin{itemize}
+\item{{Information Maximization:}} \citet{ica:infomax,ica:nadal} proposed the InfoMax principle implemented by maximizing with respect to $\xbf{B}$ the differential entropy of an appropriate nonlinear function of $\xbf{BY}$. They showed that information maximization is equivalent to minimizing a measure of independence based on the KL divergence.
+\item{{Maximum Likelihood (ML):}} ML has also been proposed to solve the BSS problem \citep{ica:cardo-ml,ica:pearlparra,ica:phamgarratjutten}. In the ICA framework, it was shown that the ML approach coincides with InfoMax provided that $\xbf{B}$ is identified to $\A^{-1}$ \citep{ica:cardo-ml}.
+\item{{Higher Order Statistics:}} As we pointed out above, maximizing the independence of the sources is equivalent to maximizing their non-Gaussianity under a strict decorrelation constraint. Because Gaussian random variables have vanishing higher order cumulants, devising a separation algorithm based on these higher order statistics should provide a way of accounting for the non-Gaussianity of the estimated sources. A wide range of ICA algorithms have been proposed along these lines, see \citep{miki:Aapo,ica:sobi,ica:jade} and references therein. Historical papers \citep{ica:comon94} proposed ICA algorithms that use approximations of the Kullback-Leibler divergence (based on truncated Edgeworth expansions). Those approximations explicitly involve higher order cumulants.
+\end{itemize}
+\citet{lee98unifying} showed that most ICA-based algorithms are similar in theory and in practice. 
+
+\subsection{Limits of ICA}
+Despite its theoretical strength and elegance, ICA suffers from several limitations:
+\begin{itemize}
+\item{{PDF assumption:}} While even implicit, the ICA algorithm requires information on the source distribution. 
+As stated in \citet{lee98unifying}, whatever the contrast function to optimize, most ICA algorithms can be equivalently restated in a ``natural gradient'' form \citep{Amari99I3SP,ica:cardoama}. In such a setting, the demixing matrix $\bf B$ is estimated iteratively: ${\bf B}^{(t+1)} = \xbf{B}^{(t)} + \mu \boldsymbol{\nabla}_\xbf{B}(\xbf{B}^{(t)})$. The ``natural gradient'' $\boldsymbol{\nabla}_\xbf{B}$ at $\xbf{B}$ is given by: % defined as follows:
+\begin{equation}
+\label{eq:ica_natgrad}
+\boldsymbol{\nabla}_\xbf{B}(\xbf{B}) \propto \parenth{\xbf{I} - \frac{1}{N}\mathscr{H}(\tilde{\xbf{S}})\tilde{\xbf{S}}^\Tr} \xbf{B} ~,
+\end{equation}
+where $\tilde{\xbf{S}}$ is the estimate of $\bf S$: $ \tilde{\xbf{S}} = \xbf{BY}$. The matrix $\mathscr{H}(\tilde{\xbf{S}})$ in \eqref{eq:ica_natgrad} is the so-called score function which is closely related to the PDF of the sources \citep{miki:Amari,ica:cardoama}. Assuming that all the sources are generated from the same joint PDF $\pdf_{\bf S}$, the entries of $\mathscr{H}(\tilde{\xbf{S}})$ are the partial derivatives of the log-likelihood function
+\begin{equation}
+\mathscr{H}(\tilde{\xbf{S}})[i,l] = - \frac{\partial \log(\pdf_{\bf S}(\tilde{\xbf{S}}))}{\partial \tilde{\xbf{S}}[i,l]}, \quad \forall (i,l) \in \{1,\cdots,N_s\} \times \{1,\cdots,N\} ~ .
+\end{equation}
+As expected, the way the demixing matrix (and thus the sources) is estimated closely depends on the way the sources are modeled (from a statistical point of view). For instance, separating platykurtic (distribution with negative kurtosis) or leptokurtic (distribution with positive kurtosis) sources will require completely different score functions. Even if ICA is shown in \citet{ica:cardoama} to be quite  robust to ``mis-modeling'', the choice of the score function is crucial with respect to the convergence (and rate of convergence) of ICA algorithms. Some ICA-based techniques \citep{koldo06} focus on adapting the popular FastICA algorithm to adjust the score function to the distribution of the sources. They particularly focus on modeling sources whose distribution belongs to specific parametric classes of distributions such as Generalized Gaussian Distribution (GGD).
+%$\pdf_{\bf S}(\xbf{S}) \propto \prod_{ij} \exp(-\mu | \xbf{S}[i,j] |^\theta)$\footnote{Note that the class of generalized Gaussian contains well-known distributions:  the Gaussian ($\theta = 2$) and the Laplacian ($\theta = 1$) distributions.}. 
+\item{{Noisy ICA:}} Only a few works have  investigated the problem of noisy ICA  \citep{Davies04,koldo:noise}. As pointed out by  \citet{Davies04}, noise clearly degenerates the ICA model: it is not fully identifiable. In the case of additive Gaussian noise as stated in \eqref{eq:mix_model}, using higher order statistics yields an effective estimate of the mixing matrix $\A = {\bf B}^{-1}$ (higher order cumulants are indeed blind to additive Gaussian noise; this property does not hold for non-Gaussian noise). But in the noisy ICA setting, applying the demixing matrix to the data does not yield an effective estimate of the sources. Furthermore, most ICA algorithms assume the mixing matrix $\A$ to be square. When there are more observations than sources ($N_c > N_s$), a dimension reduction step is first applied. When noise perturbs the data, this subspace projection step can dramatically deteriorate the performance of the separation stage.
+\end{itemize}
+In the following,  we will introduce a new way of modeling the data so as to avoid most of the aforementioned limitations of ICA.
+
+\subsection{Towards Sparsity}
+\label{subsec:towardsparsity}
+\index{independent component analysis!sparsity}
+
+The seminal paper of \citet{ica:zibu_pearl} introduced sparsity as an alternative to standard contrast functions in ICA. 
+%In this chapter, we estimate the mixing matrix $\A$ and the sources $\xbf{S}$ in a fully Bayesian framework. 
+In their work, each source $s_i$ was assumed to be sparsely represented in a dictionary $\W$:
+\begin{equation}
+s_i =  \W \alpha_i \quad \forall ~ i=1,\cdots,N_s ~.
+\end{equation}
+where the coefficients were assumed independent with a sharply-peaked (i.e. leptokurtic) and heavy-tailed PDF:
+\begin{equation}
+\pdf_{\balpha}(\alpha_1,\ldots,\alpha_{N_s}) \propto \prod_{i,l} e^{-\lambda_i \uppsi(\alpha_i[l])} ~ ,
+\end{equation}
+where $\uppsi(\alpha_i[l])$ is a sparsity-promoting penalty; e.g. the $\ell_p$-norm corresponding to a GGD prior. \citet{ica:zibu_pearl} used a convex smooth approximation of the $\ell_1$ norm (Laplacian prior) and proposed to estimate $\A$ and $\bf S$ via a MAP estimator. The resulting optimization problem was solved with a Relative Newton Algorithm (RNA) \citep{ica:zibu_relnewton}. This work paved the way for the use of sparsity in BSS. Note that several other works emphasized the use of sparsity in a parametric Bayesian approach (\citet{Djafa06} and references therein). Recently, sparsity has emerged as an effective tool for solving underdetermined source separation problems; see \citep{ica:cicho06_1,ica:cichocki,ica:zibu_bronst,LNCS46660430} and references therein.
+ 
+%This chapter concentrates on overdetermined Blind Source Separation ($N_c \ge N_s$). We present a sparsity-based source separation framework providing new insights into BSS.
+
+
+%#################### Sparse multichannel signal representation ##################################################################################
+
+\section{Sparsity and Multichannel Data}
+\label{sec:bss_sparse}
+In this section, will see how the story of monochannel sparse decomposition problem described and characterized in Section~\ref{subsec:sparsedecomp} can be told in the language of multichannel data. This will be a consequence of a key observation dictated by \eqref{eq:bss}.
+
+\index{sparsity!blind source separation}
+
+% \section{Morphological diversity in multichannel data}
+\index{sparsity!multichannel data}
+\index{multichannel dictionary}
+
+\subsection{Morpho-Spectral Diversity}
+Extending the redundant representation framework to the multichannel case requires defining what a multichannel overcomplete representation is.
+Let us assume in this section that $\A = [\varphi_{\nu,1}, \cdots, \varphi_{\nu, N_c}] \in \RR^{N_c \times N_s}$ is a \textit{known spectral} dictionary, and $\W = [ \varphi_{1}, \cdots, \varphi_{T}] \in \RR^{N \times T}$ is a \textit{spatial} or \textit{temporal} dictionary\footnote{The adjectives \textit{spectral} and \textit{spatial} that characterize the dictionaries are not formal. Owing to the symmetry of the multichannel sparse decomposition problems, $\A$ and $\W$ have no formal difference. In practice and more particularly in multi/hyperspectral imaging, $\A$ will refer to the dictionary of physical spectra and $\W$ to the dictionary of image/signal waveforms. In the BSS problem, $\A$ is unknown.}. We assume that each source $s_i$ can be  represented as a (sparse) linear combination of atoms in $\W$; $s_i=\W\alpha_i$. Let $\balpha$ the $N_s \times T$ matrix whose rows are $\alpha_i^\Tr$.
+
+From \eqref{eq:bss}, the multichannel noiseless data $\bY$ can be written as
+\be
+\label{eq:tensor1}
+\bY = \A\balpha\W^\Tr = \sum_{i=1}^{N_s}\sum_{j=1}^{T} \parenth{\varphi_{\nu,i}\varphi_{j}^\Tr}\alpha_i[j] ~.
+\ee
+Consequently, each column in of $\bY$ reads
+\be
+\label{eq:tensor2}
+\bY[.,l] = \parenth{\A \otimes \W[l,.]} \mathrm{vect}(\balpha) ~, \quad \forall ~ l=1,\cdots,N ~,
+\ee
+and finally
+\be
+\label{eq:tensor3}
+\mathrm{vect}(\bY) = \parenth{\A \otimes \W} \mathrm{vect}(\balpha) ~,
+\ee
+where $\otimes$ is the tensor (Kronecker) product and the operator $\mathrm{vect}$ stacks the columns of its argument in a long 1D vector. This latter equation brings a clear and simple insight: the sparsity of the sources in $\W$ translates into sparsity of the multichannel data $\bY$ in the multichannel tensor product dictionary ${\bf \Psi}=\A \otimes \W$. This concept of multichannel dictionary has also been noted in \citet{GN05}.
+
+The multichannel dictionary $\bf \Psi$ can also be seen as concatenation of multichannel atoms ${\bf \Psi}^{(ij)}=\varphi_{\nu,i}\varphi_{j}^\Tr$ which are rank-one matrices obtained from each atomic spectrum $\varphi_{\nu,i}$ and each spatial elementary atom $\varphi_{j}$ (see \eqref{eq:tensor1}). 
+
+In Chapter \ref{ch_mca}, we have seen that some of the popular sparse recovery results in the monochannel setting rely on the mutual coherence of the dictionary. In the multichannel case a similar quantity can be defined. In fact, by standard properties of the tensor product, one can easily show that the Gram matrix of a tensor product is the tensor product of the Gram matrices. Thus the mutual coherence of the multichannel dictionary $\bf \Psi$ is:
+\index{coherence}
+\begin{equation}
+\label{eq:mmc}
+0 \le \mu_{\bf \Psi}  =  \max\left\{\mu_{\A},\mu_{\W}\right\} < 1 ~ .
+\end{equation}
+
+This expression of mutual coherence is instructive as it tells us that multichannel atoms can be distinguished based on their spatial or spectral morphology. In other words, discriminating two multichannel atoms $\Psi_{ij}$ and $\Psi_{i'j'}$ may put on different faces:
+\begin{itemize}
+\item{Spatial or temporal (respectively spectral) diversity:} in this case $i=i'$ and $j \neq j'$ (respectively $i \neq i'$ and $j = j'$). These atoms have the same spectrum (respectively, spatial shape) but one can discriminate between them based on their spatial (respectively, spectral) diversity. From \eqref{eq:mmc}, their coherence is lower than $\mu_{{\W}}$ (respectively $\mu_{{\A}}$). Disentangling these multichannel atoms can equivalently be done in the monochannel case.
+
+\item{Both diversities:} $i \neq i'$ and $j \neq j'$, this seems to be a more favorable scenario to differentiate the atoms as they do not share neither the same spectrum nor the same spatial (or temporal) ``shape". Note that from \eqref{eq:mmc}, the coherence between these atoms in this case is lower than $\mu_{{\A}}\mu_{{\W}} \le \max\left\{\mu_{\A},\mu_{\W}\right\}$.
+\end{itemize}
+
+\subsection{Multichannel Sparse Decomposition}
+% Let's assume that the data $\bf X$ are  sparse in $\bf \Psi$.  
+% Hence, $\bf X$  are the linear combination of  multichannel atoms:
+% \begin{equation}
+% \label{eq:multi_spmodel}
+% {\bf X} = \sum_{ {\bf \gamma}  \in \Lambda} {\psi}_{\bf \gamma}  \alpha_{\bf \gamma}  ~ ,
+% \end{equation}
+% where $\Lambda$ is the set of index couples $(i,j)$.
+% This equation is clearly similar to the monochannel case. Owing to this key observation, we will see in the next section that most sparse decomposition results can be extended to the multichannel case.
+
+We embark from \eqref{eq:tensor1}, where the multichannel dictionary ${\bf \Psi}$ is supposed to be overcomplete, i.e. $NN_c < TN_s$. The goal is to recover the sparsest solution $\balpha$ from $\bY$ which requires solving:
+\begin{equation}
+\label{eq:multi_l0}
+\min_{\balpha \in \RR^{N_s \times T}} \sum_{i=1}^{N_s}\norm{\alpha_i}_{0} \st \bY  = \A \balpha \W^\Tr.
+\end{equation}
+As justified in Chapter~\ref{ch_mca}, this combinatorial problem can be replaced by its convex relaxation substituting the $\ell_1$ norm for the $\ell_0$ pseudo-norm, hence giving:
+\begin{equation}
+\label{eq:multi_l1}
+\min_{\balpha \in \RR^{N_s \times T}} \sum_{i=1}^{N_s}\norm{\alpha_i}_{1} \st \bY  = \A \balpha \W^\Tr.
+\end{equation}
+
+As \eqref{eq:tensor3} is a vectorized monochannel form of \eqref{eq:tensor1}, what we are trying so do is actually to find the sparsest solution of a monochannel underdetermined system of linear equations where the solution is sparse in an overcomplete tensor product dictionary. Recovery properties of monochannel sparse decomposition by $\ell_1$ minimization were overviewed in Section~\ref{subsec:sparsedecomp}. Therefore, if one is able to translate those identifiability criteria in the language of tensor product dictionaries, then we are done.
+
+In particular, the coherence-based sparse recovery criterion \eqref{eq:mono_unique} is trivial to adapt owing to \eqref{eq:mmc}. Indeed, if $\bY$ is $k$-sparse in the multichannel dictionary ${\bf \Psi}$ with $k < C(\mu_{{\bf \Psi}}^{-1}+1)$ for some $C > 0$ (typically $C=1/2$), and the dictionary is sufficiently incoherent (both spectrally and spatially), then the solution of \eqref{eq:multi_l1} is unique, is a point of equivalence of \eqref{eq:multi_l0} and \eqref{eq:multi_l1}, and the recovery is stable to bounded noise on $\bY$. 
+
+Above, we addressed the multichannel sparse decomposition problem without assuming any constraint on the sparsity pattern of the different channels. It is worth however pointing out that sparse recovery conditions from multichannel measurements can be refined if some structured sparsity is hypothesized. For instance, for structured multichannel representation (e.g. sources with disjoint supports) \citet{GN05} provided coherence-based sufficient recovery conditions by solving \eqref{eq:multi_l1}. One should note that despite apparent similarities, the multichannel sparse decomposition problem discussed here is conceptually different from the one targeting \textit{simultaneous} sparse recovery of multiple measurements vectors (MMV) considered by several authors, see e.g.\ \citet{CREK05,MalioutovMMV05,TroppMMV06,ChenHuo06,ArgyriouMMVLearning08,BachMMVLearning08,GribonvalMMV08,EldarMMV08,LouniciMMVLearning09,WainwrightMMV09}. The latter are not aware of any mixing process via $\A$, and their goal is to recover $\balpha$ from MMV $\bY=\balpha\W^\Tr$ in which the vectors $\alpha_i$, i.e. rows of $\balpha$, have a common sparsity pattern. However the MMV model can also be written $\mathrm{vect}(\bY^\Tr) = \parenth{\W \otimes \I} \mathrm{vect}(\balpha^\Tr)$ as in \eqref{eq:tensor3}. The most widely used approach to solve the simultaneous sparse recovery problem with joint sparsity is to minimize a mixed $\ell_p-\ell_q$ norm of the form $\sum_{j=1}^T\parenth{\norm{\balpha[.,j]}_p^q}^{1/q}$ for $p \geq 1, 0 \leq q \leq +\infty$.
+
+
+\section{Morphological Diversity and Blind Source Separation}
+\subsection{Generalized Morphological Component Analysis}
+\label{subsec:gmca}
+We now turn to the BSS problem and we highlight the role of sparsity and morphological diversity as a source of contrast to solve it. Towards this goal, we assume that the sources are sparse in the spatial dictionary $\W$ that is the concatenation of $K$ orthonormal bases $\parenth{{\W}_{k}}_{k=1,\cdots,K}$: $\W = \left[{\W}_{1},\cdots,{\W}_{K} \right]$. The restriction to orthonormal bases is only formal and the algorithms to be presented later still work in practice even with redundant sub-dictionaries $\W_k$. 
+
+The Generalized Morphological Component Analysis framework assumes a priori that each source is modeled as the linear combination of $K$ morphological components where each component is sparse in a specific basis:
+\begin{eqnarray}
+\label{eq:sourcecomponents}
+\forall i \in \{1,\cdots,N_s\}; \qquad s_i & = & \sum_{k=1}^K x_{i,k} = \sum_{k=1}^K \W_k\alpha_{i,k} \\
+& = & \W \alpha_i \qquad \mbox{ where } \alpha_i =  \left[\alpha_{i,1}^\Tr,\cdots,\alpha_{i,K}^\Tr \right]^\Tr ~. \nonumber
+\end{eqnarray}
+GMCA seeks an unmixing scheme, through the estimation of $\A$, which leads to the sparsest sources $\bf S$ in the dictionary $\W$. This is expressed by the following optimization problem written in the augmented Lagrangian form
+\begin{multline}
+\label{eq:optimgmca}
+\min_{{\A},\alpha_{1,1},\cdots,\alpha_{N_s,K}} \frac{1}{2}\norm{\bY - {\A}\balpha\W^\Tr}^2_{\mathrm{F}} + \lambda \sum_{i=1}^{N_s} \sum_{k=1}^K \norm{\alpha_{i,k}}_p^p \\ \st \norm{a_i}_2 = 1 ~ \forall i \in \{1,\cdots,N_s\} ~,
+\end{multline} 
+where typically $p=0$ or its relaxed convex version with $p=1$, and $\norm{{\bf X}}_{\mathrm{F}}=\parenth{\trace({\bf X}^\Tr{\bf X})}^{1/2}$ is the Frobenius norm. The unit $\ell_2$-norm constraint on the columns of $\A$ avoids the classical scale indeterminacy of the product $\bf AS$ in \eqref{eq:mix_model}. The reader may have noticed that the MCA problem \eqref{eq:mcaoptim} in Chapter~\ref{ch_mca} is a special case of the GMCA problem \eqref{eq:optimgmca} when there is only one source $N_s=1$ and one channel $N_c=1$ (no mixing). Thus GMCA is indeed a multichannel generalization of MCA. 
+
+The program \eqref{eq:optimgmca} is a notoriously difficult non-convex optimization problem even for convex penalties when $p \geq 1$. More conveniently, following \eqref{eq:bss}, the product $\bf AS$ can be split into $N_s \cdot K$ multichannel morphological components: ${\bf AS} = \sum_{i,k} a_i x_{i,k}^\Tr = \sum_{i,k} (a_i \alpha_{i,k}^\Tr) \W_k^\Tr$. Based on this decomposition, and inspired by the block-coordinate relaxation as for MCA, GMCA yields an alternating minimization algorithm to estimate iteratively one term at a time \citep{starck:bobin07}. We will show shortly that the estimation of each morphological component $x_{i,k} = \W_k\alpha_{i,k}$ assuming $\A$ and $x_{\{i',k'\} \neq \{i,k\} }$ are fixed is obtained by simple hard or soft thresholding for $p=0$ and $p=1$.
+
+Define the $(i,k)$th multichannel marginal residual by 
+\begin{equation}
+\label{eq:gmca_resi}
+{\bf R}_{i,k} = {\bY} - \sum_{i' \neq i}   \sum_{k'\neq k}    a_{i'} x_{i',k'}^\Tr ~.
+\end{equation} 
+as the part of the data $\bY$ unexplained by the multichannel morphological component $a_i x_{i,k}^\Tr$. Estimating $x_{i,k} =  \W_{k}  \alpha_{i,k}$, assuming $\A$ and the other components $x_{(i',k') \neq (i,k)}$ are fixed, leads to the component-wise optimization problem:
+\begin{equation}
+\label{eq:componentwisephi}
+\min_{x_{i,k} \in \RR^{N}} \frac{1}{2}\norm{{\bf R}_{i,k} - (a_i \alpha_{i,k}^\Tr)\W^\Tr}_{\mathrm{F}}^2 +  \lambda \norm{\alpha_{i,k}}_p^p ~ ,
+\end{equation}
+
+Since here ${\W}_k$ is an orthogonal matrix, with calculations similar to those of Sections~\ref{subsubsec:proxpsi} and \ref{sect_iht}\footnote{The reasoning holds for $0 \leq p \leq 1$ from Section~\ref{sect_iht}.}, it can be shown that the unique solution of \eqref{eq:componentwisephi} is obtained by a hard ($p=0$) or soft ($p=1$) thresholding. Hence, the closed-form estimate of the morphological component $x_{i,k}$ is: 
+\begin{equation}
+\label{eq:st_update}
+\tilde{x}_{i,k} = \Delta_{\W_k,\lambda^\prime} \parenth{\frac{1}{\norm{a_i}_2^2} {\bf R}_{i,k}^\Tr a_i} ~,
+\end{equation}
+where $\lambda^\prime=\lambda/\norm{a_i}_2^2$ for soft thresholding and $\lambda^\prime=\sqrt{2\lambda}/{\norm{a_i}_2}$ for hard thresholding. As described in Chapter~\ref{ch_mca}, the operator $\Delta_{{\bf D}, \lambda}(x)$ consists of (i) computing the coefficients of $x$ in the dictionary ${\bf D}$, (ii)
+thresholding (soft or hard) the obtained coefficients with the threshold $\lambda$, and (iii) reconstructing from thresholded coefficients: 
+\begin{equation}
+\Delta_{{\bf D},\lambda}(x) = {\bf D} \Thres_{\lambda} \left( {\bf D}^\Tr x \right).
+\end{equation}
+$\Thres_{\lambda}$ is either a hard or a soft thresholding. When $\W_k$ is redundant, \eqref{eq:st_update} is only the first iteration of the forward-backward splitting recursion described in Chapter~\ref{ch_inverse} (see \eqref{eq:IST} and \eqref{eq_it_IHT}), and which should be used when $\W_k$ is overcomplete.
+However in practice \eqref{eq:st_update} can still be used to save computation time.
+\index{iterative!hard thresholding}
+\index{iterative!soft thresholding}
+
+Now, considering $\{a_{i'}\}_{i' \neq i}$ and all morphological components as fixed, and recalling that $N_c \geq N_s$, updating the column $a_i$ is then just a least-squares estimate
+\begin{equation}
+\label{eq:a_update}
+\tilde{a}_i = \frac{1}{\norm{s_i}^2_2} \left({\bf Y} - \sum_{i' \neq i} a_{i'} s_{i'}^\Tr\right) s_i ~.
+\end{equation}
+where $s_i = \sum_{k=1}^K x_{i,k}$. This estimate is then projected onto the unit sphere to meet the unit $\ell_2$-norm constraint in \eqref{eq:optimgmca}.
+The GMCA algorithm is summarized in Algorithm~\ref{algo_gmca}.
+
+{\linespread{1}
+\begin{algorithm}[htb]
+\caption{GMCA algorithm.}
+\label{algo_gmca}
+\noindent{\bf Task:} Sparse Blind Source Separation.\\
+\noindent{\bf Parameters:} The data $\bY$, the dictionary $\W=[\W_1 \cdots \W_K]$, number of iterations $\niter$, number of sources $N_s$ and channels $N_c$, stopping threshold $\lambda_{\min}$, threshold update schedule.\\
+\noindent{\bf Initialization:} $x_{i,k}^{(0)} = 0$ for all $(i,k)$, $\A^{(0)}$ random and threshold $\lambda_0$.\\
+\noindent{\bf Main iteration:} \\
+\For{$t=1$ {\bf to} $\niter$}{
+    \For{$i=1,\cdots,N_s$ }{
+    \For{$k=1,\cdots,K$ }{
+       Compute the marginal residuals: $${\bf R}_{i,k}^{(t)} = {\bY}- \sum_{(i',k') \neq (i,k)} {a}_{i'}^{{(t-1)}}{x}_{i',k'}^{{(t-1)}^\Tr}.$$
+       Estimate the current component ${x}_{i,k}^{(t)}$ via thresholding with threshold $\lambda_t$:
+        \qquad ${x}_{i,k}^{(t)} = \Delta_{\W_k, \lambda_t}\left({\bf R}_{i,k}^{{(t)}^\Tr}{a}_i^{{{(t-1)}}}\right)$.
+    }
+Update $i$th source $s_i^{(t)}  =  \sum_{k=1}^K x_{ik}^{(t)}$. \\
+Update $a_i$ assuming $a_{i' \neq i}^{(t)}$ and the morphological components $ {x}_{i,k}^{(t)} $ are fixed~:
+ $ {a}_i^{{(t)}} = \frac{1}{\|{s}_i^{(t)}\|_2^2} \left({\bY} - \sum_{i' \neq i}^{N_s} {a}_{i'}^{(t-1)} {s}_{i'}^{{(t)}^\Tr} \right){s}_i^{{(t)}}$ and normalize to a unit $\ell_2$ norm.
+}
+Update the threshold $\lambda_t$ according to the given schedule.\\
+\lIf{$\lambda_t \leq \lambda_{\min}$} stop.
+}
+\noindent{\bf Output:} Estimated sources $\big(s^{(\niter)}_i\big)_{i=1,\cdots,N_s}$ and mixing matrix ${\A}^{(\niter)}$.
+\end{algorithm}}
+
+For $p=1$ and fixed threshold $\lambda$, Algorithm~\ref{algo_gmca} can be shown to converge to a stationary point, see \citet{Tseng01,bobin-gmca-cmb}. This point is not guaranteed to be even a local minimum of the energy, and this is even less clear for $p=0$. Thus, in the same vein as MCA, GMCA relies on a salient-to-fine strategy using a varying threshold to mitigate the problem of sensitivity to initialization. More precisely, GMCA first computes coarse versions of the morphological components for any fixed source $s_i$. These raw sources are estimated from their most significant coefficients in $\W$. Then, the corresponding column $a_i$ is estimated from the most significant features of $s_i$. Each source and its corresponding column of $\A$ are then alternately and progressively refined as the threshold decreases towards $\lambda_{\min}$. This particular iterative thresholding scheme provides robustness to noise and initialization by working first on the most significant features in the data and then progressively incorporating smaller details to finely tune the model parameters. GMCA can be used with either linear or exponential decrease of the threshold as for MCA in Chapter~\ref{ch_mca}.
+
+If $\A$ were known and fixed, the GMCA would be equivalent to performing an MCA sparse decomposition of $\bY$ in the tensor product multichannel dictionary ${\A} \otimes \W$. But as GMCA also updates the mixing matrix at each iteration, it is able to learn the spectral part of the multichannel dictionary directly from the data.
+
+\index{dictionary!learning}
+
+%\subsubsection{The Dictionary ${\W}$}
+% As an MCA-like algorithm (see previous chapter), the GMCA algorithm involves multiplications by matrices ${\W}_k^\Tr$ and ${\W}_k$. Thus GMCA is attractive in large-scale problems as long as the redundant dictionary ${\W}$ is a union of bases or tight frames. For such dictionaries, matrices ${\W}_k^\Tr$ and ${\W}_k$ are never explicitly constructed, and fast implicit analysis and reconstruction operators are used instead (for instance, wavelet transforms, global or local discrete cosine transform, etc.
+
+%Recent advances in harmonic analysis have given rise to new effective sparse representations namely ridgelets \citep{cur:candes99_1}, curvelets \citep{cur:candes99_3,Demanet06,starck:sta01_3}, bandlets \citep{PennecM05}, contourlets \citep{cur:do05}, wave atoms \citep{ld:wa}. Nevertheless, most of the aforementioned transforms {correspond to redundant tight frames}. At first sight, their use in GMCA is problematic as (\eqref{eq:st_update}) is \xx{no longer true} in that case. Fortunately, in \citep{Elad:shrink}, {(\eqref{eq:st_update1}) is shown to nearly solve (\eqref{eq:componentwisealpha}) when $\W_k$ is a tight frame}. In practice (see Section~\ref{sec:results}) \xx{building} a redundant dictionary ${\bf {\W} }$ by combining the \xx{ discrete cosine and curvelet transforms } gives rather good results \xx{for} large sets of natural images (see \citep{starck:sta04} and \citpe{starck:bobin06}). Note {also that} the choice of ${\W} $ could be critical for specific applications.
+
+\subsubsection{Complexity Analysis}
+\label{sec:gmca_cc}
+We begin by noting that the bulk of the computation is invested in the application of ${\W}_k^\Tr$ and ${\W}_k$ at each iteration and for each of the $N_sK$ morphological components $x_{i,k}$. Hence, fast implicit operators associated with ${\W}_k$ or its adjoint are of key importance in large-scale applications. Let $V_k$ denote the cost of one application of the analysis and synthesis operators ${\W}_k^\Tr$ and ${\W}_k$. The computation of the multichannel residuals for all $(i,k)$ costs $O(N_s K N_c N)$ operations. Each step of the double ``For'' loop computes the correlation of this residual with $a_i$ costing $O(N_c N)$ operations. Next, it computes the residual correlations (application of ${\W}_k^\Tr$), thresholds them, and then reconstructs the morphological component $x_{i,k}$. This costs $O(2V_k + T)$ operations. The sources are then reconstructed with $O(N_s K N)$, and the update of each mixing matrix column involves $O(N_c N)$ operations. Noting that in our setting, $N_s \approx N_c \ll N$, and $V_k = O(N)$ or $O( N \log N)$ for most popular transforms (see previous chapters for details), the whole GMCA algorithm then costs $O( \niter N_s^2K  N)+O(2\niter N_s \sum_{k=1}^K  V_k + N_s K  T)$. Thus in practice GMCA could be computationally demanding for large-scale high dimensional problems. In Section~\ref{fast_gmca}, we will see that under appropriate assumptions, GMCA can be accelerated yielding a simple and much faster algorithm that enables handling of very large-scale problems.
+
+\subsubsection{The Thresholding Strategy}
+
+\index{iterative!hard thresholding}
+\index{iterative!soft thresholding}
+
+\paragraph*{Hard or soft thresholding?} In practice, it was observed that hard thresholding leads to better results \citep{starck:bobin06,starck:bobin07}. Furthermore, if $\A$ is known and no noise contaminates the data, GMCA with hard thresholding will enjoy the sparse recovery guarantees given in Section~\ref{subsec:mcaguarantees}, with the proviso that the morphological components are contrasted and sparse in a sufficiently incoherent multichannel dictionary ${\A} \otimes \W$. 
+%Furthermore in \citet{starck:bobin_2}, it was shown empirically that the use of hard-thresholding is likely to provide the $\ell_0$ sparse solution for the single channel sparse decomposition problem. By analogy, the use of a hard-thresholding operator is assumed to solve the multichannel $\ell_0$ quasi-norm problem instead of \eqref{eq:optim_l1}. Recent results give also theoretical support to iterative hard thresholding methods  \citep{blumensath08,blumensath09,maleki09,donoho09}.
+
+\paragraph*{Handling additive Gaussian noise.}
+The GMCA algorithm is well suited to deal with data contaminated with additive Gaussian noise (see the next section for a Bayesian interpretation). For instance, assume that the noise $\bf E$ in \eqref{eq:mix_model} is additive white Gaussian in each channel, i.e. its covariance matrix ${\boldsymbol \Sigma}_{\bf E}$ is diagonal, and let $\sigma_{\bf E}$ be its standard deviation supposed equal for all channels for simplicity. Then, Algorithm~\ref{algo_gmca} can be applied as described above with $\lambda_{\min}=\tau\sigma_{\bf E}$, where $\tau$ is chosen as in denoising methods, typically taking its value in the range $[3,4]$. This attribute of GMCA makes it a suitable choice for use in noisy BSS. GMCA not only manages to separate the sources, but also succeeds in removing additive noise as a by-product.
+
+\subsection{The Bayesian Perspective}
+GMCA can be interpreted from a Bayesian standpoint. For instance, let us assume that the entries of the mixtures $\parenth{y_i}_{i=1,\cdots,N_c}$, the mixing matrix $\A$, the sources $\parenth{s_i}_{i=1,\cdots,N_s}$ and the noise matrix $\bf E$ are random processes. We assume that the noise $\bf E$ is zero-mean Gaussian where the noise vector $\veps_i$ in each channel is white, but the noise between channels is possibly correlated with known covariance matrix ${\boldsymbol \Sigma}_{\bf E}$. This means that the log-likelihood function takes the form:
+\[
+LL(\bY\big|{\bf S},{\A},{\boldsymbol \Sigma}_{\bf E}) = \frac{1}{2} \norm{{\bY} - {\bf{AS}}}_{{\boldsymbol \Sigma}_{\bf E}}^2 ~, \text{ where } \norm{\bf X}_{{\boldsymbol \Sigma}_{\bf E}}^2 = \trace\big({\bf X}^\Tr{\boldsymbol \Sigma}_{\bf E}^{-1}{\bf X}\big).
+\]
+
+We further assume that the uniform prior is imposed on entries of $\A$. Other priors on $\A$ could be imposed; e.g.\ known fixed column for example. 
+As far as the sources are concerned, they are known from \eqref{eq:sourcecomponents} to be sparse in the dictionary $\W$. Thus their coefficients $\balpha=[\alpha_1,\cdots,\alpha_{N_s}]^\Tr$ will be assumed as drawn independently from a leptokurtic PDF with heavy tails such as the generalized Gaussian distribution form:
+\begin{multline}
+\label{eq:indepas}
+\qquad \pdf_{\balpha}(\alpha_{1,1},\ldots,\alpha_{N_s,K}) \propto \prod_{i=1}^{N_s}\prod_{k=1}^{K}\exp\parenth{-\lambda_{i,k}\norm{\alpha_{i}}_{p_{i,k}}^{p_{i,k}}} ~, \\
+0 \leq p_{i,k} < 2 ~ \forall (i,k) \in \{1,\cdots,N_s\}\times\{1,\cdots,K\} ~.
+\end{multline}
+Putting together the log-likelihood function and the priors on $\A$ and $\balpha$, the MAP estimator leads to the following optimization problem:
+\begin{equation}
+\label{eq:optim_bayes}
+\min_{{\A},\alpha_{1,1},\cdots,\alpha_{N_s,K}} \frac{1}{2}\norm{\bY - {\A}\balpha\W^\Tr}^2_{{\boldsymbol \Sigma}_{\bf E}} + \sum_{i=1}^{N_s} \sum_{k=1}^K \lambda_{i,k}\norm{\alpha_{i,k}}_{p_{i,k}}^{p_{i,k}} ~,
+\end{equation}
+This problem has strong similarity with that of \eqref{eq:optimgmca}. More precisely, if the noise is homoscedastic and decorrelated between channels (i.e.\ ${\boldsymbol \Sigma}_{\bf E} = \sigma_{\bf E}^2 {{\bf I}}$), if the shape parameters $p_{i,k}$ of the generalized Gaussian distribution prior are all equal to $p$ and the scale parameters are all taken as $\lambda_{i,k}=\lambda/\sigma_{\bf E}^2$, and if the columns of $\A$ are assumed uniform on the unit sphere, then \eqref{eq:optim_bayes} is exactly \eqref{eq:optimgmca}. Note that in the development above, the independence assumption in \eqref{eq:indepas} does not necessarily entail independence of the sources. Rather it means that there are no a priori assumptions that indicate any dependency between the sources. 
+
+
+\subsection{The Fast GMCA Algorithm}
+\label{gmca_algo}
+\label{fast_gmca}
+The goal here is to speed up the GMCA algorithm. As a warm-up, assume that the dictionary ${\W}$ is no longer redundant and reduces to a single orthobasis (i.e. $K=1$). 
+Let us denote $\Ya=\bY\W$ the matrix where each of its rows stores the coefficients of each channel $y_i$. The optimization problem \eqref{eq:optimgmca} then becomes (we omit the $\ell_2$ constraint on $\A$ to lighten the notation):
+\begin{equation}
+\label{eq:optim2}
+\min_{{\A},{\bf \balpha}} \frac{1}{2}\norm{\Ya - {\A} \balpha}_\mathrm{F}^2 + \lambda \sum_{i=1}^{N_s} \norm{\alpha_{i}}_p^p ~.
+\end{equation}
+where $p=0$ or $p=1$. The GMCA algorithm no longer needs to apply the analysis and synthesis operators at each iteration as only the channels $\bY$ have to be transformed once in $\W$. Clearly, this case is computationally much cheaper. 
+
+However, this is rigorously valid only for an orthobasis dictionary, and no orthonormal basis is able to sparsely represent large variety of signals and yet we would like to use very sparse signal representations which motivated the use of redundancy in the first place. Arguments supporting the substitution of \eqref{eq:optim2} for \eqref{eq:optimgmca} for a redundant dictionary ${\W}$ were given in \citet{starck:bobin07,bobin08_aiep}. The idea is to first compute the sparsest representation of each channel $y_i$ in the redundant dictionary $\W$ using an appropriate (non-linear) decomposition algorithm (e.g. BP, MCA). Now, $\Ya$ denotes the matrix where each row contains the sparse decomposition of the corresponding channel. Because the channels are linear mixtures of the sources via the mixing matrix $\A$, the key argument developed by \citet{starck:bobin07} is that the sparse decomposition algorithm must preserve linear mixtures. Descriptively, the sparsest decomposition provided by the algorithm when applied to each channel must be equal to the linear combination of the sparsest decompositions of the sources. This statement is valid if the sources and the channels are identifiable, meaning that they verify sufficient conditions so that their unique sparsest representation can be recovered by the decomposition algorithm. For instance, if MCA is used, then following Section~\ref{subsec:mcaguarantees}, it is sufficient that the channels and the sources be sparse enough in an incoherent dictionary $\W$, and their morphological components be sufficiently contrasted. See \citet{starck:bobin07,bobin08_aiep} for details.
+
+Hence, under these circumstances, a fast GMCA algorithm can be designed to solve \eqref{eq:optim2} by working in the transform domain after decomposing each observed channel $y_i$ in ${\W}$ using a sparse decomposition algorithm such as MCA. There is an additional important simplification when substituting problem \eqref{eq:optim2} for \eqref{eq:optimgmca}. Indeed, since $N_c \geq N_s$ (i.e. overdetermined BSS), it turns out that \eqref{eq:optim2} is a multichannel overdetermined least-squares fit with $\ell_0/\ell_1$-sparsity penalization. We again use an alternating minimization scheme to solve for $\A$ and $\balpha$:
+\index{iterative!hard thresholding}
+\index{iterative!soft thresholding}
+\begin{itemize}
+\item Update the coefficients: when $\A$ is fixed, since the quadratic term is strictly convex ($\A$ has full column-rank), the marginal optimization problem can be solved by a general form of the forward-backward splitting iteration \citep{ChenRockafellar97}:
+\begin{equation}
+\balpha^{(t+1)} = \Thres_{\mu\lambda} \parenth{\balpha^{(t)} + \mu{\boldsymbol \Xi} \A^\Tr(\Ya - {\A}\balpha^{(t)})} ~,
+\end{equation}
+where ${\boldsymbol \Xi}$ is a relaxation matrix such that the spectral radius of $({\bf I} - \mu{\boldsymbol \Xi}\A^\Tr\A)$ is bounded above by 1, and the step-size $0 < \mu \leq 1/\opnorm{{\boldsymbol \Xi}\A\A^\Tr}$. Taking ${\boldsymbol \Xi} = (\A^\Tr\A)^{-1}$ ($\A^\Tr\A$ is non-singular and a kind of Newton's method ensues) yields the closed-form
+\begin{equation}
+\tilde{\balpha}  =  \Thres_{\lambda}\parenth{\A^{+}\Ya}, 
+\end{equation}
+where $\Thres_{\lambda}$ is a thresholding operator (hard for $p=0$ and soft for $p=1$).
+\item If $\balpha$ is fixed, and since $\balpha$ is full row-rank, the mixing matrix $\A$ is given by the least-squares estimate: 
+\begin{equation}
+{\bf \tilde{A}} = \Ya\balpha^\Tr\parenth{\balpha\balpha^\Tr}^{-1} = \Ya\balpha^+ ~,
+\end{equation}
+and the columns of ${\bf \tilde{A}}$ are then normalized.
+\end{itemize}
+Note that the latter two-step estimation scheme has a flavor of the alternating sparse coding/dictionary learning algorithm presented by \citet{ksvd:elad,fadili:peyrespie07} in a different framework.
+
+This two-stage iterative process leads to the accelerated version of GMCA summarized in Algorithm \ref{algo_fast_gmca}.
+{\linespread{1}
+\begin{algorithm}[htb]
+\caption{Fast GMCA algorithm.}
+\label{algo_fast_gmca}
+\noindent{\bf Task:} Sparse Blind Source Separation.\\
+\noindent{\bf Parameters:} The data $\bY$, the dictionary $\W=[\W_1 \cdots \W_K]$, number of iterations $\niter$, number of sources $N_s$ and channels $N_c$, stopping threshold $\lambda_{\min}$, threshold update schedule.\\
+\noindent{\bf Initialization:} 
+\begin{itemize}
+\item $\balpha^{(0)} = 0$,  $\A^{(0)}$ a random matrix.
+\item Apply the MCA Algorithm~\ref{algo:mca} with $\W$ to each data channel $y_i$ to get $\Ya$.
+\item Set threshold $\lambda_0 = \max_{i,l}\abs{\Ya[i,l]}$.
+\end{itemize}
+\noindent{\bf Main iteration:} \\
+\For{$t=1$ {\bf to} $\niter$}{
+\begin{itemize}
+\item  Update the coefficients $\balpha$:
+      ${\balpha}^{(t+1)} =  \Thres_{\lambda_t}\big({\A}^{(t)^+} \Ya\big)$.
+\item  Update the mixing matrix $\A$:
+      ${\A}^{(t+1)} =   \Ya\balpha^{(t+1)^+}$, normalize columns to a unit $\ell_2$ norm.
+\item Update  the threshold $ \lambda_t$ according to the given schedule.
+\end{itemize}
+\lIf{$\lambda_t \leq \lambda_{\min}$} stop.
+}
+Reconstruct the sources: $\tilde{s}_i   =    \sum_{k=1}^K {\W}_{k}  \alpha^{(\niter)}_{i,k}, i=1,\cdots,N_s$.\\
+\noindent{\bf Output:} Estimated sources $\big(\tilde{s}_i\big)_{i=1,\cdots,N_s}$ and mixing matrix ${\A}^{(\niter)}$.
+\end{algorithm}}
+
+In the same vein as in Section \ref{subsec:gmca}, the coarse-to-fine process is also at the heart of this fast version of GMCA with the threshold that decreases with increasing iteration count. This again brings robustness to noise and initialization.
+
+\paragraph*{Complexity analysis.} 
+When the assumptions discussed above for the redundant dictionary case are valid, the fast GMCA version requires only one application of MCA on each channel, which is faster than the first version of GMCA (see Section~\ref{sec:gmca_cc}). Once MCA is applied to each channel, and assuming as before that $N_s \approx N_c \ll N \leq T$, it can be easily shown that the rest of the algorithm requires $O(\niter N_s^2T)$ operations. In the case where only one orthogonal dictionary is used (e.g.\ Fourier orthogonal wavelet transform), the algorithm becomes even faster, since the MCA step is replaced by application of the fast analysis operator to each channel.
+
+ 
+\subsection{Estimating the Number of Sources}
+In BSS, the number of sources $N_s$ is assumed to be a fixed known parameter of the problem. In practical situations, this is rather an exception than a rule, and estimating $N_s$ from the data is a crucial and strenuous problem. 
+
+As we supposed $N_s \leq N_c$, the number of sources is the dimension of the subspace of the whole $N_c$-dimensional space (recall that $N_c$ is the number of channels) in which the data lie. A mis-estimation of the number of sources $N_s$ may entail two difficulties:
+\begin{itemize}
+\item{{Under-estimation:}} in the GMCA algorithm, under-estimating the number of sources will clearly lead to poor unmixed solutions that are made of linear combinations of ``true" sources. The solution may then be suboptimal with respect to the sparsity of the estimated sources.
+\item{{Over-estimation:}} in such case, the GMCA algorithm may have to cope with a mixing matrix estimate that becomes ill-conditioned.
+\end{itemize}
+Relatively little work has focused on the estimation of the number of sources $N_s$. One can think of using model selection criteria such as the minimum description length (MDL) devised in \cite{LNCS46660333}. Such criteria, including AIC \citep{akaike} and BIC \citep{schwarz}, would provide a balance between the complexity of the model (here the number of sources) and its ability to faithfully represent the data. It would amount to adding a penalty term in \eqref{eq:optimgmca}. This penalty term would merely prevent a high number of sources. But a sparsity-based method to estimate $N_s$ within the GMCA framework can be designed.
+
+For a fixed number of sources $n_s < N_s$, the sparse BSS problem \eqref{eq:optimgmca} can be written in the constrained from:
+\begin{equation}
+\label{eq:nbs_pb}
+(\P_{n_s,\sigma}): ~ \min_{{\A},\balpha | \rank\parenth{\A} = n_s} \sum_{i=1}^{n_s}\norm{\alpha_i}_{p}^p \st \norm{{\bY} - {\A\balpha\W^\Tr}}_\mathrm{F} \leq \sigma ~ .
+\end{equation}
+To jointly estimate the ${\bf S} = \balpha \W^\Tr$, $\A$ and the number of sources, the problem we would like to tackle is then:
+\begin{equation*}
+\label{eq:nbs_pb_all}
+\min_{n_s \in \{1,\cdots,N_c\}} \left\{\min_{{\A},\balpha | \rank\parenth{\A} = n_s} \sum_{i=1}^{n_s}\norm{\alpha_i}_{p}^p \st \norm{{\bY} - {\A\balpha\W^\Tr}}_\mathrm{F} \leq \sigma \right\} ~ .
+\end{equation*}
+If $n_s < N_s$, there exists a minimal value $\sigma^\star(n_s)$ such that if $\sigma < \sigma^\star(n_s)$, $(\P_{n_s,\sigma})$ has no feasible solution in $\A$ that satisfies the rank condition. For a fixed $n_s < N_s$, this minimal value $\sigma^\star(n_s)$ is the approximation error between $\bY$ and its projection in the subspace spanned by its singular vectors corresponding to the $n_s$ largest singular values. Furthermore, in the noiseless case, for $n_s < N_s$, $\sigma^\star(n_s)$ is always strictly positive as the data lies in a subspace whose dimension is exactly $N_s$. When $n_s = N_s$, the problem $(\P_{N_s,\sigma})$ has at least one solution for $\sigma = \sigma^\star(N_s) = 0$. 
+
+This discussion suggests a constructive approach to jointly estimate the number of sources $N_s$, ${\bf S} = \balpha \W^\Tr$ and $\A$. This selection procedure uses GMCA to solve a sequence of problems $(\P_{n_s,\sigma(n_s)})$ for each constraint radius $\sigma(n_s)$ with increasing $n_s$, $1 \leq n_s \leq N_c$. This is summarized in Algorithm~\ref{algo_nbr_sources} \citep{bobin08_aiep}.
+
+{\linespread{1}
+\begin{algorithm}[htb]
+\caption{GMCA-based selection of the number of sources.}
+\label{algo_nbr_sources}
+\noindent{\bf Task:} Jointly estimate the number of sources, source coefficients $\balpha$ and mixing matrix $\A$.\\
+\noindent{\bf Parameters:} The data $\bY$, the dictionary $\W=[\W_1 \cdots \W_K]$, number of iterations $\niter$, stopping threshold $\lambda_{\min}$, threshold update schedule.\\
+\noindent{\bf Main iteration:}\\ 
+\For{$n_s=1$ to $N_c$}{
+\begin{enumerate}[1.]
+\item Add a new column to $\A$.
+\item Solve $(\P_{n_s,\sigma^\star(n_s)})$ with the GMCA algorithm using $(\W,\niter,n_s,N_c,\lambda_{\min})$ as its parameters.
+\end{enumerate}
+\lIf{$\norm{{\bY} - {\A \balpha\W^\Tr}}_\mathrm{F} \leq \sigma^\star(N_s)$} stop.
+}
+\noindent{\bf Output:} Estimated number of sources $n_s$.
+\end{algorithm}
+}
+
+\paragraph*{Choice of the new columns of $\A$.}
+In the aforementioned algorithm, Step 1 amounts to adding a column vector to the current mixing matrix $\A$. The most simple choice would amount to choosing this vector at random. Wiser choices can also be made based on additional prior information:
+\begin{itemize}
+\item{\bf Decorrelation:} if the mixing matrix is assumed to be orthogonal, the new column vector can be chosen as being orthogonal to the subspace spanned by the columns of $\A$ with $\rank\parenth{\A} = n_s-1$.
+\item{\bf Known spectra:} if a library of spectra is known a priori, the new column can be chosen amongst the set of unused ones. The new spectrum can be chosen based on its correlation with the residual. Let $\mathcal{A}$ denote a library of spectra $\{\mathsf{a}_i\}_{i = 1,\cdots,\mbox{Card}\left(\mathcal{A}\right)}$ and let $\mathcal{A}_{n_s}^c$ denote the set of spectra that have not been chosen yet, then the $n_s$th new column of $\A$ is chosen such that:
+\begin{equation}
+\mathsf{a}_{i^\star} = \Argmax{\mathsf{a}_i \in \mathcal{A}_{n_s}^c} \abs{\sum_{l=1}^{N} \frac{1}{\norm{\mathsf{a}_i}_2^2}\mathsf{a}_i^\Tr\parenth{{\bY} - {\A {\bf S}}}[.,l]} ~ .
+\end{equation}
+\end{itemize}
+Any other prior information can be taken into account which will guide the choice of a new column vector of $\A$.
+
+\paragraph*{The noisy case.}
+In the noiseless case, Step 2 of Algorithm~\ref{algo_nbr_sources} amounts to running the GMCA algorithm to estimate $\bf A$ and ${\bf S} = \balpha \W^\Tr$ for a fixed $n_s$ with a final threshold $\lambda_{\min} = 0$. In the noisy case, $\sigma$ in $(\P_{n_s,\sigma})$ can be closely related to the noise level For instance, if the noise $\bf E$ is additive Gaussian with ${\boldsymbol \Sigma}_{\bf E}=\sigma_{\bf E}^2$, $\lambda_{\min}=\tau\sigma_{\bf E}$ with $\tau=\text{3--4}$ as suggested throughout the chapter. If the GMCA algorithm recovers the correct sources and mixing matrix, this ensures that the residual mean-squares is bounded by $\tau^2\sigma_{\bf E}^2$ with probability higher than $1 - \exp(-\tau^2/2)$.
+
+\paragraph*{Illustrative example.}
+In this experiment, 1D channels are generated following the instantaneous linear mixture model \eqref{eq:mix_model} with $N_s$ sources, where $N_s$ varies from $2$ to $20$. The number of channels is $N_c= 64$, each having $N = 256$ samples. The dictionary $\W$ is chosen as the Dirac basis, and the entries of $\bf S$ have been independently drawn from a Laplacian PDF with unit scale parameter (i.e. $p=1$ and $\lambda=1$ in \eqref{eq:indepas}). The entries of the mixing matrix are independent and identically distributed $\sim \cN(0,1)$. The observations are not contaminated by noise.  
+
+This experiment will focus on comparing the classical principal components analysis (PCA), the popular subspace selection method, and the GMCA algorithm assuming $N_s$ is unknown. In the absence of noise, only the $N_s$ highest eigenvalues provided by the PCA, which coincide with the Frobenius norm of the rank-one matrices $(a_i s_i^\Tr)_{i=1\cdots,N_s}$, are non-zero. PCA therefore provides the true number of sources. The GMCA-based selection procedure in Algorithm~\ref{algo_nbr_sources} has been applied to the same data in order to estimate the number of sources $N_s$. Fig.\ \ref{fig:css_ns} depicts the mean number of sources estimated by GMCA. Each point has been averaged over $25$ random realizations of $\bf S$ and $\A$. The estimation variance was zero indicating that for each of the $25$ trials, GMCA provides exactly the true number of sources.
+
+\begin{figure}[htb]
+\begin{minipage}[b]{1\linewidth}
+    \centerline{
+    \includegraphics[width=8cm]{CSS_EstNbSources.pdf}
+    }
+\end{minipage}
+\caption{Estimating the number of sources with GMCA. Each point is the average number of sources computed from $25$ trials. For each point, the estimation variance was zero.} \label{fig:css_ns}
+\end{figure} 
+
+Fig.\ \ref{fig:css_comp} reports the comparative performances of PCA and GMCA in recovering the true input sources. In this experiment, the number of channels is $N_c = 128$, and each channel has $N = 2048$ samples. The left panel of Fig.\ \ref{fig:css_comp} shows the mean (over 25 realizations) recovery SNR of the estimated sources. The SNR for both methods decreases as $N_s$ increases which is expected, but clearly the GMCA provides sources that are far closer to the true sources than PCA. We define the following $\ell_1$-norm based error criterion between the original sources and mixing matrix and their estimates:
+\begin{equation}
+\label{eq:lambdal1}
+\mathrm{C}_{\ell_1} = \frac{\sum_{i=1}^{N_s}\sum_{j=1}^{N_c}\sum_{l=1}^N \abs{(a_i s_i^\Tr)[j,l] - (\tilde{a}_i \tilde{s}_i^\Tr)[j,l]}}{\sum_{i=1}^{N_s}\sum_{j=1}^{N_c}\sum_{l=1}^N \abs{(a_i s_i^\Tr)[j,l]}} ~ ,
+\end{equation}
+$\mathrm{C}_{\ell_1}$ provides a sparsity-based criterion that quantifies the deviation between the estimated sources and the true sparsest sources. 
+The right panel of Fig.\ \ref{fig:css_comp} shows the evolution of $\mathrm{C}_{\ell_1}$ as $N_s$ varies. As expected, the GMCA-based algorithm also provides much sparser sources.
+
+\begin{figure}[htb]
+% \begin{minipage}[b]{1\linewidth}
+ \centerline{  
+\includegraphics[width=0.6\textwidth]{CSS_L2Log.pdf}
+\includegraphics[width=0.6\textwidth]{CSS_L1Log.pdf}
+}
+% \end{minipage}
+% 
+\caption{Comparison of GMCA (dots) to PCA (solid) in terms of source recovery. Left: recovery SNR in dB as $N_s$ increases. Right: source recovery criterion $\mathrm{C}_{\ell_1}$. Each point is an average over $25$ realizations.} \label{fig:css_comp}
+\end{figure} 
+% These examples point to the fact that GMCA is able to find the true dimension 
+% of the subspace in which the data lies (i.e.\ the true number of sources). 
+% Furthermore, GMCA provides far sparser solutions than PCA with much smaller recovery errors.  
+
+
+\section{Illustrative Experiments}
+\subsection{The Sparser, the Better}
+\label{tstb}
+So far in this chapter, sparsity and morphological diversity were claimed as the clue for good separation results. The role of morphological diversity is twofold:
+\begin{itemize}
+\item Separability:  the sparser and the more morphologically diverse the sources in the dictionary ${\W}$, the more ``separable" they are.  
+\item Robustness to noise/model imperfections: the sparser the sources, the less dramatic the noise. This is the essence of sparsity-based denoising methods as discussed in Chapter~\ref{chap:denoise}.
+%In fact, sparse sources are concentrated on very few significant coefficients in the sparse domain for which additive noise is a slight perturbation. As a sparsity-based method, GMCA should be less sensitive to noise.
+\end{itemize}
+%Furthermore, from a signal processing point of view, dealing with highly sparse signals leads to easier and more robust models. 
+
+To illustrate these points, let us consider $N_s = 2$ 1D sources with $N = 1024$ samples. These sources are the \texttt{Bump} and \texttt{HeaviSine} signals available in \citet{wave:wavelab}. The first column of Fig.\ \ref{fig:bgmca_tstb_signals}  shows the two synthetic sources. The sources are randomly mixed, and a white Gaussian noise with variance corresponding to SNR = $19$ dB is added so as to provide $N_c=2$ observations portrayed in the second column of Fig.\ \ref{fig:bgmca_tstb_signals}. To apply the fast GMCA Algorithm~\ref{algo_fast_gmca}, MCA was assumed to preserve linearity with such sources and mixtures (see our choice of the dictionary later on). The mixing matrix is assumed to be unknown. The third and fourth columns of Fig.\ \ref{fig:bgmca_tstb_signals} depict the GMCA estimated sources computed with a dictionary containing respectively the OWT, and the DCT+OWT. Visually, GMCA performs quite well in both cases.
+
+\begin{figure}[htb]
+\begin{minipage}[b]{0.2\linewidth}
+\centerline{         \includegraphics[width=3cm]{gmca_fig4a.pdf}}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.2\linewidth}
+     \centerline{         \includegraphics[width=3cm]{gmca_fig4b.pdf}}
+
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.2\linewidth}
+      \centerline{         \includegraphics[width=3cm]{gmca_fig4c.pdf}}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.2\linewidth}
+      \centerline{         \includegraphics[width=3cm]{gmca_fig4d.pdf}}
+ \end{minipage}
+\vfill
+\begin{minipage}[b]{0.2\linewidth}
+       \centerline{         \includegraphics[width=3cm]{gmca_fig4e.pdf}}
+ \end{minipage}
+\hfill
+\begin{minipage}[b]{0.2\linewidth}
+        \centerline{         \includegraphics[width=3cm]{gmca_fig4f.pdf}}
+ \end{minipage}
+\hfill
+\begin{minipage}[b]{0.2\linewidth}
+        \centerline{         \includegraphics[width=3cm]{gmca_fig4g.pdf}}
+ \end{minipage}
+\hfill
+\begin{minipage}[b]{0.2\linewidth}
+        \centerline{         \includegraphics[width=3cm]{gmca_fig4h.pdf}}
+ \end{minipage}
+\caption{The sparser the better. First column: the original sources. Second column: mixtures with additive white Gaussian noise (SNR = $19$ dB). Third column: sources estimated with GMCA using only the OWT dictionary. Fourth column: Sources estimated with GMCA using a redundant dictionary made of the union of the DCT and the OWT.} 
+\label{fig:bgmca_tstb_signals}
+\end{figure} 
+We define the mixing matrix criterion 
+\[
+\mathrm{C}_{\A} = \sum_{i,j}|{\bf I}[i,j] - ({\bf P}{\tilde{\A}}^{+} {\A})[i,j]|,
+\] 
+where $\I$ is the identity matrix as usual, ${\bf P}$ is a matrix that reduces the scale/permutation indeterminacy of the mixing model and ${\tilde{\A}}^+$ is the pseudo-inverse of the estimated mixing matrix. In the simulation experiments, the true sources and mixing matrix are obviously known and thus ${\bf P}$ can be computed easily. The mixing matrix criterion is thus strictly positive unless the mixing matrix is perfectly estimated up to scale and permutation. This mixing matrix criterion is experimentally much more sensitive to separation errors.
+
+Fig.\ \ref{fig:bgmca_tstb} portrays the evolution of the criterion $\mathrm{C}_{\A}$ as the SNR increases. The dashed line corresponds to the behavior of GMCA with the OWT dictionary, and the solid line to that when $\W$ is the union of the DWT and the DCT. On the one hand, GMCA gives satisfactory results as $\mathrm{C}_{\A}$ is rather low for both experiments. On the other hand, the values of $\mathrm{C}_{\A}$ provided by the fast GMCA with the redundant dictionary are approximately $5$ times better than those achieved using solely the orthogonal dictionary OWT. In summary, this simple toy experiment clearly underlines the role of sparsity and overcompleteness for successful BSS.
+
+\begin{figure}[htb]
+\begin{minipage}[b]{1\linewidth}
+             \centerline{         \includegraphics[width=8cm]{gmca_fig5.pdf}}
+
+\end{minipage}
+\caption{The sparser the better: behavior of the mixing matrix criterion $\mathrm{C}_{\A}$ with varying SNR. OWT--fast GMCA (dashed line) and (DCT+OWT)--fast GMCA (solid line).} 
+\label{fig:bgmca_tstb}
+\end{figure}
+
+%This simple toy experiment clearly shows the benefits of sparsity for BSS. Furthermore it underlines the effectiveness of ``very" sparse representations provided by nonlinear decompositions in overcomplete dictionaries. 
+
+
+% \subsection{GMCA is able to provide the sparsest solution}
+% In this paragraph, we have run a simple noiseless experiment. The data $\bf X$ consists of $4$ mixtures (Figure~\ref{fig:im_mixt}) each of which is the linear combination of $4$ sources (Figure~\ref{fig:im_sources}). The mixing matrix has been chosen at random. The GMCA algorithm has been performed in the biorthogonal wavelet domain; see \citep{mallatb08}. The estimated sources are shown in Figure~\ref{fig:im_esources}. These results were obtained using the GMCALab toolbox \citep{gmcalab}.
+
+% We previously emphasized on GMCA as being able to provide the sparsest sources in the sense  advocated by the sparse BSS framework. Figure~\ref{fig:globl1} provides the evolution of the sparsity divergence $\|\tilde{\bf S}\|_1 - \|{\bf S}\|_1$ along the $500$ GMCA iterations. Clearly, the GMCA algorithm tends to estimate sources with increasing sparsity. Furthermore, the GMCA solution has the same sparsity (with respect to the sparsity divergence ) as the true sources. This simple experiment then points out that GMCA is able to recover the solution having the correct sparsity level.
+
+% \begin{figure}[htb]
+% \begin{minipage}[b]{1\linewidth}
+%     \centerline{\epsfig{figure=PS/gmca_simple_sources.png,width=8cm}}
+% \end{minipage}
+%  \caption{The $256 \times 256$ source images.}  \label{fig:im_sources}
+% \end{figure}
+
+% \begin{figure}[htb]
+% \begin{minipage}[b]{1\linewidth}
+%     \centerline{\epsfig{figure=PS/gmca_simple_mixt.png,width=8cm}}
+% \end{minipage}
+%  \caption{The $256 \times 256$ noiseless mixtures.}  \label{fig:im_mixt}
+% \end{figure}
+
+% \begin{figure}[htb]
+% \begin{minipage}[b]{1\linewidth}
+%     \centerline{\epsfig{figure=PS/gmca_simple_estim.png,width=8cm}}
+% \end{minipage}
+%  \caption{The sources estimated using GMCA.}  \label{fig:im_esources}
+% \end{figure}
+
+% \begin{figure}[htb]
+% \begin{minipage}[b]{1\linewidth}
+%     \centerline{\epsfig{figure=PS/sp2.png,width=12cm}}
+% \end{minipage}
+%  \caption{\textbf{GMCA provides the sparsest solution - Abscissa~:} Iteration number. \textbf{Ordinate~:} Sparsity divergence $\|\tilde{\bf S}\|_1 - \|{\bf S}\|_1$.}  \label% {fig:globl1}
+% \end{figure}
+
+
+\subsection{GMCA and Noisy Data}
+\begin{figure}[htb]
+\begin{minipage}[b]{0.49\linewidth}
+                  \centerline{         \includegraphics[width=5cm]{gmca_fig6a.pdf}}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.49\linewidth}
+                  \centerline{         \includegraphics[width=5cm]{gmca_fig6b.pdf}}
+ \end{minipage}
+\vfill
+\begin{minipage}[b]{0.49\linewidth}
+                  \centerline{         \includegraphics[width=5cm]{gmca_fig6c.pdf}}
+ \end{minipage}
+\hfill
+\begin{minipage}[b]{0.49\linewidth}
+                  \centerline{         \includegraphics[width=5cm]{gmca_fig6d.pdf}}
+\end{minipage}
+ 
+\caption{Top: the $256 \times 256$ source images. Bottom: two noisy mixtures SNR = $10$ dB.}  
+\label{fig:im_source_mixt}
+\index{data!boats}
+\end{figure}
+
+The goal here is to compare several BSS techniques with GMCA for image separation in a noisy environment. Three different reference BSS methods are chosen:
+\begin{itemize}
+\item JADE \citep{ica:jade}: the well-known ICA based on fourth-order statistics, see Section~\ref{subsec:ICAHOS}.
+\item Relative Newton Algorithm (RNA) \citep{ica:zibu_relnewton}: the seminal sparsity-based BSS technique described in Section~\ref{subsec:towardsparsity}. In the experiments reported hereafter, we used the RNA on the channels transformed in the 2D OWT domain.
+\item EFICA: this separation method improves the FastICA algorithm for sources following a GGD prior. We thus applied EFICA on the channels transformed by a 2D OWT to sparsify them and hence the leptokurticity assumption on the source marginal statistics becomes valid. 
+\end{itemize}
+
+Fig.\ \ref{fig:im_source_mixt} shows the original $N_s=2$ sources (top) and $N_c=2$ mixtures (bottom). The sources $s_1$ and $s_2$ are normalized to a unit variance. The mixing matrix $\A$ is such that $y_1 = 0.25 s_1 + 0.5 s_2 + \veps_1$ and $y_2 = -0.75 s_1 + 0.5s_2 + \veps_2$, where $\veps_1$ and $\veps_2$ are zero-mean white Gaussian noise vectors that are mutually independent.
+
+The comparisons we carry out here are twofold: (i) we assess the separation quality in terms of the correlation between the original and estimated sources as the SNR varies; (ii) as the estimated sources are also perturbed by noise, we also quantify the performance of each method by computing the mixing matrix criterion $\mathrm{C}_{\A}$. The GMCA algorithm was applied using a dictionary containing the DCTG2 and the Local DCT.  
+
+\begin{figure}[htb]
+\centerline{
+\includegraphics[width=0.6\textwidth]{gmca_fig7a.pdf}
+\includegraphics[width=0.6\textwidth]{gmca_fig7b.pdf}}
+\caption{Evolution of the correlation coefficient between the original and the estimated sources as a function of the SNR (left: source 1, right: source 2). Solid line: GMCA. Dashed line: JADE. $'\star'$: EFICA. $'+'$: RNA.}  
+\label{fig:crit_sources}
+\end{figure}
+Fig.\ \ref{fig:crit_sources} portrays the evolution of the correlation coefficient of source $1$ (left) and source $2$ (right) as a function of the SNR. At first glance, GMCA, RNA and EFICA are very robust to noise as they give correlation coefficients close to the optimal value $1$. On these images, JADE behaves rather poorly. It might be due to the correlation between these two sources. For higher noise levels (SNR lower than $10$ dB), EFICA tends to perform slightly worse than GMCA and RNA.
+
+\begin{figure}[htb]
+\begin{minipage}[b]{0.95\linewidth}
+                       \centerline{         \includegraphics[width=9cm]{gmca_fig8.pdf}}
+\end{minipage}
+\caption{Evolution of the mixing matrix criterion $\mathrm{C}_{\A}$ as a function of the SNR. Solid line: GMCA. Dashed line: JADE. $'\star'$: EFICA. $'+'$: RNA.}  \label{fig:crit_mixmat}
+\end{figure}
+
+The mixing matrix-based criterion $\mathrm{C}_{\A}$ turns out to be more sensitive to separation errors and then better discriminates between the methods. Fig.\ \ref{fig:crit_mixmat} depicts the behavior of $\mathrm{C}_{\A}$ with increasing SNR. While the correlation coefficient was unable to discriminate between GMCA and RNA, $\mathrm{C}_{\A}$ clearly reveals their differences. First, it confirms the dramatic behavior of JADE on that set of mixtures. Secondly, RNA and EFICA behave rather similarly. Thirdly, GMCA  seems to provide far better results with $\mathrm{C}_{\A}$ values that are up to $10$ times better than JADE and approximately $2$ times better than with RNA or EFICA. 
+
+In summary, the findings of this experiment allow us to conclude safely that:
+\begin{itemize}
+\item Sparsity brings better results. Amongst the methods we used, only JADE is not a sparsity-based separation algorithm. Whatever the method, separating in a sparse representation-domain enhances the separation quality: RNA, EFICA and GMCA clearly outperform JADE.
+\item GMCA takes better advantage of overcompleteness and morphological diversity. GMCA takes better advantage of overcomplete sparse representations than RNA and EFICA.
+\end{itemize}
+%Other experiments have also shown that  GMCA computation time  is more sensitive to the number of iterations than to the number of sources, which is of major interest when dealing with higher dimensional problems such as hyperspectral data \citep{bobin08_aiep}.
+
+ 
+
+\subsection{Multichannel Image Inpainting}
+\label{sec:inp}
+
+\begin{figure}[htb]
+\hbox{
+\centerline{         
+\includegraphics[width=0.4\textwidth]{jmiv_barbara_colour.pdf}
+\includegraphics[width=0.4\textwidth]{jmiv_zoom_orig.pdf}}
+}
+\hbox{
+\centerline{         
+\includegraphics[width=0.4\textwidth]{jmiv_transmitted.pdf}
+\includegraphics[width=0.4\textwidth]{jmiv_zoom_trans.pdf}}
+}
+\hbox{
+\centerline{         
+\includegraphics[width=0.4\textwidth]{jmiv_reconstructed_cl_tv.pdf}
+\includegraphics[width=0.4\textwidth]{jmiv_zoom_yes.pdf}}
+}
+
+\caption{Inpainting color images. Top, original \texttt{Barbara} color image (left) and a zoom on the scarf (right). Middle, masked image -- $90$\% of the color pixels are missing.  Bottom, inpainted image using the adaptive GMCA algorithm.} 
+\label{fig:col_inp}
+\index{data!Barbara}
+\end{figure} 
+
+Similarly to the MCA (see Section~\eqref{par:mcainpaint}), GMCA can be readily extended to handle multichannel missing data. Although the rest of the section holds for any overdetermined multichannel data, without loss of generality, we consider color images where the observed data $\bY$ consist of $N_c=3$ observed channels corresponding to each color layer (for instance red, green and blue), and the number of sources is also $N_s=3$. 
+
+GMCA-inpainting seeks an unmixing scheme, through the estimation of $\A$, which leads to the sparsest sources $\bf S$ in the dictionary ${\W}$, 
+taking into account the missing data mask ${ \bf M}_j$ (the main diagonal of ${\bf M}_j$ encodes the pixel status in channel $j$; see Section~\ref{par:mcainpaint} for more details). The resulting optimization problem to be solved is then:
+\begin{multline}
+\label{eq:inp_optim_comp}
+\min_{{\A},\alpha_{1,1},\cdots,\alpha_{N_s,K}} \sum_{j=1}^{N_c}\frac{1}{2}\norm{y_j - {\bf M}_j\parenth{\sum_{i=1}^{N_s} \A[j,i]\W\alpha_i}}^2_2 + \lambda \sum_{i=1}^{N_s} \sum_{k=1}^K \norm{\alpha_{i,k}}_p^p \\ \st \norm{a_i}_2 = 1 ~ \forall i \in \{1,\cdots,N_s\} ~.
+\end{multline}
+If ${\bf M}_j={\bf M}$ for all channels, \eqref{eq:inp_optim_comp} becomes
+\begin{multline}
+\label{eq:inp_optim_comp1}
+\min_{{\A},\alpha_{1,1},\cdots,\alpha_{N_s,K}} \frac{1}{2}\norm{\bY - \A\balpha\W^\Tr{\bf M}}^2_{\mathrm{F}} + \lambda \sum_{i=1}^{N_s} \sum_{k=1}^K \norm{\alpha_{i,k}}_p^p \\ \st \norm{a_i}_2 = 1 ~ \forall i \in \{1,\cdots,N_s\} ~.
+\end{multline}
+
+The GMCA-inpainting algorithm is similar to Algorithm \ref{algo_gmca}, except that the update of the residual ${\bf R}^{(t)}_{i,k}$ is modified to
+\[
+{\bf R}_{i,k}^{(t)} = \bigg({\bY}- \sum_{(i',k') \neq (i,k)} {a}_{i'}^{{(t-1)}}{x}_{i',k'}^{{(t-1)}^\Tr}\bigg){ \bf M}.
+\]
+
+% This has however the drawback that we cannot use anymore the fast version of GMCA because 
+% we need to reconstruct  at each iteration the residual ${\bf R}^{(t)}_{i,k}$  in order to take into account 
+
+% the missing data mask ${ \bf M}$.
+
+The top panels of Fig.\ \ref{fig:col_inp} show the original \texttt{Barbara} color image (in RGB space) and a zoom (on the right). The middle panels depict the masked color images where $90$\% of the color pixels were missing. The bottom pictures portray the recovered images with the color space-adaptive GMCA algorithm, where $\A$ was estimated along with the inpainted sources. It was shown in \citet{BobinJMIV} that the adaptive color space GMCA inpainting performs much better than inpainting each color channel separately using the algorithms of Section~\ref{sect_inpainting}.
+
+
+%========================================================================
+
+\section{GMCA for Hyperspectral Data}
+
+\index{hyperspectral data}
+\index{multispectral data}
+
+\label{sec:hypGMCA}
+%------------------------------------------------------------------------------------
+\subsection{Specificity of Hyperspectral Data}
+%------------------------------------------------------------------------------------
+% Considering the objective function in the minimization problem~\eqref{eq:optim_bayes} from a Bayesian perspective, the $\ell_1$ penalty terms imposing sparsity are easily interpreted as coming from Laplacian prior distributions on the components $s_k$ and problem~\eqref{eq:optim_bayes} is akin to a maximum a posteriori estimation of the model parameters $\A$ and $\bf S$. 
+So far, there was a striking asymmetry in the treatment of $\A$ and $\bf S$ and this is in fact a common feature of the great majority of BSS methods. Invoking a uniform prior distribution for $\A$ is standard practice. On the one hand, this imbalanced treatment may not seem so unfair when $\A$ and $\bf S$ actually do have very different roles in the model and very different sizes. As mentioned earlier, $\A$ is often simply seen as a mixing matrix of small and fixed size while each row $s_i^\Tr$ of the source matrix $\bf S$ is usually seen as a collection of $N$ samples from a process in time or pixels in an image, which can grow very much larger than the number of channels $N_c$ as more data is collected. On the other hand, there are applications in which one deals with data from instruments with a very large number of channels which are well organized according to some physically meaningful index. 
+A typical example is hyperspectral data where images are collected in a large number of, what is more, contiguous regions of the electromagnetic spectrum.  
+It then makes sense to consider the continuity, the regularity, etc.\ of some physical property from one channel to its neighbor. For instance the spectral signatures of the objects in the scene may be known a priori to have a sparse representation in some specified possibly redundant dictionary of spectral waveforms. 
+
+In what follows, the term hyperspectral is used generically to identify data with the following specific properties regardless of other definitions or models existing in other scientific communities:   
+\begin{enumerate}
+\item High dimensionality: the number of channels $N_c$ in common hyperspectral imaging devices can be greater than a hundred. Consequently, problems involving hyperspectral data often have very high dimensions.
+\item Contiguity: the large number of channels in the instrument achieve a regular/uniform sampling of some additional and meaningful physical index (e.g.\ wavelength, space, time). We refer to this added dimension as the spectral dimension regardless of its actual physical meaning.
+\item Morpho-spectral coherence: hyperspectral data are assumed to be structured a priori according to the instantaneous linear mixture model given in \eqref{eq:bss}.
+\end{enumerate}
+We describe next an extension of the fast GMCA algorithm for hyperspectral data processing when it is known a priori that the underlying objects of interest ${\bY^{(i)}} = a_i s_i^\Tr$ exhibit sparse spectral signatures and sparse spatial morphologies in dictionaries of spectral and spatial waveforms specified a priori. 
+%------------------------------------------------------------------------------------
+
+\subsection{GMCA for Hyperspectral BSS}
+%------------------------------------------------------------------------------------
+\subsubsection{The Principle}
+%------------------------------------------------------------------------------------
+
+We now assume that each column $i$ of the mixing matrix $\A$ is sparse in a given dictionary ${\W_\nu}$ (spectral dictionary):
+\begin{equation}
+a_i = {\W_\nu} \nu_i ~.
+\end{equation} 
+
+Let $\bnu=[\nu_1,\cdots,\nu_{N_s}]$. If ${\W_\nu}$ is an orthobasis, then \eqref{eq:optimgmca} can be equivalently written for $p=1$:
+\begin{equation}
+\min_{\bnu,\balpha} ~ \frac{1}{2}\norm{\W_\nu^\Tr{\bY} -  \bigg(\sum_{i=1}^{N_s} {\nu}_i{\alpha}_i^\Tr\bigg)\W^\Tr}_\mathrm{F}^2 + \lambda\sum_{i=1}^{N_s} \norm{\alpha_{i}}_{1} ~.
+\end{equation}
+For a general redundant spectral dictionary, the solution in $\bnu$ must be regularized. One can think of adding a sparsity-promoting penalty just as for the coefficients $\balpha$ of the sources. But this will be awkward as explained shortly.
+ 
+A well known property of the linear mixture model~\eqref{eq:bss} is its scale and permutation invariance:  without additional prior information, the indexing of the ${\bY^{(i)}}=a_is_i^\Tr$ (respectively ${\nu}_i{\alpha}_i^\Tr$) in the decomposition of data $\bY$ is not meaningful and $a_i, s_i$ (respectively $ \nu_i , \alpha_i$) can trade a scale factor with full impunity. A consequence is that, unless a priori specified otherwise, information on the separate scales of  $a_i$ and $s_i$ (respectively $ \nu_i , \alpha_i$) is lost, and solely a joint scale parameter for $a_i, s_i$ (respectively $ \nu_i , \alpha_i$)  can be estimated. 
+
+In a Bayesian perspective, this a priori knowledge of the multiplicative mixing process, and of the loss of information it entails, needs to be translated into a practical joint prior probability distribution for  $ \nu_i , \alpha_i$. Unfortunately, deriving the distribution of the product of two independent random vectors $\nu_i$ and $\alpha_i$ starting from assumptions on their marginals is notoriously cumbersome. 
+
+It was proposed instead in \citet{bobin08_aiep} that the following $\pdf_{\nu_i,\alpha_i}$ is a good candidate joint sparse prior distribution for  $\nu_i$ and $\alpha_i$  after the loss of information induced by multiplication: 
+\begin{equation}
+\pdf_{\nu_i,\alpha_i}(\nu_i, \alpha_i) \propto \exp \bigg( - \lambda \sum_{l,m} | \nu_i[l] \alpha_i[m] |\bigg) ~ .
+\end{equation} 
+The property $\sum_{l,m}|(\nu_i \alpha_i^\Tr)[l,m]| = \norm{\nu_i}_1 \norm{\alpha_i}_1$ is obvious. Thus the proposed distribution has the nice property, for subsequent derivations, that the conditional distribution of $\nu_i$ given $\alpha_i$ (and conversely) is Laplacian which is a convenient sparsity prior distribution. This distribution provides a convenient and formal expression for the prior knowledge of the sparsity of both $a_i$ and $s_i$ in dictionaries of spectral and spatial waveforms and of the multiplicative mixing process. 
+
+Inserting this prior distribution in a Bayesian MAP estimator leads to the following minimization problem:
+\begin{equation}
+\label{eq:hgmca}
+\min_{(\nu_i,\alpha_i)_{i=1,\cdots,N_s}} ~ \frac{1}{2}\norm{{\bY} -  \W_\nu\bigg(\sum_{i=1}^{N_s} {\nu}_i{\alpha}_i^\Tr\bigg)\W^\Tr}_\mathrm{F}^2   +   \lambda \sum_{i=1}^{N_s}    \norm{\nu_i}_1 \norm{\alpha_i}_1  ~ . 
+\end{equation}
+Denoting ${\boldsymbol \zeta}^{(i)} = \nu_i \alpha_i^\Tr$, the above equation can be expressed slightly differently:
+\begin{multline}
+\min_{({\boldsymbol \zeta}^{(i)})_{i=1,\cdots,N_s}} ~ \frac{1}{2}\norm{{\bY} -  \W_\nu\bigg(\sum_{i=1}^{N_s} {\boldsymbol \zeta}^{(i)}\bigg)\W^\Tr}_\mathrm{F}^2   +   \lambda \sum_{i=1}^{N_s} \sum_{l,m}\abs{{\boldsymbol \zeta}^{(i)}[l,m]}  \\ \st \rank({\boldsymbol \zeta}^{(i)}) \leq 1 ~ \forall ~ i ~ .
+\end{multline} 
+which uncovers a nice interpretation as that of approximating $\bY$ by the sum of rank-one matrices which are sparse in a specified dictionary of rank-one matrices (see also Section~\ref{sec:bss_sparse}). Let us note that rescaling the parameters $\A$ and $\bf S$ is not as much a problem now as with GMCA, since 
+this is enforced mechanically in the parameterization of the prior, thus leaving the objective function~\eqref{eq:hgmca} unchanged. This is why the normalization constraint of \eqref{eq:optimgmca} is deliberately omitted in \eqref{eq:hgmca}
+
+% it does not affect the objective function~\eqref{eq:hgmca}. Indeed, rescaling the columns of the mixing matrix, ${\A} \leftarrow{\rho {\A}}$ while applying the proper inverse scaling to the rows of the source matrix, ${\bf S} \leftarrow \frac{1}{\rho} {\bf S}$, leaves both the quadratic measure of fit and  the $\ell_1$ sparsity measure in  \eqref{eq:hgmca} unaltered. Although re-normalizing is still worthwhile numerically, it is no longer dictated by the lack of scale invariance of the objective function 
+
+% In the next section, we  describe the extension of the fast-GMCA algorithm to the hyperspectral BSS issue \citep{bobin08_aiep}.
+
+%------------------------------------------------------------------------------------
+\subsubsection{Hypespectral GMCA Algorithm}
+ 
+The minimization problem \eqref{eq:hgmca} can be compactly written as
+\begin{equation}
+\label{eq:hgmca1}
+\min_{\bnu,\balpha} ~ \frac{1}{2}\norm{{\bY} -  \W_\nu\bnu\balpha\W^\Tr}_\mathrm{F}^2 + \lambda \sum_{i=1}^{N_s} \norm{\nu_i}_1 \norm{\alpha_i}_1 ~ .
+\end{equation}
+This is a non-convex problem whose solutions have no explicit formulation. But, for fixed $\bnu$ (respectively $\balpha$), the marginal minimization problem over $\balpha$ (respectively $\bnu$) becomes convex and can be solved efficiently using the forward-backward splitting iteration (see Chapter~\ref{ch_inverse}). Consequently, \eqref{eq:hgmca1} is again to be solved by means of a block-coordinate relaxation by alternately minimizing with respect to $\bnu$ holding $\balpha$ fixed, and vice versa. 
+
+The solution to $\bnu$ (respectively $\balpha$) holding $\balpha$ (respectively $\bnu$) fixed is given by the general form of the forward-backward recursion:
+\begin{equation}
+\label{eq:fhgmca1}
+\begin{split}
+\balpha^{(t+1)} &=  \ST_{\lambda_{\balpha}}\parenth{\balpha^{(t)} + \mu_{\balpha}{\boldsymbol \Xi}_{\balpha}\bnu^\Tr\W_\nu^\Tr\parenth{\bY - \W_\nu\bnu\balpha^{(t)}\W^\Tr}\W} ~, \\
+\bnu^{(t+1)}    &=  \ST_{\lambda_{\bnu}}\parenth{\bnu^{(t)} + \mu_{\bnu}\W_\nu^\Tr\parenth{\bY - \W_\nu\bnu^{(t)}\balpha\W^\Tr}\W\balpha^\Tr{\boldsymbol \Xi}_{\bnu}} ~,  
+\end{split}
+\end{equation}
+where ${\boldsymbol \Xi}_{\balpha},{\boldsymbol \Xi}_{\bnu}$ are relaxation matrices ensuring non-expansiveness and $\mu_{\balpha},\mu_{\bnu}$ is a descent step-size such that $0 < \mu_{\balpha} \leq 1/(\opnorm{\W_\nu}^2\opnorm{\W}^2\opnorm{\bnu}^2\opnorm{{\boldsymbol \Xi}_{\balpha}})$ and similarly for $\mu_{\bnu}$ by appropriate substitution \citep{ChenRockafellar97}. The multichannel soft-thresholding operator $\ST_{\lambda_{\balpha}}$ acts on each row $i$ with threshold $\lambda_{\balpha}[i]=\lambda\norm{\nu_i}_1\mu_{\balpha}$ and $\ST_{\lambda_{\bnu}}$ acts on each column $j$ of $\bnu$ with threshold $\lambda_{\bnu}[j]=\lambda\norm{\alpha_j}_1\mu_{\bnu}$.
+
+Denote $\Yz = \W_\nu^\Tr\bY\W$. Taking ${\boldsymbol \Xi}_{\balpha} = (\bnu^\Tr\bnu)^{-1}$, ${\boldsymbol \Xi}_{\bnu} = (\balpha\balpha^\Tr)^{-1}$ (both matrices are non-singular), assuming moreover that both dictionaries $\W$ and $\W_\nu$ are normalized such that their upper frame bounds are $1$, and stopping the recursions \eqref{eq:fhgmca1} at the first iteration yields the closed-form approximate solutions
+\begin{equation}
+\label{eq:fhgmca2}
+\begin{split}
+\tilde{\balpha} &=  \ST_{\lambda_{\balpha}}\parenth{(\bnu^\Tr\bnu)^{-1}\bnu^\Tr\Yz} = \ST_{\lambda_{\balpha}}\parenth{\bnu^+\Yz}~, \\
+\tilde{\bnu}    &=  \ST_{\lambda_{\bnu}}\parenth{\Yz\balpha^\Tr(\balpha\balpha^\Tr)^{-1}} = \ST_{\lambda_{\bnu}}\parenth{\Yz\balpha^+}~.  
+\end{split}
+\end{equation}
+
+\index{iterative!hard thresholding}
+\index{iterative!soft thresholding}
+
+Both update rules can be interpreted as a soft-thresholding operator applied to the result of a weighted least-squares regression in the ${\W_\nu}\otimes {\W}$ representation. In the spirit of the fast GMCA algorithm described in Section~\ref{gmca_algo}, the transformation into ${\W_\nu}\otimes {\W}$ is applied only once which has a major impact on computation speed, especially when dealing with large hyperspectral datasets. The two stage iterative process leads to the fast hypGMCA summarized in Algorithm \ref{algo_hyper_gmca} \citep{moudden08}.
+%Finally, in the spirit of the fast GMCA algorithm described in Section~\ref{gmca_algo}, it is proposed here that a solution to the above set of coupled  equations~\eqref{eq:fhgmca1} can also be approached effectively using a symmetric iterative alternating least-squares scheme in conjunction with a shrinkage operator with a progressively decreasing threshold. 
+
+{\linespread{1}
+\begin{algorithm}[htb]
+\caption{hypGMCA algorithm.}
+\label{algo_hyper_gmca}
+\noindent{\bf Task:} Sparse Blind Source Separation for hyperspectral data.\\
+\noindent{\bf Parameters:} The data $\bY$, the spatial and spectral dictionaries $\W,\W_\nu$, number of iterations $\niter$, number of sources $N_s$ and channels $N_c$, stopping threshold $\lambda_{\min}$, threshold update schedule.\\
+\noindent{\bf Initialization:} $\balpha^{(0)} = 0$,  $\bnu^{(0)} = $ random matrix. Let $\Yz = \W_\nu^\Tr\bY\W$, set threshold $\lambda_0 = \max_{l,m}\abs{\Yz[l,m]}$.
+\noindent{\bf Main iteration:} \\
+\For{$t=1$ {\bf to} $\niter$}{
+\begin{itemize}
+     \item  Update spatial coefficients $\balpha$:
+     $ \balpha^{(t+1)} = \ST_{\lambda_t}\parenth{\bnu^{(t)^+}\Yz}$.
+     \item  Update spectral coefficients $\bnu$:
+     $ \bnu^{(t+1)} = \ST_{\lambda_t}\parenth{\Yz\balpha^{(t)^+}}$.
+     \item Update  the threshold $ \lambda_t$ according to the given schedule.
+\end{itemize}
+\lIf{$\lambda_t \leq \lambda_{\min}$} stop.
+}
+Reconstruct the sources: $\tilde{\bf S} =  {\W} \balpha^{(\niter)}$.\\
+Reconstruct the mixing matrix: $\tilde{\A} =  {\W_\nu} \bnu^{(\niter)}$.\\	
+\noindent{\bf Output:} Estimated sources $\left(\tilde{s}_{i}\right)_{i=1, \cdots, N_s}$, and mixing matrix $\tilde{{\bf{A}}}$.
+\end{algorithm}
+}
+
+It goes without saying that the coarse-to-fine process is again the core of hypGMCA. With the threshold successively decreasing, the current sparse approximation is progressively refined by including finer structures alternatingly in the different morphological components, both spatially and spectrally. Here again, soft thresholding results from the use of an $\ell_1$ sparsity measure, which as explained earlier comes as a good approximation to the desired $\ell_0$ quasi-norm solution. Towards the end of the iterative process, applying a hard threshold instead can lead to better results. The final threshold should vanish in the noiseless case or it may be set to a multiple of the noise standard deviation in the presence of noise as explained before. 
+
+%-------------------------------------------------------------------------------------
+%-------------------------------------------------------------------------------------
+%-------------------------------------------------------------------------------------
+
+\subsection{Illustrative Example}
+\label{sec:expe_hyper}
+ 
+In this toy example, the sources are drawn uniformly at random from a set of $128 \times 128$ images featured in Fig.\ \ref{fig:allim}. The number of drawn sources is $N_s=5$. The number of channels is $ N_c =128$. The spectra are synthesized from OWT coefficients, and the latter are drawn from a Laplacian PDF with unit scale parameter. The spectra are to be positive; note that the GMCA algorithm is flexible enough to account for this constraint. In the next experiments, as the goal is to assess the impact of the spectral sparsity penalization, this positivity a priori information is not exploited. White Gaussian noise with covariance matrix ${\boldsymbol \Sigma}_{\bf E} = \sigma_{\bf E}^2 \bf I$ is added.
+
+The fast GMCA algorithm is compared to hypGMCA. This first test will give emphasis to the enhancements brought by the spectral sparsity regularization when the SNR varies from $0$ to $40$ dB. Fig.\ \ref{fig:hypmixtures} portrays $6$ out of $128$ noisy channels with $\mbox{SNR} = 20$ dB. The fast GMCA algorithm is applied in the curvelet domain, and hypGMCA is applied with the curvelet spatial dictionary $\W$ and the OWT for the spectral dictionary $\W_\nu$. Fig.\ \ref{fig:hypsources} depicts the sources estimated by the fast GMCA algorithm (panels on the left) and by hypGMCA algorithm (panels on the right). Visual impression clearly favors the results provided by hypGMCA. More quantitative results are given in Fig.\ \ref{fig:hypcurv} which displays the evolution of the mixing matrix criterion $\mathrm{C}_{\A}$ as a function of the SNR. Clearly, accounting for additional prior information provides better recovery results. Furthermore, as shown in Fig.\ \ref{fig:hypcurv}, the morpho-spectral sparsity constraint provides more robustness to noise.
+
+ \begin{figure}[htb]
+\begin{minipage}[b]{0.5\linewidth}
+    \centerline{ \includegraphics[width=11cm]{HypGMCA_allimages.png}}
+\end{minipage}
+\begin{minipage}[b]{0.5\linewidth}
+\end{minipage}
+\caption{Image data set used in the experiment.}
+ \label{fig:allim}
+\end{figure} 
+
+\begin{figure}[htb]
+\hbox{
+\begin{minipage}[b]{0.3\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_mixt0.png}}
+ \end{minipage}
+\begin{minipage}[b]{0.3\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_mixt1.png}}
+ \end{minipage}
+\begin{minipage}[b]{0.3\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_mixt2.png}}
+ \end{minipage}
+}
+\hbox{
+\begin{minipage}[b]{0.3\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_mixt3.png}}
+ \end{minipage}
+\begin{minipage}[b]{0.3\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_mixt4.png}}
+ \end{minipage}
+\begin{minipage}[b]{0.3\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_mixt5.png}}
+ \end{minipage}
+}
+   \caption{Six $128 \times 128$ mixtures out of the 128 channels. The SNR is equal to $20$ dB.} \label{fig:hypmixtures}
+\index{data!boats}
+\end{figure} 
+
+
+
+\begin{figure}[htb]
+\hbox{
+\begin{minipage}[b]{0.5\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_estsource0.png}}
+ \end{minipage}
+\hfill
+\begin{minipage}[b]{0.5\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_estsourceL10.png}}
+ 
+\end{minipage}
+}
+
+\hbox{
+
+\begin{minipage}[b]{0.5\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_estsource1.png}}
+ \end{minipage}
+\hfill
+
+\begin{minipage}[b]{0.5\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_estsourceL11.png}}
+ \end{minipage}
+}
+
+ 
+\hbox{
+\begin{minipage}[b]{0.5\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_estsource3.png}}
+ \end{minipage}
+\hfill
+\begin{minipage}[b]{0.5\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_estsourceL13.png}}
+ \end{minipage}
+}
+\hbox{
+
+\begin{minipage}[b]{0.5\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_estsource4.png}}
+ \end{minipage}
+ \hfill
+
+\begin{minipage}[b]{0.5\linewidth}
+\centerline{         \includegraphics[width=3.3cm]{HypGMCA_estsourceL14.png}}
+ \end{minipage}
+}
+  \caption{Comparison of fast GMCA to hypGMCA. Left: Sources estimated by the fast GMCA algorithm. Right: Sources estimated by hypGMCA.} \label{fig:hypsources}
+\index{data!boats}
+\index{data!Barbara}
+\end{figure} 
+
+
+
+
+\begin{figure}[htb]
+\begin{minipage}[b]{1\linewidth}
+\centerline{         \includegraphics[width=8cm]{HypGMCA_MMCCurv.pdf}}
+\end{minipage}
+\caption{Evolution of the mixing matrix criterion $\mathrm{C}_{\A}$ as a function of the SNR in dB. Solid line: recovery results by the fast GMCA algorithm. '$\bullet$': recovery results by hypGMCA.} \label{fig:hypcurv}
+\end{figure} 
+
+
+
+%\subsection{Other Constraints on the Mixing Matrix}
+%\label{sec:pbss} 
+%We have seen in the previous section that, for hyperspectral signals, a sparsity penalization on the mixing matrix improves the results. Very often, the separation task is only partly blind.  For example, in some applications, one (or more) columns of the mixing matrix may be known. This is the case for instance in the Cosmic Microwave Background separation (CMB) problem in cosmology. As for hyperspectral data, each column of the mixing matrix is related to the power spectrum of a given source. The CMB  power spectrum is perfectly known and is a perfect blackbody, while spectra of other  sources are unknown. In \citet{bobin-gmca-cmb}, it is shown how to modify GMCA, so we can  constrain the column of the mixing matrix ${\A}$ related to CMB to its known physical shape. This is equivalent to placing a strict prior on the CMB column of ${\A}$; that is $\pdf(a^\mathrm{cmb})) = \delta(a^\mathrm{cmb} - a^\mathrm{cmb}_0)$, $\delta(.)$ is the Dirac distribution and $a^\mathrm{cmb}_0$ is the true CMB emission law in the observed frequency range. 
+
+%Another constraint of interest is the positivity of the mixing matrix. In many problems, we know that the matrix cannot contain negative values. In the framework of GMCA, such a constraint can be incorporated by projecting the columns of $\A$ onto the positive orthant before normalization.  
+ 
+
+\section{Guided Numerical Experiments}
+\subsection{GMCAlab}
+\label{sec:gmcalab}
+GMCALab is a library of Matlab routines that implements the algorithms described here for multichannel signal/image bind source separation. The GMCALab library provides open source tools for BSS, and may be used to reproduce the BSS experiment below and to redo the figures with variations in the parameters. The library is available at the book's web site: 
+
+{\centerline{\texttt{http://www.SparseSignalRecipes.info}}}
+
+It requires at least WaveLab (see Section~\ref{sec:wavelabintro}) to avail of
+full functionality. It has been successfully tested for all major 
+operating systems, under Matlab 6.x and Matlab 7.x. 
+GMCALab is distributed for non-commercial use. 
+
+\subsection{Reproducible Experiment}
+Fig.~\ref{fig:gmcalabexperiment} illustrates the results provided by the script {\tt sparse\_noisy\_\\examples.m} which applies the fast GMCA Algorithm~\ref{algo_fast_gmca} to a BSS problem with $N_s=4$ sources, $N_c=10$ noisy channels, and SNR = 10dB. The mixing matrix is randomly generated with entries independent and identically distributed $\sim \cN(0,1)$. The fast GMCA was applied using the OWT dictionary.
+ 
+\begin{figure}[htb]
+\centerline{\includegraphics[width=\textwidth]{gmcalabexperiment.pdf}}
+\caption{Results of the BSS guided experiment: $N_s=4$ sources, $N_c=10$ noisy channels, with SNR = 10 dB. The mixing matrix is randomly generated with entries independent and identically distributed $\sim \cN(0,1)$. The dictionary used in GMCA contained the OWT. Left: original sources. Middle: four out of ten noisy mixtures. Right: sources estimated using the fast GMCA Algorithm~\ref{algo_fast_gmca}.} 
+\label{fig:gmcalabexperiment}
+\index{data!boats}
+\index{data!harbor}
+\index{data!drum}
+\end{figure} 
+
+\section{Summary}
+In this chapter, the role of sparsity and morphological diversity was highlighted to solve the blind source separation problem. Based on these key ingredients, a fast algorithmic approach coined GMCA was described together with variations to solve several problems including BSS. The conclusions that one has to keep in mind are essentially twofold: first, sparsity and morphological diversity lead to enhanced separation quality, and second, the GMCA algorithm takes better advantage of sparsity yielding better and robust-to-noise separation. When the number of sources is unknown, a GMCA-based method was described to objectively estimate the correct number of sources. This chapter also extends the GMCA framework to cope with the particular structure of hyperspectral data. The results are given that illustrate the reliability of morpho-spectral sparsity regularization. In a wider framework, GMCA is shown to provide an effective basis for solving classical multichannel restoration problems such as color image inpainting. 
+
+Nonetheless, this exciting field of sparse BSS still has many interesting open problems. Among them, one may cite for instance the extension to the underdetermined case with more sources than channels, and the theoretical guarantees of the sparsity-regularized BSS problem. 

@@ -1,0 +1,338 @@
+\chapter{Morphological Component Analysis}
+\label{sect_ctm}
+\section{Introduction}
+The content of an image is often complex, and there is not a single
+transform which is optimal to represent all the contained features. For
+example, the Fourier transform better represents some textures, while
+the wavelet transform better represents singularities. Even if we limit
+our class of transforms to the wavelet one, decision have to
+be taken between an isotropic wavelet transform which produce good 
+results for isotropic objects (such stars and galaxies in astronomical 
+images, cells in biological images, etc), or an orthogonal wavelet 
+transform, which is better for images with edges. 
+This has motivated
+the development of different methods \cite{wave:donoho98,wave:meyer98,cur:huo99}, 
+and the two most frequently discussed approaches are the Matching Pursuit (MP)
+\cite{wave:mallat93} and the Basis pursuit (BP) \cite{wave:donoho98}.
+A dictionary ${\cal D}$ being defined as a collection of waveforms 
+$(\varphi_{\gamma})_{\gamma \in \Gamma}$,
+the general principe consists in representing a signal $s$ as a ``sparse''
+linear combination  of a small number of basis such that:
+\begin{eqnarray}
+ s = \sum_{\gamma} a_{\gamma} \varphi_{\gamma}
+\end{eqnarray}
+or an approximate decomposition
+\begin{eqnarray}
+ s = \sum_{i=1}^m a_{\gamma_i} \varphi_{\gamma_i} + R^{(m)} .
+\end{eqnarray}
+ 
+Matching pursuit \cite{wave:mallat93,ima:mallat98} method (MP) uses a greedy
+algorithm which adaptively refines the signal approximation with an
+iterative procedure:
+\begin{itemize}
+\item Set $s^0 = 0$ and $R^0 = 0$.
+\item Find the element $\alpha_k \varphi_{\gamma_k}$ which best correlates with the 
+residual.
+\item Update $s$ and $R$:
+\begin{eqnarray}
+s^{k+1} & = & s^k + \alpha_k \varphi_{\gamma_k} \nonumber \\
+R^{k+1} & = & s -  s^k .
+\end{eqnarray}
+\end{itemize}
+In case of non orthogonal dictionaries, it has been shown \cite{wave:donoho98}
+ that MP may
+spend most of the time correcting mistakes made in the first few terms,
+and therefore is suboptimal in term of sparsity.
+
+\bigskip
+Basis pursuit method  \cite{wave:donoho98} (BP) is a global procedure which
+synthesizes an approximation $\tilde{s}$ to $s$ by minimizing a
+functional of the type
+\begin{equation}
+\|s - \tilde{s}\|_{\ell_2} ^2 + \lambda \cdot \|\alpha\|_{\ell_1}, 
+\quad \tilde{s} = \Phi \alpha.  
+\label{eqn_mp}
+\end{equation}
+Between all possible solutions, the chosen one has the minimum $l^1$ norm.
+This choice of $l_1$ norm is very important. A $l_2$ norm, as 
+used in the method of frames \cite{wave:daube88b},
+ does not preserve the sparsity \cite{wave:donoho98}. 
+ 
+In many cases, BP or MP synthesis algorithms are computationally very
+expensive. We present in the following an alternative approach, that we call 
+{\em Morphological Component Analysis} (MCA), which combines  
+ the different available transforms 
+in order to benefit of the advantages of each of them. 
+
+\section{The Combined Transformation}
+
+Depending on the content of the data, several transforms 
+can be combined in order to get an optimal representation of all 
+features contained in our data set. In addition to the ridgelet
+and the curvelet transform, we may want to use the \`a trous algorithm
+which is very well suited to astronomical data, or the undecimated
+wavelet transform which is commonly used in the signal processing domain.
+
+Other transform such wavelet packets, the Fourier transform, 
+the Pyramidal median transform \cite{starck:book98}, 
+or other multiscale morphological transforms,
+could also be considered. However, we found that in practice,
+these four transforms (i.e. curvelet, ridgelet, \`a trous algorithm,
+and undecimated wavelet transform)
+furnishes a very large panel of waveforms
+which is generally large enough to well 
+represents all features contained in the data.
+
+In general, suppose that we are given $K$ linear transforms $T_1,
+\ldots, T_K$ and let $\alpha_k$ be the coefficient sequence of an
+object $x$ after applying the transform $T_k$, i.e. $\alpha_k = T_k
+x$. We will suppose that for each transform $T_k$ we have available a
+reconstruction rule that we will denote by $T^{-1}_k$ although this is
+clearly an abuse of notations.
+
+Therefore, we search a vector  
+${\bf \alpha} = {\alpha_1, \dots, \alpha_{K}}$ such that
+\begin{equation}
+s =  \Phi {\bf \alpha}
+\end{equation}
+where $\Phi {\bf \alpha} = \sum_{k=1}^K T_k^{-1} \alpha_k$.
+As our dictionary is overcomplete, there is an infinity of vectors
+verifing this condition, and we need to solve the following optimization 
+problem:
+\begin{equation}
+min \parallel s - \phi {\bf \alpha} \parallel^2 + {\cal C}(\bf \alpha)  
+\end{equation}
+where ${\cal C}$ is a penalty term. We easily see that chosing
+${\cal C}({\bf \alpha}) =  \parallel {\bf \alpha} \parallel_{l_1}$ leads to the
+BP method, where the dictionary ${\cal D}$ is only composed of the
+basis elements of the chosen transforms.
+ 
+Two iterative methods, {\em soft-MCA} and {\em hard-MCA}, allowing us 
+to realize such a combined transform, are described in this section.
+
+\section{Soft-MCA}
+\label{sect_l1}
+% $l^1$ optimization by soft thresholding
+
+Noting $T_1, ..., T_{K}$ the $K$ transform operators, 
+a solution ${\bf \alpha}$  is obtained by minimizing a functional of the form:
+\begin{eqnarray}
+J({\bf \alpha}) = \parallel s - \sum_{k=1}^{K} T_k^{-1} \alpha_k  \parallel_2^2 + \lambda \sum_k \parallel \alpha_k \parallel_1
+\label{eqn_min_l1}
+\end{eqnarray}
+where $s$ is the original signal, and $\alpha_k$ are the coefficients 
+obtained with the transform $T_k$.
+
+An simple algorithm to achieve such an solution is \cite{starck:spie01b,starck:sta02_3}:
+\begin{enumerate}
+\item Initialize $L_{\max}$, the number of iterations $N_i$, 
+$\lambda = L_{\max}$, and $\delta_{\lambda} = \frac{L_{\max}}{N_i}$.
+\item While $\lambda >= 0$ do
+\item For k = 1, .., $K$ do
+\begin{itemize}
+\item Calculate the residual $R = s - \sum_k T_k^{-1} \alpha_k$.
+\item Calculate the  transform $T_k$ of the residual:
+$r_k = T_k R$.
+\item Add the residual to  $\alpha_k$:  $\alpha_k = \alpha_k + r_k$.
+\item Soft threshold the coefficient $\alpha_k$ with the $\lambda$ threshold.
+\end{itemize}
+\item $\lambda = \lambda - \delta$, and goto 2.
+\end{enumerate}
+
+Figure~\ref{fig_cb1_synt} illustrates the result in the case where the
+input image contains only lines and Gaussians. In this experiment, we have 
+initialized  $L_{\max}$ to $20$, and $\delta$ to $2$ (10 iterations).
+Two transform operators
+were used, the \`a trous wavelet transform and the ridgelet transform. The 
+first is well adapted to the detection of Gaussian due to the isotropy of
+the wavelet function~\cite{starck:book98}, while the second is optimal
+to represent lines \cite{cur:candes99_1}. Figure~\ref{fig_cb1_synt} top,
+bottom left, and bottom right represents respectively the 
+original image, the reconstructed image from the \`a trous wavelet
+coefficient, and the reconstructed image from the ridgelet
+coefficient. The addition of both reconstructed images reproduces the
+original one. 
+
+\begin{figure}[htb]
+\vbox{
+\centerline{
+\hbox{
+\psfig{figure=fig_cb2_line_g.ps,bbllx=2cm,bblly=13.5cm,bburx=13cm,bbury=24.5cm,width=5.5cm,height=5.5cm,clip=}}
+}
+\centerline{
+\hbox{
+\psfig{figure=fig_cb2_line_g_atrou.ps,bbllx=2cm,bblly=13.5cm,bburx=13cm,bbury=24.5cm,width=5.5cm,height=5.5cm,clip=}
+\psfig{figure=fig_cb2_line_g_rid.ps,bbllx=2cm,bblly=13.5cm,bburx=13cm,bbury=24.5cm,width=5.5cm,height=5.5cm,clip=}
+}}}
+\caption{Top, original image containing lines and gaussians. Botton left,
+reconstructed image for the \`a trous wavelet coefficient, bottom right,
+reconstructed image from the ridgelet coefficients.}
+\label{fig_cb1_synt}
+\end{figure}
+
+In some specific cases where the data are sparse in all bases, 
+it has been shown \cite{cur:huo99,cur:donoho01}  
+that the solution is identical to the solution when using a 
+$\parallel . \parallel_0$ penalty term. This is however generally not the 
+case. 
+The problem we met in image restoration applications,
+when minimizing equation~\ref{eqn_min_l1}, is 
+that both the signal and noise are split into the bases. The way the noise
+is distributed in the coefficients $\alpha_k$ is not known, and leads to the problem
+that we do not know at which level we should threshold the coefficients. Using
+the threshold we would have used with a single transform 
+makes a strong over-filtering of the data. Using the $l^1$ optimization 
+for data restoration implies to first study how the noise is 
+distributed in the coefficients. The hard-MCA method does not present
+this drawback.
+
+\section{Hard-MCA}
+\label{sect_l0}
+%  $l^0$ optimization by hard thresholding
+The following algorithm consists in hard thresholding the residual 
+successively on the different bases \cite{starck:spie01b,starck:sta02_3}. 
+\begin{enumerate}
+\item For noise filtering, estimate the noise standard deviation $\sigma$,
+and set $L_{\min} = k_{\sigma}$. 
+Otherwise, set $\sigma=1$ and $L_{\min} = 0$.
+\item Initialize $L_{\max}$, the number of iterations $N_i$, 
+$\lambda = L_{\max}$ and $\delta_{\lambda} = \frac{L_{\max} - L_{\min}}{N_i}$.
+\item Set all coefficients $\alpha_k$ to 0.
+\item While $\lambda >= L_{\min}$ do
+\item for k = 1, .., $K$ do
+\begin{itemize}
+\item Calculate the residual $R = s - \sum_k T_k^{-1} \alpha_k$.
+\item Calculate the transform $T_k$ of the residual:
+$r_k = T_k R$.
+\item For all coefficients $\alpha_{k,i}$ do
+\begin{itemize}
+\item  Update the coefficients:  
+ if $\alpha_{k,i} \ne 0$ or $\mid r_{k,i}  \mid > \lambda \sigma$ 
+then $\alpha_{k,i}  =  \alpha_{k,i} + r_{k,i}$.
+\end{itemize}
+\end{itemize}
+\item $\lambda = \lambda - \delta_{\lambda} $, and goto 5.
+\end{enumerate}
+For an exact representation of the data, $k_{\sigma}$ must be set to 0.
+Choosing $k_{\sigma} > 0$ introduces a filtering. If a single transform is used,
+it corresponds to the standard  $k$-sigma hard thresholding.
+
+It seems that starting with a high enough $L_{\max}$ and a high
+number of iterations would lead to the $l^0$ optimization solution,
+but this remains to be proved.
+
+
+\section{Experiments}
+
+\subsubsection{Experiment 1: Infrared Gemini Data}
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_gemini.ps,bbllx=1.8cm,bblly=12.5cm,bburx=14.8cm,bbury=25.5cm,width=5cm,height=5cm,clip=}
+\psfig{figure=fig_gem_cb_rid.ps,bbllx=1.8cm,bblly=12.5cm,bburx=14.8cm,bbury=25.5cm,width=5cm,height=5cm,clip=}
+\psfig{figure=fig_gem_cb_cur.ps,bbllx=1.8cm,bblly=12.5cm,bburx=14.8cm,bbury=25.5cm,width=5cm,height=5cm,clip=}
+}
+\hbox{
+\psfig{figure=fig_gem_cb_atrou.ps,bbllx=1.8cm,bblly=12.5cm,bburx=14.8cm,bbury=25.5cm,width=5cm,height=5cm,clip=}
+\psfig{figure=fig_gem_cb_resi_cur_rid_atrou.ps,bbllx=1.8cm,bblly=12.5cm,bburx=14.8cm,bbury=25.5cm,width=5cm,height=5cm,clip=}
+\psfig{figure=fig_gem_cb_resi_cur_rid.ps,bbllx=1.8cm,bblly=12.5cm,bburx=14.8cm,bbury=25.5cm,width=5cm,height=5cm,clip=}
+}
+}}
+\caption{Upper left, galaxy SBS 0335-052 (10 $\mu$m), upper middle, upper middle,
+and bottom left, reconstruction respectively from the ridgelet, the curvelet
+and wavelet coefficients. Bottom middle, residual image. Bottom right, 
+artifact free image.}
+\label{fig_ctm_gemini1}
+\end{figure}
+$ $ 
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_gemini2_bw.ps,bbllx=1.8cm,bblly=12.5cm,bburx=14.8cm,bbury=25.5cm,width=7cm,height=7cm,clip=}
+\psfig{figure=fig_gem2_cb_cur_rid_bw.ps,bbllx=1.8cm,bblly=12.5cm,bburx=14.8cm,bbury=25.5cm,width=7cm,height=7cm,clip=}
+}
+\hbox{
+\psfig{figure=fig_gem2_cb_atrou_bw.ps,bbllx=1.8cm,bblly=12.5cm,bburx=14.8cm,bbury=25.5cm,width=7cm,height=7cm,clip=}
+\psfig{figure=fig_gem2_cb_resi_cur_rid_atrou_bw.ps,bbllx=1.8cm,bblly=12.5cm,bburx=14.8cm,bbury=25.5cm,width=7cm,height=7cm,clip=}
+}
+}}
+\caption{Upper left, galaxy SBS 0335-052 (20 $\mu$m), upper right, addition
+of the reconstructed images from both the ridgelet and the curvelet coefficients,
+bottom left, reconstruction from the wavelet coefficients, and bottom right,
+residual image.}
+\label{fig_ctm_gemini2}
+\end{figure}
+\clearpage
+Fig.~\ref{fig_ctm_gemini1} upper left shows
+a compact blue galaxy located at 53 Mpc. The data have been
+obtained on ground with the GEMINI-OSCIR instrument at $10$ $\mu$m. 
+The pixel field of
+view is $0.089^{\prime\prime}$/pix, and the  source was observed during 1500s.
+The data are contaminated by a noise and a stripping artifact due to the 
+instrument electronic. The same kind of artifact pattern were observed with
+the ISOCAM instrument \cite{starck:sta99_1}.
+
+This image, noted $D_{10}$, has been decomposed using wavelets, ridgelets, and curvelets.
+Fig.~\ref{fig_ctm_gemini1} upper middle,  upper  right, and bottom left
+show the three images $R_{10}$, $C_{10}$, $W_{10}$
+reconstructed respectively from the ridgelets, the curvelets, and the wavelets.
+Image in Fig.~\ref{fig_ctm_gemini1} bottom middle shows the residual, i.e.
+$e_{10} = D_{10} - (R_{10} + C_{10} + W_{10})$. Another interesting
+image is the artifact free one, obtained by subtracting $R_{10}$ and
+$C_{10}$ from the input data (see Fig.~\ref{fig_ctm_gemini1} bottom right).
+The galaxy has well been detected in the wavelet space, while all stripping
+artifact have been capted by the ridgelets and curvelets.
+
+Fig.~\ref{fig_ctm_gemini2} upper left shows the same galaxy, but at
+$20$ $\mu$m. We have applied the same decomposition on $D_{20}$. 
+Fig.~\ref{fig_ctm_gemini2} upper right shows the coadded 
+image $R_{20} + C_{20}$, and we can see bottom left and right the 
+wavelet reconstruction $W_{20}$ and the residudal
+$e_{20} = D_{20} - (R_{20} + C_{20} + W_{20})$.
+
+\subsubsection{Experiment 2: A370}
+ 
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=a370.ps,bbllx=1.5cm,bblly=6cm,bburx=19.5cm,bbury=24cm,width=7cm,height=7cm,clip=}
+\psfig{figure=a370_ridcur.ps,bbllx=1.5cm,bblly=6cm,bburx=19.5cm,bbury=24cm,width=7cm,height=7cm,clip=}
+}
+\hbox{
+\psfig{figure=a370_atrou.ps,bbllx=1.5cm,bblly=6cm,bburx=19.5cm,bbury=24cm,width=7cm,height=7cm,clip=}
+\psfig{figure=a370_comb.ps,bbllx=1.5cm,bblly=6cm,bburx=19.5cm,bbury=24cm,width=7cm,height=7cm,clip=}
+}
+}}
+\caption{Top left, HST image of A370, top right coadded image from the
+reconstructions from the ridgelet and the curvelet coefficients, bottom
+left  reconstruction from  the \`a trous wavelet coefficients, 
+and bottom right addition of the three reconstructed images. }
+\label{fig_a370}
+\end{figure}
+
+Figure~\ref{fig_a370} upper left shows the HST A370 image. It contains many 
+anisotropic features such the gravitationnal arc, and the arclets. The
+image has been decomposed using three transforms: the ridgelet transform, 
+the curvelet transform, and the \`a trous wavelet transform. Three images
+have then been reconstructed from the coefficients of the three basis.
+Figure~\ref{fig_a370} upper right shows the coaddition of the ridgelet 
+and curvelet reconstructed images. The \`a trous reconstructed image
+is displayed in Figure~\ref{fig_a370} lower left, and the coaddition 
+of the three images can be seen in Figure~\ref{fig_a370} lower right.
+The gravitational arc and the arclets are all represented in the 
+ridgelet and the curvelet basis, while all isotropic features are 
+better represented in the wavelet basis.
+
+We can see that this Morphological Component Analysis (MCA) allows
+us to separate automatically features in an image which have different
+morphological aspects. It is very different from other techniques such as
+Principal Component Analysis or 
+Independent Component Analysis \cite{mc:cardoso98} where the separation
+is performed via statistical properties.
+
+
+\clearpage
+\newpage

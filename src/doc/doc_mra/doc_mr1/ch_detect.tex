@@ -1,0 +1,551 @@
+\chapter{\proj Object Detection}
+\label{ch_mvm}
+\index{detection}
+
+\markright{Object detection}
+
+
+\section{Multiscale Vision Model}
+\label{sect_detect}
+\subsection{Introduction}
+After applying the wavelet transform on the image, we have to 
+detect, to extract, to measure and to recognize the significant 
+structures. The wavelet space of a 2D direct space 
+is a 3D one. An object has to be defined in 
+this space.  A general idea for object definition lies in the connectivity 
+property. An object occupies a physical region, and in this region we 
+can join any pixel to other ones. The connectivity in the direct space 
+has to be transported to the wavelet transform space (WTS). In order to 
+define the objects we have to identify the WTS pixels we can attribute to 
+the objects.
+
+\begin{figure}[htb]
+\centerline{
+\hbox{ 
+\psfig{figure=fig_detect.ps,bbllx=4cm,bblly=4cm,bburx=18cm,bbury=21.cm,width=12cm,height=12cm}
+}}
+\label{fig_detect_graph}
+\caption{Example of connectivity in the wavelet space: contiguous significant wavelet 
+coefficients
+form a structure, and following an interscale relation, a set of structures form
+an object. Two structures $S_{j},S_{j+1}$ at two successive scales  
+belong to the same object if the position pixel of the maximum wavelet
+coefficient value of $S_j$ is  included in $S_{j+1}$.}
+\end{figure}
+
+Figure~\ref{fig_detect_graph} shows an example of connectivity between 
+detected structures at different scales.
+
+\subsection{Definition}
+
+The Multiscale Vision Model (MVM) \cite{ima:bijaoui95,ima:rue97} 
+described  an object as a hierarchical set of structures.
+It uses the following definitions:
+\begin{itemize}
+\item {\bf Structure}: a structure ${\cal S}_j$ is a set of significant
+ connected wavelet coefficients at the same scale $j$. \\
+\item {\bf object}: an object is a set of structures.\\
+\item {\bf object scale}: the scale of an object is given by the scale of the
+maximum of its wavelet coefficients.\\
+\item {\bf interscale-relation}: the rule which  
+allows us to connect two structures into a single object
+is called ``interscale relation''. Let us consider two structures at two 
+successive scales, $S^1_j$ and  $S^2_{j+1}$. Each
+structure is located in one of the individual images of the
+decomposition and corresponds to a region in this image where the
+signal is significant. Noting $p_m$ the pixel position of the maximum
+wavelet coefficient value of $S^1_j$, $S^1_j$ is said to be connected to
+$S^2_{j+1}$ if $S^2_{j+1}$ contains the pixel position $p_m$ (i.e. the maximum
+position of the structure $S^1_j$ must also be contained in the structure 
+$S^2_{j+1}$). Several structures
+appearing in successive wavelet coefficient images can be connected in
+such a way, which we call an object in the interscale connectivity
+graph.
+\item {\bf sub-object}: a sub-object is a part of an object. It appears when
+an object has a local wavelet maximum. Hence, an object can be composed of
+several sub-objects. Each sub-object can also be analysed.
+\end{itemize}
+
+\subsection{Reconstruction}
+The problem of reconstruction \cite{ima:bijaoui95,ima:rue97} 
+consists of searching for a signal $O$ such that
+its wavelet coefficients are the same as those of the detected
+structures. If $\cal T$ describes the wavelet transform operator, and $P_w$ the
+projection operator in the subspace of the detected coefficients
+(i.e.\ all coefficients set to zero at scales and positions where
+nothing was detected), the solution is found by minimization of
+\begin{eqnarray*}
+J(O) = \parallel W - (P_w \circ {\cal T}) O  \parallel
+\end{eqnarray*}
+where $W$ represents the detected wavelet coefficients of the data.
+
+The MVM presents many advantages compared to the standard approach:
+\begin{itemize}
+\item faint extended objects can be detected as well as point sources,
+\item the analysis does not require background estimation,
+\item the Point Spread Function (PSF) is not needed.
+\end{itemize}
+The second point is relatively important. Indeed, if the background varies
+spatially, its estimation becomes a non-trivial task, and may produce 
+large errors in the object photometry.
+
+The last point is an advantage when the PSF is unknown, or difficult to 
+estimate, which occurs relatively often when it is space variant.
+However, when the PSF is well determined, it becomes a drawback because
+known information is not used for the object reconstruction. 
+Such a situation leads to
+systematic errors in the photometry, which depends on PSF and on the source 
+signal to noise ratio.
+In order to correct this error, a kind of calibration must be performed using
+simulations \cite{starck:sta99_4}. The 
+next section shows how the PSF can be used
+in the MVM, leading to a deconvolution.
+
+\section{Detection and Deconvolution}
+\subsection{Object reconstruction using the PSF}
+A reconstructed and deconvolved object can be obtained
+by searching for a signal $O$ such that
+the wavelet coefficients of $P*O$ are the same as those of the detected
+structures. If $\cal T$ describes the wavelet transform operator, 
+and $P_w$ the projection operator in the subspace of the detected coefficients,
+ the solution is found by minimization of
+\begin{eqnarray}
+J(O) = \parallel W - (P_w \circ {\cal T}) P * O  \parallel
+\end{eqnarray}
+where $W$ represents the detected wavelet coefficients of the data, and 
+$P$ is the point spread function. By this approach, each object is deconvolved
+separately. The flux related to the ring of the PSF will be taken into 
+account. For a point source, the solution will be close to that obtained by
+PSF fitting. This problem is different from global deconvolution 
+in the sense that it is well-constrained. Exept for the 
+positivity of the solution
+which is always true and must be used, no other constraint needs to
+be introduced. This is due to the fact that the reconstruction is performed
+from a small set of wavelet coefficients (those above a detection limit).
+The number of objects are the same as those obtained by the MVM, but
+the photometry and the morphology are different. The position may also change
+a little.
+
+\subsection{The algorithm}
+Any minimizing method can be used to obtain the solution $O$. As we did not
+meet any problem of convergence, noise amplification, or ringing effect, 
+we choose the Van Cittert method, which is certainly the simplest one.
+For each detected object, we apply the following algorithm:
+
+\begin{eqnarray}
+O^{n+1} = O^{n} + {\cal T}^{-1}(W - (P_w \circ {\cal T}) P * O^{n})
+\end{eqnarray}
+where ${\cal T}^{-1}$ is the inverse wavelet transform.
+
+\begin{enumerate}
+\item Set $n$ to $0$.  
+\item Find the initial estimation $O^{n}$ by applying an inverse
+wavelet transform to the set $W$ corresponding to the detected wavelet
+coefficients in the data.
+\item Convolve $O^{n}$ with the PSF $P$: $I^n = P*O^{n}$.
+\item Determine the wavelet transform $W(I^n)$ of $I^n$.
+\item Threshold all wavelet coefficients in $W(I^n)$ at position 
+and scales where nothing has been detected (i.e. $P_w$ operator). We get
+$W_t(I^n)$.
+\item Determine the residual $W(R) = W -  W_t(I^n)$.
+\item Reconstruct the residual image $R^n$ applying an inverse wavelet
+ transform.
+\item Add the residual to the solution: $O^{n+1} = O^{n} + R^n$.
+\item Threshold negative values in $O^{n+1}$.
+\item if $\sigma(R^n) / \sigma(O^0) < \epsilon$ then $n = n + 1$ and goto step 3.
+\item $O^{n+1}$ contains the deconvolved reconstructed object. 
+\end{enumerate}
+In practice, the convergence is very fast (less than 20 iterations).
+The reconstructed image (not deconvolved) can also be obtained, just by
+reconvolving the solution with the PSF.
+
+\clearpage
+\newpage
+
+\section{Object Detection:  mr\_detect}
+\index{mr\_detect}
+Program {\em mr\_detect} detects all objects present in 
+an image \cite{ima:bijaoui95,ima:rue97}.
+Several output files are created:
+\begin{itemize}
+\item name\_out.tex: LaTeX file which contains a table describing all detected
+objects. Values given in the 
+table are respectively the object number, the coordinates in pixel units, 
+the standard deviation in $x$ and $y$, the orientation, the maximum value, 
+the flux and the signal to noise ratio of
+ the maximum wavelet coefficient of the object. This file
+can be compiled by the LaTeX command. The pixel coordinates are given
+using the first pixel of the image as the reference pixel (0,0).
+The rotation angle gives the angle between the main axis of the object
+and the x-axis following the trigonometric convention. The object number is
+defined by numbers: the scale number which indicates at which  scale
+the object is detected, and a number which indicates the object number
+at this scale.
+\item name\_out\_obj.ps: a Postscript file giving the position
+of all objects in the image.
+\item name\_out.fits: this image contains the sum of all objects. It looks
+like a filtered image, without any background.
+\item name\_out.mes: ASCII file describing all detected objects. Each object
+is described by five lines: 
+\begin{itemize}
+\item the first line contains the scale where the maximum of the object has
+been detected, and the object number at this scale.
+\item the second line contains respectively the coordinates 
+in pixel units ($x$ and $y$), and the standard deviation in $x$ and $y$.
+\item the third line contains the orientation, the maximum value, the flux,
+and the magnitude.
+\item the fourth line contains the flux error, the signal to noise 
+ratio (SNR) of the
+maximum of the wavelet coefficient, and the SNR of the object.
+The SNR of the wavelet coefficient gives the ratio between the maximum 
+of the wavelet coefficients belonging to the object, and the standard deviation
+of the noise at the scale of this maximum. The SNR of the object is obtained
+by calculating the standard deviation in a box containing 90\% of the flux of
+the object in the reconstructed image, and by taking the  ratio between 
+this standard deviation and 
+the noise standard deviation. In the case of Poisson
+noise with few events, the SNR of the wavelet coefficient is not calculated,
+but instead the probability that the wavelet coefficient is not due to noise
+(i.e.\ due to signal), and the SNR of the object, is calculated by
+taking the ratio between  90\% of the flux of the source and the square
+root of the flux contained in the same box in the original data.
+\item the last line contains the position of the maximum wavelet coefficient.
+\end{itemize}
+\end{itemize}
+Furthermore, if the option ``-w 1'' is set, an image is created for each 
+object individually.
+For a FITS image, if the ``-C'' option is set, another TeX table is created
+containing the object coordinates (RA, Dec), the flux and the SNR.
+
+If the Point Spread Function (PSF) is available, it can be given to the
+program using the ``-P'' option. It generally improves the object photometry.
+Furthermore an object deconvolution can be performed using the 
+``-D'' option. In
+this case, each object is also deconvolved. 
+
+The photometry is by default estimated by integrating the flux in the
+reconstructed object. An alternative is to use an 
+aperture photometry (``-a'' option). In this case, a background image is needed.
+It can be:
+\begin{itemize}
+\item automatically calculated using pyramidal transform (PMT) (``-a 1'').
+It is found by interpolating
+ the last scale of the PMT  to the input image size. 
+ The number of scales is derived from the
+ input image size and the number of pixels in the last scale (default is 16, 
+ and can be changed with the ``-b'' option).
+ The background image size must be large enough to take into account 
+ background variations, and small enough to no take into account the 
+ information relative to the significant signal.
+\item  a flat image (``-a 3''), with a value equal to
+{\em BgrValue}.
+\item an image given by the user (``-a 2'' + ``-B'' option).
+\end{itemize}
+An object is characterized by its second order moments $\sigma_x,\sigma_y$ in
+the two principal directions. The aperture photometry is done in a box
+of size $k MAX(\sigma_x,\sigma_y)$, where k is defaulted to 3. $k$ can
+be modified by the ``-l'' option.
+
+{\bf
+\begin{center}
+ USAGE: mr\_detect option image\_in name\_out
+\end{center}}
+{\bf image\_in} is the input image and {\bf name\_out} the name which will
+be used for the output files. This name must not contain any suffix.
+\\
+Options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_multiresolution\_transform ]}
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item B-spline wavelet transform: \`a trous algorithm
+\item Half-pyramidal transform
+\item Pyramidal B-spline wavelet transform
+\item Mixed WT and PMT method (WT-PMT)
+\item Mixed Half-pyramidal WT and Median method (WT-HPMT) 
+\end{enumerate}
+Default is 1.
+\item {\bf [-V Multiscale\_Vision\_Model]}
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item No vision model.
+\item Blinded Objects. 
+\item Rue-Bijaoui Vision Model for blinded + embedded Objects. 
+\end{enumerate}
+Default is Rue-Bijaoui Vision Model for blinded + embedded Objects.
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales used in the multiresolution transform. Default is 5.
+\item {\bf [-m type\_of\_noise]} \\
+Description in section~\ref{sect_filter}.
+\item {\bf [-g SigmaNoise]} \\
+SigmaNoise = noise standard deviation. Default is automatically estimated.
+\item {\bf [-c gain,sigma,mean]} \\
+Description in section~\ref{sect_support}.
+\item {\bf [-s NSigma]} \\
+Thresholding at Nsigma * SigmaNoise. Default is 3.
+\item {\bf [-E Epsilon]} \\
+Epsilon = precision for computing thresholds. (Only used in the case of 
+Poisson noise with few events). Default is 1e-03.
+\item {\bf [-e minimum\_of\_events ]} \\
+Minimum number of events for a detection. Default is 4. \\
+For Poisson noise with few events only (-m 9).
+\item {\bf [-S SizeBlock]} \\
+Size of the  blocks used for local variance estimation. Default is 7.
+\item {\bf [-N NiterSigmaClip]} \\
+Iteration number used for local variance estimation. Default is 1.
+\item {\bf [-F first\_detection\_scale]} \\
+First scale used for the detection. Default is 1.
+\item {\bf [-R RMS\_Map\_File\_Name]} \\
+RMS Map.  If this option is set, the noise model is automatically fixed to:\\
+Non-stationary additive noise
+\item {\bf [-L last\_detection\_scale]} \\
+Last scale used for the detection.
+\item {\bf [-i number\_of\_iterations]} \\
+Iteration number per object reconstruction. Default is 10.
+\item {\bf [-u object\_reconstruction\_error]} \\
+Default is 1e-5.
+\item {\bf [-k]} \\
+Keep isolated objects. Default is no.
+\item {\bf [-K]} \\
+Keep objects which touch the border. Default is no.
+\item {\bf [-A FluxMult]} \\
+ Flux in TeX tables are multiplied by {\em FluxMul}. Default is 1.   
+\item {\bf [-w writing\_parameter]}
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item  Write each object separately in an image. \\
+The image file name of the object will be:
+\begin{center}
+                      ima\_obj\_xx\_yy.fits 
+\end{center}
+\item  Two synthetic images \\
+xx\_ellips.fits: an ellipse is drawn around each object \\
+xx\_simu.fits: image created only from the morphological parameters 
+\item  equivalent to 1 and 2 together 
+\end{enumerate}
+\item {\bf [-U]} \\
+Sub-segmentation. If two objects are close, and detected as a single object,
+sub-segmentation will try to separate them (deblending) into two objects.
+\item {\bf [-p]} \\
+Detect also negative structures. Default is no.
+\item {\bf [-q]} \\
+Define the root of an object from the maximum position and its value.
+\item {\bf [-d DistMax]} \\
+Maximum distance between two max positions 
+of the same object at two successive scales. \\
+Default is 1.
+\item {\bf [-o Sub-object analysis]} \\
+If set, sub-objects are also analysed. Several files are created:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item name\_out\_sub\_obj.ps: a Postscript file giving the position
+of all sub-objects in the image.
+\item name\_out\_sub.mes: ASCII file describing all detected sub-objects. 
+The syntax is the same as for the object ASCII file.
+\item name\_out\_sub.tex: LaTeX file which contains a table describing all detected
+sub-objects.  The syntax is the same as for the object TeX file.
+\item name\_out\_subobj\_radec: sub-object coordinates (only 
+if ``-C'' option is set).
+\end{itemize}
+\item {\bf [-D]} \\
+Perform a deconvolution. Default is no.
+\item {\bf [-P PsfFileName]} \\
+PSF file name.
+\item {\bf [-f Fwhm]} \\
+Full Width at Half Maximum.
+\item {\bf [-O PSF\_Sampling]} \\
+PSF over-sampling value.
+\item {\bf [-a BgrMethod] } \\
+ Aperture photometry:
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item Aperture photometry using a background image model 
+\item Aperture photometry using an estimated background image 
+\item Aperture photometry using a constant background 
+\end{enumerate}
+Default is no aperture photometry.
+\item {\bf [-B BgrFileName]  } \\
+Background image file name.
+\item {\bf [-G BgrValue] } \\
+Constant background value. Default is: 0.
+\item {\bf  [-b BGR\_Size] } \\
+Background image size for automatic background estimation.
+Default is 16.
+\item {\bf [-l KSigmaAperture]  } \\
+Aperture photometry size parameter. Default is 3.
+\item {\bf [-M object\_reconstruction\_method]}
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item reconstruction from the fixed step gradient method 
+\item reconstruction from the optimum step gradient method 
+\item reconstruction from the conjugate gradient method 
+\item reconstruction using the PSF
+\end{enumerate}
+Default is: reconstruction from the conjugate gradient method
+\item {\bf [-C RADEC\_Table\_Order]}
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+  \item TeX table ordered by object number.
+  \item TeX table ordered by the right ascension.
+  \item TeX table ordered by object SNR.
+\end{enumerate}
+A TeX table of name {\bf name\_out\_radec.tex} is created, which contains
+the object number, the right ascension (in degrees and in HH MN SEC), the
+declination in degrees and in DEG MN SEC), the flux, and the SNR. The object 
+order depends on the {\em RADEC\_Table\_Order} parameter.
+\item {\bf [-v]} \\
+Verbose. Default is no.
+\end{itemize}
+
+\section{Examples and Strategies}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_bert_org.ps,bbllx=1.9cm,bblly=12.6cm,bburx=14.6cm,bbury=25.4cm,width=8cm,height=8cm,clip=}
+\psfig{figure=fig_bert_imag.ps,bbllx=1.9cm,bblly=12.6cm,bburx=14.6cm,bbury=25.4cm,width=8cm,height=8cm,clip=}}
+\hbox{
+\psfig{figure=fig_bert_detect.ps,bbllx=1.9cm,bblly=12.6cm,bburx=14.6cm,bbury=25.4cm,width=8cm,height=8cm,clip=}
+\psfig{figure=fig_bert_ellips.ps,bbllx=1.9cm,bblly=12.6cm,bburx=14.6cm,bbury=25.4cm,width=8cm,height=8cm,clip=}}
+}}
+\caption{Top left, original simulated image (stars + galaxies). Top right,
+same image plus Gaussian noise. Bottom left, output image produced by
+{\em mr\_detect}. Bottom right, noise image, and ellipses overplotted.}
+\label{fig_bert}
+\end{figure}
+
+\begin{itemize}
+\item  mr\_detect -v -w 2 field\_g10.fits detect\_field \\
+Figure~\ref{fig_bert} presents the result of applying such a treatment.
+The input image (top right)  has been obtained by adding 
+Gaussian noise to a simulated image (top left). The output image shows
+that all objects (even very faint objects) have been detected.
+The file ``detect\_field.tex'' contains Table~\ref{tabdetect}, and
+can be compiled by the simple command ``latex detect\_field''.
+\item mr\_detect -P PsfFileName field\_g10.fits detect\_field \\
+Apply the detection with the same parameters, but using the PSF.
+\item mr\_detect -D -P PsfFileName field\_g10.fits detect\_field \\
+This time, a deconvolution is performed on each extracted object. 
+\item mr\_detect -D -P -u 0 -i 20 PsfFileName field\_g10.fits detect\_field \\
+Force the number of iterations for each object reconstruction to be equal to 20.
+\item  mr\_detect -v -m 2 -n 7 field\_g10.fits detect\_field \\
+Assume Poisson noise, and use more wavelet scales.
+\item  mr\_detect -t 5 -q field\_g10.fits detect\_field \\
+The fifth transform type is used. 
+This means that the reconstruction is not iterative
+(it runs faster). When two objects are blended, 
+it may not reconstruct them as
+well as with other transforms.
+The Postscript file ``detect\_field\_obj.ps'' (see Figure \ref{fig_ima_obj}) 
+shows the position of each object in the map.
+
+\end{itemize}
+
+\subsection{Choice of multiscale transform}
+\subsubsection*{Linear versus nonlinear transform}
+Five multiscale transforms are available. The first three are wavelet 
+transforms, while the last two are nonlinear transform. Wavelet transforms
+should normally be preferred to nonlinear transforms, but in some cases, 
+non-linear transforms can be useful. The main difference between the two
+types of transform  is that nonlinear transforms allow us to have very
+fast object reconstruction, without iterating. But the separation between
+two blended objects is better when we iterate. 
+The PSF can also not be used when
+using nonlinear methods, and the consequence is that the photometry may 
+be systematically underestimated. 
+
+\subsubsection*{Decimation or not?}
+The default transform (transform 1) produces cubes, while transforms 
+2 and 5 produce half pyramidal data structures, and 3 and 4 pyramidal 
+data structures. It is clear that in using pyramidal transforms we save
+computation time and memory space, but the quality is less good than with
+the two other sets of transforms. Half pyramidal transforms may be
+a good compromise between quality and both computation time and memory.
+
+\subsubsection*{Photometry}
+By default, {mr\_detect} estimates the object photometry without any
+information about the Point Spread Function (PSF). If the PSF presents
+a tail, it may not be detected in the wavelet space and the photometry
+may have a systematic error which depends on the PSF and 
+on the flux of the source. If objects are sparse, an aperture photometry
+will resolve this problem (``-a'' option). In the case
+where the PSF is known, a more accuracy photometry 
+can also be obtained using the ``-P'' option. The PSF knowledge can be used
+for the object reconstruction, and the tail arround the objects is correctly
+restored. This approach produces normally goor results, even for crowded
+fields, where an aperture photometry produces poor results.
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{||c||c|c|c|c|c|c|c|c||}
+\hline
+Object & x & y & $\sigma_x$ & $\sigma_y$ & $\theta$ &
+	$I_{max} $ & Flux & SNR\_WaveCoef\\
+\hline
+\hline
+3-1 & 166.78 & 171.85 & 3.90 & 3.54 & 6.4 & 64.62 & 3155.54  & 26.88\\
+\hline
+3-2 & 167.23 & 47.96 & 2.16 & 1.59 & 23.1 & 26.30 & 533.53  & 24.34  \\
+\hline
+3-3 & 230.21 & 83.97 & 4.34 & 4.78 & -14.6 & 84.77 & 6107.79 & 10.59  \\
+\hline
+3-4 & 129.85 & 88.28 & 4.47 & 6.89 & 15.0 & 81.99 & 8839.90 & 22.36 \\
+\hline
+3-5 & 63.78 & 185.28 & 5.49 & 2.85 & 2.4 & 91.62 & 6830.69 & 32.21 \\
+\hline
+2-1 & 119.96 & 17.71 & 1.93 & 3.12 & -18.0 & 85.43 & 2910.22 & 14.89 \\
+\hline
+2-2 & 129.27 & 29.65 & 4.54 & 2.33 & -5.5 & 398.30 & 16277.82  & 60.05 \\
+\hline
+2-3 & 154.99 & 145.35 & 2.66 & 2.91 & -35.5 & 181.33 & 6070.46 & 31.37  \\
+\hline
+2-4 & 16.67 & 160.69 & 2.78 & 2.40 & -11.6 & 55.63 & 1562.33 & 8.37 \\
+\hline
+2-5 & 103.16 & 75.34 & 2.98 & 2.12 & -11.6 & 47.76 & 1368.29 & 12.32 \\
+\hline
+2-6 & 114.21 & 231.37 & 2.35 & 3.13 & -41.1 & 72.64 & 2538.67 & 12.43 \\
+\hline
+2-7 & 233.17 & 101.44 & 2.91 & 3.02 & 0.5 & 79.43 & 3552.28  & 8.54 \\
+\hline
+2-8 & 101.13 & 98.60 & 2.80 & 3.51 & 42.9 & 79.17 & 3228.94 & 9.36 \\
+\hline
+2-9 & 231.91 & 127.28 & 3.15 & 2.74 & 5.7 & 56.52 & 2015.41 & 8.71 \\
+\hline
+2-10 & 36.05 & 153.08 & 2.33 & 3.03 & -39.5 & 32.58 & 1162.67  & 15.26 \\
+\hline
+2-11 & 227.54 & 207.51 & 3.36 & 2.98 & -0.8 & 54.97 & 2549.64 & 12.13 \\
+\hline
+2-12 & 152.97 & 209.01 & 3.54 & 3.09 & 35.1 & 95.40 & 4358.75  & 10.36 \\
+\hline
+1-1 & 176.37 & 131.80 & 1.48 & 1.37 & 2.4 & 133.07 & 1653.93 & 5.66 \\
+\hline
+1-2 & 154.00 & 146.00 & 1.01 & 1.01 & 0.0 & 122.96 & 1004.52 & 13.05 \\
+\hline
+1-3 & 13.92 & 145.08 & 1.38 & 1.42 & -9.0 & 299.54 & 3488.15 & 5.54  \\
+\hline
+\end{tabular}
+\label{tabdetect}
+\caption{Detection table.}
+\end{center}
+\end{table}
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_bert_obj.ps,bbllx=2cm,bblly=6cm,bburx=19cm,bbury=23.5cm,height=14cm,width=14cm,clip=}
+}}
+\caption{Position of each object in the image.}
+\label{fig_ima_obj}
+\end{figure}
+
+\clearpage
+

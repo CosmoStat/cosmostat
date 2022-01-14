@@ -1,0 +1,926 @@
+%%%%%%%%%%%%%%%%%%%%%% start of cmmp.sty %%%%%%%%%%%%%%%%%%%%%% 
+% CMMP document style 
+% v0.26 released 18 March 1993
+% Copyright 1993 Cambridge University Press
+
+% This software may only be used in the preparation of journal articles
+% or books or parts of books to be published by Cambridge University Press.
+% Any other use constitutes an infringement of copyright.
+
+% v0.26 released 18 March 1993, to correct makeup parameters; Alison Woollatt
+% v0.25 released 17th September 1992
+% v0.2  released 8th January 1992
+% v0.1  first release 6th August 1991
+% for LaTeX version 2.09
+% based on the original LaTeX BOOK DOCUMENT STYLE
+% Copyright (C) 1988, 1989 by Leslie Lamport
+
+\@twosidetrue
+\@mparswitchtrue
+\def\ds@draft{\overfullrule 5pt}
+\def\ds@twocolumn{\errmessage{twocolumn option not available with CMMP}}
+
+% Small trim size option
+\newif\if@small   \@smallfalse
+\def\ds@small{\@smalltrue}
+\let\ds@SMALL=\ds@small
+
+\@options
+
+\def\STYversion{0.26 Released 18th March 1993}
+\if@small
+  \def\STYsize{(228x152mm)}
+\else
+  \def\STYsize{(247x174mm)}
+\fi
+
+\typeout{CUP Document Style `CMMP' v\STYversion\space \STYsize.}
+
+\lineskip 1pt
+\normallineskip 1pt
+\def\baselinestretch{1}
+
+
+% Font usage
+
+\def\@normalsize{%
+\@setsize\normalsize{13pt}\xipt\@xipt%  Main text size. (11 on 13pt)
+\abovedisplayskip=6pt plus 1.8pt minus .9pt%
+\abovedisplayshortskip=6pt plus 1.8pt minus .9pt%
+\belowdisplayskip\abovedisplayskip%
+\belowdisplayshortskip\abovedisplayshortskip%
+\let\@listi\@listI%
+} 
+
+\def\captionsize{%  Figure/table caption size. (10 on 12pt)
+\@setsize\captionsize{12pt}\xpt\@xpt%
+\abovedisplayskip=6pt plus 1.8pt minus .9pt%
+\abovedisplayshortskip=6pt plus 1.8pt minus .9pt%
+\belowdisplayskip\abovedisplayskip%
+\belowdisplayshortskip\abovedisplayshortskip%
+} 
+
+\def\referencesize{%  References size. (10 on 12pt)
+\@setsize\referencesize{12pt}\xpt\@xpt%
+\abovedisplayskip=6pt plus 1.8pt minus .9pt%
+\abovedisplayshortskip=6pt plus 1.8pt minus .9pt%
+\belowdisplayskip\abovedisplayskip%
+\belowdisplayshortskip\abovedisplayshortskip%
+}
+
+\def\contentssize{%  Table of contents size. (10 on 12pt)
+\@setsize\contentssize{12pt plus .1pt minus .1pt}\xpt\@xpt%
+\abovedisplayskip=6pt plus 1.8pt minus .9pt%
+\abovedisplayshortskip=6pt plus 1.8pt minus .9pt%
+\belowdisplayskip\abovedisplayskip%
+\belowdisplayshortskip\abovedisplayshortskip%
+}
+
+\def\small{%
+\@setsize\small{11pt}\ixpt\@ixpt%
+\abovedisplayskip 8.5pt plus 3pt minus 4pt%
+\belowdisplayskip\abovedisplayskip%
+\abovedisplayshortskip \z@ plus 2pt%
+\belowdisplayshortskip 4pt plus 2pt minus 2pt%
+ \def\@listi{%
+ \leftmargin\leftmargin%
+ \topsep 4pt plus 2pt minus 2pt%
+ \parsep 2pt plus 1pt minus 1pt%
+ \itemsep \parsep%
+ }
+}
+
+\def\footnotesize{%
+\@setsize\footnotesize{9pt}\viiipt\@viiipt%
+\abovedisplayskip 4.5pt plus 1.35pt minus .675pt%
+\belowdisplayskip\abovedisplayskip%
+\abovedisplayshortskip 4.5pt plus 1.35pt minus .675pt%
+\belowdisplayshortskip\abovedisplayshortskip
+ \def\@listi{%
+ \leftmargin\leftmargini%
+ \topsep 3pt plus 1pt minus 1pt%
+ \parsep 2pt plus 1pt minus 1pt%
+ \itemsep \parsep%
+ }
+}
+
+\def\scriptsize{\@setsize\scriptsize{8pt}\viipt\@viipt}
+\def\tiny{\@setsize\tiny{6pt}\vpt\@vpt}
+\def\large{\@setsize\large{14pt}\xiipt\@xiipt}
+\def\Large{\@setsize\Large{18pt}\xivpt\@xivpt}
+\def\LARGE{\@setsize\LARGE{22pt}\xviipt\@xviipt}
+\def\huge{\@setsize\huge{25pt}\xxpt\@xxpt}
+\def\Huge{\@setsize\Huge{30pt}\xxvpt\@xxvpt}
+\def\headsize{\@setsize\headsize{13pt}\xipt\@xipt}
+
+% This should be 16 on 18pt. 16pt is not defined in LFONTS.TEX, so I have
+% used 17 on 19pt instead.
+
+\def\chaptertitlesize{%
+\@setsize\chaptertitlesize{19pt}\xviipt\@xviipt%  Chap title size. (17/19pt)
+}
+
+\def\chapternumsize{%
+\@setsize\chapternumsize{25pt}\xxvpt\@xxvpt%  Chapter number size. (25/25pt)
+}
+
+\normalsize% set main body-text size.
+
+\oddsidemargin=0pt%
+\evensidemargin\evensidemargin%
+\topmargin -.25in
+
+\marginparwidth .75in
+\marginparsep 7pt
+\headheight 12pt
+\headsep 16pt
+\footskip .35in
+
+\if@small
+  \textheight=40\baselineskip
+  \textwidth=26pc
+\else
+  \textheight=42\baselineskip
+  \textwidth=29pc
+\fi
+\advance\textheight by \topskip
+
+\columnsep 10pt
+\columnseprule 0pt
+
+\footnotesep 6.65pt
+\skip\footins 22pt plus 4pt minus 2pt
+\floatsep 12pt plus 2pt minus 2pt
+\textfloatsep 20pt plus 2pt minus 4pt
+\intextsep 12pt plus 2pt minus 2pt
+\@maxsep 20pt
+\dblfloatsep 12pt plus 2pt minus 2pt
+\dbltextfloatsep 20pt plus 2pt minus 4pt
+\@dblmaxsep 20pt
+\@fptop 0pt plus 1fil
+\@fpsep 8pt plus 2fil
+\@fpbot 0pt plus 1fil
+\@dblfptop 0pt plus 1fil
+\@dblfpsep 8pt plus 2fil
+\@dblfpbot 0pt plus 1fil
+\marginparpush 5pt
+
+\parskip 0pt plus 1pt
+\parindent 1em
+\partopsep 2pt plus 1pt minus 1pt
+\@lowpenalty 51
+\@medpenalty 151
+\@highpenalty 301
+\@beginparpenalty -\@lowpenalty
+\@endparpenalty -\@lowpenalty
+\@itempenalty -\@lowpenalty
+
+
+% Chapter opening
+
+\newif\ifAppendix \Appendixfalse
+
+\def\@makechapterhead#1{% numbered Chapter / Appendix
+\ifAppendix%
+ \@chapterhead{Appendix\ \thechapter}{#1}%
+\else%
+ \@chapterhead{\thechapter}{#1}%
+\fi%
+}
+
+\def\@makeschapterhead#1{% unnumbered Chapter
+\@chapterhead{}{#1}%
+}
+
+\def\@chapterhead#1#2{%
+\vbox to 168pt{%
+\hrule width 0pt%
+\vbox to 34pt{%
+\vfil\hbox to \hsize{\chapternumsize\parskip=0pt\baselineskip=25pt\hfill\bf #1\hfill}%
+}%
+\vskip 6pt%
+{
+ \spaceskip=.33333em\xspaceskip=.5em%
+ \rightskip=3em plus .2\hsize\leftskip=\rightskip%
+ \pretolerance=10000\parfillskip=0pt\parindent=0pt%
+ \parskip=0pt%
+ \chaptertitlesize\baselineskip=19pt\bf #2\par%
+}%
+\vfil}%
+\vskip-13pt%
+\noindent%
+}
+
+\def\chapter{%
+\vfil\newpage%
+\thispagestyle{plain}% MR
+\global\@topnum\z@%
+\@afterindentfalse%
+\secdef\@chapter\@schapter%
+} 
+
+\def\@chapter[#1]#2{%
+\ifnum \c@secnumdepth >\m@ne%
+ \refstepcounter{chapter}%
+ \typeout{\@chapapp\space\thechapter.}%
+ \ifAppendix
+  \addcontentsline{toc}{appendix}{Appendix\ \thechapter:\ #1}%
+  \markboth{Appendix \thechapter}{#1}%  Set auto page heads for Appendix.
+  \pagestyle{myheadings}%
+ \else%
+  \addcontentsline{toc}{chapter}{\protect\numberline{\thechapter}#1}%
+ \fi
+\else%
+ \addcontentsline{toc}{chapter}{#1}%
+\fi%
+\chaptermark{#1}%
+\addtocontents{lof}{\protect\addvspace{10pt}}%
+\addtocontents{lot}{\protect\addvspace{10pt}}%
+\if@twocolumn%
+ \@topnewpage[\@makechapterhead{#2}]%
+\else%
+ \@makechapterhead{#2}%
+ \@afterheading%
+\fi%
+} 
+
+\def\@schapter#1{%
+\if@twocolumn%
+ \@topnewpage[\@makeschapterhead{#1}]%
+\else%
+ \@makeschapterhead{#1}%
+ \@afterheading%
+\fi%
+}
+
+
+% Section's
+
+\def\section{%
+\@startsection {section}{1}{\z@}{-3.5ex plus -1ex minus -.2ex}%
+{3.3ex plus .2ex}{\normalsize\bf\center}%
+}
+
+\def\subsection{%
+\@startsection{subsection}{2}{\z@}{-3.25ex plus -1ex minus -.2ex}%
+{1.5ex plus .2ex}{\normalsize\it\center}% MR
+}
+
+\def\subsub{\subsubsection}
+
+\def\subsubsection{%
+\@startsection{subsubsection}{3}{\z@}{-3.25ex plus -1ex minus -.2ex}%
+{-12pt plus 3pt minus 3pt}{\normalsize\it\noindent}%
+}
+
+\def\paragraph{%
+\@startsection{paragraph}{4}{\z@}{3.25ex plus 1ex minus .2ex}{-1em}%
+{\normalsize\bf}%
+}
+
+\def\subparagraph{%
+\@startsection{subparagraph}{4}{\parindent}{3.25ex plus 1ex minus .2ex}%
+{-1em}{\normalsize\bf}%
+}
+
+\def\chaptermark#1{}
+\setcounter{secnumdepth}{2}%  Depth of section numbering
+
+\def\appendix{%
+ \par%
+ \newpage%  This seems to fix an ANOYING LaTeX bug....
+ \setcounter{chapter}{0}%
+ \setcounter{section}{0}%
+ \def\@chapapp{Appendix}%
+ \def\thechapter{\Alph{chapter}}%
+ \Appendixtrue%  Enable special handling of chapter opeining.
+}
+
+\leftmargini 25pt
+\leftmarginii 22pt
+\leftmarginiii 18.7pt
+\leftmarginiv 17pt
+\leftmarginv 10pt
+\leftmarginvi 10pt
+\leftmargin\leftmargini
+\labelsep 5pt
+\labelwidth\leftmargini
+\advance\labelwidth-\labelsep
+
+\def\@listI{%
+\leftmargin\leftmargini%
+\parsep 4pt plus 2pt minus 1pt%
+\topsep 8pt plus 2pt minus 4pt%
+\itemsep 4pt plus 2pt minus 1pt%
+}
+
+\let\@listi\@listI
+\@listi 
+
+\def\@listii{%
+\leftmargin\leftmarginii%
+\labelwidth\leftmarginii%
+\advance\labelwidth-\labelsep%
+\topsep 4pt plus 2pt minus 1pt%
+\parsep 2pt plus 1pt minus 1pt%
+\itemsep\parsep%
+}
+
+\def\@listiii{%
+\leftmargin\leftmarginiii%
+\labelwidth\leftmarginiii%
+\advance\labelwidth-\labelsep%
+\topsep 2pt plus 1pt minus 1pt%
+\parsep \z@%
+\partopsep 1pt plus 0pt minus 1pt%
+\itemsep\topsep%
+}
+
+\def\@listiv{%
+\leftmargin\leftmarginiv%
+\labelwidth\leftmarginiv%
+\advance\labelwidth-\labelsep%
+}
+
+\def\@listv{%
+\leftmargin\leftmarginv%
+\labelwidth\leftmarginv%
+\advance\labelwidth-\labelsep%
+}
+
+\def\@listvi{%
+\leftmargin\leftmarginvi%
+\labelwidth\leftmarginvi%
+\advance\labelwidth-\labelsep%
+}
+
+\def\labelenumi{\arabic{enumi}.} 
+\def\theenumi{\arabic{enumi}} 
+\def\labelenumii{(\alph{enumii})}
+\def\theenumii{\alph{enumii}}
+\def\p@enumii{\theenumi}
+\def\labelenumiii{\roman{enumiii}.}
+\def\theenumiii{\roman{enumiii}}
+\def\p@enumiii{\theenumi(\theenumii)}
+\def\labelenumiv{\Alph{enumiv}.}
+\def\theenumiv{\Alph{enumiv}} 
+\def\p@enumiv{\p@enumiii\theenumiii}
+
+\def\labelitemi{$\bullet$}
+\def\labelitemii{\bf --}
+\def\labelitemiii{$\ast$}
+\def\labelitemiv{$\cdot$}
+
+\def\verse{\let\\=\@centercr 
+ \list{}{\itemsep\z@ \itemindent -1.5em\listparindent \itemindent 
+ \rightmargin\leftmargin\advance\leftmargin 1.5em}\item[]}
+\let\endverse\endlist
+
+\def\quotation{\list{}{\listparindent 1.5em
+ \itemindent\listparindent
+ \rightmargin\leftmargin\parsep 0pt plus 1pt}\item[]}
+\let\endquotation=\endlist
+
+\def\quote{\list{}{\rightmargin\leftmargin}\item[]}
+\let\endquote=\endlist
+
+\def\descriptionlabel#1{\hspace\labelsep \bf #1}
+\def\description{\list{}{\labelwidth\z@ \itemindent-\leftmargin
+ \let\makelabel\descriptionlabel}}
+\let\enddescription\endlist
+\newdimen\descriptionmargin
+\descriptionmargin=3em
+
+\def\titlepage{%
+\@restonecolfalse%
+\if@twocolumn\@restonecoltrue\onecolumn\else \newpage\fi%
+\thispagestyle{empty}%
+\c@page\z@%
+}
+
+\def\endtitlepage{\if@restonecol\twocolumn \else \newpage\fi}
+
+\arraycolsep 5pt
+\tabcolsep 6pt
+\arrayrulewidth .4pt
+\doublerulesep 2pt
+\tabbingsep\labelsep
+\skip\@mpfootins=\skip\footins
+\fboxsep=3pt
+\fboxrule=.4pt
+
+\newcounter {part}
+\newcounter {chapter}
+\newcounter {section}[chapter]
+\newcounter {subsection}[section]
+\newcounter {subsubsection}[subsection]
+\newcounter {paragraph}[subsubsection]
+\newcounter {subparagraph}[paragraph]
+
+\def\thepart {\arabic{part}}
+\def\thechapter {\arabic{chapter}}
+\def\thesection {\thechapter.\arabic{section}}
+\def\thesubsection {\arabic{subsection}}% MR
+\def\thesubsubsection {}
+\def\theparagraph {\thesubsubsection.\arabic{paragraph}}
+\def\thesubparagraph {\theparagraph.\arabic{subparagraph}}
+\def\@chapapp{Chapter}
+
+
+% Parts
+
+\def\part{%
+\cleardoublepage%
+\thispagestyle{empty}%
+\if@twocolumn%
+ \onecolumn%
+ \@tempswatrue%
+\else%
+ \@tempswafalse%
+\fi%
+\secdef\@part\@spart%
+}
+
+\def\@part[#1]#2{%
+\ifnum \c@secnumdepth>-2%
+ \relax%
+ \refstepcounter{part}%
+ \addcontentsline{toc}{part}{Part\ \thepart:\ #1}%
+\else%
+ \addcontentsline{toc}{part}{#1}%
+\fi%
+\markboth{}{}%
+{\centering%
+\ifnum \c@secnumdepth>-2%
+ \relax%
+ \chaptertitlesize\bf Part \thepart\par%
+ \vskip 20pt%
+\fi%
+\chaptertitlesize\bf #1\par}%
+\@endpart%
+}
+
+\def\@spart#1{%
+{\centering%
+\chaptertitlesize\bf #1\par}%
+\@endpart%
+}
+    
+\def\@endpart{%
+\vfil\newpage%
+\if@tempswa%
+ \twocolumn%
+\fi%
+}
+
+
+% Table of contents
+
+\def\@undottedtocline#1#2#3#4#5{%
+\ifnum #1>\c@tocdepth%
+\else%
+ \vskip \z@ plus .2pt%
+ {\leftskip #2\relax%
+ \rightskip \@tocrmarg%
+ \parfillskip -\rightskip%
+ \parindent #2\relax%
+ \@afterindenttrue%
+ \interlinepenalty\@M%
+ \leavevmode%
+ \@tempdima #3\relax%
+ \advance\leftskip \@tempdima%
+ \hbox{}\hskip -\leftskip%
+ #4\nobreak%
+ \hbox{}\hfill%
+ \nobreak%
+ \hbox to\@pnumwidth{\hfil\rm #5}%
+ \par}%
+\fi%
+}
+
+\def\@pnumwidth{1.55em}
+\def\@tocrmarg {2.55em}
+\def\@dotsep{4.5}
+\setcounter{tocdepth}{2}%  Depth of table of contents numbering.
+
+\def\tableofcontents{%
+\@restonecolfalse%
+\if@twocolumn\@restonecoltrue\onecolumn\fi%
+\chapter*{Contents}%
+\markboth{Contents}{Contents}%
+\pagestyle{myheadings}%
+\contentssize%
+\@starttoc{toc}%
+\normalsize%  Reset normalsize after table of contents.
+\if@restonecol\twocolumn\fi%
+}
+
+\def\l@part#1#2{%  Table of contents (\part entry).
+\addpenalty{-\@highpenalty}%
+\addvspace{1.25em plus 1pt}%
+\begingroup%
+\@tempdima 30pt%
+\parindent \z@%
+\rightskip \@pnumwidth%
+\parfillskip-\@pnumwidth%
+\noindent%
+\hskip\@tempdima%
+\bf #1\leavevmode\hfil \hbox to\@pnumwidth{\hss\rm #2}\par%
+\nobreak%
+\endgroup%
+}
+
+\def\l@chapter#1#2{%  Table of contents (\chapter entry).
+\pagebreak[3]%
+\vskip 1.0em plus 1pt%
+\@tempdima 30pt%
+\begingroup%
+\parindent \z@%
+\rightskip \@pnumwidth%
+\parfillskip -\@pnumwidth%
+\bf \leavevmode #1\hfil \hbox to\@pnumwidth{\hss\rm #2}\par%
+\endgroup%
+}
+
+\def\l@schapter#1#2{%  Table of contents (\chapter* entry).
+\pagebreak[3]%
+\vskip 1.0em plus 1pt%
+\@tempdima 30pt%
+\begingroup%
+\parindent \z@%
+\rightskip \@pnumwidth%
+\parfillskip -\@pnumwidth%
+\noindent%
+\hskip\@tempdima\it #1\leavevmode \hfil \hbox to\@pnumwidth{\hss\rm #2}\par%
+\endgroup%
+}
+
+\def\l@appendix#1#2{%  Table of contents (\appendix + \chapter entry).
+\pagebreak[3]%
+\vskip 1.0em plus 1pt%
+\@tempdima 30pt%
+\begingroup%
+\parindent \z@%
+\rightskip \@pnumwidth%
+\parfillskip -\@pnumwidth%
+\noindent%
+\hskip\@tempdima\bf #1\leavevmode \hfil \hbox to\@pnumwidth{\hss\rm #2}\par%
+\endgroup%
+}
+
+\def\l@section{\@undottedtocline{1}{0pt}{30pt}}
+\def\l@subsection{\@undottedtocline{2}{32pt}{15pt}}
+\def\l@subsubsection{\@undottedtocline{3}{0pt}{30pt}}
+\def\l@paragraph{\@undottedtocline{4}{10pt}{30pt}}
+\def\l@subparagraph{\@undottedtocline{5}{20pt}{30pt}}
+
+
+% List of figures.
+
+\def\listoffigures{%
+\@restonecolfalse%
+\if@twocolumn\@restonecoltrue\onecolumn\fi%
+\chapter*{List of Figures\@mkboth{List of Figures}{List of Figures}}%
+\@starttoc{lof}%
+\if@restonecol\twocolumn\fi%
+}
+
+\def\l@figure{\@undottedtocline{1}{1.5em}{2.3em}}
+
+
+% List of Tables.
+
+\def\listoftables{%
+\@restonecolfalse%
+\if@twocolumn\@restonecoltrue\onecolumn\fi%
+\chapter*{List of Tables\@mkboth{List of Tables}{List of Tables}}%
+\@starttoc{lot}%
+\if@restonecol\twocolumn\fi%
+}
+
+\let\l@table\l@figure
+
+
+% References / Bibliography.
+
+\def\thebibliography#1{%
+\chapter*{References}%
+\markboth{References}{References}%
+\pagestyle{myheadings}%
+\addcontentsline{toc}{schapter}{References}%
+\bgroup%
+\frenchspacing\referencesize\rm%
+\raggedright%
+\list{[\arabic{enumi}]}{\settowidth\labelwidth{[#1]}%
+\parsep=1pt plus .5pt minus .25pt%
+\itemsep=3pt plus 1pt minus .5pt%
+\leftmargin\labelwidth%
+\labelsep=10pt%
+\advance\leftmargin\labelsep%
+\usecounter{enumi}}%
+  \def\newblock{\hskip .11em plus .33em minus -.07em}
+\sloppy\clubpenalty4000\widowpenalty4000%
+\sfcode`\.=1000\relax%
+}
+
+\def\endthebibliography{\egroup\endlist}
+
+%%% \def\thebibliography#1{%
+%%% \chapter*{References}%
+%%% \markboth{References}{References}%
+%%% \pagestyle{myheadings}%
+%%% \addcontentsline{toc}{schapter}{References}%
+%%% %%%  \list{[\arabic{enumi}]}{\settowidth\labelwidth{[#1]}%
+%%% %%%  \leftmargin\labelwidth%
+%%% %%%  \advance\leftmargin\labelsep%
+%%% %%%  \usecounter{enumi}}%
+%%% \bgroup%
+%%% \referencesize\rm%
+%%%  \def\bibitem{%
+%%%   \hangindent=1em\hangafter=1%
+%%%   \parskip=1pt plus .5pt minus .25pt%
+%%%   \rightskip=0pt plus .2\hsize%
+%%%   \frenchspacing\noindent\referencesize%
+%%%  }
+%%% \def\newblock{\hskip .11em plus .33em minus -.07em}
+%%% \sloppy\clubpenalty4000\widowpenalty4000%
+%%% \sfcode`\.=1000\relax%
+%%% }
+
+%%% %%% \let\endthebibliography=\endlist
+
+%%% \def\endthebibliography{%
+%%% \egroup%
+%%% }
+
+\newif\if@restonecol
+
+
+% Index
+
+\long\def\query#1{%
+\hskip 0pt{\vadjust{\everypar={}\small\vtop to 0pt{\hbox{}%
+\vskip -13pt\rlap{\hbox to 38.5pc{\hfil{\vtop{\hsize=8pc\tolerance=6000%
+\hfuzz=.5pc\rightskip=0pt plus 3em\noindent#1}}}}\vss}}}%
+}
+
+\def\theindex{%
+\@restonecoltrue%
+\if@twocolumn\@restonecolfalse\fi%
+\columnseprule \z@%
+\columnsep 1.5pc%
+\twocolumn[\@makeschapterhead{Index}]%
+\markboth{Index}{Index}%
+\pagestyle{myheadings}%
+\thispagestyle{plain}% MR
+\addcontentsline{toc}{schapter}{Index}%
+\parindent\z@%
+\parskip\z@ plus .3pt\relax%
+\let\item\@idxitem%
+}
+
+\def\@idxitem{\par\contentssize\rm\noindent\hangindent 16pt}% MR
+\def\subitem{\par\contentssize\rm\noindent\hangindent 16pt\hspace*{8pt}}%MR
+\def\subsubitem{\par\contentssize\rm\noindent\hangindent 32pt\hspace*{16pt}}% MR
+\def\endtheindex{\if@restonecol\onecolumn\else\clearpage\fi}
+\def\indexspace{\par\vskip 10pt plus 5pt minus 3pt\relax}
+
+
+% Footnotes
+
+\def\footnoterule{%
+\kern-3\p@%
+\hrule width .2\columnwidth% MR
+\kern 2.6\p@%
+} 
+
+\long\def\@makefntext#1{%
+\leftskip=8pt\rightskip=8pt% MR
+\count\footins=1000%  1:1 text/footnotes
+\interlinepenalty=1000%
+\parindent 0pt\noindent\hbox{\llap{\hss$^{\@thefnmark}$\hskip2pt}}#1%
+}
+
+\def\thefootnote{\fnsymbol{footnote}}%  Footnote markers are symbols.
+\@addtoreset{footnote}{chapter}%  Footnotes reset on chapters.
+
+% Makeup parameters
+
+\setcounter{topnumber}{2}
+\def\topfraction{.9}
+\setcounter{bottomnumber}{2}
+\def\bottomfraction{.5}
+\setcounter{totalnumber}{3}
+\def\textfraction{0.1}
+\def\floatpagefraction{.85}
+\setcounter{dbltopnumber}{2}
+\def\dbltopfraction{.9}
+\def\dblfloatpagefraction{.85}
+
+% Figures
+
+\long\def\@makecaption#1#2{%
+\vskip 10pt%
+\captionsize%
+\setbox\@tempboxa\hbox{#1.~\hskip 6pt\relax #2}%
+\ifdim \wd\@tempboxa >\hsize%
+ #1.~\hskip 6pt\relax #2\par%  Full-out
+\else%
+ \hbox to \hsize{\hfil\box\@tempboxa\hfil}%  Center.
+\fi%
+}
+
+\newcounter{figure}[chapter]
+
+\def\thefigure{\thechapter.\@arabic\c@figure}
+\def\fps@figure{tbp}
+\def\ftype@figure{1}
+\def\ext@figure{lof}
+\def\fnum@figure{Fig. \thefigure}
+\def\figure{\@float{figure}}
+\let\endfigure\end@float
+\@namedef{figure*}{\@dblfloat{figure}}
+\@namedef{endfigure*}{\end@dblfloat}
+\newcounter{table}[chapter]
+\def\thetable{\thechapter.\@arabic\c@table}
+\def\fps@table{tbp}
+\def\ftype@table{2}
+\def\ext@table{lot}
+\def\fnum@table{Table \thetable}
+\def\table{\@float{table}}
+\let\endtable\end@float
+\@namedef{table*}{\@dblfloat{table}}
+\@namedef{endtable*}{\end@dblfloat}
+
+\def\maketitle{%
+\begin{titlepage}%
+\let\footnotesize\small%
+\let\footnoterule\relax%
+\setcounter{page}{0}%
+\null\vfil%
+\vskip 60pt%
+\begin{center}%
+{\LARGE \@title \par}%
+\vskip 3em%
+{\large \lineskip .75em%
+ \begin{tabular}[t]{c}%
+ \@author%
+ \end{tabular}%
+ \par%
+} 
+\vskip 1.5em%
+{\large \@date \par}%
+\end{center}%
+\par\@thanks\vfil\null%
+\end{titlepage}%
+\setcounter{footnote}{0}%
+\let\thanks\relax%
+\gdef\@thanks{}\gdef\@author{}\gdef\@title{}%
+\let\maketitle\relax%
+} 
+
+\mark{{}{}} 
+
+
+% Page styles
+
+\def\ps@headings{%
+\let\@mkboth\markboth%
+\def\@oddfoot{}%
+\def\@evenfoot{}%
+\def\@evenhead{\normalsize%
+  \rm\thepage\hfil\headsize\it\thechapter\hskip 6pt\leftmark\hfil%
+\phantom{\normalsize\rm\thepage}}%
+\def\@oddhead{\phantom{\normalsize\rm\thepage}%
+  \hfil\headsize\it\rightmark\hfil\normalsize\rm\thepage}%
+\def\chaptermark##1{\markboth {##1}{}}%
+\def\sectionmark##1{\markright{\ifnum\c@secnumdepth>\z@\thesection\hskip 6pt\fi ##1}}%
+}
+
+\def\ps@myheadings{%
+\let\@mkboth\@gobbletwo%
+\def\@evenhead{\normalsize%
+  \rm\thepage\hfil\headsize\it\leftmark\hbox{}\hfil%
+\phantom{\normalsize\rm\thepage}}%
+\def\@oddhead{\phantom{\normalsize\rm\thepage}%
+  \hfil\headsize\it\rightmark\hfil\normalsize\rm\thepage}%
+\def\@evenfoot{}%
+\def\@oddfoot{}%
+\def\chaptermark##1{}%
+\def\sectionmark##1{}%
+\def\subsectionmark##1{}%
+}
+
+\def\today{%
+\ifcase\month\or January\or February\or March\or April\or May\or June\or
+ July\or August\or September\or October\or November\or December\fi
+ \space\number\day, \number\year%
+}
+
+\@addtoreset{equation}{chapter}%  Reset equation number at start of chapter.
+\def\theequation{\thechapter.\arabic{equation}}
+\def\@thmcounter#1{\thechapter.\noexpand\arabic{#1}}
+
+\def\chapterhead#1{\markboth{#1}{}}
+\def\sectionhead#1{\markright{\ifnum\c@secnumdepth>\z@ \thesection\fi\hskip 6pt #1}}
+
+
+% Initialisation
+
+\ps@headings%            `headings' page style.
+\pagenumbering{arabic}%  Arabic page numbers.
+\onecolumn%              Single-column.
+
+
+% Miscellaneous math
+
+\def \s{\char'134{}}
+\def \lb{\allowbreak \char'173{}}
+\def \rb{\char'175{}}
+\def \la{\char'074{}}
+\def \ra{\char'076{}}
+\def \qst{\char'077{}}
+\def \undln{\char'137{}}
+\def \caret{\char'136{}}
+\def \curly{\char'176{}}
+\def \sepl{\char'174 \allowbreak}
+\def\rr{\mathchoice{\longrightarrow}{\rightarrow}{\rightarrow}{\rightarrow}}
+\let\text=\hbox
+
+
+% Proof
+
+\def\proofskip{\vskip 12pt plus 3pt minus 1.5pt}
+\def\proofbox{\hfill\rule{6pt}{6pt}}
+\newenvironment{proof}{{\proofskip\it Proof\/}:~}{\proofbox\proofskip}
+
+
+% More math
+
+\def\ceqnarray{\stepcounter{equation}\let\@currentlabel=\theequation
+\global\@eqnswtrue
+\global\@eqcnt\z@\tabskip\@centering\let\\=\@eqncr
+$$\halign to \displaywidth\bgroup\global\@eqcnt\@ne 
+  \hskip 2\arraycolsep \hfil${##}$\hfil
+  &\global\@eqcnt\tw@ \hskip 2\arraycolsep $\displaystyle\tabskip\z@{##}$\hfil 
+   \tabskip\@centering&\llap{##}\tabskip\z@\cr}
+
+\def\endceqnarray{\@@eqncr\egroup
+      \global\advance\c@equation\m@ne$$\global\@ignoretrue}
+
+\let\@ceqnsel=\relax
+
+\def\unnum{\ifnum \@itemdepth >3 \@toodeep\else \advance\@itemdepth \@ne
+\edef\@itemitem{labelitem\romannumeral\the\@itemdepth}%
+\list{\csname\@itemitem\endcsname}{\def\makelabel##1{\hss}}\fi}
+
+\let\endunnum=\endlist
+
+\def\figbox#1#2{%
+\hbox to \textwidth{\hfil\hbox{\hfil\framebox[#2]{\vbox to #1{}}\hfil}\hfil}%
+}
+
+\def\vguiderule{\vrule height 20pt depth 0pt width .2pt}
+\def\hguiderule{\vrule height .2pt width 20pt}
+
+
+% Output routines
+
+\def\setcornerrules{\vbox to 0pt{%
+ \hskip 35pt%
+ \vskip -40pt%
+  \hbox to 474pt{%
+   \vrule width 20pt height .3pt\vrule width .4pt height 20pt\hfil%
+   \vrule width .4pt height 20pt\vrule width 20pt height .3pt%
+  }%
+ }%
+}
+
+\def\@outputpage{\begingroup\catcode`\ =10 \if@specialpage 
+     \global\@specialpagefalse\@nameuse{ps@\@specialstyle}\fi
+     \if@twoside 
+       \ifodd\count\z@ \let\@thehead\@oddhead \let\@thefoot\@oddfoot
+            \let\@themargin\oddsidemargin
+          \else \let\@thehead\@evenhead
+          \let\@thefoot\@evenfoot \let\@themargin\evensidemargin
+     \fi\fi
+     \shipout
+     \vbox{\normalsize \baselineskip\z@ \lineskip\z@%
+           \vskip \topmargin \moveright\@themargin
+           \vbox{\setbox\@tempboxa
+                   \vbox to\headheight{\vfil \hbox to\textwidth
+                                       {\let\label\@gobble \let\index\@gobble
+                                         \@thehead}} %% 22 Feb 87
+                 \dp\@tempboxa\z@
+                 \box\@tempboxa
+                 \vskip \headsep
+                 \box\@outputbox
+                 \baselineskip\footskip
+                 \hbox to\textwidth{\let\label\@gobble 
+                           \let\index\@gobble  %% 22 Feb 87
+                           \@thefoot}}}\global\@colht\textheight
+           \endgroup\stepcounter{page}\let\firstmark\botmark}
+
+% End of CMMP.STY
+%%%%%%%%%%%%%%%%%%%%%% end of cmmp.sty %%%%%%%%%%%%%%%%%%%%%% 
+

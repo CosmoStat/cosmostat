@@ -1,0 +1,753 @@
+\chapter{\proj Image Compression}
+\label{ch_comp}
+\index{compression}
+% \chapterhead{Programs}
+\markright{Image Compression}
+
+\section{Introduction}
+Image compression can be necessitated for different reasons, which may 
+in practice motivate different compression strategies. Cases which can be
+easily distinguished include: quicklook, very large images (e.g.\ the 
+all-sky atlas, ALADIN,
+with links to cataloged information on tens of millions of astronomical
+objects \cite{compress:bartlett96}); fast access to 
+large pictorial databases; and Web-based and other types of data transmission
+(a number of references to past work on progressive image transmission
+can be found in \cite{compress:hannaford93}).
+
+Following the kind of images and the application needs, different strategies 
+can be used:
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item Lossy compression: in this case the compression ratio is relatively 
+low ($< 5$).
+\item Compression without visual loss. This means that one cannot see the 
+difference between the original image and the decompressed one. Generally, 
+compression ratios between 10 and 20 can be obtained.
+\item Good  quality compression: the decompressed image does not contain any 
+artifact, but some information is lost. Compression ratios up to 40 can be 
+obtained in this case.
+\item Fixed compression ratio: for some technical reasons, one may decide to 
+compress all images with a compression ratio higher than a given value, 
+whatever the effect on the decompressed image quality.
+\item Signal/noise separation: if noise is present in the data, noise 
+modeling can allow very high compression ratios just by including  
+filtering in wavelet space during the compression.
+\end{enumerate}
+Following the image type, and the selected strategy, the optimal compression 
+method may differ. A major  
+interest in using a multiresolution framework is to get, in a natural way, the
+possibility for progressive information transfer.
+
+According to Shannon's theorem, the number of bits we need to code 
+an image $I$ without distorsion (losslessly) is given by its entropy $H$.
+If the image (with $N$ pixels) is coded with $L$ intensity levels, each level having a 
+probability $p_i$ to appear, the entropy $H$ is 
+\begin{eqnarray}
+H(I) = \sum_{i=1}^L - p_i \log_2 p_i
+\end{eqnarray}
+The probabilities $p_i$ can be easily derived from the image histogram.
+The compression ratio is given by:
+\begin{eqnarray}
+{\cal{C}}(I) = \frac{\mbox{number of bits per pixel in the raw data}}{H(I)}
+\end{eqnarray}
+and the distortion is measured by
+\begin{eqnarray}
+R = \parallel I - \tilde I \parallel =  \sum_{k=1}^N (I_k - \tilde I_k)^2
+\end{eqnarray}
+where $\tilde I$ is the decompressed image.
+
+A Huffman, or an arithmetic, coder is generally used to transform the set 
+of integer values into the  new set of values, in a reversible way.
+
+Compression methods try to use the redundancy contained in the raw data 
+in order to reduce the number of bits. The main efficient methods belong to
+ the transform
+coding family, where the image is first transformed into another set of data
+where the information is more compact (i.e.\ the entropy of the new set is 
+lower than the original image entropy). The typical steps are:
+\begin{enumerate}
+\item transform the image (for example using a discrete cosine transform, or 
+a wavelet transform),
+\item quantize the obtained coefficients, and 
+\item code the values by a Huffman or an arithmetic coder.
+\end{enumerate}
+The first and third points are reversible, while the second is not.
+The distortion will depend on the way the coefficients are quantized. We
+may want to minimize the distortion with the minimum of bits, and a 
+trade-off will then be necessary in order to also have ``acceptable'' 
+quality.  ``Acceptable'' is evidently subjective, and will depend
+on the application. Sometimes, any loss is unacceptable, and the price 
+to pay for this 
+is a very low compression ratio (often between one and two). 
+
+\newpage
+\section{Compression Methods}
+We review briefly here different methods:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item{HCOMPRESS: }
+{\tt HCOMPRESS} \cite{compress:white92} was developed at 
+ Space Telescope Science Institute (STScI), 
+Baltimore, and is commonly
+used to distribute archive images from the Digital Sky Survey.
+It is based on the Haar wavelet transform. The algorithm consists of
+\begin{enumerate}
+\item applying a Haar transform to the data,
+\item quantizing the wavelet coefficients linearly as integer values,
+\item applying a quadtree to the quantized values, and 
+\item using a Huffman coder.
+\end{enumerate}
+ 
+\item{HCOMPRESS + iterative decompression: }
+Iterative decompression was proposed \cite{compress:bijaoui96} 
+to decompress files which
+were compressed using HCOMPRESS. The idea is to consider the decompression
+problem as a restoration problem, and to add constraints on the solution in
+order to reduce the artifacts.
+
+\item{FITSPRESS: }
+{\tt FITSPRESS} \cite{compress:press92} is based on a wavelet transform, using
+Daubechies-4 filters.
+It was developed at the Center for Astrophysics, Harvard.
+ 
+\item{JPEG: }
+JPEG is the standard video compression software   
+for single frame images \cite{compress:furht95}.
+It decorrelates pixel coefficients within 8 by 8 pixel blocks using the 
+Discrete Cosine 
+Transform and uniform quantization. 
+
+\item{Wavelet: }
+Bi-orthogonal wavelet transform. The 7/9 filter is one of the best filters.
+\cite{wave:antonini92}
+
+\item{Fractal: }
+The image is decomposed by block, and each block is represented by a fractal.
+See \cite{compress:fisher94} for more explanation.
+
+\item{Mathematical morphology: }
+This method is based on mathematical morphology \cite{compress:huang91_1} (erosion and dilation).
+It consists of detecting structures above a given level, the level being
+equal to the background plus three times the noise standard deviation.
+Then, all structures are compressed using erosion and dilation, and
+additionally a quadtree and Huffman coding. This method is based on object 
+detection, and leads to a high compression ratio if the image does not contain
+a lot of information, as is often the case in astronomy. 
+
+\item{Pyramidal median transform: }
+The principle of this compression method is to select the 
+information we want to keep,
+by using the pyramidal median transform, and to code this information without
+ any loss. Thus
+the first phase searches for the minimum set of quantized multiresolution
+coefficients which produce an image of ``high quality''. The quality is
+evidently subjective, and we will define by this term an image such as 
+the following:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item there is no visual artifact in the decompressed image,
+\item the residual (original image -- decompressed image) does not
+contain any structure.
+\end{itemize}
+Lost information cannot be recovered, so if we do not accept any loss,
+we have to compress what we take as 
+noise too, and the compression ratio will be low (3 or 4 only).
+\end{itemize}
+
+The PMT is similar to the mathematical morphology method in the sense that
+both try to understand what is in the image, and to compress only what is
+considered as significant. The PMT uses a multiresolution approach, which
+allows more powerful separation between signal and noise. Both methods have
+been developed for astronomical image compression. They certainly can also
+been used for medical, or biological images.
+ 
+
+Concerning computation time for 
+such methods, it is in general very competitive,
+of the order of a few seconds for a 1024 $\times$ 
+1024 integer (16 bits) image 
+(machine Sun Ultra-Enterprise, 250 MHz and 1 processor). Only the methods 
+producing a fixed compression ratio take more time, because they need to 
+iterate in order to obtain a good compression ratio.
+
+The \proj compression program allows us to use any of the previously 
+described strategies. User parameters define the chosen compression ratio, 
+the noise model, etc. For 
+large images, compression can be performed by blocks, and block size is a 
+parameter. This allows us to decompress a given block (or area) at a given 
+resolution, without having to read the whole file. The file format has been 
+specified in order to gain  direct access to a given block at a given 
+resolution using the C command ``fseek''. Available methods are 
+bi-orthogonal wavelet transform, Haar and Feauveau wavelet transform,
+PMT, mathematical morphology. 
+ 
+%======================================================================
+
+\section{Large Image Visualization Environment: LIVE}
+
+With new technology developments, images furnished by detectors are larger
+and larger. For example, current astronomical projects plan to deal with images
+of sizes larger than 8000 by 8000 pixels (VLT: 8k $\times$ 8k, MegaCam 
+16k $\times$ 16k, etc.). A digitized mammogram film may lead to images
+of about 5k $\times$ 5k.
+Analysis of such images is obviously not easy, but the main problem is clearly
+that of archiving and  network access to the data by users. 
+
+In order to visualize an image in a reasonable amount of time, the transmission
+is based on two concepts:
+\begin{itemize}
+\item data compression
+\item progressive decompression
+\end{itemize}
+The concept of progressive transmission has appeared in recent years. It 
+consists 
+of visualizing quickly a low resolution image, and then  
+increasing the quality 
+with the arrival of new bits. Wavelet based methods become very attractive
+for this, 
+because they integrate in a natural way this multiresolution concept. A coarse 
+resolution image can be directly obtained without 
+having to decompress the whole file.
+
+But with very large images, a third concept is necessary, which is 
+the region of 
+interest. Indeed, images are becoming so large it is impossible to 
+display them in a 
+normal window (typically of size 512 $\times$ 512), and we need to 
+have the ability to
+focus on a given area of the image at a given resolution. To move from one 
+area to another, or to increase the resolution of a part of the area is a 
+user task, and is a new active element of the decompression. The goal of LIVE 
+is to furnish this third concept.
+
+An alternative to LIVE for extracting a region of the image would be to 
+let the server extract the selected area, compress it, and send it to the user. 
+This solution is simpler and does not need any development, but presents 
+several drawbacks:
+\begin{itemize}
+\item Server load: the server must decompress the full size image and 
+re-compress the selected area on each user request.
+\item Transfer speed: indeed, to improve the resolution of a 
+256 $\times$ 256 image to 
+a 512 $\times$
+512 image, the number of bits using the LIVE strategy is of the order of 10 
+to 100 less than if the full 512 $\times$ 512 is transferred. The 
+lower the compression ratio is, the more the LIVE strategy becomes important.
+\end{itemize}
+
+The principle of LIVE is to use the previously described technology, and
+to add the following functionalities:
+\begin{itemize}
+\item Full image display at a very low resolution.
+\item Image navigation: the user can go up (the quality of an area of the 
+image is improved) or down (return to the previous image). 
+%Then the new image 
+%represents only a quarter of the previous one.
+Going up or down in resolution implies a four-fold increase or decrease
+  in the size of what is viewed.
+\end{itemize}
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_live.ps,bbllx=2.5cm,bblly=7cm,bburx=18cm,bbury=23cm,height=15cm,width=15cm,clip=}
+}}
+\caption{Example of large image, compressed by block, and represented at five
+resolution levels. At each resolution level, the visualization window is 
+superimposed at a given position. At low resolution, the window covers the
+whole image, while at the full resolution level, it covers only one block.}
+\label{fig_live}
+\end{figure}
+
+In order to illustrate this concept, see Figure~\ref{fig_live}.
+A large image (say 4000 $\times$ 4000),  
+which is compressed by blocks (8 $\times$ 8, each block having a 
+size of 500 $\times$ 500),  
+is represented at five resolution levels.
+The visualization window (of size 256 $\times$ 256 in our example) 
+covers the whole
+image at the lowest resolution level (image size 250 $\times$ 250), 
+but only one block 
+at the full resolution (in fact between one and four, 
+depending on the
+position in the image). The LIVE concept consists of moving the visualization
+window into this pyramidal structure, without having to load into memory the
+large image. The image is first visualized at low resolution, and the user
+can indicate (using the mouse) which part of the visualized subimage he
+wishes to zoom on. At each step, only wavelet coefficients of the 
+corresponding blocks
+and of the new resolution level are decompressed.  
+
+An IDL program is available (XLIVE) in \proj which allows manipulation and  
+visualization of large images. Future versions of \proj will also 
+include the LIVE
+concept in Java, allowing use over the network in client-server mode.
+
+
+% =========================== PROG ===========================
+\clearpage
+\newpage
+
+\section{Compression/Decompression Programs}
+Three image compression programs are available:
+\begin{itemize}
+\item {\em mr\_comp}: lossy image compression by several methods. This 
+program is well adapted to the compression of images contaminated by noise.
+The pyramidal median transform (default method in {\em mr\_comp}) 
+is very efficient for astronomical image compression. 
+\item {\em wcomp}: lossy image compression by the bi-orthogonal wavelet
+transform (7/9 filters), and non-uniform quantization. This program
+is similar to {\em mr\_comp} with specific options (i.e. ``-N -m 5 -s 1'').
+It also allows the user to evaluate the PSNR between the original image
+and the decompressed one.
+\item {\em mr\_lcomp}: lossless image compression using the lifting scheme
+method.
+\end{itemize}
+These programs furnishes a ``.MRC'' file format, and the decompression
+can be performed using the {\em mr\_decomp} program.  
+
+\subsection{Image Compression: wcomp}
+\index{wcomp}
+Program {\em wcomp} compresses an 
+image by the bi-orthogonal wavelet transform.
+
+For very large images, the compression can be carried out by block 
+using the ``-C'' 
+option.  Then, each block is considered as an independent image, and 
+compressed. Only one block need be in memory for this approach. Another
+advantage is the fact that a block can be decompressed alone, without
+decompression of the whole image.
+{\bf
+\begin{center}
+ USAGE: wcomp option image\_in [compressed\_file\_out]
+\end{center}}
+where options are:
+\begin{itemize}     
+\baselineskip=0.4truecm 
+\item {\bf [-g QuantifParam]}  \\
+ Quantization parameter.
+\item {\bf [-n number\_of\_scales]}  \\
+Number of scales used in the multiresolution transform. Default is 6.
+% \item {\bf [-s NSigma]}  \\
+% Thresholding at NSigma * SigmaNoise. Default is 3.
+\item {\bf [-E]} \\
+ Evaluation mode. Once the compression is finished, 
+ decompression is performed, and the PSNR between the
+ original and decompressed image is calculated.
+\item {\bf [-C BlockSize] } \\
+Compress by block. {\em BlockSize} is the size of each block.
+Default is not to compress blockwise.
+\item {\bf [-v]} \\
+Verbose. Default is no verbose output.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\item wcomp image.d \\
+Compress the image, and store the result ``image.d.MRC"
+\item wcomp -g 30 image.d \\
+Ditto, but increase the compression rate.
+\item mr\_comp -E image.d comp.MRC\\
+Compress the image, store the result in ``comp.MRC'', and calculate 
+the PSNR between the original and the decompressed image.
+\item mr\_comp -C 512 image.d \\
+Compress the image by block of size 512x512.
+\end{itemize}
+
+\subsection{Noisy image Compression: mr\_comp}
+\index{mr\_comp}
+
+Program {\em mr\_comp} compresses an 
+image by the pyramidal median transform (PMT)
+\cite{starck:sta96_2,starck:sta96_3,starck:mur98_2,starck:mur96_1}, 
+by mathematical morphology \cite{compress:huang91_1}, or by wavelet 
+transforms.
+
+The PMT method uses noise modeling,
+assuming Gaussian, Poisson, or Gaussian + Poisson noise. By default, the
+noise is not compressed, and the decompressed image will look like a 
+filtered image. Option ``-s'' fixes the detection level, for the separation
+ between signal and noise, and option ``-q'' specifies the quality we want 
+ when the detected multiresolution coefficients are coded. 
+ If the user wants to  keep the noise, two options allow him or her
+to do this.
+  Option ``-l'' for lossless compression (see also the 
+{\em mr\_lcomp} program), 
+and
+option ``-r'' when an error on the noise reconstruction is acceptable. For 
+the second case, option ``-e'' fixes the quality of the noise reconstruction.
+By default, all operations are done using float. By using the ``-O'' option,
+all operations are done using integer (the program runs faster),
+ and the input image is first converted into an integer image. 
+If the input image is coded with 
+floating values, some information may be lost during this conversion.
+If no output file name is given, the program uses the input file name, and
+adds to it the suffix ``.MRC''. 
+% On VMS machines, the output file name must always be given.
+
+For the mathematical morphology method, only  ``-O'', ``-S'' and ``-D'' 
+options are valid, ``-S'', ``-D'' allowing us to change
+the structuring element and its size.
+
+For other compression methods, options are the same as for PMT, but ``-O''
+is not valid.
+
+If the data does not contain any noise, option ``-N" must be set. In this case,
+the compression ratio cannot be determined from the significant coefficients. 
+Then, the parameter ``-q'' can be used for increasing the compression ratio,
+or the compression ratio can also be fixed, using the ``-R'' option. This
+option implies that we need to iterate in order to get an optimal distortion
+for the given compression ratio. For this reason the ``-R'' 
+option requires more
+computation time. 
+
+Depending on the kind of data, {\em mr\_comp} allows different strategies
+to be taken. For astronomical and medical 
+images, which contain noise and diffuse
+objects, the PMT transform gives good results. For an image without any noise
+and containing edges, the bi-orthogonal wavelet transform (option -m 5)
+is better. For  lossless compression (i.e.\ output decompressed image = 
+input image), the min-max transform can also be considered.
+
+For very large images, the compression can be carried out by block 
+using the ``-C'' option (see previous section).   
+
+{\bf
+\begin{center}
+ USAGE: mr\_comp option image\_in [compressed\_file\_out]
+\end{center}}
+where options are:
+\begin{itemize}     
+\baselineskip=0.4truecm
+\item {\bf [-m Compression\_Method] }
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item Compression by the pyramidal median transform 
+\item Compression by mathematical morphology             
+\item Compression by the Haar transform 
+\item Compression by the min-max transform (or G transform) 
+\item Compression by the Mallat-Daubechies transform 
+\item Compression by the Feauveau transform      
+\item Compression by mixed WT and PMT method
+\end{enumerate} 
+Default is Compression by the pyramidal median transform.
+\item {\bf [-g SigmaNoise]}  \\
+SigmaNoise = Gaussian noise standard deviation. Default is automatically estimated.
+\item {\bf [-p]} \\
+Poisson Noise. Default is no Poisson component (hence just Gaussian).
+\item {\bf [-c gain,sigma,mean]}  \\
+See section~\ref{sect_support}.
+\item {\bf [-n number\_of\_scales]}  \\
+Number of scales used in the multiresolution transform. Default is 6.
+\item {\bf [-s NSigma]}  \\
+Thresholding at NSigma * SigmaNoise. Default is 3.
+\item {\bf [-r]} \\
+If -r option is given, the noise is compressed
+with a step of sigma\_noise/2. By default, the noise is not conserved.
+\item {\bf [-k]} \\
+Keep isolated pixels in the support at the first scale. Default is not to do 
+this.
+If the point spread function is defined on only one pixel, 
+this option should be set.
+\item {\bf [-l]} \\
+Save the noise (for lossless compression). Default is not to do this.
+\item {\bf [-q SignalQuantif]} \\
+The signal is quantized by Sq = S/(SignalQuantif*Sigma\_Noise).
+By default, SignalQuantif = 1.5
+\item {\bf [-e NoiseQuantif]} \\
+The signal is quantized by Nq = S/(NoiseQuantif*Sigma\_Noise).
+By default, NoiseQuantif = 0.5.
+\item {\bf [-f]} \\
+Keep all the header in the case of FITS format files. Default is not to do 
+this.
+\item {\bf [-b bad\_pixel\_value]} \\
+All pixels with this value will be considered as bad pixels, 
+and not used for the noise modeling.
+\item {\bf [-O]} \\
+Optimization. If set, the program works with integer instead of float,
+and the execution time is faster.
+\item {\bf [-B]} \\
+Optimization without BSCALE (rescaling) operation in the case of FITS images.
+\item {\bf [-P]} \\
+Keep only positive coefficients. 
+\item {\bf [-W]} \\
+Set the Median window size equal to 5. Default is 3.
+\item {\bf [-S]} \\
+Use a square structuring element. (Only for mathematical 
+morphology compression).
+ Default structuring element is a circle.
+\item {\bf [-D Dim]} \\
+ Dimension of the structuring element (Only for mathematical 
+morphology compression).
+ Default is 5.
+\item {\bf [-R Compression\_Ratio]} \\
+ Fixes the compression ratio. Default is not to do this.
+\item {\bf [-C BlockSize] } \\
+Compress by block. {\em BlockSize} is the size of each block.
+Default is No.
+\item {\bf [-i NbrIter]} \\
+Method 3 (using Haar transform) can be improved by iterating. {\em NbrIter}
+fixes the number of iterations. Default is not to do this.
+\item {\bf [-N]} \\
+Do not use noise modeling.
+\item {\bf [-v]} \\
+Verbose. Default is no verbose output.
+
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\item mr\_comp image.d \\
+Compress the image, and store the result ``image.d.MRC"
+\item mr\_comp -f image.fits icompress\\
+Compress the image, and store the result ``icompress.MRC". The
+complete FITS header is saved in the compressed file.
+\item mr\_comp -m 5 -R 30 image.d \\
+Compress the image with a compression ratio of 30, using a bi-orthogonal
+wavelet transform.
+\item mr\_comp -m 5 -q 30 image.d \\
+Compress the image, fixing the quantization parameter, and 
+using a bi-orthogonal
+wavelet transform.
+\item mr\_comp -O -m 4 -N image.d \\
+Apply optimized lossless compression.
+\end{itemize}
+
+\newpage
+\subsection{Compression: mr\_lcomp}
+\index{mr\_lcomp}
+Program {\em mr\_lcomp} compress an image by an integer 
+wavelet transform via the lifting scheme. The integer wavelet 
+coefficients are 
+coded without losing any information. This leads to a lossless compression 
+method (if the input image contains integer values!).  Five   
+transforms are available.
+
+{\bf \begin{center}
+ USAGE: mr\_lcomp option image\_in [compressed\_file\_out]
+\end{center}}
+where options are:
+\begin{itemize}     
+\baselineskip=0.4truecm
+\item {\bf [-m Compression\_Method] }
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item  Lifting scheme: median prediction.
+\item  Lifting scheme: integer Haar WT.
+\item  Lifting scheme: integer CDF WT    .        
+\item  Lifting scheme: integer (4,2) interpolating transform.
+\item  Lifting scheme: integer 7/9 WT.
+\end{enumerate} 
+Default is Lifting scheme: integer Haar WT.
+\item {\bf [-n number\_of\_scales]}  \\
+Number of scales used in the multiresolution transform. Default is 6.
+\item {\bf [-f]} \\
+Keep all the header in the case of FITS format files. Default is not to do 
+this.
+\item {\bf [-B]} \\
+Optimization without BSCALE (rescaling) operation in the case of FITS images.
+\item {\bf [-v]} \\
+Verbose. Default is no verbose output.
+\item {\bf [-C BlockSize] } \\
+Compress by block. {\em BlockSize} is the size of each block.
+Default is No.
+\end{itemize}
+
+\newpage
+\subsection{Compression strategies}
+
+\subsubsection*{Compression method}
+If the images contain isotropic features (the case of
+medical, biomedical, and astronomical images), the PMT (with {\em mr\_comp})
+transform
+is a good choice. If the image contains edges, a bi-orthogonal transform should
+be used (option ``-m 5'' with {\em mr\_comp}, and ``-m 2'' or ``-m 3'' with
+{\em mr\_lcomp}). 
+
+\subsubsection*{Lossless compression}
+For lossless compress, {\em mr\_lcomp} is normally a better choice than 
+{\em mr\_comp}. However, {\em mr\_comp} separates signal from noise, which
+can be in many cases useful. The Haar 
+lifting scheme method has also an advantage,
+which is that a pixel in the decompressed image at a lower resolution 
+corresponds to the average of the pixel values in a square defined by
+the resolution level. This allows the user to make correct scientific 
+measurement without having to decompress the whole image. For this reason,
+the Haar lifting scheme compression method would be a good candidate for 
+a new data format. 
+
+\subsubsection*{Noise model}
+By default, {\em mr\_comp} tries to separate the noise from the signal. If
+the image is not noisy, this operation should not be carried out, and the 
+option ``-N'' must be set.
+
+\subsubsection*{Compression ratio}
+To obtain a fixed compression ratio, the option ``-R x'' (x being 
+the compression
+ratio value) has to be given. The price to be paid 
+is that the compression takes
+more time because it iterates until the correct compression ratio is obtained.
+
+\subsubsection*{Large images}
+For very large images, the ``-C'' option implies that block compression
+will be performed. The image is separated into N $\times$ M blocks and 
+each block is
+compressed separately. Blocks are directly read from  disk, so the 
+compression takes more time, but requires less memory space. A block can
+be decompressed individually and at any resolution level, a 
+ property used by the IDL XLIVE program.
+
+
+\newpage
+\subsection{Decompression: mr\_decomp}
+\index{mr\_decomp}
+Program {\em mr\_decomp} decompresses a file compressed with {\em mr\_comp}
+or {\em mr\_lcomp}.
+We are not always interested in decompressing the image at full resolution. 
+The option ``-r'' allows an image at lower resolution to be extracted from 
+the compressed file, and produces in this way 
+a smaller image than the original. Even if the compressed file contains
+the noise of the input image, the noise will not be decompressed.
+Note that for lower resolution decompression, only the necessary part of the
+file is read and decompressed (and so the decompression is particularly 
+efficient). This is possible because of the pyramidal compression method. 
+The option ``-g'' recreates a noise map, and adds it to the decompressed image.
+The final image is evidently not closer to the original one, but the appearance
+will be very similar.
+
+{\bf
+\begin{center}
+ USAGE: mr\_decomp option CompressedFileName OutputFileName
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item {\bf [-B BlockNbr]} \\
+Decompress only one block. {\em BlockNbr} is the block number to decompress.
+Default is no.
+\item {\bf [-r resolution]} \\
+{\em resolution} must be $ \geq 0$ and $<$ number of scales of the transform.
+By default, the image is reconstructed at full resolution with its noise 
+if this exists in the compressed file.
+\item {\bf [-t output\_type]} \\
+If the input image was a FITS format image, the image 
+output type can be fixed 
+by the user to ``i'' for integer, or ``s'' for short. 
+By default, the output type 
+is the same as the type of the original image. 
+\item {\bf [-g]} \\
+Add simulated noise to the decompressed image with the same properties 
+as in the original image. This preserves appearances.
+\item {\bf [-v verbose]} \\
+Default is no.
+\item {\bf [-I IterRecNbr]} \\
+Use an iterative reconstruction. Only used with orthogonal transforms.
+Default is no iteration.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\item mr\_comp ngc2997.fits \\
+Compress the image, and store the result ``ngc2997.fits.MRC"
+\item mr\_decomp ngc2997.fit.MRC decngc.fits\\
+Decompress the file, and store the result ``decngc.fits". 
+\item cat ngc2997.fits.MRC $|$ mr\_decomp - - $>$ decngc.fits \\
+Unix command, doing the same job.
+\item mr\_decomp -r 1 ngc2997.fit.MRC  decngc.fits \\
+Decompress the file at a resolution lower. The decompressed image
+has  size 128 $\times$ 128 when the original one had a size of 256 $\times$
+256.
+\item mr\_decomp  -r 3 -i ngc2997.fit.MRC decngc.fits \\
+Same as before, but the  decompressed image has size 32 $\times$ 32.
+\end{itemize}
+
+
+\newpage
+\subsection{Decompression: mr\_upresol}
+\index{mr\_upresol}
+From an image which has been compressed by {\em mr\_comp} or {\em mr\_lcomp},
+we can extract a low resolution image. The principle of {\em mr\_upresol}
+is to improve the resolution, by a factor two, of the low resolution image.
+Only wavelet coefficients of the
+new scale are extracted from the compressed file (MRC format).   
+This program is used by the IDL widget program XLIVE.
+
+If the image was compressed by block (``-C'' option using mr\_comp or
+mr\_lcomp), then {\em mr\_upresol} allows us to focus on a region of the
+image. The coordinates of the center of the region are given either by the
+``-x'' and ``-y'' options, or by ``-X'' and ``-Y'' options. In the first
+case, the coordinates must begin in the pixel units of the low resolution image,
+while in the second case, units are those of the full resolution image.
+The minimum size of the region to visualize is given by the option
+``-W''. Only blocks covering the selected region will be decompressed. 
+
+ Two files are created. The new image file, and an information file (suffix
+``.inf'') which is an ascii file and  which contains information about  the
+decompressed image. It contains the three following lines:
+\begin{verbatim} 
+L_Nl  L_Nc  Nl  Nc 
+Resol BlockSize KeepResi 
+FirstBlockNl LastBlockNl  FirstBlockNc  LastBlockNc 
+\end{verbatim} 
+where L\_Nl $\times$ L\_Nc is
+the size of the full resolution image,  Nl $\times$ Nc is the size of 
+the decompressed image, Resol its resolution level, BlockSize is the block size
+used for the compression,  KeepResi indicates whether the noise map is stored
+in the compressed file, and FirstBlockNl,LastBlockNl,FirstBlockNc, LastBlockNc
+indicates which blocks are decompressed.  
+{\bf 
+\begin{center} 
+USAGE: mr\_upresol options CompressedFileName OutputFileName 
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item {\bf [-t output\_type]} \\ 
+If the input image was a FITS format image, the image 
+output type can be fixed  by the user to ``i'' for integer, or ``s'' 
+for short. 
+By default, the output type  is the same as the type of the original image. 
+\item {\bf [-I IterRecNbr]} \\
+Use an iterative reconstruction. Only used with orthogonal transforms.
+Default is no iteration. 
+\item {\bf [-l LowResol\_Image\_FileName]} \\ 
+Image at a lower resolution. 
+\item {\bf [-x PosX]} \\ 
+Center pixel position (x) of the region to zoom 
+in the input low resolution image. \\
+Default value is 0.
+\item {\bf [-y PosY]} \\ 
+Center pixel position (y) of the region to zoom 
+in the input low resolution image. \\
+Default value is 0.
+\item {\bf [-X PosX]} \\ 
+Center pixel position (x) of the region to zoom 
+in the full resolution image (real pixel coordinate). Default value is 0.
+\item {\bf [-Y PosY]} \\ 
+ Center pixel position (y) of the region to zoom 
+ in the full resolution image (real pixel coordinate).
+ Default value is 0.
+\item {\bf  [-W WindowSize]} \\ 
+ Window size. Default is 256.
+\item {\bf [-v verbose]} \\ 
+Default is no. 
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\item mr\_lcomp -n 4 ngc2997.fits ngc2997.fits.MRC \\
+mr\_upresol ngc2997.fits.MRC resol3.fits \\
+mr\_upresol -l resol3.fits ngc2997.fits.MRC resol2.fits\\
+mr\_upresol -l resol2.fits ngc2997.fits.MRC resol1.fits\\
+mr\_upresol -l resol1.fits ngc2997.fits.MRC resol0.fits\\
+Compress first image, decompress it resolution by resolution.
+\item mr\_lcomp -n 4 -C 512 ngc2997.fits ngc2997.fits.MRC \\
+mr\_upresol -X 200 -Y 250 -W 400 -l resol3.fits ngc2997.fits.MRC resol2.fits\\
+mr\_upresol -X 200 -Y 250 -W 400  -l resol2.fits ngc2997.fits.MRC resol1.fits\\
+mr\_upresol -X 200 -Y 250 -W 400  -l resol1.fits ngc2997.fits.MRC resol0.fits\\
+Compress first image by block of 512. An image is created for each resolution
+level, which contains the region around the pixels of coordinates  (200,250).
+The ``-W'' options specifies the size of the region of interest (here 400 pixels).
+At each level, only blocks covering this surface area are decompressed. 
+\end{itemize}
+ 

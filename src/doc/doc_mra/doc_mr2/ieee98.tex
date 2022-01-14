@@ -1,0 +1,770 @@
+ 
+\documentclass[11pt,a4paper]{article}
+% \renewcommand{\baselinestretch}{2}
+
+\input{psfig}
+\textwidth 17truecm
+\textheight 24.2truecm
+\hoffset -1.5truecm
+\voffset -1.5truecm
+ 
+\title{A New Entropy Measure Based on the Wavelet Transform and Noise Modeling}
+\author{ J.-L. Starck \\
+CEA/DSM/DAPNIA, CE-SACLAY, F-91191 Gif sur Yvette Cedex \\ [12pt]
+F. Murtagh \\
+Faculty of Informatics, University of Ulster, Magee College, \\
+Londonderry BT48 7JL, Northern Ireland \\ [12pt]
+R. Gastaud \\
+CEA/DSM/DAPNIA, CE-SACLAY, F-91191 Gif sur Yvette Cedex}
+
+
+\begin{document}
+\maketitle
+
+\abstract{
+We present in this paper a new way to measure the information
+in a signal, based on noise modeling. We show that the use of such 
+an entropy-related measure leads to good results for signal restoration.}
+  
+\section{Introduction}
+The term ``entropy'' term is due to Clausius (1865), and the concept of 
+entropy was introduced by Boltzmann into statistical mechanics,
+in order to measure the number of microscopic ways that a given macroscopic
+state can be realized. Shannon \cite{shannon48} 
+founded the mathematical theory of
+communication when he suggested that the information gained in a 
+measurement depends on the number of possible outcomes out of 
+which one is realized. Shannon also suggested that 
+the entropy can be used for maximization of the bits transferred under
+a quality constraint. Jaynes \cite{jaynes57} proposed to use 
+the entropy measure
+for radio interometric image deconvolution,  in
+order to select in a set of possible solutions that which contains the
+minimum of information, or following his entropy definition, that 
+which has a maximum entropy. In principle, the solution verifying such 
+a condition should be the most reliable. A lot of work has been carried out
+in the last 30 years on the use of entropy for the general problem
+of data filtering and deconvolution 
+\cite{ables74,bontekoe94,burg67,frieden75,gull91,narrayan86,pantin96,skilling84_1,
+weir92}. 
+
+Traditionally information and entropy are determined from events and the
+probability of their occurrence.  Signal and noise are basic building-blocks 
+of signal and data analysis in the physical sciences.  Instead of the 
+probability of an event, in this work
+ we are led to consider the probabilities of our
+data being either signal or noise. 
+
+Observed data $Y$ in the physical sciences 
+are generally corrupted by noise, which is often additive and which 
+follows in many cases a Gaussian distribution, a Poisson distribution, or
+a combination of both.
+ Using Bayes' theorem to evaluate the probability of the 
+realization of the original signal $X$,
+knowing the data $Y$, we have
+
+\begin{eqnarray}
+ \mathrm{Prob}(X|Y) = \frac{\mathrm{Prob}(Y|X).\mathrm{Prob}(X)}{\mathrm{Prob}(Y)}
+\label{eqn_bayes}
+\end{eqnarray}
+$\mathrm{Prob}(Y|X)$ is the conditional probability of getting the data 
+$Y$ given an original signal $X$, i.e.\ it represents the distribution 
+of the noise. It is given, in the case of uncorrelated Gaussian 
+noise with variance $\sigma^2$, by:
+\begin{eqnarray}
+ \mathrm{Prob}(Y|X) = \mathrm{exp}(-\sum_{pixels} \frac{ (Y-X)^2}{2{\sigma}^2} )
+\label{eqn_proba}
+\end{eqnarray}
+The denominator in  equation \ref{eqn_bayes} is independent of $X$ and
+ is considered as a constant (stationary noise). 
+$\mathrm{Prob(X)}$ is the a priori distribution 
+of the solution $X$. In the absence of any information on the solution 
+$X$ except its positivity, a possible course of action 
+is to derive the probability
+of $X$ from its entropy, which is defined from information theory.
+
+The main idea of information theory \cite{shannon48} is to establish
+a relation between the received information and the probability of
+the observed event \cite{bijaoui84}. If we note ${\cal I}(E)$ the information
+related to the event $E$, and $p$ the probability of this
+event happening, then we consider that
+\begin{eqnarray}
+%\cal{I}(E) =    f(p)       
+{\cal I}(E) = f(p)
+\end{eqnarray}
+
+Then we assume the two following principles:
+\begin{itemize}
+\item The information is a decreasing function of the probability. This 
+implies that the more information we have, the  less will be the probability 
+associated with one event.
+\item Additivity of the information. If we have two independent events 
+$E_1$ and $E_2$, the information ${\cal I}(E)$ associated with the happening
+of both is equal
+to the addition of the information of each of them.
+\begin{eqnarray}
+{\cal I}(E) = {\cal I}(E_1) + {\cal I}(E_2)
+\end{eqnarray}
+\end{itemize}
+
+Since $E_1$ (of probability $p_1$) and $E_2$ (of probability $p_2$) are 
+independent, then the probability of both happening is equal to the
+product of $p_1$ and $p_2$.  Hence
+\begin{eqnarray}
+f(p_1 p_2) = f(p_1) + f(p_2) 
+\end{eqnarray}
+
+Then we can say that the information measure is
+\begin{eqnarray}
+{\cal I}(E) = k \ln(p)
+\end{eqnarray}
+where k is a constant. Information must be positive, and $k$
+is generally fixed at $-1$.
+
+Another interesting measure is the mean information which is denoted
+\begin{eqnarray}
+H = - \sum_i p_i \ln(p_i)
+\end{eqnarray}
+This quantity is called the entropy of the system and was established by 
+Shannon in 1948 \cite{shannon48}.
+
+This measure has several properties:
+\begin{itemize}
+\item It is maximal when all events have the same probability 
+$p_i = 1/ N_e$ ($N_e$ being the number of events), and is equal to 
+$\ln(N_e)$. It is in this 
+configuration that the system is the most undefined.
+\item It is minimal when one event is sure. In this case, the system is 
+perfectly known, and no information can be added.
+\item The entropy is a positive, continuous, and symmetric function.
+%\item The mean information, obtained in two steps, can be added.
+\end{itemize}
+
+Then if we know the entropy $H$ of the solution (the next section 
+describes different ways to calculate it), 
+we derive its probability by
+\begin{eqnarray}
+\mathrm{Prob}(X) = \mathrm{exp}(- \alpha H(X))
+\label{info_prop}
+\end{eqnarray}
+
+Given the data, the most probable image is obtained by maximizing
+$\mathrm{Prob}(X|Y)$. Taking the logarithm of equation \ref{eqn_bayes}, we 
+thus need to maximize
+\begin{eqnarray}
+ \ln (\mathrm{Prob}(X|Y))  = - \alpha  H(X) + \ln(\mathrm{Prob}(Y|X)) - 
+\ln(\mathrm{Prob}(Y))
+\end{eqnarray}
+The last term is a constant and can be omitted.
+Then, in the case of Gaussian noise, the solution is found by minimizing 
+\begin{eqnarray}
+J(X) = \sum_{pixels} \frac{{(Y-X)}^{2}}{2 {\sigma}^{2}} + {\alpha} H(X)
+= \frac{{\chi}^2}{2} + {\alpha} H(X)
+\label{eqn_j1}
+\end{eqnarray}
+which is a linear combination of two terms: the entropy of the signal,
+and a quantity corresponding to ${\chi}^2$ in statistics measuring the
+discrepancy between the data and the predictions of the model.
+$\alpha$ is a parameter that can be viewed alternatively as 
+a Lagrangian parameter or a value fixing the relative weight between 
+the goodness-of-fit and the entropy H. 
+
+For the deconvolution problem, the object-data relation is given by the
+convolution
+\begin{eqnarray}
+Y = P * X
+\end{eqnarray}
+where $P$ is the point spread function, and the solution is found (in the case
+of Gaussian noise) by minimizing
+\begin{eqnarray}
+J(X) = \sum_{pixels} \frac{{(Y-P*X)}^{2}}{2 {\sigma}^{2}} + {\alpha} H(X)
+\end{eqnarray}
+
+The way the entropy is defined is fundamental, because from its definition
+will depend the solution. The next section discusses the different approaches 
+which have been proposed in the past.
+
+\section{The concept of entropy}
+\label{sect_entr}
+
+We wish to estimate an unknown probability density $p(x)$ of the data.
+A direct approach would be to build up the histogram of values $X(i)$, using
+a suitable interval $\Delta x$, counting up how many times $m_k$ each interval
+$(x_k, x_k + \Delta x)$ occurs among the N occurrences. Then the probability
+that a data value belongs to an interval $k$ is $p_k = \frac{m_k}{N}$, and
+each data value has a probability $p_k$. The entropy is defined by
+\begin{eqnarray}
+H_s(X) = - \sum_{k=1}^{m} p_k \ln(p_k) 
+\end{eqnarray}
+where $m$ is the number of intervals.
+The entropy is minimum and equal to zero when the signal is flat, and
+increases when we have some fluctuations. Using this entropy in 
+equation~\ref{eqn_j1} for restoration leads to a minimum entropy restoration
+ method.
+
+The trouble with this approach is that, because the number of occurrences is
+finite, the estimate $p_k$ will be in error by an amount proportional
+to $m_k^{-\frac{1}{2}}$~\cite{frieden}. The error becomes significant when
+$m_k$ is small. Furthermore this kind of entropy definition is not
+easy to use for signal restoration, because the gradient of 
+equation~\ref{eqn_j1} is not easy to compute. For these reasons, other
+entropy functions are generally used. The main ones are:
+\begin{itemize}
+\item Burg \cite{burg67}:
+\begin{eqnarray}
+H_b(X) = -\sum_{pixels} \ln(X) 
+\end{eqnarray}
+\item Frieden \cite{frieden75}:
+\begin{eqnarray}
+H_f(X) = -\sum_{pixels}X \ln(X)
+\end{eqnarray}
+\item Gull and Skilling \cite{gull91}:
+\begin{eqnarray}
+H_g(X) = \sum_{pixels} X - M - X \ln(X|M)
+\end{eqnarray}
+\end{itemize}
+Each of these entropies can be used, and they correspond to different
+probability distributions that one can associate with 
+an image \cite{narrayan86}.
+(See \cite{frieden75,skilling84_1,skilling89} for descriptions).
+The last definition of the entropy has the advantage of having a zero
+ maximum when $X$ equals the model $M$, usually taken as a flat image. 
+All of these entropy measures are negative, and maximum when the image is flat.
+They are negative because an offset term is omitted which has no importance
+for the minimization of the functional. The fact that we consider that
+a signal has maximum information value when it is flat is evidently
+a curious way to measure information. The probability of $X$ 
+must be defined by $\mathrm{Prob}(X) = \mathrm{exp}(\alpha H(X))$. The sign has 
+been inverted
+(see equation~\ref{info_prop}), which is natural if we want the best
+solution to be  the smoothest. These three entropies lead to the 
+maximum entropy restoration method, for which the 
+solution is found by minimizing 
+(for Gaussian noise)
+\begin{eqnarray}
+J(X) = \sum_{pixels} \frac{{(Y-X)}^{2}}{2 {\sigma}^{2}} - {\alpha} H(X)
+\label{eqn_j3}
+\end{eqnarray}
+
+In 1986, Narayan and Nityanda \cite{narrayan86} 
+compared several entropy functions,
+ and finally 
+concluded by saying that all were comparable if they have good
+properties, i.e.\ they enforce positivity, and they have a negative 
+second derivative which discourages ripple. They showed also that 
+results varied strongly with the background level, and
+that these entropy functions produced poor results
+for negative structures, i.e.\ structures under the background level
+(absorption area in an image, absorption band in a spectrum, etc.), and 
+compact structures in the signal.
+The Gull and Skilling entropy gives rise to  
+the difficulty of estimating a model.
+Furthermore it has been shown \cite{bontekoe94} 
+that the solution was dependent on this choice.
+
+Many studies \cite{weir92,bontekoe94,pantin96} 
+have been carried out in order to improve the functional to be minimized.
+But the question which should be raised is: what is a good entropy for 
+signal restoration?
+
+Trying to answer this corresponds to asking what is the information
+in the signal. The entropy should verify the following criteria:
+\begin{enumerate}
+\item The information in a flat signal is zero.
+\item The amount of information in a signal is independent of the background.
+\item The amount of information is dependent on the noise. A given 
+signal $Y$ ($Y = X + Noise$) doesn't furnish the  same information if 
+the noise is high or small.
+\item The entropy must work in the same way for a pixel which
+has a value $B + \epsilon$ ($B$ being the background), and
+for a pixel which has a value $B - \epsilon$.
+\item The amount of information is dependent on the correlation in the signal.
+If a signal $S$  presents large features above the noise, it contains
+a lot of information. By generating a new set of  data from $S$, by 
+randomly taking the pixel values in $S$, the large features will
+evidently disappear, and this new signal will contain less information.
+But the pixel values will be the same as in $S$.
+\end{enumerate}
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=lenna256.ps,bbllx=1.8cm,bblly=12.9cm,bburx=14.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+\psfig{figure=scrambled_lenna.ps,bbllx=1.8cm,bblly=12.9cm,bburx=14.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+}}
+\caption{Lena image (left) and the same data distributed differently (right). 
+These
+two images have the same entropy, using any of the standard entropy methods.}
+\label{fig_lenna}
+\end{figure}
+
+Figure~\ref{fig_lenna} shows the Lena image (left), and an image obtained 
+by distributing randomly the Lena image pixel values. For someone, who is
+not involved in image processing, the second image contains less information
+than the first one. For someone working on image transmission, it is clear
+that the second image will require more bits for a lossless transmission,
+and from this point of view, he will consider that the second one contains
+more information. The standard entropy methods produce exactly 
+the same value for both images and, for such methods, both images contain
+the same amount of information. For data restoration, all fluctuations
+due to noise are not of interest, and do not contain relevant 
+information.  From this physical point of view, that is the reason why 
+the standard 
+definition of entropy seems badly adapted to information measurement 
+in signal restoration.
+
+\section{Entropy from noise modeling}
+ 
+In the case of signal restoration, the noise is the main problem. This 
+means that we should not consider the probability of appearance of 
+a pixel value in an image, but rather its probability of being due to the
+signal (or to the noise). 
+If we consider a variable $x$ which follows a probability distribution 
+$p(x)$, we
+can define the information in $x$ by $- \ln(p(x))$, and a signal $S$ can
+be considered as a set of individual variables $x_k$ (pixels), each of which 
+follows the same probability distribution. 
+Then the information contained in the data 
+can be measured by $- \sum_{pixel} \ln(p(x))$. If $x$ follows a Gaussian 
+distribution with zero mean, we have
+\begin{eqnarray}
+H(X) = \sum_{pixel} \frac{x^2}{2 \sigma^2}
+\end{eqnarray}
+The energy gives a good measurement of information. But many of the required
+criteria are not fulfilled by using such an entropy (correlation between 
+pixels, background-independent, etc.). It seems difficult to derive
+a good probability distribution from the pixel values which fulfill the 
+entropy requirements.
+
+This is not so for transformed data, especially when using  
+the wavelet transform. 
+This has  already been done, in fact,
+for finding threshold levels in filtering 
+methods by means of wavelet coefficient thresholding \cite{starck95}. Thus we 
+must introduce the concept of multiresolution into our entropy.
+We will now consider that the information contained in some dataset
+is the sum of the information at different resolution levels $j$.
+Choosing the ``\`a trous'' wavelet transform (see \cite{starck95} 
+for a description of this wavelet transform algorithm), a signal $S$ can 
+be represented by:
+\begin{eqnarray}
+S(k) = \sum_{j=1}^{l} w_j(k) + c_l(k)
+\end{eqnarray}
+where $k$ is the pixel index, $w_j$ are the wavelet coefficients of $S$, $j$ the 
+resolution
+level, and $c_l$ the smoothed version of $S$. Due to the properties of
+the wavelet transform, the set $w_j(x)$ for all $x$ has a zero mean. From 
+noise modeling, we can derive the probability distribution in the 
+wavelet space of a wavelet coefficient, assuming it is due to the noise. 
+The entropy becomes
+\begin{eqnarray}
+H(X) = - \sum_{j=1}^{l}  \sum_{k=1}^{N} \ln ( p(w_j(k)))
+\end{eqnarray}
+For Gaussian noise, we get
+\begin{eqnarray}
+H(X) =  \sum_{j=1}^{l}  \sum_{k=1}^{N} \frac{w_j(k)^2}{2 \sigma_j^2}
+\end{eqnarray}
+where $\sigma_j$ is the noise at scale $j$. We see that 
+the information is proportional
+to the energy of the wavelet coefficients.
+The higher a wavelet coefficient, then the lower will be the  probability, and the 
+higher will
+be the information furnished by this wavelet coefficient. We can see
+easily that this entropy fulfills all the requirements of 
+section~\ref{sect_entr}.
+If we consider two signals $S_1$, $S_2$, derived from a third one $S_0$ by 
+adding noise:
+\begin{eqnarray}
+S_1 & = & S_0 + N_1(\sigma_1) \\ \nonumber
+S_2 & = & S_0 + N_2(\sigma_2)
+\end{eqnarray}
+then we have:
+\begin{eqnarray}
+\mbox{if } \sigma_1 < \sigma_2 \mbox{ then } H(S_1) > H(S_2)
+\end{eqnarray}
+and a flat image has zero entropy. 
+
+Our entropy definition is completely dependent on the noise modeling.
+If we consider a signal $S$, and we assume that the noise is Gaussian, with 
+a  standard deviation equal to $\sigma$, we won't measure the same
+information compared to  the case when we consider that the noise has 
+another standard deviation
+value, or if the noise follows another distribution.
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_multi_memscale.ps,bbllx=2.5cm,bblly=13cm,bburx=19.5cm,bbury=25.5cm,width=14cm,height=7cm,clip=}
+}}
+\caption{Multiscale entropy of the Lena image (continuous curve), 
+and multiscale
+entropy of the scrambled image (dashed curve).}
+\label{fig_multi_memscale}
+\end{figure}
+Figure~\ref{fig_multi_memscale} shows the information measure at each
+scale for both the Lena image and its scrambled version. The global 
+information is the addition of the information at each scale. We see
+that for the scrambled image (dashed curve), the 
+information-versus-scale 
+curve is flat, while for the unscrambled Lena image,
+it increases with the scale.  
+
+\section{Signal information and noise information}
+\subsection{Definition}
+In the previous section, we have seen how it was possible to measure
+the information related to a wavelet coefficient. Since the data
+is composed of an original signal and noise, our information measure
+is corrupted by noise. Trying to decompose our information measure
+into two components, one ($H_S$) corresponding to the non-corrupted part, and
+another  ($H_N$) to the corrupted part, we have
+\begin{eqnarray}
+H(X) = H_S(X) + H_N(X)
+\end{eqnarray}
+We will define in the following $H_S$ as the signal information, and $H_N$
+as the noise information. It must be clear that noise does not 
+contain any information, and what we call noise information is a quantity
+which is measured as information by the multiscale entropy, and which is 
+probably not informative to us.
+
+As described in the previous section, the information $h$ relative to 
+a wavelet coefficient $w_j$ is $- \ln(p(w_j))$. If the wavelet coefficient
+is small, its value can be due to the noise, 
+and  $h$ should be assigned to $H_N$.
+If the wavelet coefficient is high, compared to the noise standard
+deviation, $h$ cannot be due to the noise, and $h$ should be assigned to $H_S$.
+$h$ can be distributed as $H_N$ or $H_S$ based on  the probability $p_n(w_j)$
+that the wavelet coefficient is due to noise, or the probability 
+$p_s(w_j)$ that it is due to 
+signal.  We have $p_s(w_j) = 1 - p_n(w_j)$. We consider 
+that  $h_n(w_j) = - p_n(w_j) \ln(p(w_j))$ is
+the noise information, and 
+$h_s(w_j) = - p_s(w_j) \ln(p(w_j))$ is the signal information. 
+Hence  signal information and  noise information are defined by
+\begin{eqnarray}
+H_s(X) & = & \sum_{j=1}^{l}  \sum_{k=1}^{N} h_s(w_j(k)) = - \sum_{j=1}^{l}  
+\sum_{k=1}^{N} p_s(w_j(k)) \ln ( p(w_j(k))) \\ \nonumber
+H_n(X) & = & \sum_{j=1}^{l}  \sum_{k=1}^{N} h_n(w_j(k)) = - \sum_{j=1}^{l}  
+\sum_{k=1}^{N} p_n(w_j(k)) \ln ( p(w_j(k)))
+\end{eqnarray}
+For the Gaussian noise case, we estimate $p_n(w_j)$ that a wavelet 
+coefficient is due to the noise by
+\begin{eqnarray}
+p_n(w_j) = \mathrm{Prob}(W > \mid w_j \mid)  & =  & \frac{2}{\sqrt{2 \pi} 
+\sigma_j} \int_{\mid w_j \mid}^{+\infty} \exp(-W^2/2\sigma^2_j) dW\\ \nonumber
+ & = & \mbox{erfc}(\frac{\mid w_j \mid }{\sqrt{2}\sigma_j})
+\end{eqnarray}
+and
+\begin{eqnarray}
+H_s(X) &= & \sum_{j=1}^{l}  \sum_{k=1}^{N}  \frac{w_j^2}{2\sigma_j^2} 
+\mbox{erf}(\frac{\mid w_j \mid }{\sqrt{2}\sigma_j}) \\ \nonumber
+H_n(X) &= & \sum_{j=1}^{l}  \sum_{k=1}^{N}  \frac{w_j^2}{2\sigma_j^2} 
+\mbox{erfc}(\frac{\mid w_j \mid }{\sqrt{2}\sigma_j}) 
+\label{eq_entrop_result_1} 
+\end{eqnarray}
+
+Note that $H_s(X) + H_n(X)$ is always equal to $H(X)$. 
+For Gaussian noise, the functional to minimize becomes
+\begin{eqnarray}
+J(X) = \sum_{pixels} \frac{{(Y-X)}^{2}}{2 {\sigma}^{2}} + {\alpha} (H_s(X)+H_n(X))
+\end{eqnarray}
+If we want to preserve features with high signal-to-noise ratio from the
+regularization, we just omit $H_s(X)$ and we get
+\begin{eqnarray}
+J(X) = \sum_{pixels} \frac{{(Y-X)}^{2}}{2 {\sigma}^{2}} + {\alpha} H_n(X)
+\end{eqnarray}
+We seek a solution which minimizes the amount of information which could
+be due to the noise.
+
+By this measure, information relative to high wavelet coefficients is  
+completely assigned to the signal. This allows us also to exclude
+wavelet coefficients with high signal-to-noise ratio (SNR)
+from the regularization.
+It leads to perfect fit of the solution with the data at scales and
+ positions with high SNR. If we want to consider the information due
+to noise, even for significant wavelet coefficients, the noise information
+relative to a wavelet coefficient is 
+\begin{eqnarray}
+h_n(w_j) =  \int_{0}^{\mid w_j \mid } p_n(u|w_j) (\frac{\partial H(x)}{\partial 
+x})_{x=u} du
+\end{eqnarray}
+which gives for Gaussian noise
+\begin{eqnarray}
+h_n(w_j) =  \frac{1}{\sigma_j^2} \int_{0}^{\mid w_j \mid} u \mbox{ 
+erfc}(\frac{\mid w_j \mid -u}{\sqrt{2} \sigma_j}) du
+\label{eqn_hn2}
+\end{eqnarray}
+and the noise and signal information in a signal are
+\begin{eqnarray}
+H_s(X) & = & \sum_{j=1}^{l}  \sum_{k=1}^{N}  \frac{1}{\sigma_j^2} \int_{0}^{\mid 
+w_j \mid} u \mbox{ erf}(\frac{\mid w_j \mid -u}{\sqrt{2} \sigma_j}) du \\ 
+\nonumber 
+H_n(X) & = & \sum_{j=1}^{l}  \sum_{k=1}^{N}   \frac{1}{\sigma_j^2} \int_{0}^{\mid 
+w_j \mid} u \mbox{ erfc}(\frac{\mid w_j \mid -u}{\sqrt{2} \sigma_j}) du  
+\label{eq_entrop_result_2}
+\end{eqnarray}
+
+Equations 27 and 32 lead to two
+different ways to regularize a signal. The first requires that we use
+all the information which is furnished in high wavelet coefficients, and 
+leads to an exact preservation of the flux in a structure. If the signal
+presents high discontinuities, artifacts can appear in the solution 
+due to the fact that the wavelet coefficients located at the discontinuities
+are not noisy, but have been modified like noise. The second equation 
+doesn't have this drawback, but a part of the flux of a structure
+(compatible with noise amplitude) can be lost in the restoration process. 
+It is however not as effective as in the standard maximum entropy methods.
+
+\subsection{A new approach for signal restoration}
+The new  definition of the information contained
+in noisy data can easily lead to a new approach for restoration of images.
+
+The problem of filtering or restoring data $D$ can be expressed by the 
+following: 
+We search for a solution $\tilde D$ such that the difference between
+$D$ and $\tilde D$ minimizes the information due to the signal, and 
+such that  $\tilde D$ minimizes the information due to the noise. 
+\begin{eqnarray}
+J(\tilde D) = H_s(D-\tilde D) + H_n(\tilde D)
+\label{eqn_func1}
+\end{eqnarray}
+Furthermore, the smoothness of the solution can be controlled by adding
+a parameter:
+\begin{eqnarray}
+J(\tilde D) = H_s(D-\tilde D) + \alpha H_n(\tilde D)
+\label{eqn_func2}
+\end{eqnarray}
+Here, $\alpha$ is considered as a constant value, but we can easely 
+imagine to have a regularization parameter per scale, or even per wavelet
+coefficient, depending on the Signal to Noise Ratio of the data. This
+direction will be investigated in the future.
+   
+Three points must be noted:
+\begin{itemize}
+\item The positivity of the solution is not enforced.
+\item There is no constraint on the flux.
+\item The last scale of the wavelet transform is not taken into 
+account in this entropy.
+\end{itemize}
+The first two points can be easily resolved by introducing strict a priori
+ constraints on the solution \cite{thiebault95}:
+\begin{eqnarray}
+J(Z) = H_s(D-{\cal C}(Z)) + \alpha H_s({\cal C}(Z))
+\end{eqnarray}
+And the real solution is evidently $\tilde D = {\cal C}(Z)$. 
+Positivity and total flux conservation impose
+\begin{eqnarray}
+{\cal C}(Z)(x) = \frac{\sum_x I(x)}{\sum_x Z(x)^2} Z(x)^2
+\end{eqnarray}
+Any other constraint can evidently be introduced into the function ${\cal C}$.
+
+There is no constraint to be introduced to cater for the third point above, 
+but this should not be a problem
+if the number of scales we use for the entropy is high enough. Indeed, in
+this case, the last scale becomes flat, and flux normalization should 
+correctly fix this level.
+
+\subsection{Example}
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\psfig{figure=fig_lit6_mem1.ps,bbllx=2.5cm,bblly=13cm,bburx=19.5cm,bbury=25.5cm,width=16cm,height=9cm}
+}}
+\caption{Spectrum and filtered spectrum superimposed.}
+\label{fig_lit6_mem1}
+\end{figure}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{ 
+\psfig{figure=fig_lit6_mem2.ps,bbllx=2.5cm,bblly=13cm,bburx=19.5cm,bbury=25.5cm,width=16cm,height=10cm}
+}}
+\caption{Difference (upper part) 
+between the real spectrum and its smoothed version.
+Part (pixels 400 to 500) of the spectrum (continuous curve), 
+with the filtered spectrum
+overplotted (dashed).}
+\label{fig_lit6_mem2}
+\end{figure}
+Figure~\ref{fig_lit6_mem1} presents a spectrum and the result (overplotted)
+after filtering using the multiscale entropy. The difference between the
+spectrum and its smoothed version is plotted in 
+Figure~\ref{fig_lit6_mem2} (upper part). 
+As we can see, the residual contains only noise.
+In order to better see the quality of the smoothing, we have plotted
+only a part of the spectrum (see lower part of Figure~\ref{fig_lit6_mem2}),
+and the filtered spectrum superimposed. The absorption lines are not 
+modified using our filtering technique. 
+
+\begin{figure}[h]
+\centerline{
+\hbox{
+\psfig{figure=fig_lenna_g10.ps,bbllx=1.8cm,bblly=12.8cm,bburx=14.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+\psfig{figure=fig_filmem_g2_lenna.ps,bbllx=1.8cm,bblly=12.8cm,bburx=14.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+}}
+\caption{Left, Lena + Gaussian noise, right, filtered image .}
+\label{fig_filter_gauss_noise}
+\end{figure}
+Figure~\ref{fig_filter_gauss_noise} (left) shows the Lena image 
+(see Figure~\ref{fig_lenna}) to which Gaussian 
+noise of standard deviation 10 has been added.  Figure~\ref{fig_filter_gauss_noise} (right) shows 
+the result using equation 32 with a regularization parameter value of 2.  
+
+\section{Conclusion}
+
+We have seen that information must be measured from the transformed
+data, and not from the data itself. This approach has been used in fact
+for several years in the domain of image compression. Indeed, modern
+image compression methods consist firstly of  applying a transformation 
+(cosine transform for JPEG, wavelet transform, etc.) to the image, and
+then coding the coefficients obtained. A good transform for
+image compression is obviously an orthogonal transform because there
+is no redundancy, and the number of pixels is the same as in the original
+image. The exact number of bits necessary to code the coefficients is
+given by the Shannon entropy. For signal restoration, the problem is
+not to reduce the number of bits in the representation of the data, and we
+prefer to use a non-orthogonal wavelet transform, which avoids
+artifacts in reconstruction due to undersampling. 
+
+We could
+have used the Shannon entropy to measure the information at a given scale,
+and derive the bins of the histogram from the standard deviation of the noise,
+but for several reasons we thought it better to directly introduce 
+noise probability into our information measure. 
+Firstly, we have seen that this leads, for Gaussian noise, to
+a very physical relation between the information and the wavelet coefficients:
+information is proportional to the energy of the wavelet coefficients
+normalized by the standard deviation of the noise. 
+Secondly, it works even in the case
+of images with few photons/events (the histograms in this case present a bias).
+We have seen that the equations are easy to manipulate. 
+Finally, experiments have 
+confirmed that this approach gives good results.
+We have seen also that our new information
+measure leads naturally to a new method for signal restoration. 
+We are now experimenting with this method, and working on generalizations to
+other classes of noise.
+
+\newpage
+% \include{annexA}
+% \include{annexB}
+
+\begin{thebibliography}{99}
+\bibitem{ables74} J.G. Ables, {\it Astronomy and Astrophysics Supplement Series},
+15, 383--393, 1974.
+ 
+\bibitem{bijaoui84} A. Bijaoui, {\it Introduction au 
+Traitement Num\'erique des Images}, Masson, Paris, 1984.
+
+% \bibitem{bijaoui94} A. Bijaoui, J.L. Starck and 
+% F. Murtagh, ``Restauration des 
+% images
+% multi-\'echelles par l'algorithme \`a trous'', {\it Traitement du Signal},
+% 11, 229--243, 1994.
+
+\bibitem{bontekoe94} Tj.R. Bontekoe, E. Koper and D.J.M. Kester,   
+``Pyramid maximum entropy images of IRAS survey data'', {\it Astronomy and
+ Astrophysics}, 294, 1037--1053, 1994.
+
+\bibitem{burg67} J.P. Burg, {\it 
+Annual Meeting International Society Exploratory Geophysics}, 1967. 
+Reprinted in {\it Modern Spectral Analysis}, 1978, D.G. Childers, ed., 
+IEEE Press, New York, 34--41, 1978.
+
+% \bibitem{chui92} C.H. Chui, {\it Wavelet Analysis and Its 
+% Applications}, Academic Press, New York, 1992.
+
+% \bibitem{daubechies88} I. Daubechies, 
+% ``Orthogonal bases of compactly supported 
+% wavelets'', {\it Communications on Pure and Applied Mathematics}, 
+% 41, 909--996, 1988.
+
+\bibitem {frieden75} B.R. Frieden, ``Image enhancement and restoration'', 
+ {\it Topics in Applied Physics}, 6,  Springer-Verlag Berlin, 177--249, 1975.
+
+\bibitem{frieden} B.R Frieden, {\it Probability, Statistical Optics, and
+Data Testing: a problem solving approach}, 2nd edition, Springer-Verlag Berlin, 
+1991.
+
+\bibitem{jaynes57} E.T. Jaynes, {\it Phys. Rev.}, 106, 620--630, 1957.
+
+% \bibitem{holschneider89} M. Holschneider, R. Kronland-Martinet, J. Morlet
+% and Ph. Tchamitchian, ``A real-time algorithm for signal analysis with the
+% help of the wavelet transform'', in 
+% {\it Wavelets: Time-Frequency Methods and Phase Space}, 
+% Springer-Verlag,  Berlin, 286--297, 1989.
+
+\bibitem{gull91} S.F. Gull, and J. Skilling, MEMSYS5 User's Manual, 1991.
+
+\bibitem{narrayan86} R. Narayan, and R. Nityananda, ``Maximum 
+Entropy Image Restoration in Astronomy'', Ann. Rev. Astron. Astrophys., 
+24, pp 127--170, 1986.
+
+\bibitem{pantin96} E. Pantin and J.L. Starck, ``Deconvolution of 
+astronomical images using the multiresolution maximum entropy method'', 
+ {\it Astronomy and Astrophysics Supplement Series}, 118, 575--585, 1996. 
+
+% \bibitem {ruskai92} M.M. Ruskai, G. Beylkin, R. Coifman, I. Daubechies,
+% S. Mallat, Y. Meyer and  L. Raphael, {\it Wavelets and Their Applications},
+% Jones and Barlett, 1992.
+
+\bibitem{shannon48} C.E. Shannon,  
+``A Mathematical Theory for Communication'', {\it Bell System Tech J.} 27 
+379--423, 1948.
+
+% \bibitem{shensa92} M.J. Shensa, ``Discrete wavelet transforms:  
+% wedding  the \`a trous and Mallat algorithms", {\it IEEE Transactions on 
+% Signal
+% Processing}, 40, 2464--2482, 1992.
+
+\bibitem{skilling84_1} J. Skilling and S.F. Gull, {\it Proceedings of 
+the American Mathematical Society}, SIAM, 14, 167, 1984.
+
+\bibitem{skilling89} J. Skilling, ``Classic maximum entropy'', 
+in: Skilling. J, ed., {\it Maximum 
+Entropy and
+Bayesian Methods}, Kluwer, Dordrecht, 45--52, 1989. 
+
+\bibitem{starck95}  J.L. Starck, F. Murtagh and  A. Bijaoui, 
+``Multiresolution support
+ applied to image filtering and deconvolution'', {\it Graphical
+Models and Image Processing}, 57, 420--431, 1995.
+
+\bibitem{starck97} J.L. Starck, F. Murtagh  and A. Bijaoui,  
+{\it Image Processing and Data Analysis: The
+Multiscale Approach},  Cambridge University Press, forthcoming, 1997.
+
+\bibitem{weir92} N. Weir, ``A multi-channel method of maximum entropy image
+restoration'', in: D.M. Worral, C. Biemesderfer and J. Barnes, 
+eds., {\it Astronomical Data Analysis Software and System 1}, Astronomical 
+Society of the Pacific, San Francisco, 186--190, 1992.
+
+\bibitem{thiebault95} E. Thiebault and J.-M. Conan, ``Strict a priori
+constraints for maximum-likelihood blind deconvolution'', {\it JOSA}, 
+12, 485--492, 1995.
+
+\end{thebibliography}
+
+
+\end{document}
+\subsection{Spectrum filtering}
+
+\subsection{Image filtering}
+\begin{figure}[h]
+\centerline{
+\hbox{
+\psfig{figure=fig_simu4_bw.ps,bbllx=1.8cm,bblly=12.8cm,bburx=14.5cm,bbury=25.5cm,width=16cm,height=16cm,clip=}
+}}
+\caption{(a) Simulated image, (b) simulated image and 
+Gaussian noise, (c) filtered image, and (d)
+residual image.}
+\label{fig_filter_gauss_noise}
+\end{figure}
+
+A simulated image containing stars and galaxies is shown in Fig.\ 
+\ref{fig_filter_gauss_noise} (top left). The simulated noisy
+image, the filtered image and the residual image are respectively shown in
+Fig.\ \ref{fig_filter_gauss_noise} top right, bottom left, and
+bottom right. We can see that there is no structure in the residual 
+image. The filtering was carried out using the multiresolution support.
+
+

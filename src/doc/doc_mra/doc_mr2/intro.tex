@@ -1,0 +1,513 @@
+
+\chapter{Multiscale Entropy Theory}
+\label{ch_entrop}
+\index{entropy}
+\section{Entropy and Image Restoration}
+
+\subsection{Introduction}
+
+The term ``entropy'' is due to Clausius (1865), and the concept of 
+entropy was introduced by Boltzmann into statistical mechanics
+in order to measure the number of microscopic ways that a given macroscopic
+state can be realized. Shannon (1948) \cite{ima:shannon48} founded the mathematical theory of
+communication when he suggested that the information gained in a 
+measurement depends on the number of possible outcomes out of 
+which one is realized. Shannon also suggested that 
+the entropy can be used for maximization of the bit transfer rate under
+a quality constraint. Jaynes (1957) \cite{entropy:jaynes57} 
+proposed to use the entropy measure
+for radio interferometric image deconvolution,  in
+order to select between a set of possible solutions that which contains the
+minimum of information or, following his entropy definition, that 
+which has maximum entropy. In principle, the solution verifying such 
+a condition should be the most reliable. A great deal of work has been 
+carried out 
+in the last 30 years on the use of the entropy for the general problem
+of data filtering and deconvolution 
+\cite{entropy:ables74,entropy:bontekoe94,entropy:burg67,entropy:frieden75,entropy:gull91,entropy:narrayan86,starck:pan96,entropy:skilling89,entropy:weir92,entropy:djafari94,entropy:djafari98}. 
+
+Traditionally information and entropy are determined from events and the
+probability of their occurrence.  Signal and noise are basic building-blocks 
+of signal and data analysis in the physical sciences.  Instead of the 
+probability of an event, we are led to consider the probabilities of our
+data being either signal or noise. 
+
+Observed data $Y$ in the physical sciences 
+are generally corrupted by noise, which is often additive and which 
+follows in many cases a Gaussian distribution, a Poisson distribution, or
+a combination of both.  Other noise models may also be considered.
+ Using Bayes' theorem to evaluate the probability distribution of the 
+realization of the original signal $X$,
+knowing the data $Y$, we have
+ 
+\begin{eqnarray}
+ \mathrm{p}(X|Y) = \frac{\mathrm{p}(Y|X).\mathrm{p}(X)}{\mathrm{p}(Y)}
+\label{eqn_bayes}
+\end{eqnarray}
+$\mathrm{p}(Y|X)$ is the conditional probability distribution of getting the data 
+$Y$ given an original signal $X$, i.e.\ it represents the distribution 
+of the noise. It is given, in the case of uncorrelated Gaussian 
+noise with variance $\sigma^2$, by:
+\begin{eqnarray}
+ \mathrm{p}(Y|X) = \mathrm{exp} \left\{
+-\sum_{pixels} \frac{ (Y-X)^2}{2{\sigma}^2} \right\}
+\label{eqn_proba}
+\end{eqnarray}
+The denominator in  equation \ref{eqn_bayes} is independent of $X$ and
+ is considered as a constant (stationary noise). 
+$\mathrm{p}(X)$ is the a priori distribution 
+of the solution $X$. In the absence of any information on the solution 
+$X$ except its positivity, a possible course of action 
+is to derive the probability
+of $X$ from its entropy, which is defined from information theory.
+
+The main idea of information theory \cite{ima:shannon48} is to establish
+a relation between the received information and the probability of
+the observed event \cite{ima:bijaoui84}. If we note ${\cal I}(E)$ the information
+related to the event $E$, and $p$ the probability of this
+event happening, then we consider that
+\begin{eqnarray}
+%\cal{I}(E) =    f(p)       
+{\cal I}(E) = f(p)
+\end{eqnarray}
+
+Then we assume the two following principles:
+\begin{itemize}
+\item The information is a decreasing function of the probability. This 
+implies that the more information we have, the  less will be the probability 
+associated with one event.
+\item Additivity of the information. If we have two independent events 
+$E_1$ and $E_2$, the information ${\cal I}(E)$ associated with the happening
+of both is equal
+to the addition of the information of each of them.
+\begin{eqnarray}
+{\cal I}(E) = {\cal I}(E_1) + {\cal I}(E_2)
+\end{eqnarray}
+\end{itemize}
+
+Since $E_1$ (of probability $p_1$) and $E_2$ (of probability $p_2$) are 
+independent, then the probability of both happening is equal to the
+product of $p_1$ and $p_2$.  Hence
+\begin{eqnarray}
+f(p_1 p_2) = f(p_1) + f(p_2) 
+\end{eqnarray}
+
+Then we can say that the information measure is
+\begin{eqnarray}
+{\cal I}(E) = k \ln(p)
+\end{eqnarray}
+where k is a constant. Information must be positive, and $k$
+is generally fixed at $-1$.
+
+Another interesting measure is the mean information which is denoted
+\begin{eqnarray}
+H = - \sum_i p_i \ln(p_i)
+\end{eqnarray}
+This quantity is called the entropy of the system and was established by 
+Shannon in 1948 \cite{ima:shannon48}.
+
+This measure has several properties:
+\begin{itemize}
+\item It is maximal when all events have the same probability 
+$p_i = 1/ N_e$ ($N_e$ being the number of events), and is equal to 
+$\ln(N_e)$. It is in this 
+configuration that the system is the most undefined.
+\item It is minimal when one event is sure. In this case, the system is 
+perfectly known, and no information can be added.
+\item The entropy is a positive, continuous, and symmetric function.
+%\item The mean information, obtained in two steps, can be added.
+\end{itemize}
+
+If we know the entropy $H$ of the solution (the next section 
+describes different ways to calculate it), 
+we derive its probability by
+\begin{eqnarray}
+\mathrm{p}(X) = \mathrm{exp}(- \alpha H(X))
+\label{info_prop}
+\end{eqnarray}
+
+Given the data, the most probable image is obtained by maximizing
+$\mathrm{p}(X|Y)$. Taking the logarithm of equation \ref{eqn_bayes}, we 
+thus need to maximize
+\begin{eqnarray}
+ \ln (\mathrm{p}(X|Y))  = - \alpha  H(X) + \ln(\mathrm{p}(Y|X)) - 
+\ln(\mathrm{p}(Y))
+\end{eqnarray}
+The last term is a constant and can be omitted.
+Then, in the case of Gaussian noise, the solution is found by minimizing 
+\begin{eqnarray}
+J(X) = \sum_{pixels} \frac{{(Y-X)}^{2}}{2 {\sigma}^{2}} + {\alpha} H(X)
+= \frac{{\chi}^2}{2} + {\alpha} H(X)
+\label{eqn_j1}
+\end{eqnarray}
+which is a linear combination of two terms: the entropy of the signal,
+and a quantity corresponding to ${\chi}^2$ in statistics measuring the
+discrepancy between the data and the predictions of the model.
+$\alpha$ is a parameter that can be viewed alternatively as 
+a Lagrangian parameter or a value fixing the relative weight between 
+the goodness-of-fit and the entropy H. 
+
+For the deconvolution problem, the object-data relation is given by the
+convolution
+\begin{eqnarray}
+Y = P * X
+\end{eqnarray}
+where $P$ is the point spread function, and the solution is found (in the case
+of Gaussian noise) by minimizing
+\begin{eqnarray}
+J(X) = \sum_{pixels} \frac{{(Y-P*X)}^{2}}{2 {\sigma}^{2}} + {\alpha} H(X)
+\end{eqnarray}
+
+The way the entropy is defined is fundamental, because from its definition
+will depend the solution. The next section discusses the different approaches 
+which have been proposed in the past.
+
+\clearpage
+\newpage
+
+\subsection{The concept of entropy}
+\label{sect_entr}
+We wish to estimate an unknown probability density $p(X)$ of the data.
+ Shannon \cite{ima:shannon48}, in the framework of the information 
+ theory, has defined the entropy of an image $X$ by 
+\begin{eqnarray}
+H_s(X) = - \sum_{k=1}^{N_b} p_k \log p_k
+\end{eqnarray}
+where  $X=\left\{X_1,.. X_N \right\}$ is an image 
+containing integer values, $N_b$ is number of possible values which can 
+take a given pixel $X_k$ 
+(256 for a 8 bits image), and 
+ $p_k$ values are derived the histogram of $X$:
+\begin{eqnarray}
+p_k = {  \mbox{\#} X_j = k \over  N} 
+\end{eqnarray}
+$\mbox{\#} X_j = k $ giving the number of pixels  $X_j = k$.
+
+If the image contains floating values, it is possible to
+to build up the histogram $L$ of values $L_i$, using
+a suitable interval $\Delta$, counting up how many times $m_k$ each interval
+$(L_k, L_k + \Delta)$ occurs among the N occurrences. Then the probability
+that a data value belongs to an interval $k$ is $p_k = \frac{m_k}{N}$, and
+each data value has a probability $p_k$.  
+
+The entropy is minimum and equal to zero when the signal is flat, and
+increases when we have some fluctuations. Using this entropy in 
+equation~\ref{eqn_j1} leads to minimize:
+\begin{eqnarray}
+J(X) = \frac{{\chi}^2}{2} + {\alpha} H_s(X)
+\label{eqn_j2}
+\end{eqnarray}
+It is a minimum entropy restoration method.
+ 
+The trouble with this approach is that, because the number of occurrences is
+finite, the estimate $p_k$ will be in error by an amount proportional
+to $m_k^{-\frac{1}{2}}$~\cite{entropy:frieden91}. The error becomes significant when
+$m_k$ is small. Furthermore this kind of entropy definition is not
+easy to use for signal restoration, because the gradient of 
+equation~\ref{eqn_j2} is not easy to compute. 
+For these reasons, other
+entropy functions are generally used. The main ones are:
+\begin{itemize}
+\item Burg \cite{entropy:burg67}:
+\begin{eqnarray}
+H_b(X) = -\sum_{k=1}^N \ln(X_k) 
+\end{eqnarray}
+\item Frieden \cite{entropy:frieden75}:
+\begin{eqnarray}
+H_f(X) = -\sum_{k=1}^N X_k \ln(X_k)
+\end{eqnarray}
+\item Gull and Skilling \cite{entropy:gull91}:
+\begin{eqnarray}
+H_g(X) = \sum_{k=1}^N  X_k - M_k - X_k \ln({X_k \over M_k})
+\end{eqnarray}
+where $M$ is a given model, usually taken as a flat image
+\end{itemize}
+where $N$ is the number of pixels, and $k$ represents an index pixel.
+
+Each of these entropies can be used, and they correspond to different
+probability distributions that one can associate with 
+an image \cite{entropy:narrayan86}.
+(See \cite{entropy:frieden75,entropy:skilling89} for descriptions).
+The last definition of the entropy has the advantage of having a zero
+ maximum when $X$ equals the model $M$. 
+All of these entropy measures are negative (if $X_k > 1$), 
+and maximum when the image is flat.
+They are negative because an offset term is omitted which has no importance
+for the minimization of the functional. The fact that we consider that
+a signal has maximum information value when it is flat is evidently
+a curious way to measure information. A consequence is that we must
+now maximize the entropy if we want a smooth solution, and
+the probability of $X$ 
+must be redefined by:
+\begin{eqnarray}
+\mathrm{p}(X) = \mathrm{exp}(\alpha H(X))
+\end{eqnarray}
+The sign has been inverted
+(see equation~\ref{info_prop}), which is natural if we want the best
+solution to be the smoothest. These three entropies, above, lead to the 
+Maximum Entropy Method method (MEM), for which the 
+solution is found by minimizing 
+(for Gaussian noise)
+\begin{eqnarray}
+J(X) = \sum_{k=1}^N \frac{{(Y_k-X_k)}^{2}}{2 {\sigma}^{2}} - {\alpha} H(X)
+\label{eqn_j3}
+\end{eqnarray}
+
+These different entropy functions  which have
+been proposed for image restoration have the property of being maximal when
+the image is flat, and of decreasing when we introduce some information.
+So minimizing the information is equivalent to maximizing the entropy, and
+this has led to the well known Maximum Entropy Method (MEM). For the Shannon
+entropy (which is obtained from the histogram of the data), 
+this is the opposite. The entropy is null for a flat image, and increases
+when the data contains some information. So, if the Shannon entropy were 
+used for restoration, this would lead to a Minimum Entropy Method.
+
+In 1986, Narayan and Nityanda \cite{entropy:narrayan86} 
+compared several entropy functions,
+ and finally 
+concluded by saying that all were comparable if they have good
+properties, i.e.\ they enforce positivity, and they have a negative 
+second derivative which discourages ripple. They showed also that 
+results varied strongly with the background level, and
+that these entropy functions produced poor results
+for negative structures, i.e.\ structures under the background level
+(absorption area in an image, absorption band in a spectrum, etc.), and 
+compact structures in the signal.
+The Gull and Skilling entropy gives rise to  
+the difficulty of estimating a model.
+Furthermore it has been shown \cite{entropy:bontekoe94} 
+that the solution is dependent on this choice.
+
+The determination of the $\alpha$ parameter is also not an easy task and in 
+fact it is a very serious problem facing the maximum entropy method.
+In the historic MAXENT algorithm of Skilling and Gull, the choice of $\alpha$ 
+is such that it must satisfy the ad hoc constraint $\chi^2=N$ when 
+the deconvolution is achieved, $N$ being
+ the number of degrees of freedom of the system i.e.\ the number of pixels 
+in image deconvolution problems.
+But this choice systematically leads to an under-fitting of the data 
+ \cite{entropy:titterington85} which is clearly apparent for imaging problems 
+with little blurring. In reality, the $\chi^2$ statistic is expected to 
+vary in the range $N\pm\sqrt{2N}$ from one data realization to another.
+ In the Quantified Maximum Entropy point of view \cite{entropy:skilling89}, the 
+optimum value of $\alpha$ is determined by including its probability 
+P($\alpha$) in Bayes' equation and then by maximizing the marginal 
+probability of having $\alpha$, knowing the data and the model $m$.
+ In practice, a value of $\alpha$ which is too large gives a resulting image 
+which is too regularized
+\index{regularization}
+with a large loss of resolution.  A value which is too small
+leads to a poorly regularized solution showing unacceptable artifacts. 
+Taking a flat model of the prior image softens the discontinuities 
+which may appear unacceptable for astronomical images often containing 
+stars and other point-like objects. Therefore the basic maximum entropy 
+method appears to be not very
+appropriate for this kind of image which contains high and low spatial 
+frequencies 
+at the same time. Another point to be noted 
+is a ringing effect of the maximum entropy method algorithm,
+producing artifacts around bright sources.
+
+ To solve these problems while still using the maximum entropy concept, some 
+enhancements of the maximum entropy method have been proposed.
+Noticing that neighboring pixels of reconstructed images with MAXENT 
+could have values differing a lot in expected flat regions \cite{entropy:charter89}, 
+Gull and Skilling introduced the concepts of hidden image $S$ and intrinsic 
+ correlation function $C$ (Gaussian or cubic spline-like) 
+in the Preblur MAXENT algorithm.
+\index{maximum entropy method}
+\index{MEM}
+\index{intrinsic correlation function}
+
+ The ICF describes a minimum scale length of correlation in the desired 
+image $O$ which is achieved by assuming that
+\begin{eqnarray}
+ O=C*S
+\end{eqnarray}
+This corresponds to imposing a  
+minimum resolution on the solution $O$. 
+Since the hidden space image $S$ is not 
+spatially correlated, this can be regularized by the entropy 
+\begin{eqnarray}
+H_g(h)=\sum_{k=1}^N  S_k - M_k - S_k \ln(\frac{S_k}{M_k})
+\end{eqnarray}
+
+Since in astronomical images many scale lengths are present, the 
+{\it Multi-channel Maximum Entropy Method}, developed by Weir 
+\index{maximum entropy method}
+\index{MEM}
+\cite{entropy:weir91,entropy:weir92}, uses a set of 
+ICFs having different scale lengths, each defining a channel. The 
+visible-space image is now formed by a weighted sum of 
+ the visible-space image
+channels $O_j$:
+   
+\begin{eqnarray}
+  O= \sum_{j=1}^{N_c} p_j O_j
+\end{eqnarray}
+where $N_c$ is the number of channels.
+Like in Preblur MAXENT, each solution $O_j$ is supposed to be the result of the
+convolution between a hidden image $S_j$ with a low-pass filter (ICF) $C_j$:
+\begin{eqnarray}
+O_j = C_j * S_j
+\end{eqnarray}
+
+But such a method has several drawbacks:
+\begin{enumerate}
+\item The solution depends on the width of the ICFs \cite{entropy:bontekoe94}.
+\item There is no rigorous way to fix the weights $p_j$ \cite{entropy:bontekoe94}.
+\item The computation time increases linearly with the number of pixels.
+\item The solution obtained depends on the choice of the models $M_j$ 
+($j = 1 \dots N_c$) which were chosen independently of the channel.
+\end{enumerate}
+\index{intrinsic correlation function}
+
+In 1993, Bontekoe et al.\ \cite{entropy:bontekoe94} used a special application 
+of this method which 
+they called Pyramid Maximum Entropy on infrared image data.
+\index{pyramid}
+The pyramidal approach allows the user to have constant ICF width, and the 
+computation time is reduced. It is demonstrated \cite{entropy:bontekoe94} that
+all weights can be fixed ($p_j = 1$ for each channel). 
+
+This method eliminates the first three drawbacks, and
+gives better reconstruction of the sharp 
+and smooth structures. But in addition 
+to the two last drawbacks, a new one is added:
+as the images $O_j$ have different sizes (due to the pyramidal approach),
+\index{pyramid}
+the solution $O$ is built by duplicating the pixels of 
+the subimages $O_j$ of each channel. This procedure is known to produce 
+artifacts due to the  appearance of high frequencies which are
+incompatible with the 
+real spectrum of the true image $\hat{O}$.
+
+However this problem can 
+be easily overcome by duplicating the pixels before convolving with the ICF, 
+or expanding the channels using linear 
+interpolation. Thus the introduction of the ``pyramid of resolution'' has 
+solved some problems and brought lots of improvements to the classic maximum
+entropy method, but has also raised other questions. In order to derive the
+model from a physical value, Pantin and Starck \cite{starck:pan96} 
+introduced the wavelet 
+transform, and defined entropy as follows:
+\begin{eqnarray}
+H(O) =  \frac{1}{\sigma_I^2}\sum_{j=1}^l \sum_{k=1}^{N_j} \sigma_j( w_{j,k}- M_{j,k}- |w_{j,k}|\ln{\frac{|w_{j,k}|}{M_{j,k}}})
+\label{eqn_entr}
+\end{eqnarray}
+where $\sigma_I$ is the noise standard deviation in the data, $l$ is the number of scales, and
+$N_j$ is the number of samples in the band $j$
+($N_j = N$ for the \`a trous algorithm). 
+The multiscale entropy is the sum of the entropy at each scale.
+
+The coefficients $w_{j,k}$ are wavelet coefficients, and we 
+take the absolute value of $w_{j,k}$ in this definition because the  
+values of $w_{j,k}$ can be positive or negative, and a negative signal 
+contains also some information in
+the wavelet transform. 
+
+The advantage of such a definition of entropy is
+ the fact we can use previous work concerning the wavelet transform and
+image restoration \cite{starck:mur95_2,starck:sta94_1,starck:sta94_4}. 
+The noise behavior has already been studied in the wavelet transform 
+and we can estimate the standard deviation of the noise $\sigma_j$ 
+at scale $j$. These estimates can be naturally introduced in our 
+models $m_j$
+\begin{eqnarray}
+M_{j,k} = k_{m} \sigma_j
+\end{eqnarray}
+ The model $M_j$ at scale $j$ represents 
+the value taken by a wavelet coefficient in the absence of any relevant
+ signal and, in  practice, it must be a small value compared to 
+any significant signal value.
+Following the Gull and Skilling procedure, we take $M_j$ as a fraction of the 
+noise because the value of 
+$\sigma_j$ can be considered as a sort of physical limit under which a signal 
+cannot be distinguished from the noise ($k_m = \frac{1}{100}$).
+
+\subsection{Conclusion}
+\label{sect_5pt}
+
+As described above, many studies   
+have been carried out in order to improve the functional to be minimized.
+But the question which should be raised is: what is a good entropy for 
+signal restoration?
+
+Trying to answer, this corresponds to asking what is the information
+in the signal. We first assume that a signal $X$ can be decomposed in
+several components:
+\begin{eqnarray}
+ X = S + B + N
+\end{eqnarray}
+where $S$ is the signal of interest, $B$ lis the background, and $N$  the noise.
+
+The entropy should verify the following criteria \cite{starck:sta98_2}:
+{\bf
+\begin{enumerate}
+\item The information in a flat signal is zero ($S=0$, $N=0$ et $B=\mathrm{Cst}$). 
+\item The amount of information in a signal is independent of the background
+($H(X)$ is independent of $B$).
+\item The amount of information is dependent on the noise 
+($H(X)$ is dependent of $N$). 
+A given signal $X$ doesn't furnish the  same information if 
+the noise $N$ is high or small.
+\item The entropy must work in the same way for a pixel which
+has a value $B + \epsilon$, and
+for a pixel which has a value $B - \epsilon$.
+$H(X)$ must be a function of the absolute value of $S$ instead of $S$.
+\item The amount of information is dependent on the correlation in the signal.
+If the signal $S$  presents large features above the noise, it contains
+a lot of information. By generating a new set of  data from $S$, by 
+randomly taking the pixel values in $S$, the large features will
+evidently disappear, and this new signal will contain less information.
+But the pixel values will be the same as in $S$.
+\end{enumerate}
+}
+% \begin{figure}[htb]
+% \centerline{
+% \hbox{
+% \psfig{figure=lenna256.ps,bbllx=1.8cm,bblly=12.9cm,bburx=14.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+% \psfig{figure=scrambled_lenna.ps,bbllx=1.8cm,bblly=12.9cm,bburx=14.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+% }}
+% \caption{Lena image (left) and the same data distributed differently (right). 
+% These
+% two images have the same entropy, using any of the standard entropy methods.}
+% \label{fig_lenna}
+% \end{figure}
+\begin{figure}[h]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_saturn.ps,bbllx=1.7cm,bblly=12.9cm,bburx=11.2cm,bbury=25.6cm,width=9.cm,height=12.3cm,clip=}
+\psfig{figure=fig_saturn_scramble.ps,bbllx=1.7cm,bblly=12.9cm,bburx=11.2cm,bbury=25.6cm,width=9.cm,height=12.3cm,clip=}
+% \vspace{21cm}
+}
+}}
+\caption{Saturn image (left) and the same data distributed differently (right). 
+These
+two images have the same entropy, using any of the standard entropy 
+definitions.}
+\label{fig_saturn}
+\end{figure}
+ 
+Fig.~\ref{fig_saturn} illustrates the last point perfectly. 
+The second image is obtained  by distributing randomly the Saturn image pixel 
+values, and the standard entropy definitions  produce the same information
+measurement for both images. The concept of information becomes really
+subjective, or at least it depends on the application domain. Indeed, for 
+someone who is
+not involved in image processing, the second image contains 
+{\em less} information
+than the first one. For someone working on image transmission, it is clear
+that the second image will require more bits for lossless transmission,
+and from this point of view, he/she will consider that the second 
+image contains
+{\em more} information. Finally, for data restoration, all fluctuations
+due to noise are not of interest, and do not contain relevant 
+information. From this physical point of view, 
+the standard  definition of entropy seems badly adapted to information 
+measurement in signal restoration.
+
+% \clearpage
+% \newpage

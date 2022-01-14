@@ -1,6 +1,25 @@
 # cosmostat
 Software package for cosmostatistics
 
+## Requirements
+
+- Armadillo
+- CFITSIO
+- CMake
+- FFTW
+- GSL
+- HEALPix
+- OpenMP
+- Python
+
+### macOS Set Up
+
+To install the package requirements it is recommended to use [Homebrew](https://brew.sh/).
+
+```bash
+brew tap sfarrens/sf
+brew install armadillo bigmac cfitsio cmake fftw gsl healpix libomp
+```
 
 ## Install
 

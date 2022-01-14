@@ -1,0 +1,256 @@
+\chapter*{Appendix B: Noise Modeling the Wavelet Space}
+\addcontentsline{toc}{chapter}{Appendix B: Noise Modeling the Wavelet Space}
+ 
+
+\subsection*{Gaussian noise}
+\index{noise}
+We have the probability density
+\begin{eqnarray}
+p(w_j(x,y)) = \frac{1}{\sqrt{2\pi} \sigma_j} e^{{-w_j(x,y)^2}/2\sigma^2_j} 
+\end{eqnarray}
+
+So we need to estimate, in the case of Gaussian noise models,
+ the noise standard deviation at each scale.  These standard deviations can 
+be determined analytically in the case of some transforms, including the 
+\`a trous transform, but the calculations can become complicated.  
+
+The appropriate value of $\sigma_j$ 
+in the succession of wavelet planes is assessed 
+from the standard deviation of the noise $\sigma_I$ in the original image
+$I$, 
+and from study of the noise in the wavelet space.  This study consists of 
+simulating an image containing Gaussian noise with a standard deviation 
+equal to 1, and taking the wavelet transform of this image.  Then we
+compute the standard deviation $\sigma^e_j$ at each scale.  We get a curve 
+$\sigma^e_j$ as a function of $j$, giving the behavior of the noise in the 
+wavelet space.
+(Note that if we had used an orthogonal wavelet transform, this curve would
+\index{wavelet transform}
+be linear.)  Due to the properties of the wavelet transform, we have 
+$ \sigma_j = \sigma_I \sigma^e_j $.
+The standard deviation of the noise at a scale $j$ of the image is equal to
+the standard deviation of the noise of the image multiplied by the 
+standard deviation of the noise of  scale $j$ of the wavelet transform.
+ 
+\subsection*{Poisson noise}
+\index{noise}
+
+If the noise in the data $I$ is Poisson, the Anscombe transform 
+\begin{eqnarray}
+t(I(x,y)) = 2\sqrt{I(x,y) + \frac{3}{8}}
+\label{eqn_noise_anscombe}
+\end{eqnarray}
+acts as if the data arose from a
+Gaussian white noise model (Anscombe, \cite{rest:anscombe48}), 
+with $\sigma = 1$, under the
+assumption that the mean value of $I$ is large.
+\index{Anscombe transformation}
+
+For Poisson parameter values under about 20, the Anscombe transformation 
+looses control over the bias.  In this case, an alternative approach to 
+variance stabilization is needed. An approach for very small numbers of 
+counts, including frequent zero cases, has been described in 
+in \cite{astro:slezak93}, \cite{astro:bijaoui94} and \cite{astro:bury95},
+and  will be described below. 
+Small numbers of detector counts will most likely be associated  with the 
+image background. 
+Note that errors related to small values carry the risk of 
+removing real objects, but not of amplifying noise.   
+
+\subsection*{Gaussian and Poisson Noise}
+\index{variance stabilization}
+\index{noise}
+
+The arrival of photons, and their expression by electron counts, on CCD
+detectors may be modeled by a Poisson distribution.  In addition, there is 
+additive Gaussian read-out noise.  
+The Anscombe 
+transformation (eqn.\ \ref{eqn_noise_anscombe}) has been extended \cite{starck:mur95_2}
+to take this combined noise into account.
+As an
+approximation, consider the signal's value, $I(x,y)$, as a sum of a Gaussian
+variable, $\gamma$, of mean $g$ and standard-deviation $\sigma$; and a
+Poisson variable, $n$, of mean $m_0$: we set 
+$I(x,y) = \gamma + \alpha n $ where $\alpha$
+is the gain.  
+
+The generalization of the variance stabilizing Anscombe formula is:
+\begin{eqnarray}
+t = \frac{2}{\alpha} \sqrt{\alpha I(x,y) + \frac{3}{8} \alpha^2 + \sigma^2 -
+\alpha g}
+\label{eqn_noise_bijaoui}
+\end{eqnarray}
+With appropriate values of $\alpha$, $\sigma$ and $g$, this reduces to 
+Anscombe's transformation (eqn.\ \ref{eqn_noise_anscombe}).  
+\index{Anscombe transformation}
+
+
+\subsection*{Poisson Noise with Few Photons or Counts}
+\index{noise}
+\label{noise_few_photons}
+
+A wavelet coefficient at a given position and at a given scale $j$ is
+\begin{eqnarray}
+w_j(x,y) =  \sum_{k \in K} n_k \psi(\frac{x_k - x}{2^j} , \frac{y_k - y}{2^j})
+\end{eqnarray}
+where $K$ is the support of the wavelet function  $\psi$ and $n_k$ is the 
+number  of events which contribute to the calculation of $w_j(x,y)$ (i.e.\ the 
+number of 
+photons included in the support of the dilated wavelet centered at ($x$,$y$)).
+\index{wavelet transform}
+
+If a wavelet coefficient $w_j(x,y)$ is due to the noise, it can be considered
+as a realization of the sum $\sum_{k \in K} n_k$ of 
+independent random variables 
+with the same distribution as that of the wavelet function ($n_k$
+being the number of photons or events used for the calculation of $w_j(x,y)$).
+Then we compare the wavelet coefficient of the data to the values 
+which can be taken by the sum of $n$ independent variables.
+
+The distribution of one event in the wavelet space is directly 
+given by the histogram $H_1$ of the wavelet $\psi$. Since 
+independent events are considered, the distribution of the random variable 
+$W_n$ (to be associated with a wavelet coefficient) related to $n$
+events is given by $n$ autoconvolutions of $H_1$
+\begin{eqnarray}
+H_n = H_1 \otimes  H_1 \otimes ... \otimes H_1
+\end{eqnarray}
+For a large number of events, $H_n$ converges to a Gaussian. 
+
+In order to facilitate the comparisons, the variable $W_n$ of distribution
+ $H_n$ 
+ is reduced by
+\begin{eqnarray}
+c = \frac{W_n - E(W_n)}{\sigma(W_n)}
+\end{eqnarray}
+and the cumulative distribution  function is 
+\begin{eqnarray}
+F_n(c) = \int_{-\infty}^{c} H_n(u) du
+\end{eqnarray}
+
+From $F_n$, we derive $c_{min}$ and $c_{max}$ such 
+that $F(c_{min}) = \epsilon$
+and $F(c_{max}) = 1 - \epsilon$.
+
+Therefore a reduced wavelet coefficient $w^r_j(x,y)$, calculated from
+$w_j(x,y)$, and  resulting 
+from $n$ photons or counts is
+significant if:
+\begin{eqnarray}
+F(w^r) > c_{max}
+\end{eqnarray}
+or
+\begin{eqnarray}
+F(w^r) < c_{min}
+\end{eqnarray}
+and $w^r_j(x,y)$ is obtained by
+\begin{eqnarray}
+w^r_j(x,y)  & = &   \frac{w_j(x,y)}{\sqrt{n} \sigma_{\psi_j}} \\
+             & =  & \frac{w_j(x,y)}{\sqrt{n} \sigma_{\psi}} 4^j
+\end{eqnarray}
+where $\sigma_{\psi}$ is the standard deviation of the wavelet function, and
+$\sigma_{\psi_j}$ is the standard deviation of the dilated wavelet function
+($\sigma_{\psi_j} = \sigma_{\psi}/4^j$).
+
+\subsection*{Root mean square map}
+If, associated to the data $I(x,y)$, we have the root mean square map  
+$R_{\sigma}(x,y)$, the noise in $I$  is non homogeneous.
+For each wavelet coefficient $w_j(x,y)$ of $I$, the 
+exact standard deviation $\sigma_j(x,y)$ have to be calculated from 
+ $R_{\sigma}$. A wavelet coefficient $w_j(x,y)$ is obtained by
+the correlation product between the image $I$ and a function 
+$g_j$:
+\begin{eqnarray}
+ w_j(x,y) = \sum_k \sum_l I(x,y)  g_j(x+k,y+l)
+\end{eqnarray}
+
+ 
+Then we have
+\begin{eqnarray}
+\sigma_j^2(x,y) =  \sum_k \sum_l R_{\sigma}^2(x,y) g_j^2(x+k,y+l).
+\end{eqnarray}
+
+In the case of the \`a trous algorithm, the coefficients $g_j(x,y)$
+ are not known exactly, but they can easily be computed by taking the
+wavelet transform of a Dirac $w^{\delta}$. The map $\sigma_j^2$ is calculated 
+by correlating the square of the wavelet scale $j$ of  $w^{\delta}$
+by $R^2_\sigma(x,y)$.
+ 
+\subsection*{Speckle Noise}
+Speckle occurs in all types of coherent imagery such as synthetic aperture
+ radar (SAR) imagery,  acoustic imagery and laser illuminated imagery. 
+ The probability density function (pdf) of the modulus of a homogeneous
+ scene is a Rayleigh distribution:
+\begin{eqnarray*}
+p(\rho)={\rho\over \sigma^2}e^{-{\rho^2\over 2\sigma^2}} 
+\quad  M_{\rho} = \sqrt{ \frac{\pi}{2} } \sigma \quad \sigma_{\rho}=\sqrt {\frac{4-\pi}{2}}\sigma
+ \end{eqnarray*}
+The ratio $\sigma_{\rho}/M_{\rho}$ is a constant of value $\sqrt{\frac{4-\pi}{\pi}}$.
+This 
+means that the speckle is a multiplicative noise. The pdf of the  modulus of a log-transformed 
+ speckle noise is:
+\begin{eqnarray*}
+p(\ell) =  \frac{e^{2\ell}}{ \sigma^2} e^{-\frac{e^{2\ell}}{2 \sigma^2} } \quad 
+M_{\ell} = 0.058 + \log(\sigma) \quad \sigma_{\ell}= \sqrt{\frac{\pi^2}{24}} = 0.641
+\end{eqnarray*}
+
+A better estimator for Rayleigh distribution is the  energy ($I=\rho^2$)
+which is known to have an exponential ({\it i.e.} Laplace) 
+distribution of parameter $a=2\sigma^2$
+\begin{eqnarray*}
+p(I)={1\over a}e^{-\frac{I}{a}}
+\end{eqnarray*}
+
+\subsection*{Other Types of Noise}
+For any type of noise, an analogous study can be carried out in order to find
+the detection level at each scale and at each position. The 
+types of noise considered so far in this chapter correspond to the general 
+cases in astronomical imagery. 
+We now describe briefly methods which can be used for non-uniform and
+multiplicative noise. 
+
+\subsubsection*{Additive Non-Uniform Noise}
+\label{noise_addi_uni}
+If the noise is additive, but non-uniform, we cannot estimate a standard
+deviation for the whole image. However, we can often assume that the noise
+is locally Gaussian, and we can compute a local standard deviation of the 
+noise for each pixel. In this way, we obtain a standard deviation 
+map of the noise, $I_{\sigma}(x,y)$. 
+A given wavelet coefficient $w_j(x,y)$ is calculated
+from the pixels of the input image $I$ in the range $I(x-l \dots x+l, y-l 
+\dots y+l)$
+where $l$ is dependent on the wavelet transform algorithm, the wavelet 
+function,
+and the scale $j$. An upper limit $u_j(x,y)$ for the noise associated with
+$w_j(x,y)$ is 
+found by just considering the maximum value in 
+$I_{\sigma}(x-l \dots x+l,y-l \dots y+l)$ and
+ by multiplying this value by the constant $\sigma_j^e$ (defined in the 
+subsection ``Gaussian noise'' at the beginning of this Appendix).
+\begin{eqnarray}
+u_j(x,y) = \max(I_{\sigma}(x-l \dots x+l, y-l \dots y+l)) \sigma_j^e
+\end{eqnarray}
+The detection level is not constant over each scale. 
+ 
+\subsubsection*{Multiplicative Noise}
+If the noise is multiplicative, the image can be transformed by taking
+its logarithm. In the resulting image, the noise is additive, and 
+a hypothesis of Gaussian noise can be used in order to find the 
+detection level at each scale.
+
+\subsubsection*{Multiplicative Non-Uniform Noise}
+In this case, we take the logarithm of the image, and the resulting image
+is treated as for additive non-uniform noise above.
+
+\subsubsection*{Unknown Noise}
+If the noise does not follow any known distribution, 
+we can consider as significant
+only wavelet coefficients which are greater than their local standard deviation
+multiplied by a constant: $w_j(x,y)$ is significant if 
+\begin{eqnarray}
+\mid w_j(x,y) \mid \ > \ k \sigma(w_j(x-l \dots x+l, y-l \dots y+l)) 
+\end{eqnarray}
+
+
+ 
+ 

@@ -1,0 +1,559 @@
+
+\chapter{IDL Routines}
+\label{ch_mrsp_idl}
+%\chapterhead{IDL Routines}
+\markright{IDL Routines}
+
+
+\section{Introduction}
+A set of routines has been developed in IDL. Starting IDL using the script program {\em isap.pro} allows the user 
+to get the interactive sparse data analysis  environment, and all routines described in the following can be called. 
+An online help facility is also available by invoking the {\em isaph} program under IDL. See Chapter~\ref{ch_install} for more
+details on the software installation.
+  
+\section{Functions for polarized spherical maps}
+\index{polar}
+
+\subsection{Reading a polarized spherical map from a file : mrsp\_read}
+\index{IDL routines!mrsp\_read}
+\index{polar!read polarized map}
+Read a polarized spherical map in Healpix format.
+{\bf
+\begin{center}
+     USAGE: map = mrsp\_read( file, noverb=noverb )
+\end{center}}
+where
+\begin{itemize}
+\item {\em file} : Input string, name of the file to be read. The pathname can be included in the string, by default 'file.fits' is equivalemt to './file.fits'
+\item {\em noverb} : scalar, prevent the printing on the screen of the format (RING or NESTED) of the read map and the number of pixels.
+\item {\em map} : Output 3D IDL array of Healpix map read. The map is setted to the NESTED format after reading.
+\end{itemize}
+
+\subsubsection*{Examples:} 
+\begin{itemize}
+\item map = mrsp\_read( 'my\_file\_healpix\_pola.fits', noverb=noverb ) \\
+Read the map stored into the file 'my\_file\_healpix\_pola.fits' and load it into map.
+\end{itemize}
+
+
+
+\subsection{Writing a polarized spherical map into a file : mrsp\_write}
+\index{IDL routines!mrsp\_write}
+\index{polar!write polarized map}
+Write a polarized spherical map in Healpix format.
+{\bf
+\begin{center}
+     USAGE: mrsp\_write, file, map, ring=ring
+\end{center}}
+where
+\begin{itemize}
+\item {\em file} : Input string, name of the file to be writen. The pathname can be included in the string, by default 'file.fits' is equivalemt to './file.fits'
+\item {\em map} : Input 3D IDL array of Healpix map to be writen. The map is assumed to be in the NESTED format.
+\item {\em ring} : scalar, if set convert the Healpix map data to the RING format for the writing.
+\end{itemize}
+
+
+
+\subsection{Conversion of a polarized spherical map from TQU scheme to TEB scheme : mrsp\_tqu2teb}
+\index{IDL routines!mrsp\_tqu2teb}
+\index{polar!conversion tqu2teb}
+Convert a polarized map in Healpix nested format from TQU scheme to TEB scheme.
+{\bf
+\begin{center}
+     USAGE: mrsp\_tqu2teb, map\_tqu, map\_teb
+\end{center}}
+where
+\begin{itemize}
+\item {\em map\_tqu} : Input 3D IDL array of healpix polarized map in TQU scheme.
+\item {\em map\_teb} : Output 3D IDL array of healpix polarized map in TEB scheme.
+\end{itemize}
+
+
+
+\subsection{Conversion of a polarized spherical map from TEB scheme to TQU scheme : mrsp\_teb2tqu}
+\index{IDL routines!mrsp\_teb2tqu}
+\index{polar!conversion tqu2teb}
+Convert a polarized map in Healpix nested format from TEB scheme to TQU scheme.
+{\bf
+\begin{center}
+     USAGE: mrsp\_teb2tqu, map\_teb, map\_tqu
+\end{center}}
+where
+\begin{itemize}
+\item {\em map\_teb} : Input 3D IDL array of healpix polarized map in TEB scheme.
+\item {\em map\_tqu} : Output 3D IDL array of healpix polarized map in TQU scheme.
+\end{itemize}
+
+
+
+\subsection{Resizing a polarized spherical map: mrsp\_resize}
+\index{IDL routines!mrsp\_resize}
+\index{polar!polarized map resizing}
+Resize a polarized map in Healpix nested format.
+{\bf
+\begin{center}
+     USAGE: resize\_map = mrsp\_resize( map, nside=nside, ViaAlm=ViaAlm, teb=teb )
+\end{center}}
+where
+\begin{itemize}
+\item {\em map} : Input 3D IDL array of healpix polarized map in TQU scheme to be transformed.
+\item {\em resize\_map} : Output 3D IDL array of healpix polarized map in TQU scheme. Healpix input map and output resized map are in nested format.
+\item {\em nside} : int, the new nside parameter of the output healpix resized map.
+\item {\em ViaAlm} : scalar, if set use alm transform for the resizing, otherwise, use interpolation. 
+Ignored if nside keyword value is lower than imag nside.
+\item {\em teb} : scalar, if set specifies that the input and output images are in TEB scheme.
+\end{itemize}
+
+\subsubsection*{Examples:} 
+\begin{itemize}
+\item map2 = mrsp\_resize( map, nside = 256, /ViaAlm ) \\
+resize an Healpix map.
+\end{itemize}
+
+
+
+
+
+\section{General transform/reconstruction routines}
+
+\subsection{Transformations of a polarized spherical map : mrsp\_trans}
+\index{IDL routines!mrsp\_trans}
+\index{polar!transforms of polarized image}
+Compute a transform (E-B mode decomposition, wavelet with spline, Meyer or needelet filters, curvelet, \ldots) 
+on a polarized map on the sphere in the Healpix representation (nested data representation) in TQU scheme.\\ \\
+The transform can be:
+\begin{enumerate}
+\item A E/B decomposition using the spin\_2 transform.
+\item An orthogonal wavelet on each T,Q,U component.
+\item A pyramidal isotropic wavelet on each T,Q,U component.
+\item An undecimated wavelet transform on each component.
+\item A decimated modulus-Phase wavelet transform.
+\item A undecimated modulus-Phase wavelet transform.
+\item A curvelet transform.
+\end{enumerate}
+{\bf
+\begin{center}
+     USAGE: mrsp\_trans, Imag, Trans, NbrScale=NbrScale, lmax=lmax, MeyerWave=MeyerWave, ebdec=ebdec, Cur=Cur, uwt=uwt, owt=owt, mpdwt=mpdwt, mpuwt=mpuwt, PyrWT=PyrWT, 
+     DifInSH=DifInSH, Overlap=Overlap, FirstBlockSize=FirstBlockSize
+\end{center}}
+where
+\begin{itemize}
+\item {\em Imag} : Input 3D IDL array of healpix polarized map in TQU scheme. Input image to be transformed.
+\item {\em Trans} : Output IDL structure with the following fields:
+\begin{itemize}
+\item {\em NbrScale} : int, number of scales.
+\item {\em nside} : int, Healpix nside parameter.
+\item {\em lmax} : int, maximum l value in the Spherical Harmonic Space.
+\item {\em npix} : long, number of pixels of the input image.
+\item {\em MeyerWave} : int, 1 if the keyword MeyerWave used, otherwise 0.
+\item {\em DifInSH} : int, 1 if the keyword DifInSH used, otherwise 0.
+\item {\em pyrtrans} : int, 1 if a pyramidal decomposition has been applied, otherwise 0.
+\item {\em ebdec} : int, 1 if an EB decomposiiton has been applied, otherwise 0.
+\item {\em DEC1} : IDL structure, first component transformation (depends on the chosen transform).
+\item {\em DEC2} : IDL structure, second component transformation (depends on the chosen transform).
+\item {\em DEC3} : IDL structure, third component transformation (depends on the chosen transform).
+\item {\em TransChoice} : string, code of the chosen transform.
+\item {\em TabCodeTransform} : string array, array of transforms codes. TabCodeTransform = ['T\_EBDEC', 'T\_OWT', 'T\_PyrWT', 'T\_UWT', 'T\_MPDWT', 'T\_MPUWT', 'T\_CUR']
+\item {\em TransName} : string, transform's name.
+\item {\em TransTypeName} : string array, array of transforms names. 
+TransTypeName = ['EBDEC','Bi-Orthogonal WT', 'Pyramidal WT', 'Undecimated WT', 'Module-Phase Decimated Transform', 'Module-Phase Undecimated Transform', 'Curvelet']
+\end{itemize}
+\item {\em NbrScale} : int, number of scales of the wavelet transforms.
+\item {\em ebdec} : scalar, if set an E/B decomposition is applied before the chosen multiscale decomposition. 
+If no transform is selected, it will be the default transformation.
+\item {\em Cur} : scalar, if set perform a curvelet transform.
+\item {\em uwt} : scalar, if set perform an undecimated isotropic wavelet transform.
+\item {\em PyrWT} : scalar, if set perform a pyramidal isotropic wavelet transform.
+\item {\em owt} : scalar, if set perform a bi-orthogonal wavelet transform on each face.
+\item {\em mpdwt} : scalar, if set perform a decimated module-phase wavelet transform.
+\item {\em mpuwt} : scalar, if set perform a undecimated module-phase wavelet transform.
+\item {\em Overlap} : int, if equal to 1 if blocks are overlapping, only used with curvelet transform.
+\item {\em FirstBlockSize} : int, block size in the ridgelet transform at the finest scale (default is 16), only used with curvelet transform.
+\item {\em lmax} : int, maximum l value in the Spherical Harmonic Space (for isoptropic wavelet transform only).
+\item {\em DifInSH} : Input keyword parameter. If set, the wavelet coefficients are computed as the difference between two resolutions in the spherical harmonics representation. 
+Otherwise, the wavelet coefficients are computed as the difference between two resolutions in direct space. Only used with keyword uwt or PyrWT.
+\item {\em MeyerWave} : If set, use Meyer wavelets and set the keyword DifInSH. Only used with keyword uwt or PyrWT.
+\end{itemize}
+
+\subsubsection*{Examples:} 
+\begin{itemize}
+\item mrsp\_trans, Imag, WT, NbrScale=5, /uwt \\
+Compute the undecimated wavelet transform of the map Imag with five scales. The result is stored in WT.
+\end{itemize}
+
+
+
+\subsection{Reconstructions of a polarized spherical map : mrsp\_rec}
+\index{IDL routines!mrsp\_rec}
+\index{polar!inverse transform of polarized image}
+Compute a inverse transform (wavelet, curvelet, \ldots) to get a polarized map on the sphere in the Healpix representation 
+(nested data representation) in TQU scheme from its decomposition obtained by mrsp\_trans.\\ \\
+The transform can be:
+\begin{enumerate}
+\item A E/B decomposition using the spin\_2 transform.
+\item An orthogonal wavelet on each T,Q,U component.
+\item A pyramidal isotropic wavelet on each T,Q,U component.
+\item An undecimated wavelet transform on each component.
+\item A decimated modulus-Phase wavelet transform.
+\item A undecimated modulus-Phase wavelet transform.
+\item A curvelet transform.
+\end{enumerate}
+{\bf
+\begin{center}
+     USAGE: mrsp\_rec, Trans, Rec
+\end{center}}
+where
+\begin{itemize}
+\item {\em Trans} : Input IDL structure, see mrsp\_trans for more details.
+\item {\em Rec} : Output 3D IDL array of healpix polarized map in TQU scheme. Reconstructed image.
+\end{itemize}
+
+\subsubsection*{Examples:} 
+\begin{itemize}
+\item mrsp\_trans, Imag, WT, NbrScale=5, /uwt \\
+Compute the undecimated wavelet transform of the map Imag with five scales. The result is stored in WT.
+\item mrsp\_rec, WT, RecIma \\
+Reconstruct the image.
+\end{itemize}
+
+
+
+\section{Spin-2 spherical harmonic transform}
+ 
+\subsection{ALM transform of a polarized spherical map : mrsp\_almtrans}
+\index{IDL routines!mrsp\_almtrans}
+\index{polar!polar ALM transform}
+Computes the spherical harmonic transform of a polarized TQU map using the Healpix representation (nested data).
+{\bf
+\begin{center}
+     USAGE: mrsp\_almtrans, Imag, Trans, lmax=lmax, tab=tab, complex=complex, norm=norm, fast=fast
+\end{center}}
+where
+\begin{itemize}
+\item {\em Imag} : Input 3D IDL array of healpix polarized map in TQU scheme to be transformed.
+\item {\em Trans} : Output IDL structure with the following fields:
+\begin{itemize}
+\item {\em ALM} : array of the ALM coefficients
+\begin{center}
+ALM = fltarray[*,2,3] list of the real part (ALM[*,0,*]) and imaginary part (ALM[*,1,*]) of the ALM. 
+This is the default storage, ALM[*,*,0] is ALM T, ALM[*,*,1] is ALM E and ALM[*,*,2] is ALM B\\
+ALM = cfarr[*,3] list of the ALM in complex values format if the keyword complex is set. 
+ALM[*,0] is ALM T, ALM[*,1] is ALM E and ALM[*,2] is ALM B\\
+ALM = fltarray[NbrMaxM, NbrMaxL, 2, 3] table of the real part (ALM[*,*,0,*]) and imaginary part (ALM[*,*,1,*]) 
+of the ALM if the keyword tab is set. ALM[*,*,*,0] is ALM T, ALM[*,*,*,1] is ALM E and ALM[*,*,*,2] is ALM B\\
+ALM = cfarr[NbrMaxM, NbrMaxL, 3] table of the ALM in complex values format if the keywords complex and tab 
+are both setted. ALM[*,*,0] is ALM T, ALM[*,*,1] is ALM E and ALM[*,*,2] is ALM B\\
+By default, NbrMaxM = NbrMaxL = lmax+1
+\end{center}
+\item {\em complex\_alm} : int, 0 (default value) if ALM array contains real and imaginary part separated. 
+1 if ALM is a complex array.
+\item {\em PixelType} : int, 0 for a Healpix input map (1 for GLESP but not used).
+\item {\em tab} : int, 0 for default ALM representation as a list (i.e. 1D IDL array) and 1 for 2D 
+representation as a table (i.e. l for the first dimension and m for the second).
+\item {\em nside} : int, Healpix nside parameter.
+\item {\em lmax} : int, maximum l value in the Spherical Harmonic Space.
+\item {\em npix} : long, number of pixels of the input image.
+\item {\em TabNbrM} : int array[NbrMaxL], max number of m value for a given l, only used if keyword tab is set otherwise, 0.
+\item {\em index} : long array, indicies of the ALM coefficients, used only if keyword tab is not set.
+\item {\em NormVal} : float, normalization value applied to the alm coefficients (only if keyword norm used).
+\item {\em norm} : int, 0 if no normalization has been aplied, else 1.
+\end{itemize}
+\item {\em lmax} : int, Number of spherical harmonics computed in the decomposition. For a Healpix map, default is 
+3*nside and should be between 2*nside and 4*nside.
+\item {\em tab} : scalar, if set, ALM coefficients in Trans.alm are stored in a 2D array: Trans.alm[m,l] where m = 0..Trans.TabNbrM[l]-1  and l = 0..lmax-1
+\item {\em complex} : scalar, if set Trans.alm will contain complex values instead of the real and imaginary parts.
+\item {\em norm} : scalar, if set, a normalization is performed to the alm coefficients.
+\end{itemize}
+
+\subsubsection*{Example:} 
+\begin{itemize}
+\item mrsp\_almtrans, Imag, Output \\
+Compute the spherical harmonics transform of a polarized image, the result is stored in Output.
+\end{itemize}
+
+
+
+\subsection{ALM inverse transform of a polarized spherical map : mrsp\_almrec}
+\index{IDL routines!mrsp\_almrec}
+\index{polar!polar ALM inverse transform}
+Computes the inverse spherical harmonic transform of a polarized TQU map using using the Healpix representation (nested data).
+{\bf
+\begin{center}
+     USAGE: mrsp\_almrec, Trans, imag, pixel\_window=pixel\_window
+\end{center}}
+where
+\begin{itemize}
+\item {\em Trans} : Input IDL structure of ALM coefficients, see mrsp\_almtrans above for details.
+\item {\em Imag} : Output 3D IDL array of healpix polarized map in TQU scheme. Image reconstructed in Healpix nested representation.
+\item {\em pixel\_window} : scalar, if set the image is convolved by the healpix pixel window (only for Healpix map).
+\end{itemize}
+
+
+\subsubsection*{Example:} 
+\begin{itemize}
+\item mrsp\_almtrans, PolaImag, Output \\
+Compute the spherical harmonics transform of a polarized image, the result is stored in Output.
+\item mrsp\_almrec, Output, PolaRec \\
+Reconstruct the image.
+\end{itemize}
+
+
+
+\subsection{Power spectrum and cross spectrum exctraction from polarized ALM~: mrsp\_alm2spec}
+\index{IDL routines!mrsp\_alm2spec}
+\index{polar!spectrum exctraction from polarized ALM}
+Computes the power spectrums and cross spectrums of a polarized map from the polarized ALM coefficients.
+{\bf
+\begin{center}
+     USAGE: spec = mrsp\_alm2spec( ALM, StdPS=StdPS )
+\end{center}}
+where
+\begin{itemize}
+\item {\em ALM} : Input IDL structure of ALM polarized coefficients, see mrsp\_almtrans above for details.
+\item {\em spec} : Output 2D IDL float array[ALM.lmax+1,6], the TT, EE, BB, TE, TB, EB spectrums. P[k,i] = Mean( SPECTRUM[*,l,i] ) \quad i=0...5.
+\item {\em StdPS} : Output 2D IDL float array[ALM.lmax+1,6]: estimated standard deviation of the spectrums coefficients.
+\end{itemize}
+
+\subsubsection*{Example:} 
+\begin{itemize}
+\item mrsp\_almtrans, Imag, Output \\
+Compute the spherical harmonics transform of a polarized image, the result is stored in Output.
+\item spec = mrsp\_alm2spec( Output, StdPS=StdPS ) \\
+Compute the spectrums of the image and it's associated standard deviation.
+\end{itemize}
+
+
+\subsection{Power spectrum and cross spectrum exctraction from a polarized image : mrsp\_spec}
+\index{IDL routines!mrsp\_spec}
+\index{polar!spectrum exctraction from a polarized image}
+Computes the power spectrums and cross spectrums of a polarized map, using the HEALPix representation (nested data representation by default). 
+By default a normalisation is applied on the ALM coefficents.
+{\bf
+\begin{center}
+     USAGE: spec = mrsp\_spec( Imag, nonorm=nonorm, teb=teb, NormVal=NormVal, StdPS=StdPS, lmax=lmax )
+\end{center}}
+where
+\begin{itemize}
+\item {\em Imag} : Input 3D IDL array of healpix polarized map in TQU scheme. Input image whose power spectrum will be extracted.
+\item {\em spec} : Output 2D IDL float array[ALM.lmax+1,6], the TT, EE, BB, TE, TB, EB spectrums. P[k,i] = Mean( SPECTRUM[*,l,i] ) \quad i=0...5.
+\item {\em Lmax} : int, number of spherical harmonics computed in the decomposition and size of the computed spectrum (Lmax+1). Default is 3*nside and should be between 2*nside and 4*nside.
+\item {\em nonorm} : scalar, if set no normalisation is applied on the ALM computed.
+\item {\em StdPS} : Output 2D IDL float array[ALM.lmax+1,6]: estimated standard deviation of the spectrums coefficients.
+\item {\em NormVal} : float, normalization value applied to the alm coefficients.
+\item {\em teb} : scalar, if set specifies that the input map is in TEB scheme.
+\end{itemize}
+
+\subsubsection*{Example:} 
+\begin{itemize}
+\item P = mrsp\_spec( Imag ) \\
+Compute the spectrum of the polarized image.
+\end{itemize}
+
+
+
+\section{Polarized Wavelets}
+\subsection{Undecimated Isotropic Wavelet Transform of a polarized spherical map : mrsp\_wttrans}
+\index{IDL routines!mrsp\_wttrans}
+\index{polar!undecimated wavelet transform of polarized image}
+Computes the undecimated isotropic wavelet transform of polarized maps on the sphere in TQU scheme, 
+using the Healpix representation (nested data representation). The wavelet function is zonal and its 
+spherical harmonics coefficients $a_{l,0}$ follow a cubic box-spline profile. If the keyword DifInSH is 
+set, the wavelet coefficients are derived in the Spherical Harmonic Space, otherwise (default) they 
+are derived in the direct space.
+{\bf
+\begin{center}
+     USAGE: mrsp\_wttrans, Imag, Trans, NbrScale=NbrScale, lmax=lmax, DifInSH=DifInSH, MeyerWave=MeyerWave
+\end{center}}
+where
+\begin{itemize}
+\item {\em Imag} : Input 3D IDL array of healpix polarized map in TQU scheme. Input image to be transformed.
+\item {\em Trans} : Output IDL structure with the following fields:
+\begin{itemize}
+\item {\em NbrScale} : int, number of scales.
+\item {\em nside} : int, Healpix nside parameter.
+\item {\em lmax} : int, maximum l value in the Spherical Harmonic Space.
+\item {\em npix} : long, number of pixels of the input image.
+\item {\em MeyerWave} : int, 1 if the keyword MeyerWave used, otherwise 0
+\item {\em DifInSH} : int, 1 if the keyword DifInSH used, otherwise 0
+\item {\em Coef} : fltarr[npix,NbrScale,3] wavelet transform of the data. Coef[*,*,0] = wavelet transform on T, Coef[*,*,1] = wavelet transform on E, Coef[*,*,2] = wavelet transform on B
+\begin{center}
+Coef[*,0,*] = wavelet coefficients of the finest scale (highest frequencies).\\
+Coef[*,NbrScale-1,*] = coarsest scale (lowest frequencies). 
+\end{center}
+\end{itemize}
+\item {\em NbrScale} : int, optional input parameter specifying the number of scales (default is 4).
+\item {\em Lmax} : int, optional input parameter specifying the maximum multipole number $l$ in the spherical harmonics decomposition 
+(default is $3\times \textrm{nside}$, should be between $2\times \textrm{nside}$ and $4\times \textrm{nside}$).
+\item {\em DifInSH} : Input keyword parameter. If set, the wavelet coefficients are computed as the difference between two resolutions in the spherical harmonics representation. 
+Otherwise, the wavelet coefficients are computed as the difference between two resolutions in direct space.
+\item {\em MeyerWave} : If set, use Meyer wavelets and set the keyword DifInSH.
+\end{itemize}
+
+\subsubsection*{Example:} 
+\begin{itemize}
+\item mrsp\_wttrans, Imag, Output, NbrScale=5 \\
+Compute the isotropic wavelet transform of the map Imag with five scales. The result is stored in Output.
+\end{itemize}
+
+
+
+\subsection{Undecimated Isotropic Wavelet Reconstruction of a polarized spherical map : mrsp\_wtrec}
+\index{IDL routines!mrsp\_wtrec}
+\index{polar!undecimated wavelet reconstruction of polarized image}
+Reconstructs a polarized maps on the sphere in TQU scheme using the Healpix representation (nested data representation) 
+from its wavelet coefficients obtained with the undecimated isotropic wavelet transform on the sphere, described right above.
+{\bf
+\begin{center}
+     USAGE: mrsp\_wtrec, Trans, Rec, filter=filter
+\end{center}}
+where
+\begin{itemize}
+\item {\em Trans}: Input IDL structures with the following fields:  
+\begin{itemize}
+\item {\em NbrScale} : int, number of scales.
+\item {\em nside} : int, Healpix nside parameter.
+\item {\em lmax} : int, maximum l value in the Spherical Harmonic Space.
+\item {\em npix} : long, number of pixels of the input image.
+\item {\em MeyerWave} : int, 1 if the keyword MeyerWave used, otherwise 0
+\item {\em DifInSH} : int, 1 if the keyword DifInSH used, otherwise 0
+\item {\em Coef} : fltarr[npix,NbrScale,3] wavelet transform of the data. Coef[*,*,0] = wavelet transform on T, Coef[*,*,1] = wavelet transform on E, Coef[*,*,2] = wavelet transform on B
+\begin{center}
+Coef[*,0,*] = wavelet coefficients of the finest scale (highest frequencies).\\
+Coef[*,NbrScale-1,*] = coarsest scale (lowest frequencies). 
+\end{center}
+\end{itemize}
+\item {\em Rec} : Output 3D IDL array of healpix polarized map in TQU scheme. Reconstructed image from the wavelet coefficients. 
+\item {\em filter} : Input keyword parameter. Use filters for the reconstructions. If this keyword is not set, the reconstructed image is obtained 
+by a simple addition of all wavelet scales. Automaticaly applied if keyword MeyerWave or DifInSH were set at the wavelet decomposition.
+\end{itemize}
+
+\subsubsection*{Examples:} 
+\begin{itemize}
+\item mrsp\_wttrans, Imag, Output, NbrScale=5 \\
+Compute the isotropic wavelet transform of the map Imag with five scales. The result is stored in Output.
+\item mrsp\_wtrec, Output, map \\
+Reconstruct the map. 
+\end{itemize}
+
+
+
+
+
+\subsection{Extract a scale from a polar decomposition : mrsp\_wtget}
+\index{IDL routines!mrsp\_wtget}
+\index{polar!polar wavelet extraction}
+Return a band of a transform for Healpix polarized map (wavelet, curvelet\ldots) obtained by the command mrsp\_trans.
+{\bf
+\begin{center}
+     USAGE:  Scale = mrsp\_wtget( Trans, Component, ScaleNumber, BandNumber=BandNumber, NormVal=NormVal )
+\end{center}}
+where
+\begin{itemize}
+\item {\em Trans} : Input IDL structure, see mrsp\_trans for more details.
+\item {\em ScaleNumber} : int, scale number of the band to be extracted. The scale number must be between 0 and Trans.NbrScale-1.
+\item {\em Component} : int, choice of the component, 0 is for T, 1 for E and 2 for B.
+\item {\em NormVal} : float, optional normalization value of the band (for isotropic wavelet transform).
+\item {\em BandNumber} : int, ridgelet band number (for curvelet transform).
+\item {\em Scale} : return value IDL array of the band extracted. See more details on the 1D versions of the functions. 
+No band is extracted from Modulus-Phases transforms (return 0). For a E/B decomposition, it will be either the T map, the E map or the B map.
+\end{itemize}
+
+
+
+\subsection{Put a scale into a polar decomposition : mrsp\_wtput}
+\index{IDL routines!mrsp\_wtput}
+\index{polar!polar wavelet insertion}
+Put a band into a transform for Healpix polarized map (wavelet, curvelet\ldots) obtained by the command mrsp\_trans.
+{\bf
+\begin{center}
+     USAGE:   mrsp\_wtput, Trans, Scale, Component, ScaleNumber, BandNumber=BandNumber
+\end{center}}
+where
+\begin{itemize}
+\item {\em Trans} : Input IDL structure, see mrsp\_trans for more details.
+\item {\em Scale} : Input IDL array of the band inserted. See more details on the 1D versions of the functions. 
+No band is inserted into Modulus-Phases transforms. For a E/B decomposition, it will be either the T map, the E map or the B map.
+\item {\em ScaleNumber} : int, scale number of the band to be extracted. The scale number must be between 0 and Trans.NbrScale-1.
+\item {\em Component} : int, choice of the component, 0 is for T, 1 for E and 2 for B.
+\item {\em BandNumber} : int, ridgelet band number (for curvelet transform).
+\end{itemize}
+
+
+
+\section{Denoising}
+\subsection{Wavelet filtering of a polarized spherical map : mrsp\_wtfilter}
+\index{IDL routines!mrsp\_wtfilter}
+\index{polar!polar wavelet filtering}
+Wavelet denoising of a polarized image on the sphere using Healpix representation in TQU scheme (nested pixel representation). 
+By default Gaussian noise is considered. If the keyword SigmaNoise is not set, then the noise standard deviation is automatically 
+estimated. If the keyword MAD is set, then a correlated Gaussian noise is considered and the noise level at each scale is derived 
+from the Median Absolution Deviation (MAD) method. If the keyword KillLastScale is set, the coarsest resolution is set to zero. 
+The thresholded wavelet coefficients can be obtained using the keyword Trans. If the input keyword niter is set, then an iterative 
+algorithm is applied and if the pos keyword is also set, then a positivity constraint is added.
+{\bf
+\begin{center}
+     USAGE:  mrsp\_wtfilter, Imag, Filter, NbrScale=NbrScale, NSigma=NSigma, SigmaNoise=SigmaNoise, KillLastScale=KillLastScale, 
+     pos=pos, mad=mad, Trans=Trans, niter=niter, FirstScale=FirstScale, Use\_FdrAll=Use\_FdrAll, soft=soft, fdr=fdr, lmax=lmax, 
+     FilterLast=FilterLast, mask=mask 
+\end{center}}
+where
+\begin{itemize}
+\item {\em Imag} : Input 3D IDL array of healpix polarized map in TQU scheme. Input image to be filtered.
+\item {\em Filter} : Output 3D IDL array of healpix polarized map in TQU scheme containing the filtered map.
+\item {\em NbrScale} : int, number of scales (default is 4).
+\item {\em NSigma} : float, level of thresholding (default is 3).
+\item {\em SigmaNoise} : float, noise standard deviation. Default is automatically estimated.
+\item {\em mad} : scalar, if set the noise level is derived at each scale using the MAD of the wavelet coefficient.
+\item {\em KillLastScale} : scalar, if set the last scale is set to zero.
+\item {\em niter} : int, number of iterations used in the reconstruction.
+\item {\em pos} : scalar, if set the solution is assumed to be positive.
+\item {\em FirstScale} : int, consider only scales larger than FirstScale. Default is 1 (i.e. all scales are used).
+\item {\em Soft} : scalar, if set use soft thresholding instead of hard thresholding.
+\item {\em fdr} : float between 0 (default) and 1 (max, if greater or equal to 1, set to 0.05), used to estimate a threshold level 
+instead of a NSigma threshold, threshold is applied from scale j=FirstScale to the last.
+\item {\em Use\_FdrAll} : same as fdr but applied to all scales.
+\item {\em FilterLast} : scalar, if set the last scale is filtered.
+\item {\em mask} : IDL array of healpix map, input mask applied.
+\item {\em lmax} : int, maximum l value in the Spherical Harmonic Space.
+\item {\em Trans} : IDL structure: Thresholded wavelet decomposition of the input image.
+\end{itemize}
+
+
+\subsubsection*{Example:} 
+\begin{itemize}
+\item mrsp\_wtfilter, Imag, Filter, NbrScale=5, Nsigma=5 \\
+Wavelet filtering with five scales and a 5 sigma threshold.
+\end{itemize}
+
+
+\subsection{Thresholding in polarized wavelet or curvelet space  : mrsp\_threshold}
+\index{IDL routines!mrsp\_threshold}
+\index{polar!polar curvelet filtering}
+
+Threshold the decomposition coefficients of a polarized healpix map. This routine works with several decompositions (see mrsp\_trans).
+{\bf
+\begin{center}
+     USAGE:  mrsp\_threshold, Trans, NSigma=Nsigma, Mad=Mad, KillLastScale=KillLastScale
+\end{center}}
+where
+where
+\begin{itemize}
+\item {\em Trans} : IDL structures obtained from the {\em mrsp\_trans} routine.
+\item {\em Nsigma}: Level of thresholding (default is 3)
+\item {\em KillLastScale}: if set, the last scale is set to zero
+\end{itemize}
+
+\subsubsection*{Examples:} 
+ Compute the undecimated wavelet transform of a vector field I with five scales (needlet filters).  The result is stored in WT, then wavelet coefficients are threshold at 2 sigma, and the filtered polarized map is reconstructed.
+\begin{itemize}
+\item  mrsp\_trans, I, WT, NbrScale=5, /UWT, /NeedletWave
+\item  mrsp\_threshold, WT, NSigma=2
+\item  mrsp\_rec, WT, RecPola
+\end{itemize}
+Compute the curvelet transform of a vector field I with five scales.  The result is stored in C, then curvelet coefficients are threshold at 5 sigma, and the filtered polarized map 
+is reconstructed.
+\begin{itemize}
+\item  mrsp\_trans, I, C, NbrScale=5, /Cur
+\item  mrsp\_threshold, C, NSigma=5
+\item  mrsp\_rec, C, RecPola
+\end{itemize}

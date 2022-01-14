@@ -1,0 +1,91 @@
+% \chapter*{Appendix A: The ``\`A Trous'' Wavelet Transform Algorithm}
+% \addcontentsline{toc}{chapter}{Appendix A: The ``\`A Trous'' Wavelet Transform Algorithm}
+\appendix
+\chapter{The ``\`A Trous'' Wavelet Transform Algorithm}
+ 
+In a wavelet transform, a series of transformations of a signal is 
+generated, providing a resolution-related set of  ``views'' of the signal.  
+The properties satisfied by a wavelet transform, and in particular by the
+{\it \`a trous} wavelet transform, are further discussed by Bijaoui et al. \cite{starck:bij94_1}. 
+Extensive literature exists on the wavelet transform
+and its applications (\cite{wave:daube88,wave:chui92,wave:ruskai92,starck:book98}). 
+The discrete {\it \`a trous} algorithm is described in \cite{wave:hol89,wave:shensa92}.
+
+We consider spectra, 
+$\{c_0(k)\}$, defined as  the scalar product at 
+samples $k$ of the function $f(x)$ with a scaling function $\phi(x)$
+which corresponds to a low pass filter:
+\begin{eqnarray}
+c_0(k) = < f(x), \phi(x-k)>
+\end{eqnarray}
+The scaling function is chosen to satisfy the dilation equation:
+\begin{eqnarray}
+\frac{1}{2}\phi(\frac{x}{2}) = \sum_l h(l)\phi(x-l)
+\end{eqnarray}
+where $h$ is a discrete low-pass filter associated with the scaling function
+$\phi$.  This means that a low-pass filtering
+of the signal is, by definition, closely linked to another resolution level
+of the signal.  The distance between levels increases by a factor 2 from one
+scale to the next.
+
+
+The smoothed data $c_j(k)$ at a given resolution $j$ and at a position
+$k$  is the scalar product 
+
+\begin{eqnarray}
+c_j(k)= \frac{1}{2^j}< f(x), \phi(\frac{x-k}{2^j})>
+\end{eqnarray}
+
+This is consequently obtained by the convolution:
+\begin{eqnarray}
+c_j(k) = \sum_l h(l) \ \ c_{j-1} (k+2^{j-1}l)
+\end{eqnarray}
+The signal difference $w_j$ between two consecutive resolutions is:
+\begin{eqnarray}
+w_j(k) = c_{j-1}(k) - c_j(k) 
+\end{eqnarray}
+or:
+\begin{eqnarray}
+w_j(k) = \frac{1}{2^j}< f(x), \psi(\frac{x-k}{2^j})>  
+\label{wj}
+\end{eqnarray}
+Here, the wavelet function $\psi$ is defined by:
+\begin{eqnarray}
+\frac{1}{2}\psi(\frac{x}{2})  = \phi(x) - \frac{1}{2}\phi(\frac{x}{2})
+\end{eqnarray}
+
+Equation~\ref{wj} defines the discrete wavelet transform, for a  
+resolution level $j$.
+
+For the scaling function, $\phi(x)$, the B-spline of degree 3 
+was used in our calculations. As a filter we use 
+$h = ( \frac{1}{16}, \frac{1}{4}, \frac{3}{8}, \frac{1}{4}, \frac{1}{16})$. 
+See  Starck (1993)
+for discussion of 
+linear and other scaling functions.  Here  
+we have derived a simple algorithm in order to compute the 
+associated wavelet transform:
+\begin{enumerate}
+\item We initialize $j$ to 0 and we start with the data $c_j(k)$.
+\item We increment $j$, and carry out a discrete convolution of the data
+$c_{j-1}(k)$ using  the filter $h$. The distance between the central sample
+and the adjacent ones is $2^{j-1}$.
+\item After this smoothing, we obtain the discrete wavelet transform
+from the difference $c_{j-1}(k) - c_j(k)$.
+\item If $j$ is less than the number $p$ of resolutions we want to
+compute, then we go to step 2.
+\item The set ${\cal W} = \{ w_1, ..., w_p, c_p \}$ represents the
+wavelet transform of the data.
+\end{enumerate}
+
+A series expansion of the original signal, $c_0$, 
+in terms of
+the wavelet coefficients is now given as follows. 
+The final smoothed array $c_{p}(x)$ is added to all the differences $w_j$:
+\begin{eqnarray}
+c_0(k) = c_{p} + \sum_{j=1}^{p} w_j(k)
+\label{eqn_rec}
+\end{eqnarray}
+ This equation provides a reconstruction formula for the original signal. At each scale $j$, we obtain a set $\{w_j\}$ which 
+we call a wavelet scale.  The  wavelet scale 
+has the same number of samples as the signal. 

@@ -1,0 +1,74 @@
+\newpage
+
+\begin{figure}[htb]
+\centerline{
+Figures~\ref{fig_lenna_comp} and \ref{fig_land_comp} show filtered images
+(Lena and the landscape image) using different methods. The upper left shows
+the noisy image, after adding Gaussian noise ($\sigma=30$). The upper right,
+lower left, and lower right show respectively the filtered image
+by hard thresholding using FWT-7/9, by the multiscale entropy method,  
+and by the combined method.
+
+
+The combined filtering has in fact already been used by 
+Donoho \cite{rest:donoho95},
+when he repeated $n$ times the filtering operations by shifting its 1D
+signal from one pixel at each operation. The border problem related 
+to the shifting is managed by ``wrap-around'', --
+the last pixel precedes the first.
+All results were then averaged, and this effectively reduces the number
+of artifacts. This approach however raises two problems: first,
+it seems  difficult to extend it to 2D or 3D signals because the number
+of filtering operations needed will become very high. Second, the way 
+the boundary is managed can lead to significant artifacts if there is 
+strong discontinuity
+between the first pixels and the last ones, which is obviously possible in
+practice 
+(whenever there is a continuum or trend in the data).
+
+The combined filtering proposed here is more general and it can be applied
+whatever the size or the dimension of the signal. We have used here 
+seven filterings, but this choice does not result from detailed study.
+We plan in the future to analyze which combinations lead 
+to the highest improvement. 
+
+
+\vbox{
+\hbox{
+\psfig{figure=fig_lenna_g30.ps,bbllx=2.cm,bblly=6.8cm,bburx=19.2cm,bbury=24cm,width=8cm,height=8cm}
+\psfig{figure=fig_lenna_g30_mallat.ps,bbllx=2.cm,bblly=6.8cm,bburx=19.2cm,bbury=24cm,width=8cm,height=8cm}
+}
+\hbox{
+\psfig{figure=fig_lenna_g30_mem.ps,bbllx=2.cm,bblly=6.8cm,bburx=19.2cm,bbury=24cm,width=8cm,height=8cm}
+\psfig{figure=fig_lenna_g30_mvm.ps,bbllx=2.cm,bblly=6.8cm,bburx=19.2cm,bbury=24cm,width=8cm,height=8cm}
+}}
+}
+\caption{Upper left, Lena image + noise ($\sigma = 30$). Upper right, filtered
+image by hard thresholding using FWT-7/9. Lower left, filtered
+image by the multiscale entropy method, and lower fight, combined 
+filtered image.}
+\label{fig_lenna_comp}
+\end{figure}
+
+
+\newpage
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_land_g30.ps,bbllx=2.cm,bblly=6.8cm,bburx=19.2cm,bbury=24cm,width=8cm,height=8cm}
+\psfig{figure=fig_land_g30_mallat.ps,bbllx=2.cm,bblly=6.8cm,bburx=19.2cm,bbury=24cm,width=8cm,height=8cm}
+}
+\hbox{
+\psfig{figure=fig_land_g30_mem.ps,bbllx=2.cm,bblly=6.8cm,bburx=19.2cm,bbury=24cm,width=8cm,height=8cm}
+\psfig{figure=fig_land_g30_mvm.ps,bbllx=2.cm,bblly=6.8cm,bburx=19.2cm,bbury=24cm,width=8cm,height=8cm}
+}}
+}
+\caption{Upper left, landscape image + noise ($\sigma = 30$). Upper right, 
+filtered
+image by hard thresholding using FWT-7/9. Lower left, filtered
+image by the multiscale entropy image, and lower right, combined filtered 
+image.}
+\label{fig_land_comp}
+\end{figure}

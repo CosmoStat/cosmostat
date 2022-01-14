@@ -1,0 +1,106 @@
+ 
+\chapter{Introduction}
+\label{ch_intro}
+% \chapterhead{Introduction}
+\markright{Introduction}
+
+% \proj (\defproj) 
+\proj is a
+set of software components 
+developed by CEA (Saclay, France) and Nice Observatory. This
+project originated in astronomy, and involved the development of a range of 
+innovative methods built around multiscale analysis.
+Multiresolution techniques have
+been developed  in recent years, and furnish a powerful and 
+insightful representation
+of the data. By means of multiresolution or multiscale analysis, an 
+image can be decomposed into a set of images (or scales), each scale 
+containing only structures of a given size. 
+This data representation, associated with noise modeling, 
+has been applied to very different applications such as data filtering, 
+deconvolution, compression, object detection, and so on. Results are 
+enhanced in all such processing because the multiresolution approach
+allows a better understanding of how the data values 
+are distributed in an image, 
+and how the signal can be separated from the noise.
+
+The \proj software 
+components include almost all applications 
+presented in the book {\em Image and Data Analysis: the Multiscale Approach}
+ \cite{starck:book98}. The goal of 
+\proj is not to replace 
+existing image processing  packages, but to complement
+them, offering the user a complete set of multiresolution tools. These tools
+are executable programs, which work on a wide range of platforms, 
+independently of current 
+image processing systems.  They allow the user to perform various tasks 
+using multiresolution, such as wavelet transforms, filtering, 
+deconvolution, and so on.
+
+The programs, written in C++, are built on three classes: the  
+``image" class, the ``multiresolution" class, and the 
+``noise\_modeling class".
+Fig. \ref{fig_sadam1} illustrates this architecture. A multiresolution
+transform is applied to the input data, and noise modeling is performed.
+Hence the multiple scales  can be derived, and the programs can use this
+in order to know at which scales, and at which positions, significant
+signal has been detected. 
+A wide range of 
+multiresolution transforms are available (see Fig.~\ref{fig_sadam2}),
+allowing significant flexibility.
+Fig.\ \ref{fig_modelnoise} summarizes how the multiresolution support data
+structure 
+is derived from the data and the noise-modeling. 
+
+
+A set of  IDL\footnote{Research Systems 
+Inc., 2995 Wilderness Place, Boulder, Colorado 80301.} (Interactive 
+Data Language) 
+and PV$\sim$Wave\footnote{Visual Numerics Inc.,  6230 Lookout Road, 
+Boulder, Colorado 80301, USA.}
+routines
+are included in the package which interface the executables to these
+image processing packages.  
+
+\proj is an important package, 
+introducing front-line methods to scientists 
+in the physical, space and medical domains among other fields; to engineers in 
+such disciplines as geology and electrical engineering; and to financial 
+engineers and those in  other fields requiring control and analysis of 
+large quantities of noisy data.  
+
+% The first release of the package is at the 
+% beginning of 1997.  
+% Further information on the pre-release version, codenamed 
+% \proj, can be found at  \\ 
+% http://www.dapnia.cea.fr/Sadam
+
+\begin{figure}[t]
+\centerline{
+\hbox{
+\psfig{figure=ch_annex2_sadam.ps,bbllx=2.5cm,bblly=3.cm,bburx=17.5cm,bbury=25cm,height=12cm,width=12cm,clip=}
+}}
+\caption{\proj diagram.}
+\label{fig_sadam1}
+\end{figure}
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+% \psfig{figure=ch_annex2_mr_trans.ps,bbllx=0.5cm,bblly=3.5cm,bburx=20.5cm,bbury=24.5cm,height=16cm,width=15cm,clip=}
+\psfig{figure=fig_mr1_transf.ps,bbllx=0.2cm,bblly=3.5cm,bburx=20.5cm,bbury=24.5cm,height=16cm,width=15cm,clip=}
+}}
+\caption{Multiresolution transforms available in \proj (a selection).}
+\label{fig_sadam2}
+\end{figure}
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=ch2_noise.ps,bbllx=0.5cm,bblly=1.5cm,bburx=22cm,bbury=26.5cm,width=13cm,height=16.66cm,clip=}}
+}
+\caption{Determination of multiresolution support from noise modeling.}
+\label{fig_modelnoise}
+\index{multiresolution support}
+\index{support, multiresolution}
+\end{figure}

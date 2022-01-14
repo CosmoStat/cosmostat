@@ -1,0 +1,2392 @@
+\documentclass[11pt,a4paper]{article}
+% \renewcommand{\baselinestretch}{2}
+\usepackage{psfig,amstex,amssymb,alltt}
+\usepackage{psfig}
+
+
+\newcommand{\psdir}{/export/home/starck/tex/report/FIG}
+\psfigurepath{\psdir/curvelet:\psdir/book98:\psdir/compress:\psdir/entropy:\psdir/PS_ISO:\psdir/cours:\psdir/demo:\psdir/detect:\psdir/edge}
+% \psfigurepath{\psdir/curvelet:\psdir/book98:\psdir/cours:\psdir/demo}
+
+\usepackage[latin1]{inputenc}
+\usepackage[widemargins]{a4}
+\usepackage{graphics}
+\usepackage{astron}
+
+\textwidth 15.6truecm
+\textheight 23truecm
+\hoffset -1.5truecm
+\voffset -1.5truecm
+
+\title{{\Huge \bf  Image Deconvolution: a Review \\
+              \underline{ \hspace{15cm}} }}
+\author{ \huge {Technical Report} \\ 
+       \vspace{2cm} \\
+        J-L. Starck     \\  [12pt]
+       DSM/DAPNIA/SEI-SAP, CEA-Saclay, 91191 Gif-sur-Yvette, France   \\
+       \\ 
+      \vspace{1cm}}
+
+\date{January - Version 0.3\\
+     \vspace{1cm}}
+
+\newcommand{\be}{\begin{eqnarray}}
+\newcommand{\ee}{\end{eqnarray}}
+
+\begin{document}
+\maketitle
+
+\newpage
+\tableofcontents
+
+\newpage
+
+\section{Introduction to deconvolution}
+
+Consider an image characterized by its intensity
+distribution (the ``data'') $I$, corresponding to the observation of a
+``real image'' $O$ through an optical system. If the
+imaging system is linear and shift-invariant, the relation between
+the data and the image in the same coordinate frame is a
+convolution:
+\begin{eqnarray}
+I(x,y) & = & \int_{x_1=-\infty}^{+\infty} 
+             \int_{y_1=-\infty}^{+\infty}
+             P(x-x_1, y-y_1) O(x_1,y_1)  dx_1 dy_1 + N(x,y) \\ 
+& = & (P * O)(x,y) + N(x,y)
+\label{eqn_3_first}
+\end{eqnarray}
+$P$ is the point spread function (PSF) of the imaging system, and $N$
+is an additive noise. 
+
+% In practice $O * P$ is subject to non-stationary noise
+% \index{stationary signal}
+% which one can tackle by simultaneous object estimation and restoration
+% \cite{rest:katsaggelos91}. 
+% The issue of more extensive statistical
+% modeling will not be further addressed here (see 
+% \cite{rest:llacer90,rest:lorenz93,rest:molina93,rest:molina01}), 
+% beyond noting that multiresolution
+% frequently represents a useful framework, allowing the user to introduce
+% a priori knowledge of objects of interest.
+ 
+In Fourier space we have:
+\begin{eqnarray}
+\hat I(u,v)= \hat O(u,v) \hat P(u,v) + \hat N(u,v)
+\end{eqnarray}
+We want to determine $O(x,y)$ knowing $I$ and $P$. This
+inverse problem has led to a large amount of work, the main difficulties 
+being the existence of: (i) a cut-off frequency of the 
+point spread function, 
+and (ii) the additive noise 
+(see for example \cite{rest:cornwell88,ima:katsa93,ima:bertero98,rest:molina01}).
+ 
+A solution can be obtained by computing
+  the Fourier transform of the deconvolved object $\hat{O}$ by
+  a simple division between the image $\hat{I}$ and the PSF $\hat{P}$
+\begin{eqnarray}
+\hat{\tilde{O}}(u,v)=\frac{\hat{I}(u,v)}{\hat{P}(u,v)}=
+   \hat{O}(u,v)+\frac{\hat{N}(u,v)}{\hat{P}(u,v)}
+\end{eqnarray}
+This  method, sometimes called {\em  Fourier-quotient method} is very fast. 
+We only need to do a Fourier transform
+ and an inverse Fourier transform. For frequencies close the frequency
+ cut-off, the noise term becomes important, and the noise is amplified.
+ Then in the presence of noise, this method cannot be used.
+%  To reduce the artifact, it is possible to convolve the solution with a 
+%  smoothing function (Gaussian). 
+
+Eqn.\ \ref{eqn_3_first} is usually in practice an ill-posed problem.
+This means that there is not a unique and stable solution.  
+
+Other topics related to the deconvolution are:
+\begin{itemize}
+\item super-resolution: object spatial frequency information 
+outside the spatial bandwith of the
+image formation system is recovered.
+\item blind deconvolution: the PSF $P$ is unknown.
+\item myopic deconvolution: the PSF $P$ is partialy known.
+\item image reconstruction:
+an image is formed from a series of projections (Computed Tomography, 
+Positron Emission Tomography, ...).
+\end{itemize}
+We will discuss only the deconvolution and  super-resolution
+problem in this chapter.
+
+In the deconvolution problem, the Point Spread funcfion is assumed to be known.
+In practice, we have to construct a PSF from the data, or from an optical model 
+of the imaging telescope. In astronomy, the data may contains stars which 
+can be used to construct a PSF. Several studies 
+\cite{astro:buonanno83,astro:moffat69,astro:djorgovski83,astro:molina92} 
+have suggested a radially 
+symmetric approximation of the PSF:
+\begin{eqnarray}
+P(r) \propto (1 + \frac{r^2}{R^2})^{-\beta}
+\end{eqnarray}
+The parameters $\beta$ and $R$ are obtained by fitting the model 
+ with the stars contained in the data.
+% Another possibility 
+% is to use Wiener filtering
+%  which is defined by:   
+%  \begin{eqnarray}
+% \hat{W}_u = \frac{\mid \hat{S}_u \mid^2 }{\mid \hat{S}_u \mid^2 + \mid \hat{N}_u\mid^2}
+% \end{eqnarray}
+% where $\mid \hat{S}_u \mid^2 $ and  $\mid \hat{N}_u\mid^2$  are
+% the spectral density of the signal and the noise. The filter is
+% \begin{eqnarray}
+% \hat{W_d}_u = \frac{ 
+%     \hat{P}^*_u} {\mid\hat{P}_u\mid^2+ \frac{\mid\hat{N}_u\mid^2}{\mid\hat{O}_u\mid^2}}
+% \end{eqnarray}
+
+% \bigskip
+% Wiener filtering has serious drawbacks (artifact creation such as ringing
+% effects), and  needs spectral noise estimation. Its advantage is that it
+% is very fast.
+
+\section{Linear Regularized Methods}
+
+\subsection{Least-square solution}
+It is easy to verify that the minimization of 
+$\parallel I(x,y) - P(x,y)* O(x,y) \parallel^2$
+lead to the solution:
+\begin{eqnarray}
+\hat{\tilde{O}}(u,v)=\frac{\hat{P}^*(u,v)\hat{I}(u,v)}{ \mid \hat{P}(u,v) \mid^2}
+ \end{eqnarray}
+which is defined on if $\hat{P}(u,v)$ is different from zero. The problem is
+general ill-posed and we need to introduce a {\em regularization} in order
+to find an unique and stable solution.
+
+\subsection{Tikhonov regularization}
+Tikhonov regularization \cite{rest:tikhonov77} consists of minimizing the term:
+\index{Tikhonov regularization}
+\index{regularization, Tikhonov}
+\begin{eqnarray}
+J_T(O) = \parallel I(x,y) - (P * O)(x,y) \parallel + \lambda \parallel H * O\parallel
+ \label{eqn_ti}
+\end{eqnarray}
+ where $H$ corresponds to a high-pass filter. 
+This criterion contains two terms. 
+The first, $\parallel I(x,y) - P(x,y)* O(x,y) \parallel^2$, expresses
+ fidelity to the data $I(x,y)$, and the second, 
+$\lambda \parallel H * O\parallel^2$, expresses 
+smoothness of the restored image. 
+$\lambda$ is the
+regularization parameter and represents the trade-off between
+fidelity to the data and the smoothness of the restored image. 
+
+The solution is obtained directly in Fourier space
+\begin{eqnarray}
+\hat{\tilde{O}}(u,v)  = \frac{\hat{P}^*(u,v) \hat{I}(u,v)}{\mid \hat{P}(u,v) \mid^2 + \lambda \mid \hat{H}(u,v) \mid^2}
+\end{eqnarray}
+
+Finding the optimal value $\lambda$ necessitates use of numerical techniques such as
+cross-validation \cite{rest:golub79,rest:galatsanos92}. 
+This method works well, but computationally it is relatively lengthy
+and produces smoothed images. This second point can be a real problem
+when we seek compact structures such as is the case in astronomical imaging.
+
+\subsection{Generalization}
+
+\begin{figure}[htb] 
+\centerline{
+\hbox{
+\psfig{figure=fig_hanning_trans.ps,bbllx=4cm,bblly=12.5cm,bburx=19cm,bbury=23.5cm,width=11.25cm,height=9.75cm,clip=}
+}}
+\caption{Example of windows whose support are $[-1/2,1/2]$.}
+\label{fig_window}
+\end{figure}
+
+This method can be generalized, and we write:
+ \begin{eqnarray}
+\hat{\tilde{O}}(u,v)  = \hat{W}(u,v) \frac{ \hat{I}(u,v)}{ \hat{P}(u,v)  }
+\end{eqnarray}
+with the window function $W$ defined by:
+\begin{eqnarray}
+W(u,v) = \frac{\mid \hat{P}(u,v) \mid^2}{\mid \hat{P}(u,v) \mid^2 + \lambda \hat{P}(u,v)}
+\end{eqnarray}
+$W$ must satisfy the following conditions \cite{ima:bertero98}
+(we give here the window definition in 1D):
+\begin{enumerate}
+\item $\mid \hat{W}(\nu) \mid \le 1, \mbox{ for any } \nu  > 0$
+\item $\lim_{\nu \rightarrow 0} \hat{W}(\nu)  = 1 \mbox{ for any $\nu$ such that } \hat{P}(\nu) \ne 0$
+\item $\hat{W}(\nu) / \hat{P}(\nu) \mbox{ bounded for any  } \nu > 0$
+\end{enumerate}
+Any function sastifying these three conditions defines a regularized linear
+solution. Most used windows are:
+\begin{itemize}
+\item Truncated window function:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+    1   &  \mbox{ if }  \mid \hat{P}(\nu) \mid \ge \sqrt{\epsilon}    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+where $\epsilon$ is the regularization parameter.
+\item Rectangular window:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+    1   &  \mbox{ if }  \mid  \nu \mid \le \Omega    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+where $\Omega$ defines the band-width.
+\item Triangular window:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+    1 - \frac{\nu}{\Omega}  &  \mbox{ if }  \mid  \nu \mid \le \Omega    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+\item Hamming Window:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+    0.54 + 0.46 \cos(\frac{2\pi \nu}{\Omega})    &  \mbox{ if }  \mid  \nu \mid \le \Omega    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+
+\item Hanning Window:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+    \cos(\frac{\pi \nu}{\Omega})    &  \mbox{ if }  \mid  \nu \mid \le \Omega    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+
+\item Gaussian Window:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+     \exp(-4.5 \frac{\nu^2}{\Omega^2})    &  \mbox{ if }  \mid  \nu \mid \le \Omega    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+
+\item Blackman Window:
+$
+\hat{W}(\nu) =  \left\{
+  \begin{array}{ll}
+  0.42 + 0.5  \cos(\frac{\pi \nu}{\Omega}) +  0.08  \cos(\frac{2\pi \nu}{\Omega})  &  \mbox{ if }  \mid  \nu \mid \le \Omega    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+$
+
+\end{itemize}
+Figure~\ref{fig_window} shows examples of windows.
+Linear regularized methods have the advantage to be very attractive from
+a computation point of view. Furthermore, the noise in the solution can
+easily be derived from the noise in the data and the window function.
+For example, if the noise in the data is Gaussian with a standard 
+deviation $\sigma_d$,
+the noise in the solution if $\sigma_s^2 = \sigma_d^2 \sum W_k^2$.
+This noise estimation does not take into account the errors relative to 
+the inaccurate knowledge of the PSF, which limits its interest in practice.
+
+Linear regularized methods presents also several drawbacks:
+\begin{itemize}
+\item Creation of Gibbs oscillations in the neighborhood of 
+ the discontinuities contained in the data. The visual quality is therefore
+ degraded.
+\item No a priori information can be used. For example, negative values
+can exist in the solution, while in most cases, we
+know that it must be positive.
+\item As the window function is a low-pass filter, the resolution is degraded.
+There is trade-off between the resolution we want to achieve and the noise
+level in the solution. Other methods such wavelets-based methods do not
+have such a constraint.
+\end{itemize}
+
+
+\section{CLEAN.}
+\index{CLEAN}
+
+This approach assumes the object is composed of point sources.
+It tries to decompose the image (called the dirty map)
+ into a set of $\delta$-functions. 
+This is done iteratively by finding the point with the largest
+absolute brightness and subtracting the point spread function (dirty beam)
+scaled with the product of the loop gain and the intensity at that
+point. The resulting residual map is then used to repeat the
+process. The process is stopped when some prespecified limit 
+is reached. The convolution of the $\delta$-functions with an ideal 
+point spread function 
+(clean beam) plus the residual equals the restored image (clean map). 
+\index{clean beam}
+\index{clean map}
+This solution is only possible if the image does not contain
+large-scale structures.  
+The algorithm is:
+\begin{enumerate}
+\item Compute the dirty map  $I^{(0)}(x,y)$ and the dirty beam $A(x,y)$\\
+%$i$ = 0
+\item Find the maximum value, and the coordinate $(x_{max},y_{max})$ of
+the corresponding pixel in $I^{(i)}(x,y)$ .
+\item Compute $I^{(i+1)}(x,y) = I^{(i)}(x,y) - \gamma I_{max} A_m(x,y)$ \\
+      with $A_m(x,y)= A(x-x_{max}, y-y_{max})$ \\
+      and the loop gain $\gamma$ inside [0,1].
+\item If the residual map is at the noise level, then go to step 5. \\
+      Else $i \longleftarrow i+1$ and go to step 2.
+\item The clean map is the convolution of the list of maxima 
+with the clean beam  (which is generally a Gaussian).
+\item Addition of the clean map and the residual map 
+  produces the deconvolved image. 
+\end{enumerate}
+
+We would like to point out the work of Champagnat et al. \cite*{rest:idier96}
+and Kaaresen \cite{rest:kaaresen97} where the 
+the restoration of an object composed of peaks, called 
+{\em sparse spike trains}, has been treated
+in a rigourous way \cite{rest:idier96,rest:kaaresen97}.
+
+\section{Bayesian methodology}
+\subsection{Definition}
+The Bayesian approach consists to construct the conditional probability
+density relationship:
+\be
+p(O/I) = {p(I/O) p(O) \over p(I)}
+\ee
+The Bayes solution is found by maximizing the right part of the equation.
+The maximum likehood solution (ML) maximizes only the density $p(I/O)$ over $O$:
+\be
+ML(O) = \max_O  p(I/O)
+\ee
+The  maximum-a-posteriori solution (MAP) maximizes over $O$ 
+the product $p(I/O) p(O)$ of the ML and a prior:
+\be
+MAP(O)  = \max_O  p(I/O) p(O)
+\ee
+
+$p(I)$ is considered as a constant value which
+has no effect in the maximization processus, and is neglected.
+The ML solution is equivalent to the MAP solution assuming an uniform 
+density probability for $p(O)$.
+ 
+\subsection{Maximum Likehood with Gaussian Noise}
+The probability $p(I/O)$ is 
+\be
+p(I/O) = {1 \over \sqrt{2} \pi \sigma_N} \exp{-{(I-P*O)^2 \over 2 \sigma_N^2}} 
+\ee
+and, assuming that $p(O)$ is a constant,
+ maximizing $p(O/I)$ is equivalent to minimize
+\be
+J(O) = {\parallel I - P * O \parallel^2 \over 2 \sigma_n^2}  
+\ee
+Using the steepest descent minimization method, a typical iteration is
+\be
+O^{n+1} = O^{n} + \gamma P^* (I - P * O^n)
+\ee
+where $P^*(x,y)=P(-x,-y)$. $P^*$ is the transpose of the point
+spread function, 
+and $O^{(n)}$ is the current estimate of the desired ``real image''.  
+This method is usually called the Landweber method \cite{rest:landweber51}, 
+but sometimes also {\em successive approximations} or 
+Jacobi method \cite{ima:bertero98}.
+
+The solution can also be found directly using the FFT by
+\be
+\hat{O}(u,v) = \frac{\hat{P}^*(u,v) \hat{I}(u,v)}
+                {\hat{P}^*(u,v) \hat{P}(u,v)}   
+\ee
+
+\subsection{Gaussian Bayes model}
+
+If the object and the noise are assumed to follow Gaussian distributions
+with zero mean and variance respectively equal to $\sigma_O$ and $\sigma_N$, 
+then Bayes solution leads to the Wiener filter solution
+\be
+\hat{O}(u,v) = \frac{ 
+    \hat{P}^*(u,v) \hat{I}(u,v)} {\mid\hat{P}(u,v)\mid^2+ 
+    \frac{\sigma_N^2(u,v)}{\sigma_O^2(u,v)}}
+\ee
+Wiener filtering has serious drawbacks (artifact creation such as ringing
+effects), and needs spectral noise estimation. Its advantage is that it
+is very fast.
+
+\subsection{Maximum Likehood with Poisson noise}
+\be
+p(x) = {\lambda^x \exp{-\lambda} \over x!}
+\ee
+\be
+p(I/O) = \prod {((P*O)(k))^{I(k)} \exp{-(P*O)(k)} \over I(k)!}
+\ee
+The maximum can be computed by derivating the logarithm:
+\be
+{\partial \ln p(I/O) \over \partial O(k)} = 0
+\ee
+which leads to the result (assuming the PSF is normalized to the unity)
+\be
+{I(k) \over P*O(k)}*P^* = 1
+\ee
+Multiplying both side by $O(k)$
+\be
+O(k) = [{I(k) \over P*O(k)}*P^*] O(k)
+\ee
+and using the Picard iteration \cite{ima:picard66} 
+(see annex~\ref{annex_picard} for more details) leads to
+\be
+O^{n+1}(k) = [{I(k) \over P*O^{n}(k)}*P^*] O^{n}(k)
+\ee
+it is the Richardson-Lucy algorithm \cite{rest:richardson72,rest:lucy74},
+also sometime called {\em Expectation-Maximization method} (EM-method).
+This method is commonly used in astronomy.
+Flux is preserved and the solution is always positive. The positivity 
+of the solution can be obtained too with Van Cittert's and the 
+one-step gradient
+methods by thresholding negative values in $O^{(n)}$ at each iteration.
+
+\subsection{Poisson Bayes model}
+we state the object pdf as
+\be
+p(O) = \prod_j {M(j)^{O(j)} \exp{-M(j)} \over O(j) !}
+\ee
+The MAP solution is
+\be
+O(k) = M(k) \exp{[{I(k) \over P*O(k)} -1 ] * P^*}
+\ee
+and chosing $M = O^n$ and using the Picard iteration leads to
+\be
+O^{n+1}(k) = O^{n}(k) \exp{[{I(k) \over P*O^{n}(k)} -1 ] * P^*}
+\ee
+
+\subsection{Maximum Entropy Method}
+In the absence of any information on the solution 
+$O$ except its positivity, a possible course of action 
+is to derive the probability
+of $O$ from its entropy, which is defined from information theory.
+Then if we know the entropy $H$ of the solution, 
+we derive its probability by
+\be
+\mathrm{p}(O) = \mathrm{exp}(- \alpha H(O))
+\ee
+The most used entropy functions are:
+\begin{itemize}
+\item Burg \cite{entropy:burg67}:
+$H_b(X) = -\sum_{pixels} \ln(X) $
+\item Frieden \cite{entropy:frieden75}:
+$H_f(X) = -\sum_{pixels}X \ln(X)$
+\item Gull and Skilling \cite{entropy:gull91}:
+$H_g(X) = \sum_{pixels} X - M - X \ln(X|M)$
+\end{itemize}
+
+The last definition of the entropy has the advantage of having a zero
+maximum when $O$ equals the model $M$, usually taken as a flat image. 
+
+\section{Iterative Regularized Methods}
+\subsection{Constraints}
+We assume now that there exists a general operator, ${\cal P_C}(.)$, which
+enforces a set of constaints on a given object $O$, such that if $O$
+satisfies all the constraints, we have:
+\begin{eqnarray}
+O  = {\cal P_C}(O)
+\end{eqnarray}
+The main used constraints are:
+\begin{itemize}
+\item{Positivity:} the object must be positive. 
+\begin{eqnarray}
+ {\cal P}_{C_p}(O_k) =  \left\{
+  \begin{array}{ll}
+    O_k   & \mbox{ if }  O_k \ge 0    \\
+    0   &   otherwise
+  \end{array}
+  \right.
+\end{eqnarray}
+This constraint can be generalyzed when the upper and lower bounds 
+$U$ and $L$ are known:
+\begin{eqnarray}
+ {\cal P}_{C_p}(O_k) =  \left\{
+  \begin{array}{ll}
+      U_k   &  \mbox{ if }  O_k > U_k    \\
+     O_k  & \mbox{ if }   L_k \le O_k \le U_k    \\
+      L_k   &   otherwise
+  \end{array}
+  \right.
+\end{eqnarray}
+For example, if the background image $B$ is known, we can fix
+$L_k = B_k$ and $U_k = +\infty$.
+
+\item{Support constraint:} 
+the objects belongs to a given spatial domain ${\cal D}$.
+\begin{eqnarray}
+ {\cal P}_{C_s}(O_k) =  \left\{
+  \begin{array}{ll}
+   O_k    & \mbox{ if }  k \in {\cal D}    \\
+   0   &  otherwise
+  \end{array}
+  \right.
+\end{eqnarray}
+\item{Band-limited:} the Fourier transform of the object belongs to a given
+frequency domain. For instance, if $F_c$ is the cut-off frequency of the
+instrument, we want to impose the object to be band-limited:
+\begin{eqnarray}
+ {\cal P}_{C_f}(\hat O_\nu) =  \left\{
+  \begin{array}{ll}
+    \hat O_\nu    & \mbox{ if }  \nu < F_c    \\
+  0 &  otherwise
+  \end{array}
+  \right.
+\end{eqnarray}
+\end{itemize}
+These constraints can be incorporated easily in the basic iterative scheme.
+
+\subsection{Jansson-Van Cittert Method}
+Van Cittert \cite{rest:vancittert31}  restoration is relatively easy to write.
+We start with $k=0$ and $O^{(0)} = I$ and we iterate:
+\index{Van Cittert deconvolution} 
+\begin{eqnarray}
+O^{(n+1)}  = O^{(n)}  + \alpha(I - P * O^{(n)})
+\label{vanvan}
+\end{eqnarray}
+where $\alpha$ is a convergence parameter generally taken as $1$.
+When $k$ tends to infinity, we have $O = O + I - p * O$, so $I = P * O$. In
+Fourier space, the convolution product becomes a product 
+\begin{eqnarray}
+\hat{O}^{(n+1)} = \hat{O}^{(n)}  + \alpha(\hat{I} - \hat{P}  \hat{O}^{(n)})
+\end{eqnarray}
+In this equation, the object distribution is modified by adding a term
+proportional to the residual. The algorithm converges quickly after only
+5 or 6 iterations. But the algorithm generally diverges in the
+presence of noise. Jansson \cite{rest:jansson68} 
+modified this technique in order to give it
+more robustness by considering constraints on the solution. If we wish
+that $ A \leq O_k \leq B$, the iteration is
+\begin{eqnarray}
+O^{(n+1)}_k = O^{(k)}_k + r(k)[I_k - P_k * O^{(n)}_k]
+\end{eqnarray}
+with:
+\[r_k = C[1 - 2(B-A)^{-1}\mid O^{(n)}_k - 2^{-1}(A+B)\mid]\]
+$C$ being a constant.
+
+More generally the constrained Van-Cittert method is written by:
+\begin{eqnarray}
+O^{(n+1)}  = {\cal P}_C [ O^{(n)}  + \alpha(I - P *  O^{(n)}) ]
+\end{eqnarray}
+
+\subsection{Other iterative methods}
+Other iterative methods can be contrainted in the same way:
+\begin{itemize}
+\item{Landweber:}
+\begin{eqnarray}
+O^{n+1} = {\cal P}_C [ O^{n} + \gamma P^* (I - P *  O^n) ]
+\end{eqnarray}
+\item{Richardon Lucy Method:}
+\begin{eqnarray}
+O^{n+1}(k) = {\cal P}_C [ O^{n}(k) [{I(k) \over P* O^{n}(k)}*P^*] ]
+\end{eqnarray}
+\item{Tikhonov:}  Tikhonov solution can be obtained iteratively 
+by computing  the gradient of equation~\ref{eqn_ti}:
+\begin{eqnarray}
+ \nabla(J_T(O)) = P^* * P * O + \mu H^* * H * O - P^* * I
+\end{eqnarray}
+and applying the following iteration:
+\begin{eqnarray}
+O^{n+1}(k) = O^{n}(k) - \gamma \nabla(J_T(O))
+\end{eqnarray}
+The constraint Tikhonov solution is therefore obtained by:
+\begin{eqnarray}
+O^{n+1}(k) =  {\cal P}_C [ O^{n}(k) - \gamma \nabla(J_T(O)) ]
+\end{eqnarray}
+\end{itemize}
+
+The number of iterations plays an important role in these iteratives
+methods. Indeed, it can be considered as a regularization parameter.
+When the number of iterations increases, the iterates first approach
+the unknown object, and then go away \cite{ima:bertero98}. 
+
+% \subsection*{Conclusion}
+% All these methods have a severe drawback:  noise amplification,
+% which prevents the detection of weak objects, and leads to false
+% detections. To resolve these problems, some constraints must be added to
+% the solution (positivity is already one such constraint, 
+% but it is not enough). The addition
+% of such constraints is called regularization. Several regularization methods 
+% exist.
+
+
+% \section{Algebric Linear Restoration}
+
+% \section{Optimisation Method}
+
+
+
+
+\section{Regularization using Markov Models}
+
+\subsection{Introduction}
+% Let us briefly review the ingredients of the proposed regularization method.
+% 
+% The basic procedure uses a random Markov field as the prior model, 
+% the relation (\ref{eqn_3_first}) for image formation consisting typically 
+% of blur and superposition
+% of Gaussian noise, and Bayes' formula to obtain the posterior distribution 
+% $P(x/y)$. 
+Markov random field has been proposed for astronomical image restoration
+\cite{rest:hunt94,rest:molina96,rest:katsa95}. The principe is to consider
+that a pixel level follows a probability law which depends on the levels
+in some surrounding neighbor, which is a way to define how a pixel is
+correlated with its neighborhood.
+
+\subsubsection*{Random Markov field}
+
+A random sequence $x$ is called a Markov random field if for each site $s$:
+\begin{eqnarray}
+P({x}) > 0 && \forall {x}\in \Omega  
+\end{eqnarray}
+\begin{eqnarray}
+P(x_s \mid x_t;t\in S-\{s\}) = P(x_s \mid x_t;t\in{{\cal V}_s}) 
+\end{eqnarray}
+where $\Omega$ represents all possible configurations and $S$ is the dimension of
+the field $x$.
+At every site $s$ of the field $x$, the conditional probability  
+depends on a neighborhood ${\cal V}_s$ which is defined by the neighbors $t$ of the 
+site $s$. Note that ${\cal V}_s$ increases with the order of the model.
+
+\subsubsection*{Examples of models}
+
+The four-neighbor system is defined as follows:
+
+\begin{picture}(100,120)(0,0)
+\put(50,0){\circle{5}}
+\multiput(0,50)(100,0){2}{\circle{5}}
+\put(50,50){\circle*{5}}
+\put(55,55){site s}
+\put(50,100){\circle{5}}
+\put(150,55){4 NEIGHBOR MODEL}
+\end{picture}
+
+Because the edges of the image are not only parallel to the axes, there seems
+to be need to include diagonal neighbor pixels.
+Then, the four-neighbor model can be improved as follows:
+
+\begin{picture}(100,120)(0,0)
+\multiput(0,0)(50,0){3}{\circle{5}}
+\multiput(0,50)(100,0){2}{\circle{5}}
+\put(50,50){\circle*{5}}
+\put(55,55){site s}
+\multiput(0,100)(50,0){3}{\circle{5}}
+\put(150,55){8 NEIGHBOR MODEL}
+\end{picture}
+
+\subsubsection*{Gibbs distribution}
+
+The prior distribution $P({x})$ can be interpreted as a Gibbs energy.
+Then, $x$ is a Markov random field if 
+$P({x})$ is a Gibbs distribution such that:
+\begin{eqnarray} 
+P({x}) = \frac{1}{Z}\exp(-U({x})) 
+\end{eqnarray}
+where $Z$ is a partition function and $U({x})$ a prior energy such that:
+\begin{eqnarray} 
+U({x}) = \sum_{c \in {\cal C}} V_c(x)
+\end{eqnarray}
+where $V_c(x)$ are potentials functions and $c$ is a clique which is 
+defined as a pair of adjacent pixels. 
+
+\subsubsection*{Potential function and line process}
+
+In order to preserve edges, 
+the use of a {\it line process} was introduced by Geman and Geman \cite{Geman84}. 
+In practice, a line process is defined via a potential function $\phi$
+which has particular properties (see \cite{Geman92}).
+
+Suppose $\phi(u)$ has the following properties on $[0,+\infty[$:
+\begin{itemize}
+\item $\phi(0)=0$
+\item $\phi(\sqrt u)$ concave
+\item $\lim_{u \rightarrow +\infty} \phi(u)=1$
+\end{itemize}
+
+Then, there exists a function $\psi(l)$ defined on an interval [0,L] 
+such that: 
+\begin{eqnarray} 
+\phi(u) = \inf_{0\leq l\leq L}(lu^2+\psi(l))
+\label{eqn_vdl}
+\end{eqnarray}
+
+and such that $\psi(l)$ has the properties:
+\begin{itemize}
+\item $\psi(0)=1$
+\item $\psi(L)=0$ 
+\item $\psi(l)$ strictly decreasing.
+\end{itemize}
+
+The line process is defined as the derivative of  
+$\phi(\sqrt u)$:
+\begin{eqnarray} 
+l = \phi'(\sqrt u) 
+\end{eqnarray}
+
+\subsection{Posterior modeling}
+ 
+In the context of Bayesian estimation, the posterior distribution  
+$P({x \mid y})$ can be written as:
+\begin{eqnarray}
+P({x \mid y}) \propto P({y \mid x})P({x}) 
+\end{eqnarray}
+where 
+\begin{eqnarray} 
+P({y \mid x}) \propto \exp(-U({y \mid x})) 
+\end{eqnarray}
+and
+\begin{eqnarray}
+P({x}) \propto \exp(-U({x}))
+\end{eqnarray}
+Then, the posterior $P({x \mid y})$ is also a Gibbs energy such that:
+\begin{eqnarray}
+U({x \mid y}) = U({y \mid x}) + U({x})
+\end{eqnarray}
+The traditional choice in image restoration is:
+\begin{eqnarray} 
+U({y \mid x}) = \frac{\|{y-Hx}\|^2}{2\sigma^2}
+\end{eqnarray}
+In the first order case, the prior $P({x})$ is defined such that:
+\begin{eqnarray} 
+U({x}) = \sum_{cliques} \phi(x_r-x_s)
+\end{eqnarray} 
+where $\phi$ is the potential function and $(x_s-x_r)$ is the difference 
+between the values $x_r$ and $x_s$ of the two neighbors inside the 
+clique $c$.
+The solution is estimated by maximizing the posterior distribution
+$P({x \mid y})$.
+Then, the energy $U({x \mid y})$ must be minimized.
+\begin{eqnarray} 
+U({x \mid y}) = \frac{\|{y-Hx}\|^2}{2\sigma^2}
+               + \lambda \sum_{cliques} \phi(x_r-x_s) 
+\label{eqn_cr}	       
+\end{eqnarray}
+where $\lambda$ is the regularizing parameter.
+
+\subsection{Application}
+
+\subsubsection{Minimization of the prior energy}
+
+The difficulty is to minimize the non quadratic energy $U(x)$.
+From the work of Geman and Reynolds \cite{Geman92},
+the minimization of $U(x)$ is equivalent to minimizing $U(x \mid l)$ such
+that:
+\begin{eqnarray}
+\min_{x}(U({x})) = \min_{x,l}(U({x,l}))
+\end{eqnarray}
+where $l$ is the vector of the line variables $l_c$.
+According to equation (\ref{eqn_vdl}), it follows that $U(x \mid l)$ can 
+be written
+as:
+\begin{eqnarray} 
+U({x,l}) = \sum_{cliques\,c} l_c (x_r-x_s)^2 + \psi(l_c)
+\label{eqn_eg}
+\end{eqnarray}
+Note that the regularization becomes 
+``half-quadratic'' (see \cite{BlancFeraud96})
+by using equation (\ref{eqn_eg}):
+\begin{itemize}
+\item With $l$ fixed, $U({x,l})$ is quadratic in $x$. The
+minimization in $x$ reduces to the resolution of a linear system.
+\item With $x$ fixed, the minimum $\hat l_c$ is given by the expression
+$\hat l_c=\phi'(u)/2u$ where $u=(x_r-x_s)$.
+\end{itemize}
+We suppose that the variables $\hat l_c$ do not interact with each other.
+In fact, these {\it line variables} map the discontinuities (or the edges) of
+the image $x$. $\hat l_c$ takes a value near zero at the edges and a 
+value $L$
+in homogeneous areas.
+
+\subsubsection{Line variables system}
+
+For the first order Markov case, a line variable is labeled as an arrow 
+between two horizontal or vertical and adjacent pixels $(x_r,x_s)$.
+Then, each arrow is associated with a first order clique.
+
+
+\begin{picture}(100,120)(0,0)
+\put(50,0){\circle{5}}
+\multiput(0,50)(100,0){2}{\circle{5}}
+\put(50,50){\circle*{5}}
+\put(55,55){(x,y)}
+\put(55,105){(x,y+1)}
+\put(55,5){(x,y-1)}
+\put(105,55){(x+1,y)}
+\put(5,55){(x-1,y)}
+\put(50,100){\circle{5}}
+\put(50,95){\vector(0,-1){40}}
+\put(50,45){\vector(0,-1){40}}
+\put(95,50){\vector(-1,0){40}}
+\put(45,50){\vector(-1,0){40}}
+\put(150,55){FOUR-NEIGHBOR SYSTEM}
+\end{picture}
+
+
+The four neighbor system can be improved by including diagonal adjacencies.
+
+\begin{picture}(100,120)(0,0)
+\multiput(0,0)(50,0){3}{\circle{5}}
+\multiput(0,50)(100,0){2}{\circle{5}}
+\put(50,50){\circle*{5}}
+\multiput(0,100)(50,0){3}{\circle{5}}
+\put(105,105){(x+1,y+1)}
+\put(5,-5){(x-1,y-1)}
+\put(105,-5){(x+1,y-1)}
+\put(5,105){(x-1,y+1)}
+\put(50,95){\vector(0,-1){40}}
+\put(50,45){\vector(0,-1){40}}
+\put(95,50){\vector(-1,0){40}}
+\put(45,50){\vector(-1,0){40}}
+\put(95,95){\vector(-1,-1){40}}
+\put(45,45){\vector(-1,-1){40}}
+\put(95,5){\vector(-1,1){40}}
+\put(45,55){\vector(-1,1){40}}
+\put(150,55){EIGHT-NEIGHBOR SYSTEM}
+\end{picture}
+
+
+\subsubsection{The potential function}
+
+Concerning the choice of $\phi$, the following convex function proposed in 
+\cite{Brette96} is used:
+\begin{eqnarray} 
+\phi_{\delta}(u) = |u/\delta| - \ln(1+|u/\delta|) 
+\label{eqn_phi}
+\end{eqnarray}
+where $u=(x_r-x_s)$ and $\delta$ is a scaling parameter. 
+An example is given for $\delta=500$ in Figure~\ref{fig_phi}. It shows 
+that $\phi$ is quadratic with $u<<\delta$ and linear with $u>>\delta$.
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_markov_phi.ps,bbllx=2.5cm,bblly=13cm,bburx=19.5cm,bbury=25.5cm,width=8cm,height=8cm,clip=}
+}}
+\caption{}
+\label{fig_phi}
+\end{figure}
+The derivative is equal to
+$\phi'_{\delta}(u)=u/\delta(|u|+\delta)$.
+Note that updating the line variables is a simplified operation by using the following
+formula:
+\begin{eqnarray} 
+\hat l_c = \phi'_{\delta}(u)/2u = \frac{1}{2\delta}/(\delta + |u|) 
+\end{eqnarray}
+
+ 
+\subsubsection{The prior energy formula} 
+ 
+In the case of the four nearest neighbors, the prior energy is defined as: 
+\begin{eqnarray} 
+U({x})& = &\sum_{vertical\, cliques} \phi_{\delta}(I_{y,x}-I_{y+1,x}) \\
+       & &  + \sum_{horizontal\, cliques} \phi_{\delta}(I_{y,x}- I_{y,x+1})
+\label{eqn_e}
+\end{eqnarray}
+where $I_{y,x}$ is the pixel intensity in image $I$ at row $y$ and column $x$.
+
+
+By adding the following expressions to the terms in equation (\ref{eqn_e}), we
+obtain the energy $U({x})$ of the eight neighbor system:
+\begin{eqnarray} 
+\sum_{diagonal\, cliques} \phi_{\delta}(I_{y,x}- I_{y+1,x+1})
+\end{eqnarray}
+and 
+\begin{eqnarray} 
+\sum_{diagonal\, cliques} \phi_{\delta}(I_{y,x}- I_{y-1,x+1})
+\end{eqnarray}
+
+Instead of using a stochastic approach, we use a single site update algorithm 
+\cite{Brette96} in order
+to minimize the half-quadratic criterion (\ref{eqn_cr}).
+The solution is computed by visiting the entire set of pixels in a determined
+fashion (checkerboard) to update each value $x_{ij}$ of the estimated solution
+$x$ at row $i$ and column $j$.
+We know that the energy $U(x)$ is quadratic as a function of $x_{ij}$.
+Its minimum value is reached at $m_{ij}$:
+\begin{eqnarray}
+m_{ij} = x_{ij} + \frac{[{H^ty}]_{ij} - [{H^tHx}]_{ij} - 2\sigma^2\lambda 
+\sum l_c(x_{ij}-x_c)}{[{H^tH}]_{ij,ij} + 2\sigma^2\lambda\sum l_c}
+\label{eqn_corr}
+\end{eqnarray} 
+where the sums extend to the neighborhood of the currently visited pixel $x_{ij}$.
+The algorithm is initialized with an image where all pixels are equal to zero.
+
+\subsubsection{Parameter estimation}
+
+% \subsubsection{Scaling parameter $\delta$}
+
+This parameter allows to fix the threshold under which the smoothness of the
+solution is preserved and above which discontinuities or edges stay in the
+estimated solution.
+The value $\delta$ is estimated from the observed image $y$ by looking at the
+evolution of edges between adjacent pixels. In fact, one method of selecting
+$\delta$
+would be to determine the global maximal difference between two adjacent pixels 
+for all possible cliques of the observed image.
+If $\delta$ is too high, then the estimated solution will be smooth.
+
+% \subsubsection{Regularizing parameter $\lambda$}
+
+This parameter balances fidelity to the prior constraints and fidelity to the
+data. In every experiment, $\lambda$ is empirically tuned to obtain 
+visually good results. In fact, since appropriate values for $\delta$ are more or
+less estimated, the value for $\lambda$ is not an evident choice.
+However, if $\lambda$ is too high, the solution is over-regularized and if
+$\lambda$ is too small, the solution is not stabilized.
+
+
+\section{Wavelet-Based Deconvolution}
+\subsection{Introduction}
+\subsubsection*{Deconvolution and Fourier Domain}
+The Fourier domain diagonalizes the convolution operator, and we can identify
+and reduce the noise which is amplified during the inversion. When 
+the signal can be modeled as stationary and Gaussian, the Wiener filter is
+optimal. But when the signal presents spatially localized features such 
+singularities or edges, theses features cannot be well represented with 
+Fourier basis functions, which extend over the entire spatial domain.
+Other basis functions, such wavelets, are better suited to represent a large
+class of signals.
+
+\subsubsection*{Toward the Multiresolution}
+The concept of multiresolution was first introduced for the deconvolution
+by Wakker and Schwarz \cite{rest:wakker88} when they proposed the 
+Multiresolution CLEAN algorithm for interferometric image deconvolution 
+(see next chapter).
+During the last ten years, many developments have been done in order 
+to improve the existing methods (CLEAN, Landweber, Lucy, MEM, ...), 
+and these works have lead to use different level of resolutions.
+
+The Lucy algorithm has been modified \cite{rest:lucy94b}
+in order to take into account an a priori information about 
+the stars in the field where 
+both the position and the brightness are known. This is done by using a two
+channels restoration algorithm, one channel representing the contribution
+relative to the stars, and the second to the background. A smoothness 
+constraint is added on the background channel. This method, called {\em PLUCY},
+have been then refined a first time (and called {\em CPLUCY})
+ for considering subpixel positions \cite{rest:hook99}, and a second time
+\cite{rest:gira00} (and called {\em GIRA}) for modifying the smoothness
+constraint.
+
+A similar approach has been followed by Magain \cite{rest:magain98}, but
+more in the spirit of the CLEAN algorithm. Again, the data are modeled as a 
+set of points sources on top of spatially varying background, leading
+to a two channels algorithm.
+
+The MEM method has also be modified by several authors 
+\cite{entropy:weir92,entropy:bontekoe94,starck:pan96,entropy:nunez98,starck:sta01_1}.
+First, Weir has proposed the {\em Multi-channel MEM} method, in which an 
+object is modeled as the sum of objects at different level of resolutions.
+The method has then been improved by   
+Bontekoe et al. \cite{entropy:bontekoe94} with the {\em Pyramid MEM}. 
+In particular, many regularization parameters have been fixed by the
+introduction of the diadic pyramid. The link between the {\em Pyramid MEM} 
+have been underlined in \cite{starck:pan96,starck:sta01_1}, and it has been
+shown that all the regularization parameters can be derived from the noise
+modeling. The wavelets have also been used in \cite{entropy:nunez98} in 
+order to do a segmentation of the image, each region being then restore
+with a different smothness constraint, depending on the resolution level
+where the region has been found. This last method has however the drawback
+to require user interactions for deriving the segmentation
+threshold in the wavelet space.
+
+The {\em PIXON} method \cite{rest:dixon96,rest:puetter99}
+is relative different to the previous described methods. This time, an object
+is modeled as the sum of pseudoimage smoothed locally by a function with 
+position-dependant scale, called pixon shape function. 
+The set of pseudoimages defines a dictionary, and the image is supposed to
+contain only features included in this dictionary. This approach is
+called {\em Matching Pursuit} \cite{wave:mallat93,ima:mallat98} 
+in the signal processing litterature. 
+
+The wavelets offer a mathematical framework for the 
+multiresolution processing. Furthermore, it furnishes a perfect way
+to include a noise modeling in the deconvolution methods. As the noise
+is the main problem in the deconvolution, the wavelet seems very well
+adapted to the regularization task.  
+
+
+\subsection{Wavelet-Vaguelette Decomposition}
+The Wavelet-Vaguelette decomposition, proposed by Donoho \cite{rest:donoho95b},
+consists in first applying a inverse filtering:
+\begin{eqnarray}
+ F = P^{-1} * I  +  P^{-1} * N = O + Z
+\end{eqnarray}
+where $P^{-1}$ is the inverse filter 
+($\hat{P}^{-1}(\nu) = \frac{1}{\hat{P}(\nu)}$). 
+The noise $Z =  P^{-1} * N$ is not white but remains 
+Gaussian. It is amplified when the deconvolution
+problem is unstable. 
+Then, a wavelet transform is applied on $F$, the wavelet coefficients
+are soft or hard thresholded \cite{rest:donoho93_2}, 
+and the inverse wavelet transform 
+furnishes the solution. 
+
+\begin{figure}[htb] 
+\centerline{
+\hbox{
+\psfig{figure=fig_mirror_basis_1D.ps,bbllx=4cm,bblly=12.5cm,bburx=19cm,bbury=23.5cm,width=11.25cm,height=9.75cm,clip=}
+}}
+\caption{Wavelet packet decomposition by a mirror basis. The variance of the
+noise has a hyperbolik growth.}
+\label{fig_mirror_1d}
+\end{figure}
+ 
+\begin{figure}[htb] 
+\centerline{
+\hbox{
+\psfig{figure=fig_mirror_basis_2D.ps,bbllx=4cm,bblly=12.5cm,bburx=19cm,bbury=23.5cm,width=11.25cm,height=9.75cm,clip=}
+}}
+\caption{The mirror wavelet basis in dimension 2.}
+\label{fig_mirror_2d}
+\end{figure}
+
+The method has been refined by 
+adapting the wavelet basis to the frequency response of the inverse of $P$
+\cite{rest:kalifa99,rest:kalifa00}. This {\em Mirror Wavelet Basis} has a 
+time-frequency tiling structure different from conventional wavelets one,
+and isolates the frequency where $\hat{P}$ is close to zero, because 
+a singularity in $\hat{P}^{-1}(\nu_s)$ influences the noise variance in
+the wavelet scale corresponding the frequency band which includes $\nu_s$.
+Figure~\ref{fig_mirror_1d} and Figure~\ref{fig_mirror_2d} 
+shows the decomposition of the Fourier space respectively in 1D and 2D.
+
+Because it may be not possible to isolate all singulaties, Neelamani
+\cite{rest:neelamani99,rest:neelamani01} has advocated an hybrid approach,
+and propose to still use the Fourier domain to restrict excessive noise
+amplification. The regularization in the Fourier domain is done with
+the window function $W_{\lambda}$
+\begin{eqnarray}
+   \hat{W}_{\lambda}(\nu) =
+ \frac{\mid \hat{P}(\nu) \mid^2}{\mid \hat{P}(\nu) \mid^2 + \lambda {\cal T}(\nu)}
+\end{eqnarray}
+
+where ${\cal T}(\nu) = \frac{\sigma^2}{\hat{S}(\nu)}$, $S$ being the the power
+spectral density of the observed signal.
+\begin{eqnarray}
+ F = W_{\lambda} * P^{-1} * I  +  W_{\lambda} * P^{-1} * N  
+\end{eqnarray}
+The regularization parameter $\lambda$ controls the amount of Fourier-domain
+shrinkage, and should be relatively small ($<1$) \cite{rest:neelamani01}.
+The estimate $F$ still contains some noise, and a wavelet transform is 
+performed to remove the remaining noise. The optimal $\lambda$ is determined
+using a given cost function (see \cite{rest:neelamani01} for more details).
+
+This approach is fast and competitive compared to linear methods, and
+the wavelet thresholding removes the Gibbs oscillations. It presents however
+several drawbacks:
+\begin{itemize}
+\item The regularization parameter is not so easy to find in practice
+\cite{rest:neelamani01}, and requires some computation time, which limits
+the interest of the method.
+\item The power spectrum of the observed signal is generally not known. 
+\item The positivity a priori is not used. 
+\item It is not trivial to consider non Gaussian noise.
+\end{itemize}
+The second point is important for astronomical images. It has been shown
+that the positivity constraint has a strong influence on the solution quality
+\cite{rest:kempen00}. 
+We will see in the following that it is straitforward
+to modify the standard iterative methods in a way that they benefit of
+capacity of the wavelets to separate the signal from the noise.
+
+\subsection{Regularization from the multiresolution support}
+
+\subsubsection{Noise suppression based on the wavelet transform}
+\index{noise}
+We have noted how, in using 
+an iterative deconvolution algorithm such as  Van Cittert or
+Richardson-Lucy, we define $R^{(n)}(x,y)$, the residual at iteration $n$:
+\index{Richardson-Lucy deconvolution}
+\index{Van Cittert deconvolution}
+\begin{eqnarray}
+R^{(n)}(x,y) = I(x,y) - (P * O^{(n)})(x,y)
+\end{eqnarray}
+ 
+ By using the \`a trous wavelet transform algorithm, $R^{(n)}$ 
+\index{a trous wavelet transform}
+\index{wavelet transform}
+can be defined as the sum of its $J$ wavelet scales and the last smooth 
+array:
+\begin{eqnarray}
+R^{(n)}(x,y) = c_{J}(x,y) + \sum_{j=1}^{J} w_j(x,y) 
+\label{resid}
+\end{eqnarray}
+where the first term on the right is the last smoothed array, 
+and $w$ denotes a wavelet scale.
+ 
+The wavelet coefficients provide a mechanism to extract only the significant 
+structures from the residuals 
+at each iteration. Normally, a large part of
+these residuals are statistically non-significant. 
+The significant residual (\cite{starck:mur94_1,starck:sta94_1}) is then:
+\begin{eqnarray}
+\bar{R}^{(n)}(x,y) = c_{p}(x,y) + \sum_{j=1}^{p} T(w_j(x,y)) w_j(x,y)
+\label{eq_resi}
+\end{eqnarray}
+ 
+\noindent $T$ is a function which is defined by:
+\begin{eqnarray}
+T(w) = \left\{
+  \begin{array}{ll}
+  1 & \mbox{ if w is significant} \\
+  0 & \mbox{ if w is non-significant} \\
+  \end{array}
+  \right.
+\end{eqnarray}
+ 
+Assuming that the noise follows a given law,  
+ $w_j(x,y)$ is significant if the probability that the wavelet coefficient
+is due to noise is small. 
+\begin{eqnarray}
+w_j(x,y) \mbox{ is significant if } \left\{ \begin{array}{ll}
+  P(W > w_j(x,y)) < \epsilon & \mbox{ if }   w_j(x,y) \geq 0 \\
+  P(W < w_j(x,y)) < \epsilon & \mbox{ if }   w_j(x,y) < 0 \\
+  \end{array}
+  \right.
+\end{eqnarray}
+
+\subsubsection{Multiresolution support}
+\index{noise}
+\index{multiresolution support}
+\index{support, multiresolution}
+A multiresolution support of a signal or an image describes in a
+logical or Boolean way if the data $s$ contains information at a 
+given scale $j$ and at a given position $l$.
+If $M^{(s)}(j,l) = 1$ (or $= \ true$), then $s$ contains information 
+at 
+scale $j$ and at the position $l$.
+$M$ depends on several parameters:
+\begin{itemize}
+\item The input data.
+\item The algorithm used for the multiresolution decomposition.
+\item The noise.
+\item All additional constraints we want the support to satisfy.
+\end{itemize}
+Such a support results from the data, the treatment (noise
+estimation, etc.), and from knowledge on our part of the objects 
+contained
+in the data (size of objects, linearity, etc.). In the most general 
+case, 
+a priori information is not available to us.
+
+The multiresolution support of an image is computed in several steps:
+\begin{itemize}
+\item Step one is to compute the wavelet transform of the data.
+\item Binarization of each scale leads to the multiresolution support
+(the binarization consists of assigning to each pixel a value 
+only equal to $0$ or $1$). 
+\item A priori knowledge can be introduced by modifying the support.
+\end{itemize}
+This last step depends on the knowledge we have of our data.
+For instance, if we know there is no interesting object smaller or 
+larger 
+than a
+given size in our image, we can suppress, in the support, anything 
+which is
+due to that kind of object. This can often be done conveniently by  the 
+use of 
+mathematical morphology. In the most general setting, we naturally have
+no information to add to the multiresolution support.
+
+The multiresolution support will be obtained by detecting 
+at each scale the significant coefficients. 
+The multiresolution support is defined by:
+ 
+\begin{eqnarray} M(j,l) = \left\{ \begin{array}{ll} \mbox{ 1 } & 
+\mbox{ if
+}   w_{j,l} \mbox{ is significant} \\ \mbox{ 0 } & \mbox{ if }  
+w_{j,l}
+\mbox{ is not significant} \end{array} \right. 
+\end{eqnarray} 
+
+
+
+In the approach presented in the preceding section, 
+a wavelet coefficient is significant
+if it is above a threshold.  Therefore a coefficient which is 
+less than this threshold is not considered, even if a significant 
+coefficient had
+been found at the same scale as this coefficient, during previous 
+iterations; and consequently we were justified in thinking that we had found
+signal at this scale, and at this position.  Arising out of this approach,
+it follows that the wavelet coefficients of the residual image could
+contain signal, above the set threshold, which is ignored.  
+ 
+In order to 
+conserve such signal, we use the notion of multiresolution support.
+Whenever we find signal at a scale $j$ and at a position $(x,y)$, we will 
+consider that this position in the wavelet space belongs to the 
+multiresolution support of the image.
+ 
+Eqn.\ \ref{eq_resi} becomes:
+\begin{eqnarray}
+\bar{R}^{(n)}(x,y) = c_{p}(x,y) + \sum_{j=1}^{p} M(j,x,y) \  w_j(x,y)
+\label{eq_sup_resi}
+\end{eqnarray}
+ 
+An alternative approach was outlined in \cite{starck:mur95_2} and 
+\cite{starck:sta95_1}:
+ the support was
+initialized to zero, and built up at each iteration of the restoration 
+algorithm.  Thus in eqn.\ \ref{eq_sup_resi} above, 
+$M(j,x,y)$ was additionally
+indexed by $n$, the iteration number.  In this case, the support was
+specified in terms of significant pixels at each scale, $j$; and in addition
+pixels could become significant as the iterations proceeded, but could not
+be made non-significant.  In practice, we have found both of these strategies
+to be equally acceptable.
+
+\subsubsection{Regularization of Van Cittert's Algorithm}
+\index{Van Cittert deconvolution}
+ 
+Van Cittert's iteration \cite{rest:vancittert31} is:
+\begin{eqnarray}
+O^{(n+1)} (x,y) = O^{(n)} (x,y) + \alpha{R}^{(n)}(x,y) 
+\end{eqnarray}
+with ${R}^{(n)}(x,y) =  I^{(n)}(x,y) - (P * O^{(n)}) (x,y)$.
+Regularization using significant structures leads to:
+\begin{eqnarray}
+O^{(n+1)} (x,y) = O^{(n)} (x,y) + \alpha {\bar{R}}^{(n)}(x,y) 
+\end{eqnarray}
+The basic idea of our method consists of detecting, at each scale,  
+structures of a given size in
+the residual $R^{(n)}(x,y)$ and putting them in the restored 
+image $O^{(n)}(x,y)$. The
+process finishes when no more structures are detected. Then, we have separated
+the image $I(x,y)$ into two images $\tilde O(x,y)$ and $R(x,y)$.
+ $\tilde O$ is the restored image, which ought not to contain any
+noise, and  $R(x,y)$ is the final residual which ought  not to contain any 
+structure. $R$ is our estimate of the noise $N(x,y)$.
+ 
+\subsubsection{Regularization of the One-Step Gradient Method}
+ 
+The one-step gradient iteration is:
+\begin{eqnarray}
+O^{(n+1)} (x,y) = O^{(n)} (x,y) + P(-x,-y) * {R}^{(n)}(x,y) 
+\end{eqnarray}
+with ${R}^{(n)}(x,y) = I(x,y) - (P * O^{(n)}) (x,y)$.
+Regularization by significant structures leads to:
+\begin{eqnarray}
+O^{(n+1)} (x,y) = O^{(n)} (x,y) +  P(-x,-y) * {\bar{R}}^{(n)}(x,y)
+\end{eqnarray}
+ 
+\subsubsection{Regularization of the Richardson-Lucy Algorithm}
+\index{Richardson-Lucy deconvolution} 
+
+From eqn.\ \ref{eqn_3_first}, 
+we have $I^{(n)}(x,y) =  (P * O^{(n)}) (x,y)$. Then
+ $R^{(n)}(x,y) = I(x,y) - I^{(n)}(x,y) $, and 
+hence $ I(x,y) = I^{(n)}(x,y) + R^{(n)}(x,y)$.\\
+The Richardson-Lucy equation is:
+\begin{eqnarray}
+O^{(n+1)}(x,y) = O^{(n)}(x,y) [ \frac{I^{(n)}(x,y) + 
+               R^{(n)}(x,y)}{I^{(n)}(x,y)} * P(-x,-y) ]
+\end{eqnarray}
+and regularization leads to: 
+\begin{eqnarray}
+O^{(n+1)}(x,y) = O^{(n)}(x,y) [ \frac{I^{(n)}(x,y) + 
+               {\bar{R}}^{(n)}(x,y)}{I^{(n)}(x,y)} * P(-x,-y) ]
+\end{eqnarray}
+ 
+\subsubsection{Convergence}
+ 
+The standard deviation of the residual decreases until no more
+significant structures are found. Convergence can be estimated
+from the residual. The algorithm stops when a user-specified threshold is
+reached:
+ 
+\begin{eqnarray}
+(\sigma_{{R}^{(n-1)}} - \sigma_{{R}^{(n)}})/(\sigma_{{R}^{(n)}})   < \epsilon
+\end{eqnarray}
+
+
+\subsubsection{Examples}
+ 
+A simulated Hubble Space Telescope 
+Wide Field Camera image of a distant cluster of galaxies
+was used to assess how well the suppression of noise, inherent in the 
+wavelet-based method, aids object detection.
+The image used was one of a number described in \cite{rest:freudcaul93a},
+\cite{rest:freudcaul93b}. 
+A spatially invariant point spread function 
+was used.  This is an approximation to the known spatially
+varying point spread function, but is not of great importance given the 
+limited image dimensions, 256 $\times$ 256.  The simulated image allowed us
+to bypass certain problems, such as cosmic ray hits and 
+charge-coupled device (CCD) detector faults,
+and to concentrate on the general benefits of regularization.
+ 
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=ch3_simu_cont.ps,bbllx=3.7cm,bblly=2.2cm,bburx=16.7cm,bbury=13.8cm,height=12cm,width=14cm,clip=}
+}}
+\caption{Simulated Hubble Space Telescope 
+Wide Field Camera image of a distant cluster of 
+galaxies.  Four quadrants.  Upper left: original, unaberrated and noise-free.
+Upper right: input, aberrated, noise added.  Lower left: restoration, 
+Richardson-Lucy
+method with noise suppression, 28 iterations.  Lower right: restoration, 
+Richardson-Lucy method without noise suppression, 40 iterations.  Intensities 
+logarithmically transformed.}
+\label{fig_caulet_freudling}
+\end{figure}
+
+The procedure followed was to detect objects in the simulated image, and
+also in the images restored by the wavelet-based (or regularized) 
+Richardson-Lucy method, and the basic
+Richardson-Lucy method.  The Inventory package in MIDAS ({\it Munich Image
+Data Analysis System}, a large image processing system, developed at the 
+European Southern Observatory) was used for this. 
+Inventory detects objects by means of a local background threshold, which
+was varied. 
+ 
+A set of 122 objects was found, using Inventory, in the original, unaberrated,
+noise-free image (upper left, Fig.\ \ref{fig_caulet_freudling}).  
+This agrees well with the fact
+that 124 objects were used in the simulation (121 galaxies, 3 stars).  
+With a somewhat different 
+threshold in the case of the wavelet-based Richardson-Lucy 
+method, 165 objects were 
+obtained.  With a very much raised threshold (to exclude noise peaks) in the
+case of the basic Richardson-Lucy method, 159 objects were obtained.  
+\index{Richardson-Lucy deconvolution}
+
+Detections of spurious objects were made in the case of both restorations.
+Given that we have ``ground truth'' in this case, we simply selected the
+real objects among them.  This was done by seeking good matches (less than
+1 pixel separation) between objects found in the restored images, and the
+objects found in the original, unaberrated noise-free image.  This led to
+69 close matches, in the case of the wavelet-based Richardson-Lucy 
+method; and to 53
+close matches, in the case of the basic Richardson-Lucy method.
+ 
+There was thus a  greater number of object detections, obtained with 
+the wavelet-based Richardson-Lucy 
+\index{Richardson-Lucy deconvolution}
+method.  These were also more accurate: the mean square
+error was 0.349 pixel units 
+as against 0.379 for the smaller number of detections 
+obtained from the basic Richardson-Lucy 
+method.  For bright objects, photometric plots
+using aperture magnitudes were relatively similar in both cases; and for 
+fainter objects neither were good.  
+While the wavelet-based Richardson-Lucy method 
+acquited itself well in these respects, its regularization property is 
+clearly advantageous for object detection.
+ 
+\subsection{Wavelet CLEAN}
+\subsubsection{Multiresolution CLEAN}
+\index{CLEAN}
+
+The CLEAN solution is only available if the image does not contain
+large-scale structures.  Wakker and Schwarz \cite{rest:wakker88}
+introduced the concept of Multiresolution Clean
+(MRC) in order to alleviate the difficulties occurring
+in CLEAN for extended sources.  The MRC approach
+consists of building two intermediate images, the first one (called
+the smooth map) by smoothing the data to a lower resolution with a
+Gaussian function, and the second one (called the difference map)
+by subtracting the smoothed image from the original data.  Both
+these images are then processed separately.  By using a standard
+CLEAN algorithm on them, the smoothed clean map and difference clean map are
+obtained.  The recombination of these two maps gives the clean map
+at the full resolution.
+
+In order to describe how the clean map at the full resolution is
+obtained from the smoothed and difference clean map, a number of symbols
+must be defined:
+\begin{itemize}
+%\baselineskip=0.3truecm
+\item $G = $ the normalized  ($\int G(x)dx = 1$) smoothing function; the width
+of the function is chosen such that the 
+full-width at half maximum of the smoothed dirty beam is $f$
+times larger than the full-width at half maximum of the original dirty beam.
+\item $A = $ dirty beam
+\item $D = $ dirty map
+\item $\delta = \delta$-functions
+\item $R = $ residual after using CLEAN on the map
+\item $B = $ clean beam with peak value 1
+\item $C = $ clean map 
+\item $s = $ the scale factor of the dirty beam needed to rescale the smooth  dirty beam back to a peak value 1
+\item $r = $ the scale factor of the dirty beam needed to rescale the smooth clean beam back to a peak value 1 
+\item $A_s = $ normalized smooth dirty beam  $= s A * G$
+\item $A_d = $ normalized difference dirty beam 
+$= 1/(1-\frac{1}{s})(A-\frac{A_s}{s})$
+\item $B_s = $ normalized smooth clean beam $= r B * G$
+\item $B_d = $ normalized difference clean beam  
+$= 1/(1-\frac{1}{r})(B-\frac{B_s}{r})$
+\end{itemize}
+%\baselineskip=0.6truecm
+
+From the delta-functions found by the CLEAN algorithm, one can restore
+the dirty map by convolving with the dirty beam and adding the residuals:
+\begin{eqnarray}
+D = D_s + D_d = \delta_s*A_s+R_s + \delta_d*A_d+R_d
+\end{eqnarray}
+which can be written also as:
+\begin{eqnarray}
+D = [s\delta_s*G + \frac{s}{s-1}\delta_d*(1-G)]*A+ R_s+R_d
+\end{eqnarray}
+If we replace the dirty beam by the clean beam, we obtain the clean map:
+\begin{eqnarray}
+C = \frac{s}{r}\delta_s * B_s + \frac{s(r-1)}{r(s-1)}\delta_d
+* B_d+R_s+R_d
+\end{eqnarray}
+
+The MRC algorithm  needs three parameters.
+The first fixes the smoothing function  $G$, and the other two are the 
+ loop gain and the  extra loop gain which are used by  CLEAN respectively
+on the smooth dirty map and  difference dirty map.
+
+This algorithm may be viewed as an artificial recipe, but we have
+shown \cite{aper:starck91} that it is linked to 
+multiresolution analysis as defined by Mallat \cite{wave:mallat89}. 
+Mallat's theory provides a new representation where a
+function is a sum of detail structures obtained with the same pattern, the
+wavelet, with suitable translations and dilations. Wavelet analysis
+leads to a generalization of MRC from a set of scales.
+
+Our approach allows MRC algorithms to be harmonized with the
+classical theory of deconvolution.
+
+\subsubsection{Wavelet and CLEAN}
+\index{CLEAN}
+\index{wavelet transform}
+
+We have seen that there are many wavelet transforms. For interferometric
+deconvolution, we choose the wavelet transform based on the FFT 
+\cite{starck:sta94_3,starck:sta94_4,starck:book98} for
+the following reasons:
+\begin{itemize}
+\item The convolution product is kept at each scale.
+\item The data are already in Fourier space, so this decomposition
+\index{Fourier transform}
+is natural.
+\item There is a pyramidal implementation available which does not take 
+much memory.
+\end{itemize}
+Hence until the end of this chapter, we will consider the use of the
+pyramidal transform based on the FFT (see annex B for more details).
+
+\subsubsection{Deconvolution by CLEAN in Wavelet Space.}
+\index{deconvolution}
+
+If $w_j^{(I)}$ are the wavelet 
+coefficients of  the image $I$ at the scale $j$, we
+get:
+\begin{eqnarray}
+\hat{w}_j^{(I)}(u,v) =  \hat{w}_j^{(P)} \hat{O}(u,v) 
+\end{eqnarray}
+where $w_{j}^{(P)}$ are the wavelet coefficients of the point spread 
+function at the scale $j$.
+The wavelet coefficients of the image $I$ are the   convolution product
+of the object $O$ by the  wavelet coefficients of the point spread 
+function.
+
+At each scale $j$, the wavelet plane $w_j^{(I)}$ can be decomposed by CLEAN 
+($w_j^{(I)}$ represents the dirty map and $w_{j}^{(P)}$  the dirty beam)
+into a set, noted $\delta_j$, of weighted $\delta$-functions.
+\begin{eqnarray}
+\delta_j  = \{A_{j,1} \delta(x-x_{j,1}, y-y_{j,1}), A_{j,2} \delta(x-x_{j,2},
+ y-y_{j,2}), \dots,  \\ \nonumber
+A_{j,n_j} \delta(x-x_{j,n_j}, y-y_{j,n_j})\}
+\end{eqnarray}
+ where $n_j$ is the number of $\delta$-functions at the scale $j$  
+and $A_{j,k}$ represents the height of the peak $k$ at the scale $j$.
+
+ By repeating this operation at each scale, we get
+a set ${\cal W}_\delta$ 
+composed of weighted $\delta$-functions  found by CLEAN 
+($ {\cal W}_\delta= \{\delta_1, \delta_2, \dots\}$).
+If $B$ is the ideal point spread function (clean beam),
+the estimation of the wavelet coefficients of the object at the scale $j$
+is given by:
+\begin{eqnarray}
+w_j^{(E)}(x,y) = \delta_j * w_j^{(B)}(x,y) + w^{(R)}_j (x,y) = \\ \nonumber
+\sum_k A_{j,k}
+ w_j^{(B)}(x-x_{j,k},y-y_{j,k}) + w^{(R)}_j(x,y)
+\end{eqnarray}
+where $w^{(R)}_j $ is the residual map.
+The clean map at the full resolution is obtained by the reconstruction 
+algorithm.
+If we take a Gaussian function as the scaling function, and the difference 
+between
+two resolutions as the wavelet ($\frac{1}{2}\psi
+(\frac{x}{2},\frac{y}{2})=\phi(x,y) - 
+\frac{1}{2}\phi(\frac{x}{2},\frac{y}{2}$)), we find the algorithm 
+proposed by
+Wakker and Schwarz \cite{rest:wakker88}. The MRC algorithm in the wavelet space is:
+\begin{enumerate}
+\item We compute the wavelet transforms of the dirty map, the dirty beam 
+and the clean beam.
+\item For each scale $j$, we decompose by CLEAN the wavelet coefficients 
+of the 
+dirty map into a list of weighted $\delta$-functions $\delta_j$.
+\item For each scale $j$, we convolve  $\delta_j$ by the wavelet 
+coefficients of the clean beam and we add the residual map $w^{(R)}_j$ 
+to the result in order to obtain the  wavelet coefficients of the clean map.
+\item We compute  the clean map at the full resolution by using the 
+reconstruction algorithm.
+\end{enumerate}
+
+\subsubsection{Improvements to Multiresolution CLEAN.}
+
+\index{CLEAN}
+We apply CLEAN to each plane of the wavelet transform. This allows us to
+detect at each scale the significant structure. The reconstructed image
+ gives the estimation $\tilde{O}$ found by MRC of the object. But MRC does
+not
+assume that this estimation is compatible with the measured visibilities.
+We want:
+ \begin{eqnarray}
+\mid \hat{\tilde{O}}(u,v) - V_m(u,v)\mid \ < \ \Delta_m(u,v)
+\end{eqnarray}
+ where $\Delta_m(u,v)$ is the error associated with the measure $V_m$.
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=ch3_peaks.ps,bbllx=6cm,bblly=9cm,bburx=14cm,bbury=19cm,height=8cm,width=6.4cm,clip=}
+}}
+\caption{Example of detection of peaks by CLEAN at each scale.}
+\index{CLEAN}
+\label{fig_pic}
+\end{figure}
+
+To achieve this, we use the position of the
+peaks determined by the MRC algorithm. We have seen that after
+the use of CLEAN, we get a list of positions $\delta_j$ on each plane $j$, with
+ approximate heights $A_j$. In fact, we get a nice description
+ of the significant structures in the wavelet space (see Fig.\ \ref{fig_pic}). 
+The height values are not sufficiently accurate, 
+but CLEAN enhances these structures.
+So we have to determine heights which reduce the error. 
+We do so using Van Cittert's algorithm \cite{rest:vancittert31}
+\index{Van Cittert deconvolution}
+which converges, even in the presence of noise,
+because our system is well regularized. Then, heights of the peaks
+contained in ${\cal W}_{\delta}$ will be modified by the following
+iterative algorithm:
+
+\begin{enumerate}
+\item Set $n = 0$ and ${\cal W}_{\delta}^{(0)} = {\cal W}_{\delta}$.
+\item Compute $A_{j,l}^{(n+1)}  = A_{j,l}^{(n)} + 
+{\cal Q}_{j,l}.{\cal W}_{\delta}^{(n)}$
+so that we then have:
+\begin{eqnarray*}
+\delta_j^{(n+1)} = \{ A_{j,1}^{(n+1)} \delta(x-x_{j,1}, y-y_{j,1}),  
+%A_{j,2}^{(n+1)} \delta(x-x_{j,2}, y-y_{j,2}), A_{j,n_j}^{(n+1)} 
+%\delta(x-x_{j,n_j}, y-y_{j,n_j})\}
+\end{eqnarray*}
+and:
+\begin{eqnarray*}
+{\cal W}_{\delta}^{(n+1)} =  \{\delta_1^{(n+1)}, \delta_2^{(n+1)}, \dots\}
+\end{eqnarray*}
+\item $n = n + 1$ and go to step 1.
+\end{enumerate}
+
+${\cal Q}$ is the  operator which:
+\begin{itemize}
+\item computes the  wavelet coefficients of the clean map $w^{(C)}$ by
+convolving at each scale $\delta_j^{(n)}$ by the clean beam wavelet $w_j^{(B)}$
+\[w_j^{(C)} = \delta_j^{(n)} * w_j^{(B)}\] 
+\item reconstructs  the estimated object $O^{(n)}$ at  full resolution
+from $w^{(C)}$
+\item thresholds  the negative values of $O^{(n)}$
+\item computes  the residual $r^{(n)}$ by:
+\[\hat{r}^{(n)} = p(V - \hat{O}^{(n)})\]
+ where $p$ is a weight function which depends on the quality of the
+measurement $V$ (error bars). A possible choice for $p$ is:
+\begin{itemize}
+\item $p(u,v) = 0$ if we do not have any information at this frequency (i.e.\ 
+a frequency hole).
+\item $p(u,v) = 1 - 2 \frac{\Delta_m(u,v)}{V_m(0,0)}$ if $\Delta_m(u,v)$
+is the error associated with the measurement $V_m(u,v)$.
+\end{itemize}
+\item computes the wavelet transform $w^{(r^{(n)})}$ of $r^{(n)}$ 
+\item extracts the wavelet coefficient of $w^{(r^{(n)})}$ which is at 
+the position of the peak $A_{j,l} \delta(x - x_l, y - y_l)$.
+\end{itemize}
+
+\bigskip
+
+The final deconvolution algorithm is:
+\index{deconvolution}
+\begin{enumerate}
+\item Convolution of the dirty map and the dirty beam by the scaling function.
+\item Computation of the wavelet transform of the dirty map which yields 
+$w^{(I)}$.
+\item Computation of the wavelet transform of the dirty beam which yields 
+$w^{(D)}$.
+\item Estimation of the standard deviation of the noise $N_0$ of the first 
+plane
+from the histogram of $w_0$. Since we process oversampled images, the
+values of the
+wavelet image corresponding to the first scale ($w_0^{(I)}$) are nearly 
+always due to the noise. The histogram shows a Gaussian peak around
+$0$. We compute the standard deviation of this Gaussian function,
+with a $3\sigma$ clipping, rejecting pixels where the signal
+could be significant.
+\item Computation of the wavelet transform of the clean beam. We get $w^{(B)}$.
+If the  clean beam is a Dirac, then $\hat{w}_j^{(B)}(u,v) = \frac{\psi(2^ju, 
+2^jv)}{\phi(u, v)}$.
+\item Set $j$ to 0. 
+\item Estimation of the standard deviation of the noise $N_j$ from $N_0$. This
+is done from the study of the variation of the noise between two
+scales, with the hypothesis of a white Gaussian noise.
+\item Detection of significant structures by CLEAN: we get $\delta_j$ from
+$w_j^{(I)}$ and $w_j^{(D)}$. The CLEAN algorithm is very sensitive to the
+noise. Step 1 of this algorithm offers more robustness. CLEAN
+can be modified in order to optimize the detection. 
+\item $j = j + 1$ and go to step 7.
+\item Reconstruction of the clean map from ${\cal W}_{\delta}= \{\delta_1, \delta_2, \cdots\}$ by the 
+iterative algorithm using Van Cittert's method.
+\end{enumerate}
+\index{Van Cittert deconvolution}
+
+The limited support constraint is implicit because we put information
+only at the position of the peaks, and the positivity constraint is 
+ introduced in the iterative algorithm. 
+We have made the hypothesis that MRC, 
+by providing the coordinates of the peaks,
+ gives the exact position of the information in the wavelet space and 
+we limited the deconvolution problem by looking for the  height of the peaks 
+which give the best results. It is a very strong limited support
+constraint which allows our problem to be regularized. CLEAN is not used as a 
+deconvolution algorithm, but only as a tool to detect the position of 
+structures.
+
+\subsubsection{Examples}
+ Hen 1379 is a post-Asymptotic Giant Branch star in a phase
+of intense mass loss. The circumstellar dust
+distribution for post-AGB generally departs from  spherical geometry. 
+This is the case for Hen 1379, the high polarization measured at
+visible and near-infrared wavelengths indicating that the envelope is 
+strongly non-spherical.
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_inter1_hen_uv.ps,bbllx=0.5cm,bblly=10.8cm,bburx=13.5cm,bbury=17.2cm,height=7cm,width=14.5cm,clip=}
+}}
+\caption{Right, uv plane coverage of Hen 1379, and left, the inverse Fourier transform of the data.}
+\label{fig_rec_hen1}
+\end{figure}
+
+\begin{figure}[h]
+\centerline{
+\hbox{
+\psfig{figure=fig_inter1_hen_rec.ps,bbllx=10.cm,bblly=15.cm,bburx=19cm,bbury=24.2cm,height=7.1cm,width=7.38cm,clip=}
+}}
+\caption{Hen 1379: reconstructed image.}
+\label{fig_rec_hen2}
+\end{figure}
+ 
+Figure \ref{fig_rec_hen1} shows the uv plane coverage of Hen 1379,
+and the inverse Fourier transform of the data.
+The high angular resolution observations of this source were performed  
+using the ESO one-dimensional (1D) slit-scanning near-infrared specklegraph 
+attached to the ESO 3.6m telescope Cassegrain focus. 
+
+Figure \ref{fig_rec_hen2} shows the reconstruction by the wavelet transform
+of the evolved star Hen 1379. The ratio of 
+point-source to the maximum amplitude of the envelope is 290. Contour
+levels are 12, 24, 36, $\dots$, 96\% of the maximum amplitude of the envelope.
+
+
+\subsection{Multiscale Entropy}
+\subsubsection{Introduction}
+In \cite{starck:sta98_2,starck:sta99_2,starck:sta01_1}, 
+the benchmark properties for a good ``physical''
+definition of entropy were discussed.
+Assuming that a signal $X$ is the sum of several components:
+\begin{eqnarray}
+X = S + B + N
+\end{eqnarray}
+where $S$ is the signal of interest, $B$ the background, and $N$ the noise,
+we proposed that
+the following criteria should be verified:
+\begin{enumerate}
+\item The information in a flat signal is zero ($S=0$, $N=0$ and 
+$B=\mathrm{Constant}$). 
+\item The amount of information in a signal is independent of the background
+(i.e., $H(X)$ is independent of $B$).
+\item The amount of information is dependent on the noise 
+(i.e., $H(X)$ is dependent on $N$). 
+A given signal $X$ does not furnish the  same information in the different
+cases where the noise $N$ is high or small.
+\item The entropy must work in the same way for a pixel which
+has a value $B + \epsilon$, and
+for a pixel which has a value $B - \epsilon$.
+$H(X)$ must be a function of the absolute value of $S$ instead of $S$.
+\item The amount of information is dependent on the correlation in the signal.
+If the signal $S$  presents large features above the noise, it contains
+a lot of information. By generating a new set of  data from $S$, by 
+randomly taking the pixel values in $S$, the large features will
+evidently disappear, and this new signal will contain less information.
+But the pixel values will be the same as in $S$.
+\end{enumerate}
+
+A possibility is to consider that the 
+entropy of a signal is the sum of the information at each scale of its
+wavelet transform \cite{starck:sta98_2}, and the information of a wavelet 
+coefficient is related to the probability of it being due to noise
+Denoting  $h$ the information relative to a single wavelet coefficient,
+we define
+\begin{eqnarray}
+H(X) = \sum_{j=1}^{l} \sum_{k=1}^{N_j}  h(w_{j,k}) 
+\label{eqn_statwave}  
+\end{eqnarray}
+with $h(w_{j,k})  = - \ln p(w_{j,k})$.
+ $l$ is the number of scales, and
+$N_j$ is the number of samples (pixels, time- or wavelength-interval 
+values) in band (scale) $j$. 
+For Gaussian noise, we get
+\begin{eqnarray}
+ h(w_{j,k}) =  \frac{w_{j,k}^2}{2 \sigma_j^2} + \mbox{Const.}
+\end{eqnarray}
+where $\sigma_j$ is the noise at scale $j$.  Below, when we use the 
+information in a functional to be minimized, the constant term has no effect
+and we will omit it.
+We see that the information is proportional
+to the energy of the wavelet coefficients.
+The larger the value of a normalized wavelet coefficient, 
+then the lower will be 
+its  probability of being noise, and the 
+higher will
+be the information furnished by this wavelet coefficient. 
+
+\subsubsection{Signal and noise information}
+Assuming that the signal $X$ is still composed of the three components 
+$S$, $B$, $N$ ($X = S + B + N$), $H$ is independent of $B$ but not of $N$.
+Hence, our information measure
+is corrupted by noise, and we decompose our information measure
+into two components, one ($H_s$) corresponding to the non-corrupted part, and
+the other ($H_n$) to the corrupted part. We have \cite{starck:sta98_2}
+\begin{eqnarray}
+H(X) = H_s(X) + H_n(X)
+\end{eqnarray}
+We will define in the following $H_s$ as the signal information, and $H_n$
+as the noise information. It is clear that noise does not 
+contain any meaningful information, and so $H_n$ describes a semantic 
+component which is usually not informative to us.
+For each wavelet coefficient $w_{j,k}$, we have to estimate the 
+proportions
+$h_n$ and $h_s$ of $h$ (with $h(w_{j,k}) = h_n(w_{j,k}) + h_s(w_{j,k}))$
+which should be assigned to $H_n$ and $H_s$.
+Hence  signal information and  noise information are defined by
+\begin{eqnarray}
+H_s(X) & = & \sum_{j=1}^{l} \sum_{k=1}^{N_j} h_s(w_{j,k})    \nonumber \\  
+H_n(X) & = & \sum_{j=1}^{l} \sum_{k=1}^{N_j} h_n(w_{j,k})     
+\label{eq_entrop_result_2}
+\end{eqnarray}
+If a wavelet coefficient is small, its value can be due to noise, 
+and the information $h$ relative to this single wavelet coefficient
+should be assigned to $H_n$.
+In \cite{starck:sta01_1}, the following functions were motivated:
+\begin{eqnarray}
+h_n(w_{j,k}) & = &  \int_{0}^{\mid w_{j,k} \mid } P_n(\mid w_{j,k} \mid - u) 
+\left(\frac{\partial h(x)}{\partial x}\right)_{x=u} du \\
+ h_s(w_{j,k}) & = &  \int_{0}^{\mid w_{j,k} \mid } P_s(\mid w_{j,k} \mid - u) 
+\left(\frac{\partial h(x)}{\partial x}\right)_{x=u} du
+\end{eqnarray}
+For Gaussian noise, we have
+\begin{eqnarray}
+h_n(w_{j,k}) & = &  \frac{1}{\sigma_j^2} \int_{0}^{\mid w_{j,k} \mid} u 
+\mbox{ erfc}
+\left(\frac{\mid w_{j,k} \mid -u}{\sqrt{2} \sigma_j}\right) du \nonumber \\
+h_s(w_{j,k}) & = &  \frac{1}{\sigma_j^2} \int_{0}^{\mid w_{j,k} \mid} u 
+\mbox{ erf}\left(\frac{\mid w_{j,k} \mid -u}{\sqrt{2} \sigma_j}\right)
+\label{eqn_hn2}
+\end{eqnarray}
+
+\subsubsection{Functional to Minimize}
+
+We have seen that in the case of Gaussian noise, $H$ is given by the 
+energy of the wavelet coefficients. We have
+\begin{eqnarray}
+J(O)= \sum_{k=1}^N
+ \frac{(I_k-(P*O)_k)^2}{2\sigma_I^2} + \alpha \sum_{j=1}^{l} \sum_{k=1}^{N_j} \frac{w_{j,k}^2}{2 \sigma_j^2}
+\end{eqnarray}
+where $\sigma_j$ is the noise at scale $j$, $N_j$ the number of pixels at the
+scale $j$, $\sigma_I$ the noise standard deviation in the data, and $l$ 
+the number of scales.
+
+Rather than minimizing the amount of information in the solution, we may
+prefer to minimize the amount of information which can be due to the noise.
+The function is now:
+\begin{eqnarray}
+J(O)= \sum_{k=1}^N
+ \frac{(I_k-(P*O)_k)^2}{2\sigma_I^2} + \alpha H_n(O)
+\end{eqnarray}
+and for Gaussian noise, $H_n$ has been defined by 
+\begin{eqnarray}
+H_n(X) = \sum_{j=1}^{l} \sum_{k=1}^{N_j} \frac{1}{\sigma_j^2} \int_{0}^{\mid w_{j,k} \mid} u 
+         \mbox{ erf}\left(\frac{\mid w_{j,k} \mid -u}{\sqrt{2} \sigma_j}\right)
+\end{eqnarray}
+
+The solution is found by computing the gradient $\nabla(J(O))$ 
+and performing the following iterative schema:
+\begin{eqnarray}
+O^{n+1} = O^{n} - \gamma \nabla(J(O^n))
+\label{eq_iter1}
+\end{eqnarray}
+More details can be found in \cite{starck:sta01_1}.
+
+\subsubsection{Example 1: simulation}
+
+The simulation consists of a faint extended object (galaxy) 
+near a bright star (Figure \ref{fig_dec1} upper left). 
+This was blurred using a Gaussian point spread function, and 
+noise was added (Figure \ref{fig_dec1} upper right): the two objects are overlapping and the galaxy
+is barely detectable. After filtering by the multiscale method 
+(Figure \ref{fig_dec1} bottom left),
+ an extended object can be clearly identified, but both objects are still
+overlapping. After deconvolution using the multiscale  entropy method (Figure 
+\ref{fig_dec1} bottom right), 
+the two objects are separated. \\
+
+It is clear in this example that photometric 
+measurements  cannot always be made directly on the data, and 
+deconvolution is often necessary, especially when objects are overlapping.\\
+ 
+\bigskip
+\begin{figure}[h]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_dec1_orig.ps,bbllx=4cm,bblly=3.5cm,bburx=12cm,bbury=11.5cm,width=7cm,height=7cm,clip=}
+\psfig{figure=fig_dec1_imag.ps,bbllx=4cm,bblly=3.5cm,bburx=12cm,bbury=11.5cm,width=7cm,height=7cm,clip=}
+}
+\vspace{0.3cm}
+\hbox{
+\psfig{figure=fig_dec1_filter.ps,bbllx=4cm,bblly=3.5cm,bburx=12cm,bbury=11.5cm,width=7cm,height=7cm,clip=}
+\psfig{figure=fig_dec1_deconv.ps,bbllx=4cm,bblly=3.5cm,bburx=12cm,bbury=11.5cm,width=7cm,height=7cm,clip=}
+}}}
+\caption{Upper left: original image; upper right: blurred image and noise;
+bottom left: filtered image; bottom right: deconvolved image.}
+\label{fig_dec1}
+\end{figure}
+
+\subsubsection{Example 2: Beta Pictoris Image Deconvolution}
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_dec2_bpic_orig.ps,bbllx=4.5cm,bblly=3.5cm,bburx=11.5cm,bbury=10.5cm,width=7cm,height=7cm,clip=}
+}}
+\caption{Beta Pictoris raw data.}
+\label{fig_dec2_1}
+\end{figure}
+The Beta Pictoris image \cite{starck:pan96} was obtained by integrating 5 hours on-source using an mid-infrared camera,
+ TIMMI, placed on the 3.6 ESO telescope (La Silla, Chile). The raw image has
+ a peak signal-to-noise ratio of 80. It is strongly blurred by a combination
+of seeing, diffraction (0.7 arcsec on a 3m class telescope) and additive
+Gaussian noise. The initial disk shape in the original image has been lost 
+after the convolution with the point spread function. 
+Thus we need to deconvolve such an image to get the best information
+on this object i.e.\ the exact profile and thickness of the disk, and 
+subsequently to compare the results to models of thermal dust emission.
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_dec2_bpic_filter.ps,bbllx=4cm,bblly=3.cm,bburx=12cm,bbury=11.cm,width=7cm,height=7cm,clip=}
+\psfig{figure=fig_dec2_bpic_deconv.ps,bbllx=4cm,bblly=4.5cm,bburx=12cm,bbury=12.5cm,width=7cm,height=7cm,clip=}
+}}
+\caption{Filtered image (left), and deconvolved one (right).}
+\label{fig_dec2_2}
+\end{figure}
+
+After filtering (left), the disk appears
+clearly. For detection of faint structures (the disk here), 
+one can calculate that the application of such a filtering method
+to this image provides a gain of observing time of a factor 
+of around 60. The deconvolved image (right) shows that the disk is extended
+ at 10 $\mu$m and asymmetrical. The multiscale entropy method is
+  more effective for regularizing than  other standard methods, 
+and leads to good reconstruction of the faintest structures 
+of the dust disk.
+
+
+\section{Deconvolution and resolution}
+\subsubsection*{The Intrinsic Correlation Function}
+In many cases, there is no sense in trying to deconvolve an image at the 
+resolution
+of the pixel (especially when the PSF is very large). The idea to limit 
+the 
+resolution is relatively old, because it is already this concept which 
+is used in the CLEAN algorithm \cite{rest:hogbom74}. Indeed the 
+Clean-Beam
+fixes the resolution in the final solution. This principle was also 
+developed by Lannes \cite*{rest:lannes87} in a different form. 
+This concept has been re-invented,  first by
+Gull \& Skilling \cite*{entropy:gull91} who have called the Clean-Beam 
+the {\em Intrinsic Correlation Function} (ICF), and more recently by
+Magain \cite*{rest:magain98} and Pijpers \cite*{rest:Pijpers:99}. 
+
+The ICF is usually a Gaussian, but in some cases it may be useful to
+take another function. For example, if we want to compare two images 
+$I_1$ and
+$I_2$ which are obtained with 
+two wavelengths or with two different instruments,
+their PSFs $P_1$ and $P_2$ will certainly be different. The classic approach 
+would
+be to deconvolve $I_1$ with $P_2$ and $I_2$ with $P_1$, so we are sure that
+both are at the same resolution. But unfortunately we lose some 
+resolution in doing this.
+Deconvolving both images is generally not possible because we can never 
+be sure
+that both solutions $O_1$ and $O_2$ will have the same resolution. 
+
+A solution would be to 
+deconvolve only the image which has the worse resolution
+(say $I_1$), and to limit the deconvolution to the second image 
+resolution ($I_2$).
+Then, we just have to take $P_2$ for the ICF. The deconvolution problem 
+is to
+find $\tilde O$ (hidden solution) such that:
+\begin{eqnarray}
+I_1 = P_1 * P_2 * \tilde O
+\end{eqnarray}
+and our real solution $O_1$ at the same resolution as $I_2$ is 
+obtained
+by convolving $\tilde O$ with $P_2$. $O_1$ and $I_2$ can then be 
+compared.
+
+Introducing an ICF $G$ in the deconvolution equation leads to
+just considering a 
+new PSF $P^\prime$ which is the convolution of $P$ and $G$.
+The deconvolution is carried out using $P^\prime$, and the solution 
+must be 
+reconvolved with $G$ at the end. In this way, the solution has a constrained
+resolution, but aliasing may occur during the iterative process, and it 
+is
+not sure that the artifacts will disappear afer the re-convolution with 
+$G$.
+Magain \cite*{rest:magain98} has proposed an original alternative to 
+this
+problem, by assuming that the  PSF can be considered as the convolution
+product of two terms, the ICF $G$ and an unknown $S$, $P=G*S$. Using
+$S$ instead of $P$ in the deconvolution process, and a sufficiently large 
+FWHM value for $G$,  implies that the 
+Shannon sampling theorem \cite{ima:shannon48} is never
+violated. But the problem is now to calculate $S$, knowing $P$ and $G$,
+which is again a deconvolution problem. Unfortunately, 
+this delicate point was not discussed in the original paper. Propagation 
+of the error on the $S$ estimation in the final solution has also until now 
+not been investigated, even if this issue seems to be quite 
+important.
+
+\subsubsection*{ICF calculation}
+
+This section describes how to calculate the FWHM
+for a given sampling, in order not to violate the Shannon
+sampling theorem. Gaussian functions are generally chosen for the ICF. 
+The resolution to be
+achieved is fixed by its standard deviation $\sigma_G$, or its FWHM
+(FWHM=2.34$\sigma_G$). Since the Fourier transform of a Gaussian 
+of standard deviation $\sigma_G$ is
+also a Gaussian of standard deviation $\sigma_\nu = {N \over 2\pi 
+\sigma_G}$,
+($N$ being the number of pixels), we can estimate the smallest FWHM 
+which 
+does not violate the Shannon sampling theorem.  
+In theory, a Gaussian cannot respect it,
+ but in practice we can consider that values smaller than a given 
+$\epsilon$ 
+have no practical effect, and the Shannon sampling theorem is 
+experimentally
+respected if 
+\begin{eqnarray}
+\exp{ -{u^2 \over 2 \sigma_{\nu}^2}} < \epsilon \mbox{ when } u > {N 
+\over 2}
+\end{eqnarray}
+For $u = {N \over 2}$, we have:
+$
+\exp{ -{\pi^2\sigma_G^2 \over 2 }} < \epsilon
+$ \\
+Then the smallest ICF standard deviation $\sigma_{G}$ is given by
+\begin{eqnarray}
+\sigma_G = \sqrt{-{2 \log{\epsilon} \over \pi^2}}
+\end{eqnarray}
+Table~\ref{comptab} gives the $\sigma_G$ values for different values
+of $\epsilon$. If the resolution to be achieved is smaller than $\sigma_G$,
+this means that the solution sampling must be fainter than the data 
+sampling.
+
+\begin{table}[hbt]
+\caption{ICF standard deviation.}
+\begin{center}
+\begin{tabular}{ccc} \hline \hline
+$\epsilon$     & ICF $\sigma_G$  & ICF FWHM       \\ \hline \hline
+ $10^{-3}$      & 1.18    &   2.77     \\
+$10^{-4} $       & 1.37    &   3.20     \\
+$10^{-5} $       & 1.53    &   3.57     \\
+$10^{-7} $       & 1.81    &   4.23     \\
+$10^{-10}$      & 2.16    &   5.05     \\
+$10^{-20}$      & 3.05    &   7.15     \\  \hline \hline
+\end{tabular}
+\end{center}
+\label{comptab}
+\end{table}
+
+\section{Space-Variant Deconvolution by Combining Deconvolution and Detection}
+\subsection{Object Detection in the Wavelet Space and Reconstruction}
+The Multiscale Vision Model (MVM) \cite{ima:bijaoui95,ima:rue97}
+is an object  detection method, based on the wavelet transform.
+Signicant wavelet coefficients are first detected using a noise modeling.
+Connected significant coefficients in the 3D wavelet space 
+are grouped in order to form an object. Each object is then reconstructed 
+separately (see \cite{starck:book98} for more details). 
+
+The reconstruction problem
+consists of searching for a signal $O$ such that
+its wavelet coefficients are the same as those of the detected
+structures. If $\cal T$ describes the wavelet transform operator, and 
+$P_w$ the
+projection operator in the subspace of the detected coefficients
+(i.e. having set to zero all coefficients at scales and positions where
+nothing was  detected), the solution is found by minimization of
+\begin{eqnarray*}
+J(O) = \parallel W - (P_w \circ {\cal T}) O  \parallel
+\end{eqnarray*}
+where $W$ represents the detected wavelet coefficients of the data.
+More details can be found in Bijaoui \& Ru\'e \cite*{ima:bijaoui95}.
+
+\subsection{Object Deconvolution}
+
+A reconstructed and deconvolved object can be obtained
+by searching for a signal $O$ such that
+the wavelet coefficients of $P*O$ are the same as those of the 
+detected coefficients. If $\cal T$ describes the wavelet transform operator, 
+and $P_w$ the projection operator in the subspace of the detected 
+coefficients,
+ the solution is found by minimization of
+\begin{eqnarray}
+J(O) = \parallel W - (P_w \circ {\cal T}) P * O  \parallel
+\label{eqn_obj_rec}
+\end{eqnarray}
+where $W$ represents the detected wavelet coefficients of the data, and 
+$P$ is the PSF. In this approach, each object is 
+deconvolved
+separately. The flux related to the extent of the PSF will be taken into 
+account.
+
+Any minimizing method can be used to obtain the solution $O$. Since we did 
+not
+find any problem of convergence, noise amplification, or ringing 
+effect, the Van Cittert method can be chosen on the grounds of its simplicity.
+For each detected object, we apply the following algorithm:
+
+\begin{eqnarray}
+O^{n+1} = O^{n} + {\cal T}^{-1}(W - (P_w \circ {\cal T}) P * O^{n})
+\end{eqnarray}
+where ${\cal T}^{-1}$ is the inverse wavelet transform.
+
+\subsection{Space-variant PSF}
+Deconvolution methods generally do not take into account the case of 
+space-variant PSF. The standard approach when the PSF varies is to decompose
+the image into blocks, and to consider the PSF constant inside a 
+given block. Blocks which are too small lead to a problem of computation time 
+(the 
+FFT cannot be used), while blocks which are too large introduce errors 
+due to the use of an incorrect PSF. 
+Blocking artifacts may also appear. Combining
+source detection and deconvolution opens up an elegant way for 
+deconvolution
+with a space-variant PSF \cite{starck:sta00_3}. 
+Indeed, a straightforward method is derived by 
+just
+replacing the constant PSF at step 3 of the algorithm with the PSF at the
+centre of the object. This means that it is not the image which is 
+deconvolved,
+but its constituent objects.
+
+\subsection{Example: Abell 1689 ISOCAM data}
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_det_iso_no_deconv.ps,bbllx=2cm,bblly=13.5cm,bburx=13cm,bbury=24.5cm,width=8cm,height=8cm,clip=}
+\psfig{figure=fig_det_iso_deconv.ps,bbllx=2cm,bblly=13.5cm,bburx=13cm,bbury=24.5cm,width=8cm,height=8cm,clip=}
+% \psfig{figure=ds10090f3.ps,bbllx=2cm,bblly=13.5cm,bburx=13cm,bbury=24.5cm,width=8cm,height=8cm,clip=}
+% \psfig{figure=ds10090f4.ps,bbllx=2cm,bblly=13.5cm,bburx=13cm,bbury=24.5cm,width=8cm,height=8cm,clip=}
+}}
+\caption{Abell 1689: left, ISOCAM source detection (isophotes) 
+overplotted on an optical
+image (NTT, band V). The ISOCAM image is a raster observation at 7 
+$\mu$m.
+Right, ISOCAM source detection using the PSF (isophotes) overplotted on 
+the optical
+image. Compared to the left panel, it is clearly 
+easier
+to identify the detected infrared sources in the optical image.} 
+\label{fig_iso_abell}
+\end{figure}
+
+Figure~\ref{fig_iso_abell} (left) shows the detections (isophotes) 
+obtained
+using the MVM method without deconvolution on ISOCAM data. The data 
+were
+collected using the 6 arcsecond lens at 6.75$\mu$m. This was a raster 
+observation
+with 10s integration time, 16 raster positions, and 25 frames per 
+raster position.
+The noise is non-stationary, and the detection of the significant 
+wavelet 
+coefficients was carried out using the root mean square 
+error map $R_\sigma(x,y)$ 
+by the method described 
+in Starck et al.\ \cite*{starck:sta99_4}.
+The isophotes are overplotted on an optical image (NTT, band V) in order
+to identify the infrared source. 
+Figure~\ref{fig_iso_abell} (right) shows the same treatment but using 
+the
+MVM method with deconvolution. The objects are the same, but the 
+photometry
+is improved, and it is clearly easier to identify the optical 
+counterpart
+of the infrared sources.
+
+
+\section{Super-resolution}
+\subsection{Definition}
+Super-resolution consists in recovering object spatial frequency information 
+outside the spatial bandwith of the image formation system. In other terms,
+frequency components where $\hat{P}(\nu)=0$ have to be recovered. 
+It has been demonstrated \cite{rest:donoho92} that it possible under certain
+conditions. The observed object must be {\em nearly black}, i.e. nearly zero
+in all but a small fraction of sample. Noting $n$ beeing the number of samples,
+a$m$ the number of non zero values in the Fourier transform of the PSF,
+and $\epsilon = \frac{m}{n}$ the incompleteness ratio,
+it has been shown that \cite{rest:donoho92} :
+\begin{itemize}
+\item must admit supper-resolution if the object is $\frac{1}{2} \epsilon$-black.
+\item might admit supper-resolution if the object is  $\epsilon$-black. In this
+case, it depends on the noise level and the spacing of non zero elements
+in the object. Well spaced elements is in favor of supper-resolution.
+\item cannot admit supper-resolution if the object is not $\epsilon$-black. 
+\end{itemize}
+Near blakness is both necessary and sufficient for super-resolution. 
+Astronomical images often presents such data set, where the real information
+(stars and galaxies) is contained in very few pixels. 
+If the $\frac{1}{2} \epsilon$-blackness of the object is not verified, a 
+solution is to limit the Fourier domain $\Omega$ of the restored object.
+Several methods have been proposed in different contexts for achieving
+super-resolution.
+
+\subsection{Gerchberg-Saxon Papoulis method}
+The Gerchberg-Saxon-Papoulis \cite{rest:gerchberb74} method is iterative,
+and uses the a priori information on the object, which are its positivity
+and its support in the spatial domain. It was developped for interferrometric
+image reconstruction, where we want to recover the object $O$ from some
+of its {\em visibilities}, i.e. some of its frequency components. Hence,
+the object is supposed to be known in a given Fourier domain $\Omega$ and we 
+need to recover the object outside this domain. The problem can also be
+seen as deconvolution problem, $I = P*O$, where
+\begin{eqnarray}
+  P(\nu)  & =  & \left\{
+  \begin{array}{ll}
+  1    & \mbox{ if }  \nu \in  \Omega    \\
+   0   &  otherwise
+  \end{array}
+  \right.  
+\end{eqnarray}
+We note ${\cal P}_{C_s}$ and
+ ${\cal P}_{C_f}$ the project operators in the spatial 
+ and the Fourier domain:
+\begin{eqnarray}
+ {\cal P}_{C_s}(X(k))  & =  & \left\{
+  \begin{array}{ll}
+   X(k)    & \mbox{ if }  k \in {\cal D}    \\
+   0   &  otherwise
+  \end{array}
+  \right.  \nonumber \\
+ {\cal P}_{C_f}(\hat X(\nu)) & = & \left\{
+  \begin{array}{ll}
+    \hat I(\nu) = \hat O(\nu)    & \mbox{ if }  \nu \in \Omega    \\
+  0 &  otherwise
+  \end{array}
+  \right.
+\end{eqnarray}
+The projection operator ${\cal P}_{C_s}$ replaces by zero all pixels values
+which are not the spatial support defined by $\cal D$, and ${\cal P}_{C_f}$
+replaces all frequencies in the Fourier domain $\Omega$ by the frequencies
+of the object $O$. The Gerchberg algorithm is:
+\begin{enumerate}
+\item compute $\tilde O^0$ = inverse Fourier transform of  $\hat I$, and
+set $i=0$.
+\item compute $X_1 =  {\cal P}_{C_s}(\tilde O^i)$.
+\item compute $\hat X_1$ = Fourier transform of $X_1$.
+\item compute $\hat X_2 =  {\cal P}_{C_f}(\hat X_1)$.
+\item compute $X^2$ = inverse Fourier transform of  $\hat X_2$.
+\item compute $\tilde O^{i+1} = {\cal P}_{C_s}(\hat X_2)$.
+\item set $X_1 = \tilde O^{i+1}$, $i=i+1$ and goto 2.
+\end{enumerate}
+
+The algorithm consists just in forcing interatively the solution to be 
+zero outside the spatial domain ${\cal D}$, and equals to the observed 
+visibilities inside the Fourier domain $\Omega$. It has been shown that
+this algorithm can be derived from the Landweber method \cite{ima:bertero98},
+and therefore its convergence and regularization properties are the same of
+the Landweber method. It is straitforward to introduce the positivity 
+constraint by replacing ${\cal P}_{C_s}$ by  ${\cal P}^+_{C_s}$
+\begin{eqnarray}
+ {\cal P}^+_{C_s}(X(k))  & =  & \left\{
+  \begin{array}{ll}
+  \max(X(k), 0)    & \mbox{ if }  k \in {\cal D}    \\
+   0   &  otherwise
+  \end{array}
+  \right.  \nonumber 
+\end{eqnarray}
+
+The Gerchberg method can be generalized \cite{ima:bertero98} using the
+Landweber iteration:
+\begin{eqnarray}
+O^{n+1} =  {\cal P}^+_{C_s} \left[ O^{n} + \alpha (P^* * L - P^* * P* O^n) \right]
+\end{eqnarray}
+where $L = {\cal P}^+_{C_s}(I)$.
+
+\subsection{Deconvolution with interpolation}
+The MAP Poisson algorithm, combined with an interpolation, can be used
+to achieve super-resolution \cite{rest:hunt94}: 
+\begin{eqnarray}
+O^{n+1} =   O^{n} \exp \left(  \left(  \frac{ I(k)}{ \left[ (P*O)(k) \right]_{\downarrow} } -1  \right)_{\uparrow} * P^* \right)
+\end{eqnarray}
+where uparrow and downarraw notation describe respectively the upsampling
+and downsampling operators. The PSF $P$ must be sampled on the same grid
+as the object $P$.
+
+\subsection{Restoration with an Undersampled Point Spread Function}
+Some observations are made with an undersampled PSF. When the observation
+is repeated several times with a small shift between two measurements, 
+we can reconstruct a deconvolved image on a smaller grid. We note
+$D(i,j,k)$ the $k$th observation (k = 1..n), 
+$\Delta_{i,k}$, $\Delta_{j,k}$ the shift in both directions 
+relative to the first frame, ${\cal L}_{\uparrow}$ the operator
+which coadds all the frame on a smaller grid, 
+and ${\cal L}^{-1}_{\downarrow}$ the
+operator which estimates $D$ from 
+${\cal L}_{\uparrow} D$ using shifting and averaging operations. 
+The $\Delta_{i,k}$, $\Delta_{j,k}$ shifts are generelly derived from the
+observations using correlation methods, or a PSF fitting (if a star is in
+the field), but can also be the jitter information if data are obtained
+from space. Note also that ${\cal L}^{-1}_{\downarrow} {\cal L}_{\uparrow} D \ne D$.
+The point spread function $P$ can generally be derived on a finer grid using
+a set of observations of a star, or using an optical modeling of the instrument.
+The deconvolution iteration becomes:
+\begin{eqnarray}
+O^{n+1} =  O^{n} + \alpha P^*\left[  {\cal L}_{\uparrow} (D - {\cal L}^{-1}_{\downarrow}(P*O^n)) \right] 
+\end{eqnarray}
+and the positivity and spatial constraints can also be used:
+\begin{eqnarray}
+O^{n+1} =  {\cal P}^+_{C_s} \left[  O^{n} + \alpha P^*\left[  {\cal L}_{\uparrow} (D - {\cal L}^{-1}_{\downarrow}(P*O^n)) \right] \right]
+\end{eqnarray}
+The coaddition operator ${\cal L}_{\uparrow}$ can be implemented in different 
+ways. All frames can first be interpolated to the finer grid size,
+shifted using an interpolation function, and then coadded. 
+In \cite{rest:lauer99}, another method has been proposed which eliminates
+aliasing effects.
+
+\subsection{Multiscale Support Constraint}
+The constraint operator  ${\cal P}^+_{C_s}$ may not always be easy to 
+determine, especially when then observed object is extended. Furthermore,
+if the object is very extended, the support will be very large and
+the support constraint may have a small influance on the final result. 
+For this reason, it may convenient to replace the  
+support constraint by the multiresolution support constraint. The advantages
+are the following:
+\begin{itemize}
+\item it can be automatically calculated from the noise modeling in the wavelet
+space.
+\item extended object are generelly also smooth. It means that the support 
+in the small scales will be small, and therefore introduces a   
+smoothness contraint on extended object, and no constraint on point-like
+objects.
+\end{itemize}
+
+
+\section{Conclusion}
+
+We have seen that the recent deconvolution methods improvements
+has lead to use a multiscale approach. This could be summerized in 
+the following way:
+\begin{itemize}
+\item Linear Inverse Filtering $\rightarrow$  Wavelet-Waguelette decomposition\\
+\item  CLEAN $\rightarrow$ Wavelet-CLEAN \\
+\item \bigskip
+\( \left. \begin{array}{l}
+\mbox{Fixed step gradient}\\
+\mbox{Lucy}\\
+\mbox{Van Cittert}
+\end{array}\right\} \) \( \rightarrow \begin{array}{c}
+\mbox{Regularized by}\\
+\mbox{the multiresolution}\\
+\mbox{support}
+\end{array} \) \\
+\bigskip
+\item MEM $\rightarrow$ Multiscale Entropy Method
+\end{itemize}
+The reason of the success of the wavelets is due to the fact that
+wavelets basis represents well a large class of signals. Other multiscale
+methods, such the ridgelet or the curvelet transform 
+\cite{cur:candes99_1,cur:candes00,cur:donoho99,starck:sta01_3}
+will certainly play a role in the future.
+
+\newpage
+% \bibliographystyle{plain}
+\bibliographystyle{aabib99}
+% \bibliography{aperture,markov,restore,iref,starck,wave,ima,curvelet,entropy,astro,mc}
+\bibliography{aperture,starck,wave,restore,compress,ima,edge,curvelet,markov,astro,entropy}
+
+\newpage
+\section*{Appendix A: Picard Iteration}
+\label{annex_picard}
+\addcontentsline{toc}{section}{Appendix A: Picard Iteration}
+
+Suppose that an equation is given, 
+\be 
+\L(x) = 0 
+\ee
+where $x$ is a vector, and $L$ a function, and that it is possible
+to rewrite the equation into the form: 
+\be
+x = F(x)
+\ee
+where $F$ is function obtained by rearrangement on the funciton $L$,
+then the solution can be obtained from the sequence 
+\cite{ima:picard66,rest:hunt94}: 
+\be
+x^{n+1} = F(x^n) 
+\ee
+
+The sequence converges if it exists a neighborhood such that,
+for any $x$ and $x + \Delta$ in the neighborhood
+\be
+ \parallel F(x+ \Delta) - F(x) \parallel \le C \parallel \Delta \parallel 
+\ee
+for a constanst $C < 1$.
+For example, the object-image relation is:
+\be
+I - P*O = 0
+\ee
+By convolving by $P^*$ and adding $O$ to both sides, we have
+\be
+O  = O + P^* * (I - P*O)
+\ee
+The Picard iteration gives:
+\be
+O^{n+1}  = O^{n} + \lambda P^* * (I - P*O^{n})
+\ee
+where $\lambda$ is a parameter which controls the convergence.
+
+\newpage
+\include{annex_fftwavelet}
+\newpage
+\include{annex_atrou}
+\end{document}

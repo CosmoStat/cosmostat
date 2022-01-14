@@ -1,0 +1,640 @@
+%--- BEGIN "Guide for preparation of camera-ready papers" LaTeX file --------
+
+  
+%============================================================================
+% \documentclass[twocolumn,10pt,a4paper,ieee]{article}
+
+% \documentclass[11pt,ieee]{article}
+\documentclass{article}
+
+ 
+
+%============================================================================
+\usepackage{spie}
+\usepackage{psfig}
+\newcommand{\psdir}{/home/jstarck/tex/FIG/}
+\psfigurepath{./PS:\psdir/book98:\psdir/compress:\psdir/entropy:\psdir/PS_ISO:\psdir/cours:\psdir/demo:\psdir/detect}
+
+
+\begin{document}
+\pagestyle{empty}
+ 
+%============================================================================
+
+\title{Image Denoising by the Curvelet Transform}
+\author{J.-L. Starck \supit{a,b}, E. Cand\`es \supit{a} and D. Donoho  \supit{a} 
+\skiplinehalf 
+\supit{a} Statistics Department, Stanford University, \\ 
+Sequoia Hall,  Stanford, CA 94305 USA \\  
+\\
+\supit{b} DAPNIA/SEI-SAP, CEA/Saclay, 91191 Gif sur Yvette, France 
+}
+
+\authorinfo{Further author information: Send correspondence to jstarck@cea.fr}
+ 
+
+\maketitle
+ 
+%============================================================================
+
+\begin{abstract}
+We present in this paper a new implementation of the curvelet transform,
+well adapted to the analysis of images with edges.
+We show that the use of such a transform leads to good results for 
+image restoration, and outperforms the wavelet transform both gray and 
+color image denoising.
+\end{abstract}
+
+%============================================================================
+
+\section{Introduction}
+
+As traditional methods based on wavelet, Fourier analysis, or splines
+fail at efficiently representing images with edges, 
+Cand\`es \cite{cur:candes98,cur:candes99_3}
+has introduces the ridgelet transform, which
+consists in analyzing a data set with ridge functions, defined by:
+\begin{eqnarray}
+\psi_{a,b,\theta}(x,y) = a^{1 \over 2} \psi(\frac{x \cos(\theta) + y \sin(\theta)-b}{a})
+\end{eqnarray}
+where $a$ is the scale, $\theta$ the orientation, and b the location parameter.
+in two dimensions, ridgelets are concentrated around lines.
+
+It has been shown  \cite{cur:candes98} that the 2D Ridgelet transform can be
+computed in a efficient way by applying a Radon transform to the input
+image, followed  by a 1D wavelet transform on each line of Radon transform.
+The idea to combine the Radon and the ridgelet transform has already
+been exploited in several domains, such in medical image processing
+for tomographic image reconstruction, 
+\cite{cur:sahiner98,cur:olson94,cur:zhao97}, 
+neural networks theory \cite{cur:meir98}, 
+or pattern detection \cite{cur:magli97,cur:magli99}. However 
+it has been presented for the first time in \cite{cur:candes98} as a
+reversible transform allowing a new image representation, well designed  
+to describe lines segment with a size comparable to the image size, 
+and whatever their width. This was possible by the
+introduction of a non regular Fourier space angular sampling, and
+the use of a reversible 1D wavelet transform.
+
+As the ridgelet transform is optimal to find only lines of the size of the image,
+Cand\`es \cite{cur:candes98} has introduced a partitioning of the image.
+The image is first decomposed into overlapping blocks, and the 
+ridgelet transform is performed on each block. Such a transform becomes
+optimal for detection line  segment of different width
+and  of the size of the block. If the input data contain many sizes of
+segment lines, which is the case in most of the cases, a multiscale 
+ridgelet transform can be applied, consisting in applying 
+several times the ridgelet 
+transform to the image, with different block sizes. The reconstruction
+from the set of ridgelet transforms has however not be discussed, and 
+is not straitforward.
+
+As an alternative to the multiscale ridgelet transform, Donoho  and 
+Cand\`es have proposed the Curvelet transform 
+\cite{cur:candes99_3,cur:donoho99}. In the curvelet transform, the 
+image is first decomposed into a set of wavelet coefficient images.
+The wavelet scales are then grouped by two to form a curvelet scale, 
+and each curvelet scale is partitioned and ridgelet transformed.
+This approach allows us to treat an image with different block sizes
+in the same time, the size varying with curvelet scale number. 
+It also does not present any problem of reconstruction as in the
+multiscale ridgelet transform. The curvelet transform is a succession
+of reversible operators, and is therefore reversible.
+
+We propose in this paper a new implementation of the curvelet transform,
+and show its performance for image filtering.
+Section two and three describe respectively
+the ridgelet transform and the curvelet transform.
+Section four shows how curvelet coefficients can be
+thresholded in order to filter an image. Comparisons with other methods
+are presented. 
+
+\section{The Ridgelet Transform}
+
+The 2D ridgelet transform can be interpreted as a following of two
+different steps: a Radon transform and a 1D wavelet 
+transform. We describe in this section these two steps.
+
+\subsection{Radon transform}
+The Radon transform (RT) is defined by:
+
+\begin{eqnarray}
+R_f(\rho, \theta) = \int \int f(x,y) 
+     \delta (\rho - x \cos ( \theta ) - y \sin ( \theta) ) dx dy
+\end{eqnarray}
+where theta is the angle and rho
+the smallest distance to the origin of the coordinate system. 
+
+
+\begin{figure}[htb]
+\centerline{
+\hbox{\psfig{figure=fig_radon.ps,bbllx=5cm,bblly=11cm,bburx=15cm,bbury=21cm,width=7cm,height=7cm,clip=}
+}}
+\caption{Selected lines in the Fourier domain of an image NxN (N=8) 
+for the Radon transform calculation. 2N lines are chosen sampled with N pixels.
+The selected lines correspond to the
+lines which pass through the pixels at the image border and the 
+frequency origin.}
+\label{fig_radon}
+\end{figure}
+
+A fast implementation of the RT can be performed in the Fourier domain.
+First the 2D FFT is computed. Then it is interpolated along a number 
+of straight lines equal to the selected number of projections, each line
+passing through the origin of the 2D frequency space, with a slope 
+equal to the projection angle, and a number of interpolation points
+equal to the number of rays per projection. The one dimensional inverse
+Fourier transform of each interpolated array is then evaluated.
+The FFT based RT  is however not straitforward because we need to 
+interpolate the Fourier domain. Furthermore, if we want to have 
+an exact inverse transform, we have to make sure that the lines
+pass through all frequencies. 
+As described in \cite{cur:candes98}, we choose to select $2N$ directions
+sampled with $N$ pixels.  
+A redundancy of two is therefore introduced.
+An image of NxN pixels will be Radon transformed into an image 2NxN.
+The advantage of this choice is that by selecting a specific set of 
+angles, we are sure to cover correctly the frequency plane, and hence
+to have a reversible transform. As shown in figure~\ref{fig_radon}, 
+the selected lines correspond to the
+lines which pass through the pixels at the image border and the 
+frequency origin. Angles are not regularly sampled. Finally, no 
+interpolation is done in the Fourier, the closest frequency component
+is systematically chosen. This error introduced when calculating 
+the Radon transform is canceled when the inverse Radon transform 
+is computed.
+
+\subsection{1D Wavelet Transform}
+Applying a standard 1D bi-orthogonal wavelet transform on the 
+line of the Radon transform would be a possible approach to compute the
+ridgelet transform. But experiments have shown that it creates
+a lot of artifacts when a thresholding is applied on the coefficients.
+This is due to the fact that the wavelet has a support compact in the direct 
+space, and high frequency fluctuations are created from the low frequencies
+wavelet coefficients, which produce dramatic effects when the Fourier 
+map is reconstructed from the inverse Radon transform. Therefore, 
+we have prefer to choose a wavelet transform which is compact in the
+Fourier domain. Such a wavelet transform has been proposed in the past 
+\cite{starck:sta94_3,starck:book98} for interferometric image reconstruction,
+where the data (visibilities measurements) are Fourier coefficients.
+This wavelet transform algorithm is based on a scaling function $\phi$ which
+has a cut off frequency $\nu_c$. 
+For example, $\phi$ can be derived from a $B_3$ spline:
+\begin{eqnarray}
+\hat{\phi}(\nu)={3\over 2}B_3(4\nu)
+\end{eqnarray}
+and using a wavelet as the difference of two resolutions leads to:
+\begin{eqnarray}
+\hat \psi(2\nu) = \hat \phi(\nu) - \hat \phi(2\nu)
+\end{eqnarray}
+Therefore, the filter $h$ is:
+\begin{eqnarray}
+\hat h(\nu)= \left\{
+  \begin{array}{ll}
+  {\hat{\phi}(2\nu)\over \hat{\phi}(\nu)} & \mbox{if } \mid \nu \mid < \nu_c \\
+0 & \mbox{if } \nu_c  \leq \mid \nu \mid < {1\over 2} 
+  \end{array}
+  \right.
+\end{eqnarray}
+and $\hat g(\nu) = 1 - \hat h(\nu)$.
+The frequency band is reduced by a factor $2$ at each step.
+Applying the sampling theorem, we can build a pyramid  of
+$N+{N\over 2}+\ldots+1=2N$ elements. More details about this transform can 
+be found in \cite{starck:book98}.
+
+This WT algorithm has the drawback to introduce a redundancy of two,
+but it presents to following advantages:
+\begin{itemize}
+\item The Fourier transform of the ridgelet coefficients are directly
+derived from the Fourier transform of the image.
+\item The decimation results from the reduction of the frequency band,
+and therefore does not introduce artifact. Shannon sampling theorem is
+never violated.
+\item The reconstruction is trivial. The ridgelet coefficient in the Fourier
+domain have just to be co-added to reproduce the Fourier coefficient of the image.
+\end{itemize}
+ 
+\begin{figure}[htb]
+\centerline{
+\hbox{\psfig{figure=fig_rid.ps,bbllx=4.5cm,bblly=5cm,bburx=21cm,bbury=22cm,width=10cm,height=10cm,clip=}
+}}
+\caption{Ridgelet transform flowgraph. Each of the 2N selected lines 
+in the Fourier domain is treated separately, by calculating its
+inverse 1D Fourier transform and its 1D non orthogonal wavelet transform.
+in practice, we calculate directly the 1D wavelet coefficient 
+in the Fourier domain, without taking the inverse 1D Fourier transform
+of the lines.}
+\label{fig_ridgelet}
+\end{figure}
+
+% \subsection{Algorithm}
+Figure~\ref{fig_ridgelet} shows the flowgraph of the ridgelet transform.
+The Ridgelet transform of an image of size NxN is an image of size 2Nx2N.
+The redundancy is therefore 4.
+
+% The Ridgelet transform of an NxN image   
+% is calculated by the following algorithm:
+% \begin{itemize}
+% \item Take the 2D Fourier transform of the image.
+% \item Extracts 2N lines of N pixels.
+% \item Apply the 1D Wavelet transform in Fourier space of each line.
+% \item Apply the inverse 1D Fourier transform of each scale of the 1D WT.
+% \end{itemize}
+
+% The reconstruction algorithm is:
+% \begin{itemize}
+% \item Apply the 1D Fourier transform of each scale of the WT.
+% \item Apply the inverse Wavelet transform in Fourier space of each line.
+% \item Recreate the Fourier map of the image. 
+% \item Take its inverse 2D Fourier transform.
+% \end{itemize}
+
+Two other methods have been proposed in the 
+past \cite{cur:candes98,cur:do00} based respectively on the exact sampling
+of the Fourier space \cite{cur:candes98}, 
+and on the finite Radon transform \cite{cur:matus93}. Full evaluation of each 
+them can be found in \cite{cur:donoho00}.
+The approach presented here has the advantage to be more robust than the
+two others concerning the creation of artifact after thresholding, and 
+has the drawback to be more redundant. This last point is however not
+crucial for image filtering purpose.
+
+\subsection{Ridgelet transform and Partitioning}
+The ridgelet transform is optimal to find only lines of the size 
+of the image. To detect line segments, a partitioning must be
+introduced \cite{cur:candes98}.  The image is decomposed 
+into overlapping blocks
+of size $B$. The overlapping size between two consecutive blocks
+is $B/4$. For an image of size NxN, the number of blocks 
+in each direction is ${2N \over B}$. The overlapping is important
+because it eliminates the block artifacts, and it allows us to be 
+also optimal when segment lines of size $B$ may 
+intersect two blocks. 
+As one image pixel is represented in several blocks, we need
+to calculate the pixel value from the different block values. 
+There is two way to make the partitioning:
+\begin{enumerate}
+\item The block values are weighted in such a way that the coaddition 
+of all bock reproduce exactly the original pixel value.
+\item The block values are those of the image pixel values, but they are weighted
+when we reconstruct the image.
+\end{enumerate}
+The first approach presents the advantage to have blocks with values close 
+to zero on the border, which limits the artifacts. The drawback is 
+a lose in sensibility. For this reason, the second approach 
+is more appropriate for data restoration purpose.
+% Indeed, imagine that a line of size $B$ and
+% of intensity $1$ is 
+% contained in a block of size $B$, with a noise standard deviation $\sigma=1$.
+% that RD will coadd signal values with zero values (or relative small
+% values), which make the signal ration of such of coefficient
+The weighting scheme we used is the following: when 
+calculating a pixel image value, $I(x,y)$, from its four corresponding block
+values of half size $L={B \over 2}$, 
+$B_1(x_1,y_1),B_2(x_2,y_1),B_3(x_1,y_2),B_4(x_2,y_2)$, with
+$x_1,y_1 > {B \over 2}$ and $x_2 = x_1-L, y_2=y_1-L$, we have:
+\begin{eqnarray}
+I_1 &  = &  w({x_2\over L}) B_1(x_1,y_1) + w(1-{x_2\over L}) B_2(x_2,y_2)  \nonumber \\
+I_2 &  = &  w({x_2\over L}) B_3(x_1,y_1) + w(1-{x_2\over L}) B_4(x_2,y_2)  \nonumber \\
+I(x,y) &  = &  w({y_2\over L}) I_1 +  w(1-{y_2\over L}) I_2  \\
+\end{eqnarray}
+with $w(x) = {\cos}^2( x {\pi \over 2})$.
+Any other function $w(x) $ that goes from 0 to 1 on the interval $[0,1]$ and 
+satisfy $w(x) + w(1-x) = 1$ can also be used.
+
+The partitioning has an important cost. It introduces a redundancy of four 
+in the data.
+
+\begin{figure}[htb]
+\centerline{
+\hbox{\psfig{figure=fig_cur.ps,width=8cm,height=10cm,clip=}}}
+\caption{Curvelet transform flowgraph. The image 
+is first decomposed into a set wavelet bands. A partitioning
+is applied on each band with a given block size, and a ridgelet transform
+is performed on each block.}
+\label{fig_curvelet}
+\end{figure}
+
+\section{The Curvelet Transform}
+
+The curvelet transform, proposed by Donoho \cite{cur:donoho99,cur:candes99_3},
+open us the possibility to analyze an image with different block sizes, but
+with a single transform. The idea is to first decompose the image into
+a set of wavelet bands, and to analyze each bands by a ridgelet transform.
+The block size can be changed at each scale level. 
+In the theory \cite{cur:donoho99}, each two wavelet bands should be merged
+by a reconstruction before applying the ridgelet transform, but we found 
+that applying the ridgelet transform on each band separately improves
+in the significant way the results. The \`a trous algorithm seems very well
+adapted for the first step of the curvelet transform, because of its 
+isotropic nature. It allows us to represent an
+image $I$ by a simple sum of its wavelet coefficients $w_j$ and a
+smoothed version of the image $c_{p}$ (see \cite{starck:book98} for more details
+about the ``\`a trous'' algorithm):
+\begin{eqnarray}
+I(x,y) = c_{p}(x,y) + \sum_{j=1}^{p} w_j(x,y)
+\end{eqnarray}
+The algorithm produces $p+1$ arrays of the same size, each one
+containing only information at a given frequency band. $j=1$ corresponds here
+the finest scale (highest frequencies). 
+
+\subsection{Algorithm}
+The curvelet transform algorithm is:
+\begin{enumerate}
+\item apply the \`a trous algorithm with $p$ scales
+\item set $B_1 = B_{min}$
+\item for $j=1, .., p$ do 
+\begin{itemize}
+\item apply the ridgelet transform with a block size $B_j$ to 
+the wavelet scale $w_j(x,y)$.
+\item if j modulo 2 = 1 then $B_{j+1} = 2 B_{j}$
+\item else $B_{j+1} = B_{j}$
+\end{itemize}
+\end{enumerate}
+By default, we used $B_{min} = 16$ in our implementation. The last smooth
+scale is not treated in the curvelet transform.
+Figure~\ref{fig_curvelet} shows the flowgraph of the algorithm.
+
+The curvelet transform is a very redundant transform. For an analysis 
+with $p$ wavelet scales, the redundancy is $16p+1$. 
+
+\section{Filtering}
+\subsection{Introduction}
+For filtering purpose, it is not necessary to have the full transform
+in memory (if the block size is lower than the image size). We can
+treat the image block per block and update the result at each step.
+This is also true for the curvelet transform. We describe in this section
+how to select the coefficients in order to filter the data.
+
+\subsection{Filtering the ridgelet coefficient}
+
+\subsubsection{Gaussian noise}
+The noise standard deviation varies with the scales in our 
+implementation of the ridgelet transform. First, it is multiply
+by $\sqrt{B}$, where $B$ is the block size, when performing the Radon
+transform, and then it is modified by the 1D wavelet transform.
+
+The appropriate value of $\sigma_j$ 
+in the succession of wavelet scales of the ridgelet transform is assessed 
+from the standard deviation of the noise $\sigma_I$ in the original image
+$I$, and from study of the noise in the ridgelet space.  This study consists of 
+simulating an image containing Gaussian noise with a standard deviation 
+equal to 1, and taking the ridgelet transform of this image.  Then we
+compute the standard deviation $\sigma^e_j$ at each scale normalize
+by  $\sqrt{B}$.  We get a curve 
+$\sigma^e_j$ as a function of $j$, giving the behavior of the noise in the 
+ridgelet space.  Due to the properties of the ridgelet transform, we have 
+$ \sigma_j = \sqrt{B} \sigma_I \sigma^e_j $.
+
+The thresholding is then done by:
+\begin{eqnarray}
+\begin{array}{l}
+\tilde r_j = r_j \mbox{ if }  \mid r_j \mid \ \geq \ k \sigma_j \\ 
+\tilde r_j = 0 \mbox{ if }  \mid r_j \mid \ < \ k \sigma_j \ \ \mbox{ then } w_j \mbox{ is not significant }
+\end{array}
+\end{eqnarray}
+In our experiments, we took $k=4$ at the first scale,  and $k=3$
+for the others.
+
+\subsubsection{Poisson noise}
+If the number of counts is high enough (more than 30 per pixel), 
+the Anscombe variance stabilization
+\cite{rest:anscombe48} can be applied to the input image. 
+Anscombe  transformation 
+\cite{rest:anscombe48}
+\begin{eqnarray}
+t(I) = 2\sqrt{I + \frac{3}{8}}
+\label{eqn_anscombe}
+\end{eqnarray}
+acts as if the data arose from a
+Gaussian white noise model \cite{rest:anscombe48}, with $\sigma = 1$, under the
+assumption that the mean value of $I$ is sufficiently large.
+
+If the number of counts is smaller,
+the Ridgelet transform algorithm can be modified in order to take
+into account the noise distribution. Indeed, the Anscombe variance 
+stabilization can be applied on the Radon coefficient in the direct
+space. The 1D WT is then applied on the Anscombe transformed Radon coefficients.
+
+% \subsubsection{The low frequency component}
+% A final refinement can be added to the filtering by first extracting
+% the low frequency component of the image, and to only treat the 
+% high frequency part by the ridgelet transform. The separation
+% between high and low frequency depends on the block size. Smaller 
+% is the block size, larger will be the low frequency band that cannot
+% be treated by the ridgelet transform. Doing this is a kind 
+% of curvelet transform with one wavelet scale. It has the advantage to
+% improve slightly the quality of the reconstructed image. 
+
+\subsection{Filtering the curvelet coefficient}
+In the curvelet transform, the noise becomes highly colorated.
+The approach described previously is not optimal because the
+noise distribution in the curvelet coefficients 
+differs from a Gaussian white noise distribution. A better method
+is to calculate experimentally the the noise distribution, and to
+calculate the threshold level corresponding to given interval confidence.
+Doing this improves significantly the results.
+
+
+\section{Filtering Experiments}
+
+\subsection{Simulation 1: gray image filtering}
+\subsubsection{Introduction}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_lena_g20.ps,bbllx=2cm,bblly=13.5cm,bburx=13cm,bbury=24.5cm,width=8cm,height=8cm,clip=}
+\psfig{figure=fig_lena_t14_f11.ps,bbllx=2cm,bblly=13.5cm,bburx=13cm,bbury=24.5cm,width=8cm,height=8cm,clip=}
+}
+\hbox{
+\psfig{figure=fig_lena_f24.ps,bbllx=2cm,bblly=13.5cm,bburx=13cm,bbury=24.5cm,width=8cm,height=8cm,clip=}
+\psfig{figure=fig_lena_cur.ps,bbllx=2cm,bblly=13.5cm,bburx=13cm,bbury=24.5cm,width=8cm,height=8cm,clip=}
+}}}
+\caption{Noisy image, and filtered images by the decimated wavelet transform,
+the undecimated wavelet
+transform, and the curvelet transform.}
+\label{fig_cur_lenna}
+\end{figure}
+
+A simulation has been done with the classical
+Lena 512$\times$512 image. A white Gaussian noise 
+with a standard deviation equal to 20 has been added to the
+original data. The noisy image has been filtered by the ridgelet 
+transform with different block sizes (8,16,32 and 64) 
+and the curvelet transform. In order to compare the 
+results with wavelet methods, we have also filter the image
+with the following wavelet based methods:
+\begin{enumerate}
+\item Mallat-Daubechies bi-orthogonal wavelet transform using the Dauchechies-
+Antonini 7/9 filters (FWT-7/9) 
+and a hard thresholding:
+
+% \begin{eqnarray}
+% \tilde w_j & = & sgn(w_j) ( \mid w_j \mid - T_j) \mbox{ if } \mid w_j \mid 
+% \geq  T_j  \\
+%          & = & 0  \mbox{ otherwise} 
+% \end{eqnarray}
+% with the universal threshold  \cite{rest:donoho93_1,rest:donoho93_2} 
+% % $T_j =  \sqrt{2\log(n)}\sigma_j$ (where $n$ 
+% is number of pixels).
+\item Undecimated bi-orthogonal wavelet transform (UWT-7/9) with a
+a $k\sigma$ hard thresholding: $T_j = k \sigma$. We used $k=4$ at the
+first scale, and 3 for the others.
+\item Multiscale entropy method using the undecimated wavelet transform\\
+The multiscale entropy method is described in \cite{starck:sta98_2,starck:sta99_2}.
+
+\item Wavelet-domain Hidden Markov Models (WHMM) using Daubechies length 8 orthonormal wavelet \\
+This method \cite{wave:crouse98} try to capture  the key 
+features of the joint probability density of the wavelet coefficient,
+and derives the filtered coefficient from an Bayesian approach.
+\end{enumerate}
+
+
+\subsubsection{Results}
+
+For each filtered image, the PSNR was calculated. If it is an objective
+measure, it is however not sufficient, because it does not allow us to 
+control whether artifacts are present or not. Images were therefore also
+visually assessed,  in order to decide if artifacts are visible.
+
+\voffset -1truecm
+{\small
+\begin{table}[htb]
+
+\begin{center}
+\begin{tabular}{lccccc} \hline \hline
+Method                          & PSNR   &  Comments   \\ \hline \hline
+Noisy image                     & 22.13  &     \\
+FWT7-9 + Universal Hard thresh. & 28.35  &    many artifacts    \\
+UWT7-9 + ksigma  Hard thresh.   & 31.94  &    very few artifact \\
+UWT7-9 + Multiscale entropy     & 32.10  &    no artifact       \\
+WHMM                            & 30.80  &    some noise remains \\
+Ridgelet (B=8)                  & 29.99  &    artifacts   \\
+Ridgelet (B=16)                 & 30.87  &    few artefacts  \\
+Ridgelet (B=32)                 & 30.97  &    few artefacts  \\
+Ridgelet (B=64)                 & 30.79  &    few artefacts  \\
+Curvelet (B=16)                 & 31.95  &    no artifact  \\ \hline \hline
+\end{tabular}
+\caption{PSNR after filtering the simulated image (Lena + Gaussian noise (sigma=20)).
+In the combined filtering, a ridgelet, a curvelet, and a undecimated wavelet
+transform have been used.}
+\vspace{0.5cm}
+\label{comptab1}
+\end{center}
+\end{table}
+}
+Figure~\ref{fig_cur_lenna} shows the noisy image (top left), the 
+DWT filtering (top right), the UWT filtering  (bottom left), 
+and the curvelet filtering (bottom  right).
+
+From this simulation, we can conclude that:
+\begin{itemize}
+\item The curvelet transform do a better job than the ridgelet transform,
+whatever the block size.
+\item Undecimated wavelet transform produces comparable PSNR than the
+curvelet transform (a little bit better for the multiscale entropy),
+but the curvelet filtered image has a better visual quality.
+\end{itemize}
+
+\subsection{Simulation 2: Lines Filtering}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{
+\psfig{figure=fig_line.ps,bbllx=1cm,bblly=12cm,bburx=15cm,bbury=26cm,width=8cm,height=8cm,clip=}
+\psfig{figure=fig_line_g0p5.ps,bbllx=1cm,bblly=12cm,bburx=15cm,bbury=26cm,width=8cm,height=8cm,clip=}
+}
+\hbox{
+\psfig{figure=fig_f24_line_g0p5.ps,bbllx=1cm,bblly=12cm,bburx=15cm,bbury=26cm,width=8cm,height=8cm,clip=}
+\psfig{figure=fig_cur_line_g0p5.ps,bbllx=1cm,bblly=12cm,bburx=15cm,bbury=26cm,width=8cm,height=8cm,clip=}
+}}}
+\caption{Top left, simulated image, top right, same image + Gaussian noise,
+bottom left and right, filtered images respectively 
+by the undecimated wavelet
+transform, and the curvelet transform.}
+\label{fig_cur_line}
+\end{figure}
+Figure~\ref{fig_cur_line} top left is a simulated image containing many lines
+and a square. The vertical lines pixel values are power of 2, and
+varies from left to right from 32 to $1.75$ $10^{-3}$. All other lines have 
+a pixel value of 1. Figure~\ref{fig_cur_line} top right is a noisy 
+simulated image (the noise standard deviation is $0.5$). Therefore the
+square and the non vertical lines have a signal to noise ratio of 2.
+Figure~\ref{fig_cur_line} bottom left and right shows the filtered images
+by the undecimated wavelet transform and the curvelet transform.
+The square and the non vertical lines are significantly better restored by
+the curvelet transform. For the vertical lines, the wavelet transform detect
+them for a SNR large than 1, while the curvelet transform detect them  
+for a SNR large than $0.5$. Note also that  the horizontal and vertical 
+lines are favorable directions for the wavelet transform, because it corresponds
+to directions of its filters. Lines with the same intensity, but at different 
+angles are not as well restored.
+
+
+\subsection{Simulation 3: Color Image Filtering}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\hbox{ 
+\psfig{figure=fig_cmp_lena_rgb.ps,bbllx=2.5cm,bblly=13cm,bburx=20cm,bbury=25cm,width=8.5cm,height=6cm,clip=}
+\psfig{figure=fig_cmp_pepper_rgb.ps,bbllx=2.5cm,bblly=13cm,bburx=20cm,bbury=25cm,width=8.5cm,height=6cm,clip=}
+}
+}}
+\caption{SNR versus noise standard deviation using different filtering methods.  YUV+ decimated wavelet transform,
+YUV+curvelet, YUV+ undecimated wavelet, YUV+ decimated wavelet
+are respectively represented in continuous, dashed, and dotted lines. 
+Left, lena RGB image, and right pepper RGB image.}
+\label{fig_exp_rgb_curv}
+\end{figure}
+
+Color RGB images are generally first transformed into YUV space,
+and each YUV band is then filtered independently by the wavelet transform.
+We have made some experiments in order to see if replacing the wavelet
+transform by the curvelet transform would improved the results. We have used
+the two classic color images Lena and Pepper. % Barbara, Baboon, 
+For each of them, we have generated a set of noisy images (the noise 
+varying from 5 to 100), and applied three different filtering methods:
+YUV+curvelet (YUV-CUR), YUV+undecimated wavelet (YUV-UWT), and
+YUV+decimated wavelet (YUV-DWT).
+Figure~\ref{fig_exp_rgb_curv} represents the SNR versus the noise 
+standard deviation for the
+Lena image (left), and  for the pepper image (right).
+ YUV-CUR, YUV-UWT, and YUV-DWT are respectively represented by 
+continuous, dashed , and dotted lines.  
+For both of them, when the noise standard deviation increases 
+the curvelet transform outperforms the wavelet transform for both the SNR and
+the visual aspect.
+
+
+\section{Conclusion}
+The ridgelet and the curvelet algorithms presented here are the results of many 
+experiments. Several points must be emphased in order to
+have a high quality data representation:
+\begin{enumerate}
+\item The wavelet scales must be treated individually, and not grouped
+by two. It means that the ratio angular resolution over space resolution
+is not preserved, but results are clearly better. It is certainly due
+to the fact that it allows us to better use  the separation 
+between the signal and  noise in the wavelet domain.
+\item The block windowing operation must be done when the filtered blocks 
+are coadded to form an image (or a wavelet scale), and not 
+during the block extraction. Applying the windowing when extracting the blocks
+leads to limit the ability of the method in detecting faint features.
+\item The \`a trous algorithm seems perfectly well adapted for the first step
+of curvelet transform. A non isotropic 2D WT leads to many artifacts
+in the filter directions.
+\item It is very important that the 1D wavelet transform is compact in
+the Fourier domain. To use a domain support compact wavelet transform
+makes a lot of artifacts when a thresholding is applied. 
+\end{enumerate}
+
+
+\bibliographystyle{spiebib}
+\bibliography{starck,wave,restore,compress,ima,edge,curvelet}
+
+
+\end{document}

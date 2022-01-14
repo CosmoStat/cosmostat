@@ -1,0 +1,736 @@
+\chapter{\projcur Programs}
+% \section{Program}
+\section{Ridgelet Transform}
+\subsection{im\_radon}
+\index{im\_radon}
+Program {\em im\_radon} makes an (inverse-) Radon transform of a square
+$n \times n$ image.
+The output file which contains the transformation has a 
+suffix, .rad. If the output file name
+given by the user does not contain this suffix, it is automatically
+added. The ``.rad'' file is a FITS format file, and can be manipulated by
+any package implementing the FITS format, or can be converted to another
+format using the {\em im\_convert} program.
+For the two first Radon transform methods, the user can change the
+number of directions and the resolution. For other methods, the 
+number of directions and the resolution are fixed, and the
+x and y options are not valid. Options f, w and s allow the user to perform
+a filtering-backprojection. They are valid only when the selected Radon
+method is the second one. ``w'' fixes the width of the filter and the
+``s'' is the sigma parameter of the Gaussian filter.
+{\bf
+\begin{center}
+ USAGE:  im\_radon  options image\_in trans\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-m type\_of\_radon\_method]}  
+{\small 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item  Radon transform (resp.\ backprojection) in spatial domain. \\
+       By default, the output image is a $2n \times n$ image.
+\item  Radon projection in spatial domain and reconstruction in Fourier domain.
+       By default, the output image is a $2n \times n$ image.
+       The reconstruction is available only for image with
+       a size $n$ being a power of 2.
+\item  Radon transformation and reconstruction in Fourier space 
+       (i.e.\ Linogram). \\
+       The output is a 
+       $2n \times n$ image. The number of rows is multiplied by two.
+\item  Finite Radon Transform. \\
+       The output image is a $(n+1) \times n$ image. The input image size $n$
+       must be a prime number.
+\item  Slant Stack Radon transform. \\
+       The output image has twice the number of rows and twice the number
+       of columns of the input image.
+       The output is a $2n \times 2n$ image.
+       The reconstruction is not available with this transform.
+\end{enumerate}}
+Default is Radon transformation and reconstruction in Fourier space.
+
+\item {\bf [-y OutputLineNumber]} \\
+For the RADON transform, OutputLineNumber = number of projection,
+ and default is twice the number of input image rows. Only valid for Radon
+methods 1 and 2.\\
+% For the inverse RADON transform, OutputLineNumber = number of lines,
+% and default is the input image column number.
+
+\item {\bf [-x OutputColumnNumber]} \\
+For the RADON transform, OutputLineNumber = number of pixels per projection,
+and default is the input image column number. Only valid for Radon
+methods 1 and 2.\\
+% For the inv. RADON transform, OutputLineNumber = number of column,
+% and default is the input image column number.
+
+\item {\bf [-r]} \\
+Inverse Radon transform.
+\item {\bf [-f]} \\
+Filter each scan of the Radon transform. Only valid for Radon
+method 2.
+\item {\bf [-w FilterWidth]} \\
+Filter width. Only valid for Radon
+method 2. Default is 100. 
+\item {\bf [-s SigmaParameter} \\
+ Sigma parameter for the filtering. Only valid for Radon
+method 2. Default is 10.
+\item {\bf [-v]} \\
+Verbose. Default is no
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\item im\_radon image.fits trans\\
+Apply the Radon transform to an image.
+\item im\_info -r trans.rad rec\\
+ Reconstruct an image from its Radon transform.
+\end{itemize}
+
+\subsection{rid\_trans}
+\index{rid\_trans}
+Program {\em rid\_trans} makes the  ridgelet transform 
+(and the inverse when -r option is set).  
+The output file which contains the transformation has a 
+suffix, .rid. If the output file name
+given by the user does not contain this suffix, it is automatically
+added. The ``.rid'' file is a FITS format file, and can be manipulated by
+any package implementing the FITS format, or can be converted to another
+format using the {\em im\_convert} program.
+The default transform is the second one 
+(RectoPolar Ridgelets using a  FFT based WT). 
+The two first transform are based on the RectoPolar
+(i.e. linogram) radon transform, but the first applies a standard 
+bi-orthogonal wavelet transform (WT) on the Radon image rows, while the
+second uses the Fourier-based WT which introduces a redundancy of 2.
+For an $n \times n$ image, the output has $2n$ lines and $n$ column 
+with the first transform, and is a $2n \times 2n$ image for the second.
+When the overlapping is set, the size is doubled in each direction.
+
+{\bf
+\begin{center}
+ USAGE: rid\_trans options image\_in trans\_out
+\end{center}}
+where options are:
+
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_ridgelet]}  
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item RectoPolar Ridgelet Transform using a standard bi-orthogonal WT.
+\item RectoPolar Ridgelet Transform using a FFT based Pyramidal WT.
+\item Finite ridgelet transform.
+\end{enumerate}
+Default is 2.
+\item {\bf [-n number\_of\_scale]} \\
+ Number of scales used in the wavelet transform.
+ Default is automatically calculated.
+\item {\bf [-b BlockSize]} \\
+Block Size. Default is image size.
+\item {\bf [-i]} \\
+Print statistical information about each band. Default is no. 
+\item {\bf [-O]} \\
+ No block overlapping. Default is no. When this option is set, the 
+ number of rows and columns is multiplied by two. 
+\item {\bf [-r]} \\
+Inverse Ridgelet transform.
+\item {\bf [-x]} \\
+ Write all bands separately as images in the FITS format with prefix 'band\_j' 
+(j being the band number).
+\item {\bf [-v]} \\
+Verbose. Default is no
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\item rid\_transform image.fits trans\\
+Apply the Ridgelet transform to an image.
+\item rid\_transform -r trans.rid rec\\
+ Reconstruct an image from its Ridgelet transform.
+\end{itemize}
+
+\subsection{rid\_stat}
+\index{rid\_stat}
+Program {\em rid\_stat} makes the  ridgelet transform, and 
+gives statistical information on the ridgelet coefficients.
+At each scale, it caculates the standard deviation, the skewness,
+the kurtosis, the minimum, and the maximum. The output file is a 
+fits file containing a two-dimensional array $T[J-1,5]$ ($J$ being the
+number of scales), with the following syntax:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item $T[j,0] = $ standard deviation of the jth ridgelet band.
+\item $T[j,1] = $ skewness of the jth ridgelet band.
+\item $T[j,2] = $ kurtosis of the jth ridgelet band.
+\item $T[j,3] = $ minimum of the jth ridgelet band.
+\item $T[j,4] = $ maximum of the jth ridgelet band.
+\end{itemize}
+The last ridgelet scale is not used.
+If the ``-A'' option is set, these statistics are calculated only for 
+the ridgelet coefficients relative the specified angle.
+{\bf
+\begin{center}
+ USAGE: rid\_stat options image\_in trans\_out
+\end{center}}
+where options are:
+
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_ridgelet]}  
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item RectoPolar Ridgelet Transform using a standard bi-orthogonal WT.
+\item RectoPolar Ridgelet Transform using a FFT based Pyramidal WT.
+\item Finite ridgelet transform.
+\end{enumerate}
+Default is 2.
+\item {\bf [-n number\_of\_scale]} \\
+ Number of scales used in the wavelet transform.
+ Default is automatically calculated.
+\item {\bf [-b BlockSize]} \\
+Block Size. Default is 16.
+\item {\bf [-O]} \\
+   Use overlapping block. Default is no.
+\item {\bf [-A Angle]} \\
+ Statistics for a given angle. The value must be given  in degrees.
+ Default is no, statistics are calculated from all coefficients.
+\item {\bf [-v]} \\
+Verbose. Default is no
+\end{itemize}
+
+\subsubsection*{Example:}
+\begin{itemize}
+\item rid\_stat -v  image.fits tabstat\\
+\end{itemize}
+
+\subsection{rid\_filter}
+
+Program {\em rid\_filter} filters an image using the ridgelet transform.
+\begin{center}
+ USAGE:  rid\_filter options image\_in imag\_out
+\end{center}
+where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_ridgelet]}  
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item RectoPolar Ridgelet Transform using a standard bi-orthogonal WT.
+\item RectoPolar Ridgelet Transform using a FFT based pyramidal WT.
+\item Finite ridgelet transform.
+\end{enumerate}
+Default is 2.
+\item {\bf [-n number\_of\_scale]} \\
+ Number of scales used in the wavelet transform.
+ Default is automatically calculated.
+\item {\bf [-h]} \\
+Apply the ridgelet transform only on the high frequencies.
+Default is no.
+
+\item {\bf [-b BlockSize]} \\
+Block Size. Default is image size.
+
+\item {\bf [-F FirstDetectionScale]} \\
+ First detection scale. Default is 1. 
+
+% \item {\bf [-i NbrIter]}  \\
+%  Number of iteration for the constraint reconstruction.
+%   Default is no. 
+% \item {\bf [-G RegulParam]}  \\
+%   Regularization parameter for the constraint reconstruction.
+%  Default is 0.2.
+% \item {\bf [-C ConvergParam]}  \\
+%  Convergence parameter. Default is 1.
+
+\item {\bf [-s Nsigma]} \\
+False detection rate. The false detection rate for a detection is given
+\begin{eqnarray}
+\epsilon =  \mbox{erfc}( NSigma / \sqrt{2})
+\end{eqnarray}
+{\em Nsigma} parameter allows us to express the false detection rate
+even if it is not Gaussian noise. \\
+Default is 3.
+
+\item {\bf [-g sigma]} \\
+Gaussian noise: sigma = noise standard deviation.  \\
+ Default is automatically estimated.
+
+\item {\bf [-p]} \\
+Poisson noise.
+
+\item {\bf [-O]}  \\
+Do not apply block overlapping. By default, block overlapping is used.
+
+\item {\bf [-v]} \\
+Verbose.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\item rid\_filter  image.fits fima\\
+Filter an image using all default options.
+\item rid\_filter -h -s5 image.fits fima\\
+Five sigma filtering, filtering only the high frequencies.
+\end{itemize}
+
+
+\section{Curvelet Transform}
+\subsection{cur\_trans}
+\index{cur\_trans}
+Program {\em cur\_trans} determines the  curvelet transform 
+(and the inverse when -r option is set).  
+The output file which contains the transformation has a 
+suffix, .cur. If the output file name
+given by the user does not contain this suffix, it is automatically
+added. The ``.cur'' file is a 3D FITS format file, and can be manipulated by
+any package implementing the FITS format.
+The curvelet transform uses the ridgelet transform, and the default 
+ridgelet transform is the RectoPolar one with a FFT based pyramidal WT.
+
+{\bf
+\begin{center}
+ USAGE: cur\_trans options image\_in trans\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_ridgelet]}  
+\begin{enumerate}
+\baselineskip=0.4truecm
+\item RectoPolar Ridgelet Transform using a standard bi-orthogonal WT.
+\item RectoPolar Ridgelet Transform using a FFT based pyramidal WT.
+\item Finite ridgelet transform.
+\end{enumerate}
+Default is 2.
+\item {\bf [-n number\_of\_scale]} \\
+ Number of scales used in the 2D wavelet transform.
+ Default is 4. 
+\item {\bf [-N number\_of\_scale]} \\
+ Number of scales used in the ridgelet transform.
+ Default is automatically calculated.
+\item {\bf [-b BlockSize]}  \\
+Block Size. Default is 16.
+\item {\bf [-r]}  \\
+Inverse Curvelet transform.
+\item {\bf [-i]}  \\
+Print statistical information about each band. Default is no. 
+\item {\bf [-O]}  \\
+ Block overlapping. Default is no. 
+\item {\bf [-x]} \\
+ Write all bands separately as images in the FITS format with prefix 'band\_j' 
+(j being the band number).
+\item {\bf [-v]} \\
+Verbose. Default is no.
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\item cur\_trans -i image.fits trans\\
+Curvelet transform of an image.
+\item cur\_trans -r  trans.cur rec\\
+Image reconstruction from its curvelet transform.
+\end{itemize}
+
+
+\subsection{cur\_stat}
+\index{cur\_stat}
+Program {\em cur\_stat} determines the  curvelet transform, and 
+gives statistical information on the curvelet coefficients.
+At each scale, it caculates the standard deviation, the skewness,
+the kurtosis, the minimum, and the maximum. The output file is a 
+FITS file containing a two-dimensional array $T[J-1,5]$ ($J$ being the
+number of bands), with the following syntax:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item $T[j,0] = $ standard deviation of the jth ridgelet band.
+\item $T[j,1] = $ skewness of the jth ridgelet band.
+\item $T[j,2] = $ kurtosis of the jth ridgelet band.
+\item $T[j,3] = $ minimum of the jth ridgelet band.
+\item $T[j,4] = $ maximum of the jth ridgelet band.
+\end{itemize}
+{\bf
+\begin{center}
+ USAGE: cur\_stat options image\_in trans\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\item {\bf [-n number\_of\_scale]} \\
+ Number of scales used in the wavelet transform.
+ Default is automatically calculated.
+\item {\bf [-b BlockSize]} \\
+Block Size. Default is 16.
+\item {\bf [-O]} \\
+   Use overlapping block. Default is no.
+\item {\bf [-v]} \\
+Verbose. Default is no
+\end{itemize}
+
+\subsubsection*{Example:}
+\begin{itemize}
+\item cur\_stat -v  image.fits tabstat\\
+\end{itemize}
+
+
+\subsection{cur\_filter}
+\index{cur\_filter}
+
+Program {\em cur\_filter} filters an image using the curvelet transform.
+\begin{center}
+ USAGE:  cur\_filter options image\_in imag\_out
+\end{center}
+where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-t type\_of\_ridgelet]} 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item RectoPolar Ridgelet Transform using a standard bi-orthogonal WT.
+\item RectoPolar Ridgelet Transform using a FFT based Pyramidal WT.
+\item Finite ridgelet transform.
+\end{enumerate}
+Default is 2.
+\item {\bf [-n number\_of\_scale]} \\
+ Number of scales used in the 2D wavelet transform.
+ Default is 4. 
+
+\item {\bf [-N number\_of\_scale]} \\
+ Number of scales used in the ridgelet transform.
+ Default is automatically calculated.
+
+\item {\bf [-b BlockSize]}  \\
+Block Size. Default is 16.
+
+\item {\bf [-g sigma]} \\
+Gaussian noise: sigma = noise standard deviation.  \\
+ Default is automatically estimated.
+
+\item {\bf [-s Nsigma]} \\
+False detection rate. \\
+Default is 3.
+
+\item {\bf [-O]}  \\
+Do not apply block overlapping. By default, block overlapping is used.
+
+\item {\bf [-P]}  \\
+ Supress the positivity constraint. Default is no. 
+
+\item {\bf [-I NoiseFileName]}  \\
+If the noise is stationary, the program can estimate the correct 
+thresholds from a realization of the noise.
+
+\item {\bf [-v]} \\
+Verbose
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\item cur\_filter image.fits sol\\
+Curvelet filtering of an image.
+\item cur\_filter -n 5 -s4  image.fits sol\\
+Curvelet filtering of an image, using five resolution levels, and
+a 4-sigma detection.
+\end{itemize}
+
+
+\subsection{cur\_colfilter}
+\index{cur\_colfilter}
+
+Program {\em cur\_colfilter} filters a
+color image using the curvelet transform.
+\begin{center}
+ USAGE:  cur\_colfilter options image\_in imag\_out
+\end{center}
+where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-n number\_of\_scale]} \\
+ Number of scales used in the 2D wavelet transform.
+ Default is 4. 
+
+\item {\bf [-N number\_of\_scale]} \\
+ Number of scales used in the ridgelet transform.
+ Default is automatically calculated.
+
+\item {\bf [-b BlockSize]}  \\
+Block Size. Default is 16.
+
+\item {\bf [-g sigma]} \\
+Gaussian noise: sigma = noise standard deviation.  \\
+ Default is automatically estimated.
+
+\item {\bf [-s Nsigma]} \\
+False detection rate. \\
+Default is 3.
+
+\item {\bf [-O]}  \\
+Do not apply block overlapping. By default, block overlapping is used.
+
+\item {\bf [-v]} \\
+Verbose
+\end{itemize}
+
+\subsubsection*{Example:}
+\begin{itemize}
+\item cur\_colfilter image.fits sol\\
+Curvelet transform of a color image.
+\end{itemize}
+
+
+\subsection{cur\_contrast}
+\index{cur\_contrast}
+
+Program {\em cur\_contrast} filters a color image using the curvelet transform.
+\begin{center}
+ USAGE:  cur\_contrast options image\_in imag\_out
+\end{center}
+where options are 
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales used in the wavelet transform.
+Default is 4. 
+\item {\bf [-N number\_of\_scales]} \\
+Number of scales used in the ridgelet transform.
+Default is automatically calculated.
+\item {\bf [-b BlockSize]} \\
+Block size used by the curvelet transform. Default is 16.
+\item {\bf [-O]} \\
+Use overlapping block. Default is no.
+\item {\bf [-g sigma]} \\
+Noise standard deviation. Only used when filtering is performed.
+Default is automatically estimated.
+\item {\bf [-s NSigmalLow]} \\
+ Coefficient $<$ NSigmalLow*SigmaNoise is not modified.
+ Default is   5.
+\item {\bf [-S NSigmalUp]} \\
+ Coefficient $>$ NSigmalUp*SigmaNoise is not modified.
+ Default is  20.
+\item {\bf [-M MaxCoeff]} \\
+If MaxBandCoef is the maximum coefficient in a given curvelet band,
+ Coefficient $>$ MaxBandCoef*MaxCoeff is not modified.
+ Default is 0.5.
+\item {\bf  [-P P\_parameter]} \\
+Determine the degree on non-linearity. P must be in ]0,1[.  
+Default is 0.5.
+\item {\bf [-T P\_parameter]} \\
+ Curvelet coefficent saturation parameter. T must be in [0,1].  
+Default is 0.
+\item {\bf [-c]} \\
+By default a sigma clipping is performed. When this option is set, no
+sigma clipping is performed.
+\item {\bf [-K ClippingValue]} \\
+Clipping value. Default is 3.
+\item {\bf [-L Saturation]} \\
+Saturate the reconstructed image.
+A coefficient larger than Saturation*MaxData is set to Saturation*MaxData.
+Default is  1. If L is set to 0, then no saturation is applyied.
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item cur\_contrast image.fits image\_out.fits\\
+Enhance the contrast using the curvelet transform.
+\item cur\_contrast -O image.fits image\_out.fits\\
+Enhance the contrast using the curvelet transform and block overlapping.
+\item cur\_contrast -M 0.8 image.fits image\_out.fits\\
+Enhance more the contrast.
+\end{itemize}
+
+\subsection{cur\_colcontrast}
+\index{col\_colcontrast}
+The program {\em col\_colcontrast} enhances the contrast of a color image
+using the curvelet transform.
+The command line is:
+{\bf
+\begin{center}
+ USAGE: cur\_colcontrast option in\_image out\_image
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales used in the wavelet transform.
+Default is 4. 
+\item {\bf [-N number\_of\_scales]} \\
+Number of scales used in the ridgelet transform.
+Default is automatically calculated.
+\item {\bf [-b BlockSize]} \\
+Block size used by the curvelet transform. Default is 16.
+\item {\bf [-O]} \\
+Use overlapping block. Default is no.
+\item {\bf [-g sigma]} \\
+Noise standard deviation.  
+Default is automatically estimated.
+\item {\bf [-s NSigmalLow]} \\
+ Coefficient $<$ NSigmalLow*SigmaNoise is not modified.
+ Default is   5.
+\item {\bf [-S NSigmalUp]} \\
+ Coefficient $>$ NSigmalUp*SigmaNoise is not modified.
+ Default is  20.
+\item {\bf [-M MaxCoeff]} \\
+If MaxBandCoef is the maximum coefficient in a given curvelet band,
+ Coefficient $>$ MaxBandCoef*MaxCoeff is not modified.
+ Default is 0.5.
+ \item {\bf  [-P P\_parameter]} \\
+Determine the degree of non-linearity. P must be in ]0,1[.  
+Default is 0.5.
+\item {\bf [-T P\_parameter]} \\
+ Curvelet coefficent saturation parameter. T must be in [0,1].  
+Default is 0.
+\item {\bf [-c]} \\
+By default a sigma clipping is performed. When this option is set, no
+sigma clipping is performed.
+\item {\bf [-K ClippingValue]} \\
+Clipping value. Default is 3.
+\item {\bf [-L Luminance\_Saturation]} \\
+Values in the luminance map which are 
+larger than Saturation*MaxData are set to Saturation*MaxData.
+Default is  1. 
+\end{itemize}
+
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item cur\_colcontrast image.tiff image\_out.tiff\\
+Enhance the contrast using the curvelet transform.
+\item cur\_colcontrast -n 5 image.tiff image\_out.tiff\\
+Ditto, but use five scales instead of four.
+\item cur\_colcontrast -M 0.9 image.tiff image\_out.tiff\\
+Enhance more the contrast.
+\end{itemize}
+
+
+\section{Combined Filtering}
+\subsection{cb\_filter}
+\index{cb\_filter}
+Program {\em cb\_filter} filters an image corrupted by Gaussian noise by
+ the combined filtering method. By default, the undecimated  bi-orthogonal WT
+ and the curvelet transform are used. The number of iterations is defaulted
+ 10. In general, the algorithm converges with less than six iterations.
+If the ``-T'' option is set, the Total Variation is minimized instead of 
+the $l_1$ norm of the multiscale coefficients.
+A deconvolution can also be performed using the ``-P'' option. In this
+case, a division is first done in Fourier space between the 
+input image and the point spread function. All Fourier components with
+a norm lower than $\epsilon$ (default value is $10^{-3}$) are set to zero.
+Then the deconvolved image is filtered by the combined filtering method
+using the new noise properties (still Gaussian, but not white).
+
+{\bf
+\begin{center}
+ USAGE: cb\_filter options image\_in trans\_out
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+ \item {\bf [-t TransformSelection]}
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item A trous algorithm
+\item Bi-orthogonal WT with 7/9 filters
+\item Ridgelet transform
+\item Curvelet transform
+\item Mirror Basis WT
+% \item Multiscale Ridgelet
+%\item Cosinus transform
+%\item Pyramidal Median transform
+\end{enumerate}
+
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales used in the \`a trous wavelet transform 
+%, the PMT and
+ and the curvelet transform. 
+% Number of ridgelet in the multi-ridgelet transform.
+Default is 4.
+
+\item {\bf [-b BlockSize]}  \\
+ Block Size in the ridgelet transform.
+Default is image size.  
+% Starting Block Size in the multi-ridgelet transform. Default is 8. 
+
+\item {\bf [-i NbrIter]}  \\
+Number of iterations. Default is 10.
+
+\item {\bf [-F FirstDetectionScale]} \\
+First detection scale in the ridgelet transform.
+Default is 1. 
+
+\item {\bf [-k]} \\
+Kill the last scale in ridgelet. % , and multiscale ridgelet transform.
+Default no.
+
+\item {\bf  [-K]} \\
+Kill last scale in the \`a trous algorithm and the curvelet. % and the PMT
+Default no.
+
+\item {\bf  [-L FirstSoftThreshold]} \\
+First soft thresholding value. Default is 0.5.
+
+\item {\bf  [-l LastSoftThreshold]} \\
+Last soft thresholding value. Default is 0.5.
+
+\item {\bf  [-u]} \\
+ Number of undecimated scales in the WT.
+ Default is 1. 
+
+\item {\bf [-s Nsigma]} \\
+False detection rate. Default is 4.
+
+\item {\bf [-g sigma]} \\
+Gaussian noise: sigma = noise standard deviation.  \\
+ Default is automatically estimated.
+
+% \item {\bf [-p]} \\
+% Poisson Noise. Default is no (Gaussian).
+
+\item {\bf [-O]}  \\
+No block overlapping. Default is no.
+
+\item {\bf [-T]}  \\
+ Minimize the Total Variation instead of the L1 norm. 
+
+\item {\bf [-P PsfFile]}  \\
+Apply a deconvolution using the PSF in the file PsfFile. 
+
+\item {\bf [-e Eps]}  \\
+ Remove frequencies with $|P P^*| < \epsilon $. 
+ Default is $10^{-3}$.
+
+\item {\bf [-C TolCoef]}  \\
+ Default is 0.5. 
+
+\item {\bf [-v]} \\
+Verbose. Default is no.
+\end{itemize}
+
+\subsubsection*{Example:}
+\begin{itemize}
+\item cb\_filter image.fits sol\\
+Image filtering by the combined filtering method, using both
+the curvelet and wavelet transform.
+\end{itemize}
+
+
+

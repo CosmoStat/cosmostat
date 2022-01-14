@@ -13,6 +13,9 @@ include(ExternalProject)
 include(FindPkgConfig)
 
 # Load custom CMake function
+# - find_pkg
+# - build_package
+# - build_pybind_list
 include(functions)
 
 # Set build type
@@ -41,8 +44,7 @@ link_directories(${Python_LIBRARY_DIRS})
 find_pkg(CFITSIO cfitsio)
 
 # Locate HEALPix
-find_pkg(HEALPIX healpix_cxx)
-include_directories(${HEALPIX_INCLUDE_DIRS})
+find_pkg(HEALPIX healpix_cxx>=3.80)
 
 # Locate FFTW
 find_package(FFTW3 QUIET)
@@ -60,88 +62,320 @@ set(CMAKE_CXX_FLAGS_RELEASE
 )
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
+# Set basic package dependency list including Sparse2D, CFITSIO and FFTW
+set(basic_libs ${sparse2d_libs} ${CFITSIO_LIBRARIES} ${fftw_libs})
+
+# -------------- #
+# Build packages #
+# -------------- #
+
+# ---- #
+# MISC #
+# ---- #
+
+# List package libs
+set(misc_libs misc1d misc2d misc3d)
+# List package mains
+set(misc_mains main2d main3d)
+# List package dependencies
+# - Sparse2D
+# - CFITSIO
+# - FFTW
+set(misc_deps ${basic_libs})
+# Build package
+build_package(
+  "${misc_mains}"       #List of mains
+  "${misc_libs}"        #List of libs
+  "${misc_deps}"        #List of dependencies
+  misc                  #Path to package
+  cc                    #Source extension
+  h                     #Header extension
+)
+
+# -- #
+# MR #
+# -- #
+
+# List package libs
+set(mr_libs mr1d mr2d)
+# List package mains
+set(mr_mains mrmain1d mrmain2d mrmain3d)
+# List package dependencies
+# - MISC
+# - Sparse2D
+# - CFITSIO
+# - FFTW
+set(mr_deps ${misc_libs} ${basic_libs})
+# Build package
+build_package(
+  "${mr_mains}"         #List of mains
+  "${mr_libs}"          #List of libs
+  "${mr_deps}"          #List of dependencies
+  mr                    #Path to package
+  cc                    #Source extension
+  h                     #Header extension
+)
+
+# -- #
+# MC #
+# -- #
+
+# List package libs
+set(mc_libs mc1d mc2d)
+# List package mains
+set(mc_mains mcmain1d mcmain2d)
+# List package dependencies
+# - MR
+# - MISC
+# - Sparse2D
+# - CFITSIO
+# - FFTW
+set(mc_deps ${mr_libs} ${misc_libs} ${basic_libs})
+# Build package
+build_package(
+  "${mc_mains}"         #List of mains
+  "${mc_libs}"          #List of libs
+  "${mc_deps}"          #List of dependencies
+  mc                    #Path to package
+  cc                    #Source extension
+  h                     #Header extension
+)
+
+# --- #
+# MGA #
+# --- #
+
+# List package libs
+set(mga_libs mga1d mga3d)
+# List package mains
+set(mga_mains mgamain1d mgamain2d mgamain3d)
+# List package dependencies
+# - MC
+# - MR
+# - MISC
+# - Sparse2D
+# - CFITSIO
+# - FFTW
+set(mga_deps ${mc_libs} ${mr_libs} ${misc_libs} ${basic_libs})
+# Build package
+build_package(
+  "${mga_mains}"        #List of mains
+  "${mga_libs}"         #List of libs
+  "${mga_deps}"         #List of dependencies
+  mga                   #Path to package
+  cc                    #Source extension
+  h                     #Header extension
+)
+
+# ---- #
+# MWIR #
+# ---- #
+
+option(BUILD_MWIR "Build MWIR library" ON)
+message(STATUS "MWIR Build: ${BUILD_MWIR}")
+
+if(BUILD_MWIR)
+
+  # List package libs
+  set(mwir_libs mwir)
+  # List package mains
+  set(mwir_mains mwirmain)
+  # List package dependencies
+  # - MISC
+  # - Sparse2D
+  # - CFITSIO
+  # - FFTW
+  set(mwir_deps ${misc_libs} ${basic_libs})
+  # Build package
+  build_package(
+    "${mwir_mains}"       #List of mains
+    "${mwir_libs}"        #List of libs
+    "${mwir_deps}"        #List of dependencies
+    mwir                  #Path to package
+    cc                    #Source extension
+    h                     #Header extension
+  )
+
+endif()
+
+# ------------------- #
+# DICTIONARY LEARNING #
+# ------------------- #
+
+# NOTE: Need to to include GSL and Armadillo libraries
+
+option(BUILD_DICLEARN "Build Dictionary Learning library" ON)
+message(STATUS "BUILD_DICLEARN Build: ${BUILD_DICLEARN}")
+
+if(BUILD_DICLEARN)
+
+  # Locate GSL using pkg-config
+  pkg_check_modules(GSL gsl)
+  find_pkg(GSL gsl)
+
+  # Locate the Armadillo library
+  find_package(Armadillo)
+  include_directories(${ARMADILLO_INCLUDE_DIRS})
+
+  # List package libs
+  set(diclearn_libs diclearn)
+  # List package mains
+  set(diclearn_mains diclearnmain)
+  # List package dependencies
+  # - MR
+  # - MISC
+  # - GSL
+  # - Armadillo
+  # - Sparse2D
+  # - CFITSIO
+  # - FFTW
+  set(diclearn_deps
+    ${mr_libs}
+    ${misc_libs}
+    ${GSL_LIBRARIES}
+    ${ARMADILLO_LIBRARIES}
+    ${basic_libs}
+  )
+  # Build package
+  build_package(
+    "${diclearn_mains}"   #List of mains
+    "${diclearn_libs}"    #List of libs
+    "${diclearn_deps}"    #List of dependencies
+    diclearn              #Path to package
+    cc                    #Source extension
+    h                     #Header extension
+  )
+
+endif()
+
 # --- #
 # MRS #
 # --- #
 
-# Build mrs libs
+# List package libs
 set(mrs_libs mrs mrsp)
-foreach(library ${mrs_libs})
-  build_lib(${library} mrs cc h)
-endforeach()
-
-# Find all mrs targets
-find_targets(mrs_targets mrs/mainmrs cc)
-find_targets(mrsp_targets mrs/mainmrsp cc)
-set(mrs_all_targets ${mrs_targets} ${mrsp_targets})
-
-# Build MRS binaries
-foreach(program ${mrs_targets})
-  build_bin(${program} "${mrs_libs}" mrs/mainmrs cc)
-endforeach(program)
-
-# Build MRSP binariess
-foreach(program ${mrsp_targets})
-  build_bin(${program} "${mrs_libs}" mrs/mainmrsp cc)
-endforeach(program)
-
-# Install libraries
-install(TARGETS ${mrs_libs} DESTINATION lib)
-
-# Install binaraies
-install(TARGETS ${mrs_all_targets} DESTINATION bin)
+# List package mains
+set(mrs_mains mainmrs mainmrsp)
+# List package dependencies
+  # - HEALPix
+  # - Sparse2D
+  # - CFITSIO
+  # - FFTW
+set(mrs_deps ${HEALPIX_LIBRARIES} ${basic_libs})
+# Build package
+build_package(
+  "${mrs_mains}"        #List of mains
+  "${mrs_libs}"         #List of libs
+  "${mrs_deps}"         #List of dependencies
+  mrs                   #Path to package
+  cc                    #Source extension
+  h                     #Header extension
+)
 
 # -------- #
 # Astro WL #
 # -------- #
 
-# Set path to astro weaklensing
-set(astro_wl_path astro/weaklensing)
+option(BUILD_ASTRO_WL "Build ASTRO WL library" ON)
+message(STATUS "ASTRO WL Build: ${BUILD_ASTRO_WL}")
 
-# Build astro weaklensing libs
-set(astro_wl_libs divcurlwt wl wls)
-foreach(library ${astro_wl_libs})
-  build_lib(${library} ${astro_wl_path} cc h)
-  add_dependencies(${library} ${mrs_libs})
-endforeach()
-set(astro_wl_mrs_libs ${astro_wl_libs} ${mrs_libs})
+if(BUILD_ASTRO_WL)
 
-# Find all astro wl targets
-find_targets(astro_wl_targets ${astro_wl_path}/mainwl cc)
-find_targets(astro_wls_targets ${astro_wl_path}/mainwls cc)
-set(astro_wl_all_targets ${astro_wl_targets} ${astro_wls_targets})
+  # Set path to astro weak lensing
+  set(astro_wl_path astro/weaklensing)
+  # List package libs
+  set(astro_wl_libs divcurlwt wl wls)
+  # List package mains
+  set(astro_wl_mains mainwl mainwls)
+  # List package dependencies
+  # - MRS
+  # - HEALPix
+  # - Sparse2D
+  # - CFITSIO
+  # - FFTW
+  set(astro_wl_deps ${mrs_libs} ${HEALPIX_LIBRARIES} ${basic_libs})
+  # Build package
+  build_package(
+    "${astro_wl_mains}"   #List of mains
+    "${astro_wl_libs}"    #List of libs
+    "${astro_wl_deps}"    #List of dependencies
+    ${astro_wl_path}      #Path to package
+    cc                    #Source extension
+    h                     #Header extension
+  )
 
-# Build astro wl binaries
-foreach(program ${astro_wl_targets})
-  build_bin(${program} "${astro_wl_libs}" ${astro_wl_path}/mainwl cc)
-endforeach(program)
+endif()
 
-# Build astro wls binaries
-foreach(program ${astro_wls_targets})
-  build_bin(${program} "${astro_wl_mrs_libs}" ${astro_wl_path}/mainwls cc)
-endforeach(program)
+# --------- #
+# Astro Gal #
+# --------- #
 
-# Install libraries
-install(TARGETS ${astro_wl_libs} DESTINATION lib)
+option(BUILD_ASTRO_GAL "Build ASTRO GAL library" ON)
+message(STATUS "ASTRO GAL Build: ${BUILD_ASTRO_GAL}")
 
-# Install binaraies
-install(TARGETS ${astro_wl_all_targets} DESTINATION bin)
+if(BUILD_ASTRO_GAL)
+
+  # Set path to astro weak lensing
+  set(astro_gal_path astro/galaxies)
+  # List package libs
+  set(astro_gal_libs gal)
+  # List package mains
+  set(astro_gal_mains galmain)
+  # List package dependencies
+  # - MISC
+  # - Sparse2D
+  # - CFITSIO
+  # - FFTW
+  set(astro_gal_deps ${misc_libs} ${basic_libs})
+  # Build package
+  build_package(
+    "${astro_gal_mains}"  #List of mains
+    "${astro_gal_libs}"   #List of libs
+    "${astro_gal_deps}"   #List of dependencies
+    ${astro_gal_path}     #Path to package
+    cc                    #Source extension
+    h                     #Header extension
+  )
+
+endif()
 
 # --------------- #
 # Python Bindings #
 # --------------- #
 
-# Include Pybind11 headers
-if(NOT DEFINED PYBIND11_INCLUDE_DIR)
-  message(FATAL_ERROR "Path to Pybind11 headers must be specified.")
-else()
-  include_directories(${PYBIND11_INCLUDE_DIR})
+option(BUILD_BINDING "Build Python Bindings" ON)
+message(STATUS "Bindings Build: ${BUILD_BINDING}")
+
+if(BUILD_BINDING)
+
+  # Include Pybind11 headers
+  if(NOT DEFINED PYBIND11_INCLUDE_DIR)
+    message(FATAL_ERROR "Path to Pybind11 headers must be specified.")
+  else()
+    include_directories(${PYBIND11_INCLUDE_DIR})
+  endif()
+
+  # Define binding targets
+  set(binding_targets pymrs)
+  # List binding dependencies
+  # - MRS
+  # - HEALPix
+  # - OpenMP
+  # - Sparse2D
+  # - CFITSIO
+  # - FFTW
+  set(pybind_deps
+    ${mrs_libs}
+    ${HEALPIX_LIBRARIES}
+    ${OpenMP_CXX_LIBRARIES}
+    ${basic_libs}
+  )
+  # Build bindings
+  build_pybind_list(
+    "${binding_targets}"  #List of bindings
+    "${pybind_deps}"      #List of binding depdendencies
+    python_binding        #Path to bindings
+    cpp                   #Source extension
+  )
+
 endif()
-
-# Define binding targets
-set(binding_targets pymrs)
-
-# Build bindings
-foreach(program ${binding_targets})
-  build_pybind(${program} python_binding cpp)
-endforeach(program)

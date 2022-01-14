@@ -1,0 +1,678 @@
+\chapter{Introduction}
+\label{ch_iso}
+ 
+The ISOCAM infrared camera is one of the four instruments on board the
+ISO (Infrared Space Observatory) spacecraft which 
+ended its life on May 1998. It operated in the 2.5-18 $\mu$m
+range, and was developed by the ISOCAM consortium lead by the French
+Service d'Astrophysique of CEA Saclay.  
+Some software have been developed using the \proj package.
+
+ISOCAM was designed to provide images of the sky and polarization
+measurements in the 2.5-18~$\mu$m band. It features two 
+detectors, one for short wavelengths (SW: 2.5-5.5~$\mu$m band), the
+other for long wavelengths (LW: 4-18~$\mu$m band). The camera has  
+two channels which cannot be used simultaneously: a selection wheel
+holding Fabry mirrors can direct the light beam from the ISO
+telescope toward either one of the detectors. The selection
+wheel also holds two internal calibration sources which can illuminate
+ the detectors quasi-uniformly for flatfield purposes. In order to choose the
+observing configuration, there are two wheels for each channel. The
+first wheel holds four lenses allowing the choice of the spatial sampling:
+1.5, 3, 6, and 12$''$ per
+pixel. At ISOCAM wavelengths, the spatial resolution is diffraction
+limited but the sampling may not obey the Nyquist criterion.  
+The second wheel holds a dozen  discrete band pass
+filters with spectral resolution ranging from 2 to 15, 
+and continuously variable filters (CVF) with spectral resolution of 45.
+The sixth wheel, the entrance wheel, has four positions: one
+hole and three polarizers.  It is possible to observe data with different
+exposure times (0.28, 2.1, 5.04, 6.02, 10.08, 20.16 and 60.2~sec) due to
+the telemetry flow and on-board electronics. The electronic gain
+can be adjusted to 1, 2 or 4.  The operating temperature of the camera
+is as low as 2.4~K, provided by liquid helium
+cooling. All details about ISOCAM, including in flight performances, are
+available in \cite{starck:ces96}.  
+
+For one observation, the ISOCAM instrument delivers a set of $32\times32$
+frame pairs (start of integration, called {\em Reset}, and end of integration,
+EOI). For the long wavelength detector (LW), the signal corresponds
+to a simple difference between EOI and Reset. For the short wavelength
+detector (SW), it is more complex, and several operations such as
+``cross talk correction'' must be done. We assume that these
+corrections have been applied to the data being considered
+here. We have a set of data noted $D(x,y,t,c)$: one
+measurement per pixel position $(x,y)$,  
+repeated $t$ times, with $c$ configurations (there is a new
+configuration each time the pointing position, the filter, the
+integration time, etc, are changed).
+
+In the ideal case, calibration will consist of 
+\begin{itemize}
+
+\item normalizing the data to ADU (analog-to-digital units), 
+g$^{-1}$\,s$^{-1}$ by 
+\[ D_1(x,y,t,c) = \frac{D_0(x,y,t,c)}{gain*tint*Naccu} \]
+where $gain$ is the electronic gain, $tint$ is the integration time,
+$Naccu$ is the number of frames already added by the on-board
+processing ($Naccu$ is greater than one only in the accumulation mode,
+normally confined to the $0.28$ second readouts ($Naccu=4$), or in
+the CAM parallel mode ($Naccu=12$)).
+
+\item subtract the DARK current  
+\[ D_2(x,y,t,c) = D_1(x,y,t,c) - dark(x,y) \]
+The corresponding dark is extracted from the calibration library.
+\item divide by the optical flat (oflat) and the detector flat (dflat)
+\[ D_3(x,y,t,c) = \frac{D_2(x,y,t,c)}{oflat(x,y)dflat(x,y)} \]
+The corresponding optical and detector flats are extracted from the
+calibration library.
+
+\item average the values corresponding to the same sky position and the same 
+configuration
+\[ Image(x,y,c) = mean(D_3(x,y,1..t,c)) \]
+\[ RMS(x,y,c) =  sigma(D_3(x,y,1..t,c)) \]
+
+\item in the case of raster observations, reconstruct the final raster
+map, $Raster(x,y)$, from all images, $Image(x,y,c)$.
+
+\end{itemize}
+
+In practice, however, we have to take into account several problems:
+
+\begin{itemize}
+
+\item since the dark exhibits variation from one orbit to another, library 
+darks obtained on specific calibration orbits are not always applicable to 
+the data, especially at low flux. 
+
+\item calibration flat fields are made with an internal source, which
+creates flats different from those of astronomical sources.
+
+\item cosmic rays hit the detector (see next section).
+
+\item the detector exhibits transient behavior. Each time a
+detector pixel is illuminated successively by a source and the
+background, as the detector is scanning the sky, the transition
+between the two flux levels is not instantaneous.
+
+\item spacecraft jitter around the nominal pointing position randomly
+shifts the sources on the array during the observation.
+
+\item the field of view is subject to distortion. The resolution of each pixel depends on its 
+position in the detector.
+\item no signal is read from column 24.
+\end{itemize}
+
+Studies have been done and continue in order to solve all of these
+problems, and some solutions have been proposed.
+
+
+\chapter{ISOCAM Data Processing}
+
+\section{Cosmic Ray Impact Suppression}
+\label{sec:glitch}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\psfig{figure=fig_deglitch2.ps,bbllx=2.5cm,bblly=13cm,bburx=19.5cm,bbury=25.5cm,width=15cm,height=7cm}
+}}
+\caption{Original data (top), deglitched data (middle), and both overplotted 
+(bottom).}
+\label{fig_deglitch2}
+\end{figure}
+ 
+At first sight, the images from ISOCAM are crossed by strings of high
+value pixels produced by cosmic ray impacts. Most of these glitches are 
+due to mild, fast electron energy deposition along a string of pixels.  
+Typically for the LW
+detector, on average, about 40 to 60 pixels are affected at any time
+for an integration time of 5 seconds. Those pixels usually recover
+completely after one or two readouts. However, some impacts can have
+long lasting effects (up to 5 minutes) on the hit pixel. They are
+thought to be due to heavy particles. There is one impact with this
+behavior about every second somewhere on the LW channel.  The rate of
+cosmic ray impacts increases greatly when ISO is close to its
+perigee, due to the radiation belt.
+
+Cosmic ray impact suppression (also called deglitching) is not a
+trivial task for several reasons. First of all the data are rarely
+fully stabilized (i.e. it takes a long time until the pixel reaches a
+stabilized value, although the incoming flux is constant) and this
+implies that not all differences between two successive frames can be
+attributed to cosmic ray impacts. Secondly, several glitches can hit
+ the same pixel successively and create a long temporal structure which
+could be considered as a source by a simple algorithm. 
+As the glitch structures can have different sizes, we need a
+multiresolution tool in order to perform   efficient automatic
+detection. The wavelet
+transform is not well adapted to treat this kind of data, due to the
+linearity of the transform. At a glitch position, a structure would be
+detected at all scales. This is due to the high intensity of the
+glitch. The Multiresolution Median Transform (MMT), proposed by Starck
+et al. \cite{starck:book98}, is an alternative to the wavelet transform. It is a
+non-linear multiresolution transform, and is particularly useful every
+time we have structures with large dynamics. This is the case for the
+deglitching problem. The idea developed here is the 
+following \cite{starck:sta99_1}: 
+as we observe  the same position in the sky during $n$ exposures, we cannot have any structure in our signal 
+which has a temporal size lower than $n*tint$. This means that all the 
+significant structures (i.e. not due to the noise) at small scales
+are due to the glitches.  
+
+The method consists
+in doing for each pixel $(x,y)$ the following steps,
+where $D$ represents  the raw data (three dimensional array) 
+\begin{enumerate}
+\item set $S(t) = D(x,y,t)$
+\item estimate the temporal noise $\sigma_t$ in $S(t)$ 
+(see \cite{starck:book98} for more details on this step) 
+\item calculate the MMT of $S(t)$. The result is  $w_j(t)$ where $j$ is the 
+temporal scale. The number of scales in the transform is fixed due to the
+number of frames per satellite position.
+\item derive from $\sigma_t$ the standard deviation $\sigma_j$ at each
+scale $j$.
+\item at all scales, set to zero all structures higher than a given level.
+\begin{eqnarray}
+\mbox{ if } abs(w_j(t)) > k \sigma_j \mbox{ then } w_j(t) = 0
+\end{eqnarray}
+$k$ is generally taken equal to 4.
+\end{enumerate}
+
+
+Figure \ref{fig_deglitch2} shows the results of such a
+treatment. Figure \ref{fig_deglitch2} (top) shows the values of
+a pixel of the camera as time elapses. The x-axis represents the frame
+number (time / integration time), and the y-axis is the signal in ADU per
+second. These data were collected during a raster observation, and the
+satellite remained at the same position for about 20 frames, and the
+integration time was equal to 2.1\,s. A source is at the limit of
+detection (frames 130 to 150). All peaks are due to cosmic ray
+impacts. Figure \ref{fig_deglitch2}
+(middle) shows the same data after the glitch suppression.  The third
+plot (Figure \ref{fig_deglitch2} (bottom)) shows both data and
+deglitched data overplotted.  We see that the noise and the signal are
+not modified during this operation.
+
+The method is robust and works for non-stabilized data. The only real
+limitation is that we cannot detect glitches which last for a time
+longer than or equal to $n*tint$. That means that the more frames we
+have per camera configuration, the better the deglitching will
+be. Some ``special'' glitches introduce a gain variation with a very
+long time duration. These special glitches can be separated in two
+types: 1) the pixel value decreases
+slowly until a stabilized value is reached; 2) the pixel value
+decreases first below the stabilized value, and then increase slowly
+until the stabilized value is reached.  
+In both cases, the stabilization can be
+very slow, and the deglitching method presented here does
+not correct for this effect.  As a result, pixels where a glitch has been
+detected are not used when averaging values corresponding to the same
+sky position and same configuration.
+
+ 
+\section{Dark Subtraction for the LW channel}
+\label{sect_dark}
+One has to subtract the dark current from the image,   
+for both the SW and LW channels. This is done with measurements obtained
+during dedicated calibration orbits. This procedure produces
+acceptable results for the SW channel, but can sometimes fail for the
+LW channel. The reason for this is a combination of long-term drifts in the
+dark current, and low-signal that will make these drifts dominate the
+noise over photon and readout noise. This situation is quite easy to
+recognize as the LW dark current shows strong odd-even stripes (see
+Figure~\ref{fig_dark}), which are not completely gone when the dark
+correction fails. To provide the reader with orders of magnitudes for
+these effects, Table~\ref{tab:dk} lists, for all integration times,
+the spatial mean of the noise on the calibration dark measurement
+(each dark is the result of the average of a given number of frames,
+therefore each pixel in the dark measurement has an associated RMS,
+we report here the mean of these RMS), and, separately
+for the even and odd lines, the mean, median and rms of the dark
+level. Finally, this table also lists typical values of residuals (mean
+and rms) that can be obtained when the calibration dark is used (see
+also Table~\ref{tab:sdk}). These values were obtained by correcting
+very long dark measurements by the calibration dark. These long
+measurements are performed to derive the time behavior of ISOCAM LW
+dark \cite{iso:biviano98}. As can be seen from the table, the dark
+correction is not perfect and there remains a residual whose amplitude
+is larger than the noise in the calibration dark. Furthermore a clear
+even-odd pattern remains (see Figure~\ref{fig_dark}) as indicated by
+the relatively large dispersion.
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_dark1.ps,bbllx=1.8cm,bblly=12.9cm,bburx=14.5cm,bbury=25.6cm,width=8cm,height=8cm}
+\psfig{figure=fig_dark2.ps,bbllx=1.8cm,bblly=12.9cm,bburx=14.5cm,bbury=25.6cm,width=8cm,height=8cm}
+}}
+\caption{Image before dark subtraction (left) and after (right). Notice 
+the dark pattern, which is visible as a change of the signal by comparing
+odd and even lines in the original image.}
+\label{fig_dark}
+\end{figure}
+
+The offset between the calibration dark and the actual dark can only
+be derived from a study of the time behavior of the dark \cite{iso:biviano98}. 
+The pattern, however, can be removed with appropriate
+analysis \cite{iso:bure96,starck:tr_dark96}.
+
+% \setlongtables
+
+% \begin{longtable}{r|c|rrr|rrr||rr}
+\setlength{\tabcolsep}{1mm}
+\begin{table}
+{\small
+\begin{tabular}{r|c|rrr|rrr||rr}
+\hline
+T$_{\rm int}$ (s) & $\sigma_{\rm N}$ & \multicolumn{3}{|c|}{Even Lines} &
+\multicolumn{3}{|c||}{Odd Lines} & \multicolumn{2}{|c}{Dark mes - Cal} \\
+              &                  & Mean & Median & rms & Mean & Median & rms &
+Mean & rms \\
+              & ADU\,g$^{-1}$\,s$^{-1}$ & 
+\multicolumn{3}{|c|}{ADU\,g$^{-1}$\,s$^{-1}$} &
+\multicolumn{3}{|c||}{ADU\,g$^{-1}$\,s$^{-1}$} &
+\multicolumn{2}{|c}{ADU\,g$^{-1}$\,s$^{-1}$} \\
+(1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9) & (10) \\
+\hline
+0.28  & 0.66 & -46.7 & -43.5 & 10.9 & -28.4 & -26.4 & 6.0 & & \\
+2.1   & 0.16 & -10.3 & -9.87 & 1.53 & -7.08 & -6.83 & 0.81  & -0.58 & 0.27 \\
+5.04  & 0.007 & -4.87 & -4.68 & 0.069  & -3.63 & -3.53 & 0.35  & -0.31 & 0.16 \\
+10.08 & 0.004 & -2.57 & -2.48 & 0.036  & -2.04 & -1.98 & 0.19  & -0.18 & 0.07 \\
+20.16 & 0.003 & -1.25 & -1.21 & 0.019  & -1.04 & -1.02 & 0.10  & -0.16 & 0.05 \\
+\end{tabular}
+
+\caption{Dark levels and associated dispersions for the LW channel of
+ISOCAM. Column (1) is the integration time in seconds, (2) is the
+spatial mean of the noise (1$\sigma$) in the calibration dark
+measurement. As the LW dark shows a strong separation between the odd
+and even lines (due to the different amplification chains), we have
+listed the levels separately for the even and odd lines. 
+The mean dark value, the median dark value, and the
+1$\sigma$ dispersion around the mean are listed for the even lines
+(columns 3 to 5) and odd lines (columns 6 to 8). 
+Finally in the last two columns,
+we have used data obtained during ``dark'' revolutions (CAM is kept
+closed for a whole revolution and is continuously read out) to
+exemplify the amplitude of dark drifts by subtracting the calibration
+dark from these dark measurements. The spatial mean and rms are listed
+in column (9) and (10). All dark values are in
+ADU\,g$^{-1}$\,s$^{-1}$. No values are listed for the 0.28s
+integration time since due to technical constraints, it cannot be measured
+for a complete orbit.}
+}
+\label{tab:dk}
+\end{table}
+
+ 
+
+\subsection{Dark Pattern Removal using the Maximum Entropy Method (MEM) 
+Filtering}
+
+In order to extract the residual dark from the data, we first derive
+the median image $M(x,y)$ by taking the median of all values
+$Image(x,y,*)$ for a given detector pixel. If the pixel $(x,y)$ sees
+ the background longer than an object, then $M(x,y)$ (renormalized)
+gives a good estimate of the flat-field at this position.  In a
+general way, $M(x,y)$ contains less signal than $I(x,y,c)$ for any
+configuration $c$, and we prefer to try to extract the residual dark
+in $M$ than in $I$.
+
+Filtering can be applied to $M$ to suppress the visual residual
+dark.  In order to achieve this without modifying the signal significantly, 
+we use the vertical cross-entropy of image $O(x,y)$ defined
+by
+\begin{eqnarray}
+E(O) & = & \sum_{x,y} (O(x,y) - O(x,y-1)) + \\ \nonumber
+     &  & (O(x,y) - O(x,y+1)) - O(x,y) \ln( 
+\frac{O(x,y)^2}{\mid O(x,y-1)O(x,y+1)\mid)})
+\end{eqnarray}
+This entropy definition leads to a solution where the difference between pixels
+in one direction is minimized while  matching the data 
+ as closely as possible. \\
+
+
+The functional to minimize is:
+
+\begin{equation}
+J(F) = \frac{\parallel M - F \parallel^2}{2\sigma^2} - \alpha E(F)
+\label{func}
+\end{equation}
+in which the first term ($\frac{\parallel M - F
+\parallel^2}{2\sigma^2}$) represents the "goodness of fit" (GOF)
+constraint, which is regularized by the vertical cross-entropy
+functional ${E}(F)$. $\sigma$ is the noise standard deviation, and
+$\alpha$ a parameter defining the weight between the GOF term and the
+regularizing efficiency by the cross-entropy.  $F$ is the filtered
+image. \\
+
+The gradient of the former functional is 
+\begin{eqnarray}
+\nabla(J(F(x,y))) = - \frac{(M-F)(x,y)}{\sigma^2} \\ \nonumber
+     &  &  + \alpha sgn(F(x,y)) \ln( 
+\frac{F(x,y)^2}{\mid F(x,y-1)F(x,y+1)\mid) } 
+\label{eq_grad}
+\end{eqnarray}
+
+Then the ``one step gradient'' algorithm gives us an iterative scheme
+to minimize the functional~(\ref{func}):
+\begin{eqnarray}
+F^{n+1} = F^{n} - \gamma \nabla(J(F^n))
+\end{eqnarray}
+The residual dark is finally obtained by taking the difference between
+$M$ and $F$.
+
+\subsection{Dark Pattern removal in   Fourier space}
+
+The dark pattern can be suppressed in   Fourier space by the
+following method:
+
+\begin{enumerate}
+\item Average together all deglitched frames, obtaining $I_a$.
+
+\item Eliminate in $I_a$ the low frequencies, obtaining $I_h$.
+
+\item Estimate the noise in $I_h$, and set to zero all structures 
+higher than three times the noise standard deviation.
+
+\item Compute the FFT $\hat{I_h}$ of $I_h$, and estimate the noise in the
+real part $\hat{I_h}_r$, and imaginary part $\hat{I_h}_i$ of
+$\hat{I_h}$.
+
+\item Threshold all Fourier coefficients lower than the noise. 
+We get $\hat{T_h}_r$, $\hat{T_h}_i$.
+
+\item Compute the inverse FFT transform of 
+$(\hat{T_h}_r$, $\hat{T_h}_i)$. Its real part gives the pattern
+$P$.  The pattern $P$ can then be subtracted from the input image.
+
+\end{enumerate}
+
+This procedure can be iterated and usually three cycles is 
+sufficient for a good dark pattern removal.
+
+The residual dark can be relatively well suppressed just by deleting
+some frequencies. The result is obviously not as good as if we had had
+the true dark, and there will be always a confidence interval on the
+flux.  Yet the advantage of the FFT thresholding method is that it
+always finds a residual dark image evaluation with zero
+mean (whithin the numerical errors). Therefore, the method just suppresses the visual artifacts,
+without adding any offset to the data.  The MEM method produces good
+results as well, but seems to have some limitations. For instance, it
+is a real filtering method (even if it is only in one direction), thus, the
+noise statistics can be modified. This point could be resolved by
+previous filtering of the data cube. Note, also, that some columns
+can show   atypical behavior and the resulting artifacts seem to be
+satisfactorily removed when using the FFT thresholding method.
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=ant_fft_bw.ps,bbllx=2cm,bblly=6.9cm,bburx=19cm,bbury=24.5cm,width=13cm,height=13.5cm}}}
+\caption{Upper, raster image of the antennae without second order dark
+correction, and lower, the same image but using the FFT thresholding
+second order dark correction. }
+\label{fig_ant_fft_dark}
+\end{figure}
+
+Figure \ref{fig_ant_fft_dark} shows the final calibrated raster image
+of the Antennae, without any second order dark correction (upper), and
+with a second order dark correction using the FFT method (lower). The
+visual aspect of the residual dark has disappeared. It must be clear
+that the ``real'' dark is not corrected using this method, only its
+visual aspect is removed.
+
+
+To provide quantitative information on the quality of this correction
+we performed the following experiment: we used dark measurements
+performed during ``dark orbits''  and 
+subtracted the corresponding calibration dark
+from these measurement. 
+The FFT method was applied to the  
+residuals. In Table \ref{tab:sdk} we give, for the most often used
+integration times of 2.1, 5.04 and 10.08\,s, the mean and rms around
+the mean for the residuals after calibration dark removal, the mean
+and rms around the mean for the residuals after the FFT dark
+correction. As can be seen from the table, the mean value of the
+residuals is almost unchanged after the FFT dark correction while the
+rms has been divided by two. More striking  is the effect in  
+even-odd pattern. In the last two columns of Table~\ref{tab:sdk} we
+list the difference between the mean of the even lines and the mean of
+the odd lines for the residuals after calibration dark correction and
+those after application of the FFT dark correction. After FFT dark
+correction the remaining difference becomes barely significant.
+
+{\tiny
+\begin{table}
+\begin{tabular}{r|rr|rr||rr}
+\hline
+T$_{\rm int}$ & \multicolumn{2}{c|}{{\small Calibration Dark}} & \multicolumn{2}{c||}{{\small FFT dark correction}} & \multicolumn{2}{c}{{\small Mean(even lines) - Mean(odd lines)}} \\
+ & Mean & rms & Mean & rms & calg & FFT \\
+\multicolumn{1}{c|}{s} & \multicolumn{2}{c|}{ADU\,g$^{-1}$\,s$^{-1}$} & \multicolumn{2}{c||}{ADU\,g$^{-1}$\,s$^{-1}$} & \multicolumn{2}{c}{ADU\,g$^{-1}$\,s$^{-1}$} \\
+(1) & (2) & (3) & (4) & (5) & (6) & (7) \\
+\hline 
+2.10 &  -0.597 & 0.279 & -0.588 & 0.126 & -0.455 & 5.31\,10$^{-3}$ \\
+5.04 &  -0.302 & 0.133 & -0.300 & 0.068 & -0.207 & 2.59\,10$^{-3}$ \\
+10.08 & -0.174 & 0.680 & -0.173 & 0.360 & -0.105 & 1.17\,10$^{-3}$ \\
+\end{tabular}
+
+\caption{Quantitative information on the performances of the FFT dark
+subtraction method. This table compares the quality of dark current
+correction between the standard method, i.e. using a library dark, and
+the standard$+$FFT method, where the subtraction of a library dark is
+followed by FFT filtering. To make this comparison, we are using dark
+measurements (typically between 10 and 20 per integration times)
+obtained during ``dark'' orbits \cite{iso:biviano98}. Column (1)
+gives the integration time in seconds. We only display results for the
+most commonly used integration times. Columns (2) and (3) list the spatial
+mean and rms on the library dark corrected images. Columns (4) and (5)
+give the same information once these images have been FFT
+filtered. One can see that the mean signal is little affected ($<$2\%)
+while the rms is divided by $\sim$2. In column (6) and (7) we compare
+the even and odd lines of the images at the two stages of dark
+correction by computing the difference between the mean of the even
+lines and the mean of the odd lines. One can see that while this
+difference is quite significant after only the library dark
+correction, it is almost insignificant after FFT filtering.}
+
+\label{tab:sdk}
+\end{table}
+}
+
+
+As the program may also be used for other purpose, it is describes in
+section~\ref{pat}.
+
+\section{Stabilization}
+The response of each CAM-LW pixel strongly depends on previous observations. 
+A long-term transient response after changes in
+photon flux levels is a well-known characteristics of extrinsic IR
+photoconductors working under low background conditions (see for
+instance \cite{iso:fouks95}).  The detector used in the LW channel
+of ISOCAM is a gallium doped silicon photoconductor hybridized by
+indium bumps. The pixel pitch is 100~$\mu$m and the detectors are
+500~$\mu$m thick. A physical model has been developed for the Si:Ga
+detector arrays used in the PHT-S instrument of the ISOPHOT experiment
+on board ISO \cite{iso:fouks95}.  
+
+Ground-based and in-flight measurements have shown that the pixel response
+after a change of the incident flux level can be separated at least in the 
+following two phases:
+\begin{itemize}
+\item an instantaneous step to 60\% of the flux step.
+\item a long variation for the remaining 40\%, to a first order exponential,
+similar to a time constant inversely proportional to the incident flux level.
+\end{itemize}
+The exponential description of the long variation for the remaining
+40\% after the instantaneous step is an approximation. Going from a
+dark level to a strong incident flux level,
+the first readouts after the instantaneous step strongly depart from
+an exponential curve. This is likely due to charge coupling between
+pixels, which can also be responsible for the oscillations that can
+affect the response curve.  These effects are dramatic for strong
+steps of flux, especially at low background.  Therefore, all methods
+based on an exponential-like description of the pixel response fail
+for all steps going from the dark level, and for strong steps going
+from a low background. There is also a very long-term transient which
+affects typically 5-10\% the flux above the dark level which will not
+be discussed in this paper. This transient can introduce a memory
+effect with an amplitude of a few \% of the input flux level, thus
+affecting  the data over several hours.  
+
+
+There are  different methods to achieve stabilization which have
+been tested. 
+Some of them try to fit the transients using a
+model, and then suppress them. See \cite{iso:delattre96} for a description of each of them. A transient can be split into two parts:  
+\begin{itemize}
+\item a first part where data are quickly decreasing and they can 
+be fitted by an downward exponential.
+\item a second part where data are decreasing very slowly but which 
+cannot be seen as the tail of the decreasing exponential of the first
+part.
+\end{itemize}
+The best model takes into account this behaviour, and proposes a transient
+function with two relaxation times:
+
+\begin{itemize}
+\item For downward transient
+	\[ J_d(t)\,=\,J_{\infty} + (J_0 - J_{\infty}).\beta.exp(- {t \over \tau}) + \beta' . exp(- {t \over \tau'}) \] 
+where $\tau' >> \tau$ ;
+
+\item and for upward transient
+	\[ J_u(t)\,=\, J_{\infty} - (J_{\infty} - J_0).\beta.exp(- {t \over \tau}) \]
+\end{itemize}
+where $J_{\infty}$ is the stabilized value (observed flux), and $J_0$ is
+the starting value (observed flux at the previous satellite configuration). This model has six parameters $J_0$,$J_{\infty}$, $\beta$, $\beta'$, $\tau$, $\tau'$.
+The low decrease of the transient is modeled by a larger time constant
+$\tau'$.  This model has two advantages: it leads to a complete fit of
+the data (and not only the beginning or the end of the transient), and
+it also allows us to work with the first points to guess the
+stabilized value $J_{\infty}$.
+
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=fig_ex_transient_CEA.ps,bbllx=2.5cm,bblly=2cm,bburx=18.5cm,bbury=13.1cm,width=16cm,height=11cm}}}
+\caption{Example of transient fit using the SACLAY model.}
+\label{fig_trans_cea1}
+\end{figure}
+
+Figure \ref{fig_trans_cea1} shows the result of a fit. The detector pixel values  
+  are represented in solid line. The pixel detector is observing
+a flux of around three ADUs. We see that even after
+eighty frames, the flux is not stabilized. Overplotted to the data, the 
+model is plotted, and in the bottom of the figure, we see the data corrected
+from the transient effect.
+\clearpage
+
+\section{Field of View Distortion Correction}
+
+\begin{figure}[htb]
+\centerline{
+\hbox{
+\psfig{figure=velo.ps,bbllx=2.7cm,bblly=5.5cm,bburx=19cm,bbury=22.5cm,width=11cm,height=11cm}}}
+\caption{ISOCAM field of view distortion (6 arcsec lens).}
+\label{fig_disto}
+\end{figure}
+
+ Field distortion in ISOCAM is mostly due to the off-axis mirror
+that directs the light beam toward each detector and to the fact that
+the ISOCAM field of view is an off-axis part of the full FOV of the
+ISO telescope.  The field distortion was measured for the LW channel
+6$''$ and 3$''$ lenses, using calibration observations of fields that
+contained many stars. No measurements have been made for the 1.5$''$ lens
+because they are difficult to perform as the amplitude of the
+satellite jitter is of the order of the quantities to be
+measured. 
+Since the distortion with the 1.5$''$ lens is predicted to be negligible, no
+error would be made if it is not taken into account.
+
+ISOCAM also suffers from lens wheel jitter. In order to avoid any
+mechanical blocking, the gear wheel has been designed with a small
+play. Therefore, the position at which the lens stops is not fixed.
+
+It has been shown by the CAM Instrument Dedicated Team that
+there are only two broad families of positions that the lens wheel 
+can take for a
+commanded position, and it is suspected that the wheel stops at either
+side of the play.  This can be very easily detected by close
+inspection of the flat field derived from the data: the leftmost
+column of the detector receives very little light.  This is called the
+``left'' position.  This jitter results in an offset of about 1.2
+pixels of the optical axis, thus $\approx$ 7$"$ with the 6$"$ lens. It
+also modifies the distortion pattern and therefore the latter has been
+measured for both positions. The measurement method is discussed in \cite{iso:aussel97}.
+% Aussel (1997).
+
+Following the work done on the HST WFPC described in \cite{iso:holtzman95}, % by Holtzman et al. (1995),
+each measurement is fitted with a general polynomial of degree 3, that
+is :
+\begin{equation}
+x_{c} = a_{0}+ a_{1}x + a_{2} y + a_{3}x^{2}+ a_{4}x y + a_{5}y^{2} + 
+a_{6}x^{3}+ a_{7}x^{2}y + a_{8}xy^{2}+ a_{9}y^{3} 
+\end{equation}
+\begin{equation}
+y_{c} = b_{0}+ b_{1}x + b_{2} y + b_{3}x^{2}+ b_{4}x y + b_{5}y^{2} + 
+b_{6}x^{3}+ b_{7}x^{2}y + b_{8}xy^{2}+ b_{9}y^{3} 
+\end{equation}
+
+where $x_{c}$ and $y_{c}$ are the positions on the ISOCAM LW array in
+pixels, corrected for distortion, while $x$ and $y$ are the
+non-corrected ones.  Figure \ref{fig_disto} shows a map of the
+distortion of the LW channel of ISOCAM with the 6$"$ lens, where each
+vector starts from where the center of a pixel should fall were there
+no distortion and ends at its actual position.  The length of the
+vectors are at the scale of the plot. At the lower corners of the
+array (lines 0 to 5), the effect is greater than one pixel.
+
+Since the pixel size is not uniform on the sky, the pixels at the edges of 
+the array cover a wider surface. Therefore, a new flat-field correction has 
+to be applied in order to account for it. This flat-field is of the 
+form :
+\begin{equation}
+F_{i,j} = \frac{S_{16,16}}{S_{i,j}}
+\end{equation}
+with $S_{i,j}$, the surface on the sky of pixel i,j.  The pixel 
+(16,16), being the center pixel of ISOCAM LW array and therefore the 
+less distorted, has been taken as reference. 
+
+This is where distortion corrections stop in the case of staring
+observations. In a raster mode, where an image has to be constructed
+from the coaddition of many smaller ones, the processing continues as
+follows: each raster sub-image is projected on the raster map, using a
+flux-conservative shift and add algorithm.  The intersecting surface
+$S_{(x,y,i,j)}$ of each sky pixel of the raster map with each ISOCAM
+pixel is computed. The flux in the pixel (x,y) of the raster map is
+therefore:
+ 
+\begin{equation}
+R_{x,y} = \frac{\sum_{pointings}S_{(x,y,i,j)}\sqrt{N_{i,j}}I_{i,j}}
+{\sum_{pointings}S_{(x,y,i,j)}\sqrt{N_{i,j}}}    
+\end{equation}
+Assuming Gaussian noise distributions for pixels, the noise 
+map is:
+\begin{equation}
+\sigma_{x,y} = 
+\sqrt{\frac{\sum_{pointings}S^{2}_{(x,y,i,j)}N_{i,j}\sigma^{2}_{i,j}}
+{\sum_{pointings}S^{2}_{(x,y,i,j)}N_{i,j}}}    
+\end{equation} 
+Where $R_{x,y}$ is the value of the final raster map at (x,y), 
+$S_{(x,y,i,j)}$ is the intercepted surface between ISOCAM pixel (i,j) 
+and raster map pixel (x,y) and $N_{i,j}$is the number of readouts   
+  averaged together to produce $I_{i,j}$, the image of the raster 
+pointing. The computation of $S_{(x,y,i,j)}$ is derived from the 
+algorithm used by Fruchter et al. in their ``drizzle'' IRAF task.
+The files containing the coefficients for the distortion 
+correction are available from the authors under a format accepted by 
+this task.
+
+ 
+
+
+
+ 
+ 
+ 
+
+

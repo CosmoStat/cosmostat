@@ -1,0 +1,86 @@
+
+\section{IDL Routines}
+\label{ch_mrs_idl}
+%\chapterhead{IDL Routines}
+\markright{IDL Routines}
+
+\subsection{Introduction}
+A set of routines has been developed in IDL. Starting IDL using
+the script program {\em mre} allows the user to get the multiresolution
+environment, and all routines
+described in the following can be called. An online help facility 
+is also available by
+invoking the {\em mrh} program under IDL.
+
+\subsection{mw1d\_filter}
+Filter a 1D signal by the the multiscale entropy.
+{\bf
+\begin{center}
+     USAGE: mw1d\_filter, Signal, Result, Opt=Opt
+\end{center}}
+where 
+\begin{itemize}
+\item {\em Signal}: input  one-dimensional IDL array.
+\item {\em Result}: output one-dimensional IDL array (filtered signal).
+\item {\em Opt}:  string which contains the different options 
+(see the {\em mw1d\_filter} C++  program).
+\end{itemize}
+
+\subsection{mw1d\_predict}
+Considering a temporal signal $S$ with $n$ measures ($S[0..n-1]$), 
+ {\em mr1d\_predict} estimates (or predicts) the next values $S[n .. n+dt]$.
+A multiscale transformation is first applied, followed by filtering
+in the wavelet space. At each scale, a predictor is then applied,
+and the predicted signal is obtained from the reconstruction of
+the predicted signal. 
+
+{\bf
+\begin{center}
+     USAGE: Result = MW1D\_PREDICT(Signal,wave=wave,PredWave=PredWave,
+                      NPredict=NPredict, Nscale=Nscale,  OPT=OPT, NCoef=NCoef)
+\end{center}}
+where 
+\begin{itemize}
+\item {\em wave}: output 2D IDL array; filtered wavelet coefficient
+\item {\em PredWave}: output 2D IDL array; Predicted wavelet coefficient
+\item {\em NPredict}: number of values to predict. Default is one.
+\item {\em Nscale}: number of scales used for the wavelet transform
+\item {\em NCoef:} Number of coefficients used for the prediction. Default is 3.
+\item {\em OPT}: string which contains the differents options accepted by the
+mw1d\_filter C++ program.
+\end{itemize}
+
+\subsection{mw\_filter}
+Filter  an image by the multiscale entropy. 
+This routine is calling the C++ executable {mw\_filter}. The keyword 
+``OPT" allows 
+all options described in the section corresponding to the 
+ {\em mw\_filter} program.
+
+{\bf
+\begin{center}
+     USAGE: mw\_filter, Data, FilterData, opt=opt
+\end{center}}
+{\em Data} is an image (2D IDL array), and {\em FilterData} is the result
+of the filtering.
+
+\subsection{mw\_deconv}
+Deconvolve an image by  the  multiscale entropy. This routine calls 
+the C++ executable {mw\_deconv}. The keyword ``OPT" 
+allows 
+all options described in the section corresponding to the 
+ {\em mw\_deconv} program.
+
+{\bf
+\begin{center}
+     USAGE: mw\_deconv, Data, PSF, DeconvData, opt=opt
+\end{center}}
+\subsubsection*{Examples:} 
+\begin{itemize}
+\item mw\_deconv, Imag, Psf, Result \\
+deconvolve an image with all default options.
+\item  mw\_deconv, Imag, Psf, Result, OPT='-i 30 -e 0'  \\
+same example, but impose the number of iterations to be 30.
+\end{itemize}
+
+ 

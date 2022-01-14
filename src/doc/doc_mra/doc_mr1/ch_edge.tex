@@ -1,0 +1,912 @@
+\chapter{\proj Edge Detection}
+\label{ch_edge}
+\index{edge detection}
+% \chapterhead{Programs}
+\markright{Edge detection}
+
+\section{Introduction}
+% An edge in an image  corresponds to a discontinuity in the intensity
+% surface of the underlying scene.
+An edge is defined as a local variation of image intensity. Edges can
+be detected by the computation of a local derivative operator. 
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\psfig{figure=fig_inflex.ps,bbllx=3.5cm,bblly=4cm,bburx=19.5cm,bbury=12cm,width=12cm,height=6cm,clip=} 
+}}
+\caption{First and second derivative of  $G_\sigma * f$. (a) Original signal,
+(b) signal convolved by a Gaussian, (c) first derivative of (b), (d) second
+derivative of (b).}
+\label{fig_inflex}
+\end{figure}
+
+Figure~\ref{fig_inflex} shows how the inflection point of a signal can be
+found from its first and second derivative.
+Two methods
+can be used for generating first order derivative edge gradients.
+
+\section{First Order Derivative Edge Detection}
+
+\subsection{Gradient}
+The gradient of an image $f$ at location $(x,y)$, along the line
+normal to the edge slope, is the vector \cite{ima:pratt91,ima:gonzalez93,ima:jain89}:
+\begin{eqnarray}
+\bigtriangledown f = & 
+\left[ \begin{array}{c}
+f_x  \\
+f_y
+\end{array} \right] & = 
+\left[ \begin{array}{c}
+ \partial f \over \partial x  \\
+ \partial f \over \partial y
+\end{array} \right]
+\end{eqnarray}
+
+% The gradient of an image $f$ along $r$ in a direction $\alpha$ is
+%\begin{eqnarray}
+%{\partial f \over \partial r} & = &{\partial f \over \partial x} \cos{\alpha} +
+%{\partial f \over \partial y} \sin{\alpha} \\
+%  & = & f_x \cos{\alpha} + f_y \sin{\alpha}
+%\end{eqnarray}
+%The maximum value of ${\partial f \over \partial r}$ is obtained when $
+
+The spatial gradient amplitude is given by:
+\begin{eqnarray}
+G(x,y) = \sqrt{f_x^2 + f_y^2}
+\end{eqnarray}
+and the gradient direction with respect to the row axis is
+\begin{eqnarray}
+\Theta(x,y) = \arctan{\frac{f_y}{f_x}}
+\end{eqnarray}
+
+The first oder derivative edge detection can be carried out either by using
+ two orthogonal directions in an image or by using a set of
+directional derivatives. 
+ 
+\subsection{Gradient mask operators}
+% details dans le Jain, p348 et dans le pratt p504
+
+Gradient estimates can be obtained by using gradient operators of the form:
+\begin{eqnarray}
+f_x & = f & \otimes  \ \ H_x \nonumber \\
+f_y & = f & \otimes \ \ H_y 
+\end{eqnarray}
+where $\otimes$ denotes the convolution product, and $H_x$ and $H_y$ are $3
+\times 3$
+row and column operators, called gradient masks. Table \ref{tab_grad1} shows 
+the main gradient masks proposed in the literature. Pixel difference is
+the simplest one, which consists just of making the difference of   pixels
+along rows and columns of the image:
+\begin{eqnarray}
+f_x(x_m, y_n) & = & f(x_m , y_n) - f(x_m-1, y_n) \nonumber \\
+f_y(x_m, y_n) & = & f(x_m , y_n )- f(x_m, y_n-1)
+\end{eqnarray}
+
+The Roberts gradient masks \cite{edge:roberts65} are more sensitive 
+to diagonal edges. Using these masks,
+the orientation must be calculated by
+\begin{eqnarray}
+\Theta(x_m, y_n) = {\pi \over 4} + \arctan \left[ 
+{f_y(x_m, y_n) \over f(x_m , y_n)} \right]
+\end{eqnarray}
+
+Prewitt \cite{edge:prewitt70}, Sobel, and Frei-Chen \cite{edge:frei77} produce
+better results than the pixel difference, separated pixel difference and 
+Roberts
+operator, because the mask is larger, and provides averaging of small luminance
+fluctuations. The Prewitt operator is more sensitive to 
+horizontal and vertical edges  than diagonal edges, and the 
+reverse is true for the Sobel operator. The Frei-Chen  edge detector has the 
+same sensitivity for diagonal, vertical, and horizontal edges.
+
+% table
+\begin{table}[htb]
+\begin{center}
+\begin{tabular}{lllc}
+Operator &    $H_x $     & $H_y$   & Scale factor\\
+         &              &        \\
+Pixel difference&
+\( \left[ \begin{array}{ccc}
+0 & 0 & 0\\
+0 & 1 & -1\\
+0 & 0 & 0
+\end{array}\right]  \) &
+\( \left[ \begin{array}{ccc}
+0 & -1 & 0\\
+0 & 1 & 0\\
+0 & 0 & 0
+\end{array}\right]  \) & 1\\
+
+\begin{tabular}{l}
+Separated \\
+pixel difference \\
+\end{tabular} &
+
+\( \left[ \begin{array}{ccc}
+0 & 0 & 0\\
+1 & 0 & -1\\
+0 & 0 & 0
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+0 & -1 & 0\\
+0 & 0 & 0\\
+0 & 1 & 0
+\end{array}\right]  \) & 1\\ 
+Roberts&
+\( \left[ \begin{array}{ccc}
+0 & 0 & -1\\
+0 & 1 & 0\\
+0 & 0 & 0
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+-1 & 0 & 0\\
+0 & 1 & 0\\
+0 & 0 & 0
+\end{array}\right]  \) & 1 \\
+Prewitt&
+\( \left[ \begin{array}{ccc}
+1 & 0 & -1\\
+1 & 0 & -1\\
+1 & 0 & -1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+-1 & -1 & -1\\
+0 & 0 & 0\\
+1 & 1 & 1
+\end{array}\right]  \) & 1\\
+Sobel&
+ \( \left[ \begin{array}{ccc}
+1 & 0 & -1\\
+2 & 0 & -2\\
+1 & 0 & -1
+\end{array}\right]  \)&
+ \( \left[ \begin{array}{ccc}
+-1 & -2 & -1\\
+0 & 0 & 0\\
+1 & 2 & 1
+\end{array}\right]  \) & $ \frac{1}{4} $ \\ 
+Fei-Chen&
+ \( \left[ \begin{array}{ccc}
+1 & 0 & -1\\
+\sqrt{2} & 0 & \sqrt{2}\\
+1 & 0 & -1
+\end{array}\right]  \)&
+ \( \left[ \begin{array}{ccc}
+-1 & -\sqrt{2} & -1\\
+0 & 0 & 0\\
+1 & \sqrt{2} & 1
+\end{array}\right]  \) & $\frac{1}{2+\sqrt{2}}$ \\
+ \end{tabular}\par
+\caption{Gradient edge detector masks.}
+\label{tab_grad1}
+  \end{center}
+\end{table}
+\vspace{0.3cm}
+
+
+\subsection{Compass operators}
+Compass operators measure gradients in a selected number of directions.
+The directions are $\Theta_k = k {\pi \over 4}$,  $k = 0,...,7$. The edge
+template gradient is defined as:
+\begin{eqnarray}
+G(x_m, y_n) = \max_{k=0}^7 { \mid f(x_m, y_n) \otimes H_k(x_m, y_n) \mid }
+\end{eqnarray}
+
+Table~\ref{tab_grad2} shows the principal template gradient operators.
+
+\begin{table}[htb]
+\begin{center} 
+
+\begin{tabular}{lllll}
+\begin{tabular}{c}
+ Gradient \\
+ direction \\
+ \end{tabular} &
+\begin{tabular}{c}
+ Prewitt \\
+ compass   \\
+ gradient \\
+\end{tabular} &
+Kirsch&
+\begin{tabular}{c}
+Robinson \\
+3-level \\
+\end{tabular}&
+\begin{tabular}{c}
+Robinson \\
+5-level\\
+\end{tabular} \\
+East&
+\( \left[ \begin{array}{ccc}
+1 & 1 & -1\\
+1 & -2 & -1\\
+1 & 1 & -1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+5 & -3 & -3\\
+5 & 0 & -3\\
+5 & -3 & -3
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+1 & 0 & -1\\
+1 & 0 & -1\\
+1 & 0 & -1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+1 & 0 & -1\\
+2 & 0 & -2\\
+1 & 0 & -1
+\end{array}\right]  \)\\
+ Northeast&
+\( \left[ \begin{array}{ccc}
+1 & -1 & -1\\
+1 & -2 & -1\\
+1 & 1 & 1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+-3 & -3 & -3\\
+5 & 0 & -3\\
+5 & 5 & -3
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+0 & -1 & -1\\
+1 & 0 & -1\\
+1 & 1 & 0
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+0 & -1 & -2\\
+1 & 0 & -1\\
+2 & 1 & 0
+\end{array}\right]  \)\\
+ North&
+\( \left[ \begin{array}{ccc}
+-1 & -1 & -1\\
+1 & -2 & 1\\
+1 & 1 & 1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+-3 & -3 & -3\\
+-3 & 0 & -3\\
+5 & 5 & 5
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+-1 & -1 & -1\\
+0 & 0 & 0\\
+1 & 1 & 1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+-1 & -2 & -1\\
+0 & 0 & 0\\
+1 & 2 & 1
+\end{array}\right]  \)\\
+ Northwest&
+\( \left[ \begin{array}{ccc}
+-1 & -1 & 1\\
+-1 & -2 & 1\\
+1 & 1 & 1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+-3 & -3 & -3\\
+-3 & 0 & 5\\
+-3 & 5 & 5
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+-1 & -1 & 0\\
+-1 & 0 & 1\\
+0 & 1 & 1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+-2 & -1 & 0\\
+-1 & 0 & 1\\
+0 & 1 & 2
+\end{array}\right]  \)\\
+ West&
+\( \left[ \begin{array}{ccc}
+-1 & 1 & 1\\
+-1 & -2 & 1\\
+-1 & 1 & 1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+-3 & -3 & 5\\
+-3 & 0 & 5\\
+-3 & -3 & 5
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+-1 & 0 & 1\\
+-1 & 0 & 1\\
+-1 & 0 & 1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+-1 & 0 & 1\\
+-2 & 0 & 2\\
+-1 & 0 & 1
+\end{array}\right]  \)\\
+ Southwest&
+\( \left[ \begin{array}{ccc}
+1 & 1 & 1\\
+-1 & -2 & 1\\
+-1 & -1 & 1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+-3 & 5 & 5\\
+-3 & 0 & 5\\
+-3 & -3 & -3
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+0 & 1 & 1\\
+-1 & 0 & 1\\
+-1 & -1 & 0
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+0 & 1 & 2\\
+-1 & 0 & 1\\
+-2 & -1 & 0
+\end{array}\right]  \)\\
+ South&
+\( \left[ \begin{array}{ccc}
+1 & 1 & 1\\
+1 & -2 & 1\\
+-1 & -1 & -1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+5 & 5 & 5\\
+-3 & 0 & -3\\
+-3 & -3 & -3
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+1 & 1 & 1\\
+0 & 0 & 0\\
+-1 & -1 & -1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+1 & 2 & 1\\
+0 & 0 & 0\\
+-1 & -2 & -1
+\end{array}\right]  \)\\
+ Southeast&
+\( \left[ \begin{array}{ccc}
+1 & 1 & 1\\
+1 & -2 & -1\\
+1 & -1 & -1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+5 & 5 & -3\\
+5 & 0 & -3\\
+-3 & -3 & -3
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+1 & 1 & 0\\
+1 & 0 & -1\\
+0 & -1 & -1
+\end{array}\right]  \)&
+\( \left[ \begin{array}{ccc}
+2 & 1 & 0\\
+1 & 0 & -1\\
+0 & -1 & -2
+\end{array}\right]  \)\\
+ \begin{tabular}{c}
+ Scale  \\
+ factor    \\
+ \end{tabular} &  
+ \begin{tabular}{c}
+\( \frac{1}{5} \) \\
+ \end{tabular}&
+ \begin{tabular}{c}
+\( \frac{1}{15} \) \\
+ \end{tabular}&
+ \begin{tabular}{c}
+ \( \frac{1}{3} \) \\
+  \end{tabular} &
+  \begin{tabular}{c}
+\( \frac{1}{4} \) \\
+\end{tabular} \\
+ \end{tabular} 
+\caption{Template gradients.}
+\label{tab_grad2}
+\end{center}
+\end{table}
+
+
+\clearpage
+
+\subsection{Derivative of Gaussian}
+The previous methods are relatively sensitive to the noise.  A solution 
+could be to extend the window size of the gradient mask operators.
+Another approach is to use  the derivative of the 
+convolution of the image by a Gaussian.
+The derivative of a Gaussian (DroG) operator is
+\begin{eqnarray}
+\bigtriangledown (g \otimes f) & =  & {\partial  (g \otimes f) \over \partial x} +
+ {\partial  (g \otimes f) \over \partial y} \nonumber \\
+  & =  & f_x + f_y
+\end{eqnarray}
+with $g = \exp{- {x^2+y^2 \over {2\sigma^2}}}$. Partial derivatives of the
+Gaussian function are
+\begin{eqnarray}
+g_x(x,y) & = {\partial  g  \over \partial x} = & - {x \over \sigma^2} \exp{- {x^2+y^2 \over {2\sigma^2}}} \nonumber \\
+g_y(x,y) & = {\partial  g  \over \partial y} = & - {y \over \sigma^2} \exp{- {x^2+y^2 \over {2\sigma^2}}}
+\end{eqnarray}
+The filters are separable so we have
+\begin{eqnarray}
+g_x(x,y) & = & g_x(x) * g(y) \nonumber \\
+g_y(x,y) & = & g_y(y) * g(x)  
+\end{eqnarray}
+Then
+\begin{eqnarray}
+f_x & = & g_x (x) \otimes g(y) \otimes f \nonumber \\
+f_y & = & g_y (y) \otimes g(x) \otimes f
+\end{eqnarray}
+ 
+\subsection{Thinning the contour}
+From the gradient map, we may want to consider only pixels which belong to the
+contour. This can be done by looking for each pixel in the direction of 
+gradient. For each point P0 in the gradient map, we determine the two 
+adjacent pixels P1,P2
+in the direction orthogonal to the gradient. If P0 is not a maximum in 
+this direction (i.e.\ P0 $<$ P1, or P0 $<$ P2), then we threshold P0 to 
+zero.
+ 
+\section{Second Order Derivative Edge Detection}
+Second derivative operators allow us to accentuate the 
+edges. The most frequently
+used operator is the Laplacian one, defined by 
+\begin{eqnarray}
+\bigtriangledown^2 f = {\partial^2  f  \over \partial x^2} 
+                     + {\partial^2  f  \over \partial y^2}
+\end{eqnarray}
+
+Table~\ref{tab_laplacian} gives three discrete approximation of this operators.
+ 
+\begin{table}[htb]
+\begin{center}
+\begin{tabular}{ccc}
+ Laplacian 1 &   Laplacian 2 &   Laplacian 3\\
+             &           &    \\
+\( {1 \over 4} \left[ \begin{array}{ccc}
+0 & -1 & 0\\
+-1 & 4 & -1\\
+0 & -1 & 0
+\end{array}\right]  \) &
+\( {1 \over 8} \left[ \begin{array}{ccc}
+-1 & -1 & -1\\
+-1 & 8 & -1\\
+-1 & -1 & -1
+\end{array}\right]  \) &  
+\( {1 \over 8} \left[ \begin{array}{ccc}
+-1 & -2 & -1\\
+-2 & 4 & -2\\
+-1 & -2 & -1
+\end{array}\right]  \) \\
+\end{tabular}
+\caption{Laplacian operators.}
+\label{tab_laplacian}
+\end{center}
+\end{table}
+
+Marr and Hildreth \cite{edge:marr80} have proposed the Laplacian of Gaussian (LoG) edge detector operator.
+It is defined as
+\begin{eqnarray}
+L(x,y) = {1 \over{\pi s^4}} 
+	  \left[ 1 - {{x^2+y^2} \over {2s^2}} \right] 
+\exp \left( - {{x^2+y^2}\over {2s^2}} \right)
+\end{eqnarray}
+where $\sigma$ controls the width of the Gaussian kernel. 
+
+Zero-crossings of a given image $f$ convolved with $L$  
+give its edge locations.
+
+A simple algorithm for zero-crossings is:
+\begin{enumerate}
+\item For all pixels i,j do
+\item ZeroCross(i,j) = 0
+\item P0 = G(i,j); P1 =  G(i,j-1); P2 =  G(i-1,j); P3 =  G(i-1,j-1)
+\item If (P0*P1 $<$  0) or  (P0*P2 $<$  0) or (P0*P3 $<$ 0) then ZeroCross(i,j) = 1
+\end{enumerate} 
+
+
+\section{Edge Detection Program: im\_edge}
+\index{im\_edge}
+The program {\em im\_edge} detects the edges in an image by the
+methods previously described.
+{\bf
+\begin{center}
+     USAGE: im\_edge option file\_name\_in file\_name\_out
+\end{center}}
+where options are: 
+\begin{itemize} 
+\baselineskip=0.4truecm
+\item {\bf [-M edge\_detection\_method}
+{\small
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item Derivative of a Gaussian (DroG) 
+\item Pixel difference 
+\item Separated pixel difference 
+\item Sobel 
+\item Prewitt 
+\item Roberts 
+\item Frei Chen 
+\item Laplacian: filter 1 
+\item Laplacian: filter 2 
+\item Laplacian: filter 3 
+\item Marr and Hildreth: Laplacian of Gaussian (LoG) 
+\item Prewitt compass gradient 
+\item Kirsch 
+\item Robinson 3-level 
+\item Robinson 5-level 
+\end{enumerate}}
+Default is Sobel method
+\item {\bf [-k]} \\
+Select local maxima in gradient direction for first derivative methods,
+and zero-crossings for second derivative methods. \\
+Default is not to do these operations.
+\item {\bf [-t ThresholdValue]} \\
+Threshold all values in the edge map lower than {\em ThresholdValue}.
+\item {\bf [-S Sigma]} \\
+Scale parameter. Only used for DroG and LoG methods. \\
+Default value is ${1 \over \sqrt{3}}$.
+\end{itemize}
+
+\clearpage
+\newpage
+
+\section{Wavelets and Edge Detection}
+The LoG operator, also called the Mexican hat, is a well-known 
+wavelet function
+(even if wavelets did not exist when the LoG operator was proposed!).
+Furthermore, a scale parameter ($\sigma$) in this method leads to 
+a multiscale approach when $\sigma$ is varying. The advantage of using
+the wavelet framework is the existence of very fast WT, such as the \`a trous
+algorithm, which furnishes us with a  way to get the edges directly at all 
+dyadic scales, even for large scales.
+
+\subsection{Multiscale first derivative}
+
+Generalizing the concept of multiscale edge detection, 
+Mallat \cite{edge:mallat92a,edge:mallat92b,ima:mallat98} showed that 
+the DroG operators can be easily associated with a wavelet
+transform.
+If $\phi(x)$ is a smoothing function (i.e. $\int \phi(x) dx = 1$), 
+converges to zero at infinity, and is differentiable, we denote
+\begin{eqnarray}
+\psi^{1}(x,y) = {{d \phi(x,y)} \over {dx}} \quad \mbox{ and } \quad
+\psi^{2}(x,y) = {{d \phi(x,y)} \over {dy}} \quad \mbox{     } \quad
+ \end{eqnarray}
+By definition, $\psi^x$ and $\psi^y$ are wavelets
+(their integral is equal to zero). The local extrema of the wavelet coefficients
+using $\psi^{x_1},\psi^{y_1}$ correspond to the inflection points of $f*\phi_s$ 
+(with $\phi_s = {1 \over s} \phi({x\over s})$).
+
+Using the directional \`a trous algorithm, sometimes also called dyadic wavelet
+transform, we have at each scale $j$ and at pixel location $(x,y)$ two wavelet
+coefficients $w_{j,x}, w_{j,y}$. The modulus of the gradient is then defined by
+\begin{eqnarray}
+G_j(x,y) = \sqrt{ w_{j,x}^2 + w_{j,y}^2}
+\end{eqnarray}
+and the directional angle $\theta_j$ is
+\begin{eqnarray}
+\theta_j(x,y) = \left\{ \begin{array}{cc}
+ \arctan({w_{j,y} \over w_{j,x}})  & \mbox{ if } w_{j,x} \ge 0 \\
+ \pi - \arctan({w_{j,y} \over w_{j,x}})  & \mbox{ if } w_{j,x} < 0
+\end{array}\right.
+\end{eqnarray}
+  
+Multiscale edge points, also called modulus maxima, are points where 
+the modulus is locally maximum with respect to its neighbors along the
+direction $\theta_j$.
+
+A similar approach can be developed for the
+ LoG operator \cite{edge:mallat92a}.
+
+
+\subsection{Image reconstruction from its multiscale edges}
+
+\begin{figure}[htb]
+\centerline{
+\vbox{
+\psfig{figure=fig_project.ps,bbllx=4cm,bblly=16cm,bburx=20.5cm,bbury=26cm,width=12cm,height=8cm,clip=} 
+\caption{Approximation of the wavelet transform of $f$.}
+}}
+\label{fig_project}
+\end{figure}
+
+An image can be reconstructed (approximately) from its multiscale edges
+\cite{ima:mallat98} using an iterative algorithm. It does not
+converge exactly towards the image, but in practice the error is very
+small. The algorithm consists of searching for an image $h$
+such that its wavelet transform has the same modulus maxima (i.e.\ 
+same number of modulus maxima, same positions, and same amplitudes) as 
+those of the original image $f$.
+Denoting as $w_j(X)$ the wavelet coefficients of an image $X$ at a scale $j$,
+and $w^m_j(X)$ its modulus maxima, 
+we require that $w^m_j(h) = w^m_j(f)$.
+The algorithm is the following:
+\begin{enumerate}
+\itemsep=0.1truecm
+\item Set $w^m_j(h)$  to zero.
+\item Loop:
+\item Calculate the difference $w^m_j(f) - w^m_j(h)$, and
+interpolate between the maxima: we get $w_j^d$.
+\item Update $w_j(h)$: $w_j(h) = w_j(h) + w_j^d$.
+\item Assign in $w_j(h)$ the correct values at maxima positions.
+\item Reconstruct $h$  from  $w_j(h)$
+\item Do a wavelet transform of $h$: $w_j(h)$ is then updated.  
+\item Goto 2
+\item Assign in $w_j(h)$ the correct values at maxima positions.
+\item Reconstruct $h$  from  $w_j(h)$.
+\end{enumerate}
+The algorithm converges quickly to the solution after a few iterations.
+The interpolation \cite{edge:mallat92a} can be viewed 
+as a projection on an affine space
+$\Gamma$, and the inverse and forward wavelet transform as a projection
+on the space V of all possible wavelet transform signals. The two 
+projections are visualized in Figure~\ref{fig_project} ($Wh$ and $Wf$ 
+are respectively the wavelet transform of $h$ and $f$).
+
+
+\section{Multiscale Edge Detection Program}
+\subsection{First derivative: mr\_edge}
+\index{mr\_edge}
+The program {\em mr\_edge} detects the edges in an image by the
+methods previously described. The wavelet transform used is 
+the Mallat dyadic wavelet transform. The output file is a multiresolution
+file (``.mr''). For each scale, two bands are stored, one 
+the maxima map and the second the gradient angle map. 
+
+{\bf
+\begin{center}
+     USAGE: mr\_edge option file\_name\_in file\_name\_out
+\end{center}}
+where options are: 
+\begin{itemize} 
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales used in the multiresolution transform.
+Default is 4.
+\end{itemize} 
+\subsubsection*{Examples:}
+\begin{itemize} 
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item mr\_edge image.d med.mr \\
+Build the multiscale edge detection file.
+\item mr\_extract -B -s 1 med.mr mod1 \\
+Create an image which contains the detected edge map (maxima) 
+of the first scale.
+\item mr\_extract -B -s 2 med.mr ang1 \\
+Create an image which contains the  gradient angle map
+of the previous edge map.
+\item mr\_extract -B -s 5 med.mr mod3 \\
+\item mr\_extract -B -s 6 med.mr ang3 \\
+Ditto for scale 3.
+\end{itemize} 
+
+\subsection{Second derivative: mr\_at\_edge}
+\index{mr\_at\_edge}
+The program {\em mr\_at\_edge} detects the edges in an image by the
+methods previously described. The wavelet transform used is 
+the \`a trous algorithm. Only zero crossings of each scale are
+kept (i.e.\ not thresholded).
+The output file is a multiresolution
+file (``.mr''). 
+{\bf
+\begin{center}
+     USAGE: mr\_at\_edge option file\_name\_in file\_name\_out
+\end{center}}
+where options are: 
+\begin{itemize} 
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales used in the multiresolution transform.
+Default is 4.
+\end{itemize} 
+\subsubsection*{Examples:}
+\begin{itemize} 
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item mr\_at\_edge image.d med.mr \\
+Build the multiscale edge detection file.
+\item mr\_extract -s 1 med.mr zero1 \\
+Create an image which contains the detected edge map of the first scale.
+\item mr\_extract -s 2 med.mr zero2 \\
+Ditto for scale 2.
+\end{itemize} 
+
+\subsection{Image reconstruction: mr\_rec\_edge}
+\index{mr\_rec\_edge}
+The program {\em mr\_rec\_edge} reconstructs an image from its multiscale
+edges. 
+The multiscale edge file must have been obtained from the {\em mr\_edge}
+program. 
+{\bf
+\begin{center}
+     USAGE: mr\_rec\_edge option file\_name\_in file\_name\_out
+\end{center}}
+where options are: 
+\begin{itemize} 
+\item {\bf [-i number\_of\_iterations]} \\
+Number of iterations.
+Default is 10.
+\end{itemize} 
+
+\newpage
+
+\section{Contrast Enhancement}
+\label{sec_contrast}
+
+\subsection{Introduction}
+Because some features are hardly detectable by eyes in a image, we
+often transform it before visualization. Histogram equalization is
+certainly one the most well known method for contrast enhancement.
+Such an approach is general useful for images
+with a poor  intensity distribution. As edges play a fundamental 
+role in image understanding, a way to enhance the contrast is to 
+enhance the edges. For example, we can add to the original image its Laplacian
+($I^{'}= I + \gamma \Delta I$, where $\gamma$ is a parameter). Only
+features at the finest scale are enhanced (linearly). For a high 
+$\gamma$ value, only the high frequencies are visible.
+Multiscale edge enhancement \cite{col:velde99} can be seen 
+as a generalization of this approach to all resolution levels.  
+Images with a high dynamic range are also 
+difficult to analyze. For example, astronomers generally visualize their
+images using a logarithmic transformation. We see in the next
+section that wavelet can also be used to compress the dynamic range
+at all scales, and therefore allows us to clearly see some very faint
+features.
+
+\subsection{Multiscale Edge Enhancement}
+\subsubsection{Gray Images}
+Velde has proposed the following algorithm \cite{col:velde99}:
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item The image  $L$ is mapped nonlinearly according to:
+\begin{eqnarray}
+   L(i) \rightarrow L(i)^{1-q} 100^q
+\end{eqnarray}
+\item The $L$ image is decomposed into a multiscale gradient
+pyramid by using the dyadic wavelet transform (two directions per scale).
+The gradient at the scale $j$, the pixel position $i$  is
+calculated by: $G_j(i) = \sqrt{ (w_j^{(h)}(i))^2 + (w_j^{(v)}(i))^2}$ where 
+$w_j^{(h)}$ and $w_j^{(v)}$ are the wavelet coefficients in both 
+vertical and diagonal directions
+at pixel position $i$. 
+\item The two wavelet coefficients at scale $j$ and at position $i$ 
+are multiplied by  $y(G_j(i))$, 
+where $y$ is defined by:
+\begin{eqnarray}
+  y(x) & = & ({m \over c})^p \mbox{ if } \mid x \mid < c \nonumber \\
+  y(x) & = & ({m \over \mid x \mid })^p  \mbox{ if } c \le \mid x \mid < m \nonumber \\
+  y(x) & = & 1  \mbox{ if } \mid x \mid \ge m
+\end{eqnarray}
+\item The $\tilde L$image is reconstructed 
+from the modified wavelet coefficients.
+\item the $\tilde L$ image is mapped nonlinearly according to:
+\begin{eqnarray}
+  \tilde L(i) \rightarrow \tilde L(i)^{1 \over 1-q} 100^{- {q \over {1-q}}}
+\end{eqnarray}
+\end{enumerate}
+
+\begin{figure}[htb]
+\vbox{
+\centerline{  
+\hbox{
+\psfig{figure=fig_velde.ps,bbllx=3cm,bblly=13cm,bburx=20cm,bbury=25.cm,width=11cm,height=8cm,clip=}
+}}
+}
+\caption{Enhanced coefficients versus  original coefficients.  
+Parameters are m=30,c=3,p=0.5, and q=0.
+}
+\label{fig_velde1}
+\end{figure}
+
+Four parameters are needed $p$,$q$,$m$,$c$. 
+$p$ determines the degree of non-linearity in the nonlinear rescaling
+of the luminance, and must be in $]0,1[$. $q$ must be in $[-0.5,0.5]$.
+When $q > 0$, then darker parts are less enhanced than the lighter parts.
+When $ q < 0$, then the dark parts are more enhanced than lighter parts.
+Coefficients larger than $m$ are not modified by the algorithm.
+The $c$ parameter corresponds to the noise level.  
+
+Figure~\ref{fig_velde1} shows the modified wavelet coefficients versus
+the original wavelet coefficients for a given set parameters 
+(m=30,c=3,p=0.5, and q=0).
+
+
+\subsection{The LOG-Wavelet Representation of Gray Images}
+
+By using the \`a trous wavelet transform algorithm, an image $I$ 
+\index{a trous wavelet transform}
+\index{wavelet transform}
+can be defined as the sum of its $J$ wavelet scales and the last smooth 
+array:
+\begin{eqnarray}
+I(x,y) = c_{J}(x,y) + \sum_{j=1}^{J} w_j(x,y) 
+\label{resid}
+\end{eqnarray}
+where the first term on the right is the last smoothed array, 
+and $w$ denotes a wavelet scale. See \cite{starck:book98} more
+details about this algorithm.
+The wavelet-log representations consists in replacing $w_j(x,y)$
+by $\log(\mid w_j(x,y)\mid)$:
+\begin{eqnarray}
+I_w(x,y) = \log(c_{J}(x,y)) +  \sum_{j=1}^{J} \mathrm{sgn}(w_j(x,y)) \log(\mid w_j(x,y)\mid) 
+\end{eqnarray}
+
+\begin{figure}[htb]
+\vbox{
+\centerline{  
+\hbox{
+\psfig{figure=fig_comet.ps,bbllx=1.8cm,bblly=12.7cm,bburx=14.5cm,bbury=25.4cm,width=9cm,height=9cm,clip=}
+}}
+\centerline{ 
+\hbox{
+\psfig{figure=comet_wlog_m8.ps,bbllx=1.8cm,bblly=12.7cm,bburx=14.5cm,bbury=25.4cm,width=9cm,height=9cm,clip=}
+}}}
+\caption{Hale-Bopp Comet image and its wavelet log representation.}
+\label{fig_halebopp_wavelet}
+\end{figure}
+Figure~\ref{fig_halebopp_wavelet} left shows  the  logarithm of 
+Hale-Bopp comet image and right its wavelet log representation. The jets
+clearly appears in the last representation. 
+
+
+\subsection{Contrast Enhancement Program: mr\_contrast}
+\index{mr\_contrast}
+The program {\em mr\_contrast} enhances the contrast of a gray image. 
+Several methods are available. 
+{\bf
+\begin{center}
+ USAGE: mr\_contrast option in\_image out\_image
+\end{center}}
+where options are:
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item {\bf [-m contrast\_enhancement\_method]} 
+\begin{enumerate}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item Histogram Equalization 
+\item Wavelet Coefficients Enhancement 
+\item Wavelet-Log function: $f(w) = log(\mid w \mid +L) $
+\item Wavelet-Log function: $f(w) = sgn(w).log(\mid w \mid+L)$ 
+\item K-Sigma clipping.
+\item Add to the image its Laplacian. 
+\end{enumerate}
+Default is Wavelet Coefficients Enhancement.
+\item {\bf [-n number\_of\_scales]} \\
+Number of scales used in the wavelet transform.
+Default is 4. 
+\item {\bf [-M M\_parameter]} \\
+M Parameter. Only used if ``-e'' option is set. 
+Coefficients larger than M are not enhanced. 
+Default is 100.
+\item {\bf [-P P\_parameter]} \\
+P Parameter. Only used if ``-e'' option is set. 
+P must be in the interval $]0,1[$.
+Default is $0.5$.
+\item {\bf [-Q Q\_parameter]} \\ 
+Q Parameter. Only used if ``-e'' option is set. 
+Q must be in the interval $[-0.5,0.5]$. When $Q > 0$,
+darker part are less enhanced than lighter part.
+When $Q < 0$, darker part are more enhanced than lighter part.
+Default is $0$.
+\item {\bf [-C C\_parameter]} \\  
+C Parameter. Only used if ``-e'' option is set. 
+Default is $0$.
+\item {\bf [-K ClippingValue]} \\
+Clipping value. Default is 3.
+\item {\bf [-L Param]} \\
+Parameter for for the Laplacian or the log method. Default is 0.1.
+\end{itemize}
+\subsubsection*{Examples:}
+\begin{itemize}
+\baselineskip=0.4truecm
+\itemsep=0.1truecm
+\item mr\_contrast image.fits image\_out.fits\\
+Enhance the contrast by multiscale edge method.
+\item mr\_contrast -n6 -m4 image.fits image\_out.fits\\
+Enhance the contrast by wavelet log representation using six
+resolution levels.
+\end{itemize}

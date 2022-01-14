@@ -1,0 +1,115 @@
+\indexentry{multiresolution support}{16}
+\indexentry{support, multiresolution}{16}
+\indexentry{cea\_lm}{17}
+\indexentry{CEA\_LICENSE\_HOST}{17}
+\indexentry{CEA\_MR\_DIR}{18}
+\indexentry{format}{19}
+\indexentry{CEA\_VM\_SIZE}{19}
+\indexentry{CEA\_VM\_DIR}{19}
+\indexentry{im\_convert}{21}
+\indexentry{im\_info}{21}
+\indexentry{im\_snr}{23}
+\indexentry{im\_get}{24}
+\indexentry{im\_put}{24}
+\indexentry{im\_op}{24}
+\indexentry{im\_random}{25}
+\indexentry{im\_simu}{26}
+\indexentry{im\_segment}{27}
+\indexentry{im\_mirror}{27}
+\indexentry{im\_threshold}{27}
+\indexentry{im\_rot}{28}
+\indexentry{rotation}{28}
+\indexentry{fourier}{30}
+\indexentry{fft}{30}
+\indexentry{fft\_f\_2d}{31}
+\indexentry{fft\_cf\_2d}{31}
+\indexentry{im\_dct}{32}
+\indexentry{im\_dst}{32}
+\indexentry{mathematical morphology}{33}
+\indexentry{im\_erode}{34}
+\indexentry{erosion}{34}
+\indexentry{im\_dilate}{34}
+\indexentry{dilation}{34}
+\indexentry{im\_opening}{35}
+\indexentry{im\_closing}{35}
+\indexentry{closing}{35}
+\indexentry{im\_thin}{35}
+\indexentry{skeleton}{35}
+\indexentry{Principal component analysis}{36}
+\indexentry{im\_pca}{36}
+\indexentry{im\_pca\_rec}{37}
+\indexentry{Multiscale}{39}
+\indexentry{wavelet transform, continuous}{39}
+\indexentry{continuous wavelet transform}{39}
+\indexentry{wavelet transform, Morlet-Grossman}{39}
+\indexentry{Mallat's multiresolution}{42}
+\indexentry{mr\_transform}{42}
+\indexentry{CEA\_FILTER}{49}
+\indexentry{mr\_extract}{50}
+\indexentry{mr\_insert}{50}
+\indexentry{mr\_recons}{51}
+\indexentry{mr\_visu}{51}
+\indexentry{mr\_support}{52}
+\indexentry{multiresolution support}{52}
+\indexentry{mr\_info}{54}
+\indexentry{mr\_segment}{55}
+\indexentry{mr\_sigma}{56}
+\indexentry{mr\_background}{57}
+\indexentry{mr\_compare}{57}
+\indexentry{wavelet transform}{59}
+\indexentry{restoration}{61}
+\indexentry{filtering}{63}
+\indexentry{stationary signal}{64}
+\indexentry{mr\_filter}{67}
+\indexentry{speckle}{73}
+\indexentry{mr\_rfilter}{73}
+\indexentry{mr\_rfilter}{74}
+\indexentry{mr\_abaque}{78}
+\indexentry{mr\_psupport}{79}
+\indexentry{mr\_pfilter}{80}
+\indexentry{mr\_hfilter}{84}
+\indexentry{deconvolution}{87}
+\indexentry{im\_deconv}{87}
+\indexentry{mr\_deconv}{89}
+\indexentry{mr\_mrc}{91}
+\indexentry{compression}{93}
+\indexentry{wcomp}{99}
+\indexentry{mr\_comp}{100}
+\indexentry{mr\_lcomp}{103}
+\indexentry{mr\_decomp}{105}
+\indexentry{mr\_upresol}{106}
+\indexentry{detection}{109}
+\indexentry{mr\_detect}{113}
+\indexentry{registration}{121}
+\indexentry{mr\_fusion}{122}
+\indexentry{edge detection}{129}
+\indexentry{im\_edge}{134}
+\indexentry{mr\_edge}{137}
+\indexentry{mr\_at\_edge}{138}
+\indexentry{mr\_rec\_edge}{138}
+\indexentry{a trous wavelet transform}{140}
+\indexentry{wavelet transform}{140}
+\indexentry{mr\_contrast}{140}
+\indexentry{im1d\_convert}{143}
+\indexentry{im1d\_info}{143}
+\indexentry{im1d\_tend}{145}
+\indexentry{mr1d\_trans}{146}
+\indexentry{mr1d\_recons}{149}
+\indexentry{mr1d\_filter}{149}
+\indexentry{mr1d\_detect}{151}
+\indexentry{mr1d\_max}{153}
+\indexentry{mr1d\_maxrecons}{153}
+\indexentry{mr1d\_acor}{158}
+\indexentry{mr1d\_nowcast}{158}
+\indexentry{mr1d\_nowcast}{159}
+\indexentry{im1d\_stf}{161}
+\indexentry{im1d\_tfreq}{163}
+\indexentry{Wigner-Ville transform}{163}
+\indexentry{transform!Wigner-Ville transform}{163}
+\indexentry{fractal}{165}
+\indexentry{Mallat's multiresolution}{166}
+\indexentry{Mallat's multiresolution}{170}
+\indexentry{mf1d\_create\_ds}{173}
+\indexentry{mf1d\_chain}{173}
+\indexentry{mf1d\_repart}{174}
+\indexentry{mf\_analyse}{174}
