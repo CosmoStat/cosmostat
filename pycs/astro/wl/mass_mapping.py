@@ -604,10 +604,13 @@ class massmap2d():
             Nrea=self.DEF_Nrea
         if FirstDetectScale is None:
             FirstDetectScale=DEF_FirstDetectScale
+        # TabFDRNSigma = [5,,4.5,3.5,3.]
+        # TabFDRNSigma = [5.,4.,3.,2.5,2.]
         for j in range(Last):
             wtscale=self.WT.get_scale(j)
             #if j == 2:
             #    tvilut(wtscale,title='scale2')
+            # Nsigma = TabFDRNSigma[j]
             if j == 0:
                 Nsig= Nsigma + 1
             else:
@@ -1071,6 +1074,8 @@ class massmap2d():
               B reconstructed mode  of the sparse component.
         """
 
+        # print("Mass Mapping routine")
+
         gamma1 = InshearData.g1
         gamma2 = InshearData.g2
         nx = self.nx
@@ -1208,6 +1213,15 @@ class massmap2d():
                 xg[:,:] = xw + xs
 
             xg[:,:] = xw + xs
+            ZeroMeanCst=False
+            if ZeroMeanCst is True:
+                xgr = xg.real
+                xgi = xg.imag
+                ind = np.where(mask == 1)
+                mxg = np.mean(xgr)
+                mxgm = np.mean(xgr[ind])
+                xgr[:,:] = xgr[:,:]-mxg
+                xg[:,:] = (xgr[:,:] + 1j*xgi[:,:])
 
             if self.Verbose:
                 ind = np.where(mask == 1)
