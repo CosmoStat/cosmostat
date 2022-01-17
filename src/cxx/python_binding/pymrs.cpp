@@ -68,6 +68,6 @@ PYBIND11_MODULE(pymrs, module)
     .def("get_alm", &C_ALM::get_tabalm)
     .def("put_alm", &C_ALM::put_tabalm, py::arg("arr"))
     .def("wiener", &C_ALM::wiener, py::arg("psn"), py::arg("pss"))
-    .def("alm2spec", &C_ALM::alm2spec)
-    .def("recons", &C_ALM::recons);
+    .def("alm2spec", &C_ALM::alm2spec);
+//     .def("recons", &C_ALM::recons);
 }
