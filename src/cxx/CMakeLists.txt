@@ -44,10 +44,10 @@ link_directories(${Python_LIBRARY_DIRS})
 find_pkg(CFITSIO cfitsio)
 
 # Locate HEALPix
-find_pkg(HEALPIX healpix_cxx>=3.80)
+find_pkg(HEALPIX healpix_cxx)
 
 # Locate FFTW
-find_package(FFTW3 QUIET)
+find_pkg(FFTW3 fftw3)
 
 # Build Sparse2D
 include(BuildSparse2D)
@@ -210,7 +210,6 @@ message(STATUS "BUILD_DICLEARN Build: ${BUILD_DICLEARN}")
 if(BUILD_DICLEARN)
 
   # Locate GSL using pkg-config
-  pkg_check_modules(GSL gsl)
   find_pkg(GSL gsl)
 
   # Locate the Armadillo library
