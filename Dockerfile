@@ -12,14 +12,17 @@ ARG CXX=g++-9
 RUN apt-get update && \
     apt-get install -y autoconf automake libtool pkg-config libgl1-mesa-glx && \
     apt-get install -y gcc-9 g++-9 && \
-    apt-get install -y cmake git pkg-config wget && \
+    apt-get install -y cmake git wget && \
     apt-get install -y libarmadillo-dev && \
     apt-get install -y libcfitsio-dev && \
     apt-get install -y libfftw3-dev && \
     apt-get install -y libgsl-dev && \
     apt-get install -y libsharp-dev && \
     apt-get install -y libhealpix-cxx-dev && \
+    apt-get install -y healpy-data && \
     apt-get clean
+
+ENV HEALPIX /usr/share/healpy
 
 RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
     bash Miniconda3-latest-Linux-x86_64.sh -b -p /miniconda && \

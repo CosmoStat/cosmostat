@@ -14,21 +14,15 @@ option(BUILD_FFTW "Build FFTW libraries" OFF)
 #   set(BUILD_FFTW ON)
 # endif()
 
-# Check for FFTW in CMAKE_PREFIX_PATH
-# if(NOT "${CMAKE_PREFIX_PATH}" STREQUAL "")
-#
-#   foreach(path in ${CMAKE_PREFIX_PATH})
-#     string(FIND ${path} "fftw" fftw_in_string)
-#     if(fftw_in_string)
-#       set(FFTW_PATH ${path})
-#     endif()
-#   endforeach()
-#
-# endif()
-#
-# if(NOT "${FFTW_PATH}" STREQUAL "")
-#   message(WARNING "Using this FFTW Path for Sparse2D build: ${FFTW_PATH}")
-# endif()
+# Check for CMAKE_PREFIX_PATH
+if(NOT "${CMAKE_PREFIX_PATH}" STREQUAL "")
+  # Create a list with an alternate separator e.g. pipe symbol
+  string(REPLACE ";" "|" SPARSE2D_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
+endif()
+
+if(NOT "${SPARSE2D_PREFIX_PATH}" STREQUAL "")
+  message(WARNING "Using this prefix Path for Sparse2D build: ${SPARSE2D_PREFIX_PATH}")
+endif()
 
 # Download and build Sparse2D
 ExternalProject_Add(sparse2d-git
@@ -37,6 +31,7 @@ ExternalProject_Add(sparse2d-git
   GIT_REPOSITORY https://github.com/sfarrens/Sparse2D.git
   GIT_TAG fftw_build
   PREFIX sparse2d
+  LIST_SEPARATOR | # Use the alternate list separator
   CMAKE_ARGS ${CMAKE_ARGS}
   -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
   -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -44,7 +39,7 @@ ExternalProject_Add(sparse2d-git
   -DUSE_FFTW=ON
   -DBUILD_FFTW=${BUILD_FFTW}
   -DBUILD_NFFT=OFF
-  # -DCMAKE_PREFIX_PATH=${FFTW_PATH}
+  -DCMAKE_PREFIX_PATH:PATH=${CMAKE_BINARY_DIR}
   -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
 )
 
@@ -56,7 +51,6 @@ set(fftw_libs fftw3f_omp fftw3_omp fftw3f fftw3)
 
 # Include external headers
 include_directories(${CMAKE_INSTALL_PREFIX}/include/sparse2d)
-# link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
 # Extract FFTW libraries from Sparse2D build
 if(NOT FFTW3_FOUND)
