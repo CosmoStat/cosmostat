@@ -34,6 +34,7 @@ ExternalProject_Add(healpix
     CONFIGURE_COMMAND ${HEALPIX_COMPILE} ./configure ${HEALPIX_CONFIG_FLAGS}
     BUILD_COMMAND     make
     COMMAND           make clean
+    INSTALL_COMMAND   cmake -E echo "Skipping install step."
     DEPENDS           cfitsio
 )
 
