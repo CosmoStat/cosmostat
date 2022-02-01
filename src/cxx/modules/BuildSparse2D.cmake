@@ -41,6 +41,7 @@ ExternalProject_Add(sparse2d-git
   -DBUILD_NFFT=OFF
   -DCMAKE_PREFIX_PATH:PATH=${CMAKE_BINARY_DIR}
   -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+  DEPENDS healpix
 )
 
 # List Sparse2D libs

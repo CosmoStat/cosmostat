@@ -34,6 +34,7 @@ ExternalProject_Add(healpix
     CONFIGURE_COMMAND ${HEALPIX_COMPILE} ./configure ${HEALPIX_CONFIG_FLAGS}
     BUILD_COMMAND     make -j 4
     COMMAND           make clean
+    DEPENDS           cfitsio
 )
 
 set(HEALPIX_LIBRARY_DIRS ${CMAKE_BINARY_DIR}/healpix/lib/ )
