@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
+        os: [macos-latest, ubuntu-latest]
         python-version: [3.9]
 
     steps:
@@ -36,12 +36,19 @@ jobs:
           conda list
           python --version
 
+      - name: Install Linux Dependencies
+        shell: bash -l {0}
+        if: runner.os == 'Linux'
+        run: |
+          apt-get update
+          apt-get install -y fftw libarmadillo-dev libgsl-dev pkg-config
+
       - name: Install macOS Dependencies
         shell: bash -l {0}
         if: runner.os == 'macOS'
         run: |
           brew tap sfarrens/sf
-          brew install armadillo bigmac cfitsio fftw gsl healpix libomp
+          brew install armadillo bigmac fftw gsl libomp
 
       - name: Install Dependencies
         shell: bash -l {0}
