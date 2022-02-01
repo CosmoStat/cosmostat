@@ -32,7 +32,7 @@ ExternalProject_Add(healpix
     SOURCE_DIR        ${CMAKE_BINARY_DIR}/healpix
     BUILD_IN_SOURCE   1
     CONFIGURE_COMMAND ${HEALPIX_COMPILE} ./configure ${HEALPIX_CONFIG_FLAGS}
-    BUILD_COMMAND     make -j 4
+    BUILD_COMMAND     make
     COMMAND           make clean
     DEPENDS           cfitsio
 )
