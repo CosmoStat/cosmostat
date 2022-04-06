@@ -91,6 +91,9 @@ MRS::MRS(bool verbose)
 
 // Destructor
 MRS::~MRS(){
+    mr_initialized=False;
+    nb_procs=0;
+    Verbose=False;
 }
 
 // int MRS::get_lmax(int  & Lmax, int Nside, float ZeroPadding)
@@ -110,10 +113,12 @@ void MRS::info(){
 // Transform method
 void  MRS::alloc(int Nside, int Nscale, int LmaxIn, int ALM_iter, bool Verb)
 {
+    if (Verb) (*this).info();
     bool nested=false;
     float ZeroPadding=0.;
     int LM=LmaxIn;
     int Lmax = mrs_get_lmax (LM,  Nside, ZeroPadding);
+    cout << "ALLOC: " << Nside << " " << Nscale << " " << LmaxIn << " " << ALM_iter << endl;
     WT.wt_alloc(Nside, Nscale, Lmax, nested);  //  DEF_MRS_ORDERING);
     WT.ALM_iter = ALM_iter;
     if (Verb) Verbose=Verb;
@@ -124,20 +129,28 @@ void  MRS::alloc(int Nside, int Nscale, int LmaxIn, int ALM_iter, bool Verb)
 py::array_t<float>  MRS::uwt(py::array_t<float>& arr, int Ns)
 {
     Verbose=True;
-    cout << "arr.ndim() = " << arr.ndim() << endl;
+    cout << "Input arr.ndim() = " << arr.ndim() << " " << arr.shape(0) << endl;
     if (arr.ndim() != 1)
         throw std::runtime_error("Input should be 1-D NumPy array");
+
+    
+    cout << "OK" << endl;
+    exit(-1);
+    
+    
     auto buffer = arr.request();
     float *pointer = (float *) buffer.ptr;
-    
+ 
     int Npix = arr.shape(0);
     int Nside =floor(sqrt((double) Npix / 12.));
-    if (Nside != WT.nside())
-        throw std::runtime_error("Input map has not expected nside.");
-
     if ((!this->mr_initialized) || ((Ns>1) && (Ns != WT.nscale()))
             || (Nside != WT.nside()))
         alloc(Nside, Ns);
+    
+    if (Nside != WT.nside())
+    {
+        throw std::runtime_error("Input map has not expected nside.");
+    }
 
     cout << "alloc ok. Nside = " << Nside << " " << Ns << ", Npix = " << Npix << endl;
 
@@ -167,6 +180,7 @@ py::array_t<float>  MRS::uwt(py::array_t<float>& arr, int Ns)
     arr1.resize({WT.nscale(), Npix});
     cout << "resize dim = " << arr1.ndim() << " " << arr1.shape(1)<< " " <<   arr1.shape(0) << endl;
     return arr1;
+    
 }
 
 py::array_t<float> MRS::get_tabnorm()
