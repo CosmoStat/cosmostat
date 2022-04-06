@@ -8,20 +8,20 @@
 **
 **    Author: Jean-Luc Starck
 **
-**    Date:  14/03/00 
-**    
+**    Date:  14/03/00
+**
 **    File:  MC_Comp.h
 **
 *******************************************************************************
 **
 **    DESCRIPTION  multichannel image decompression
-**    ----------- 
-**                 
-**    PARAMETRES    
-**    ----------    
-** 
-**    RESULTS      
-**    -------  
+**    -----------
+**
+**    PARAMETRES
+**    ----------
+**
+**    RESULTS
+**    -------
 **
 **
 ******************************************************************************/
@@ -33,7 +33,7 @@
 extern float PasCodeur;  /* CCD gain */
 extern float SigmaGauss; /* CCD read-out noise standard deviation */
 extern float MeanGauss;  /* CCD read-out noise mean */
-// extern float BadPixalVal; 
+// extern float BadPixalVal;
 // extern Bool BadPixel;
 
 extern Bool InputFromStdin;// = False;
@@ -91,13 +91,13 @@ void param_visual_quant()
 
 /*********************************************************************/
 
-void wt_decompress (Ifloat &Imag, type_transform Transform, 
+void wt_decompress (Ifloat &Imag, type_transform Transform,
                     int Resol, FILE *FileDes, int &Nli, int &Nci, Bool Verbose)
 {
     int i,j,s;
     int Nl,Nc,Nl_s,Nc_s;
     int Nbr_Plan;
- 
+
     /* read the original image size */
     Nl =readint(FileDes); /* x size of image */
     Nc =readint(FileDes); /* y size of image */
@@ -106,8 +106,8 @@ void wt_decompress (Ifloat &Imag, type_transform Transform,
     Imag.resize (Nl, Nc);
 
     /* read the number of scales */
-    Nbr_Plan=readint(FileDes); 
-     
+    Nbr_Plan=readint(FileDes);
+
     if (Verbose == True)
     {
        fprintf (stderr,"DECODING wavelet transform: nbr_scale = %d\n", Nbr_Plan);
@@ -131,7 +131,7 @@ void wt_decompress (Ifloat &Imag, type_transform Transform,
           Nc = (Nc+1)/2;
        }
        Nbr_Plan -= Resol;
-    }     
+    }
     if (Verbose == True) printf ("\n Create an image of size (%d, %d)\n", Nl, Nc);
     Imag.resize (Nl, Nc);
     int NbrBand = (Nbr_Plan-1)*3 + 1;
@@ -166,7 +166,7 @@ void wt_decompress (Ifloat &Imag, type_transform Transform,
         TabResolNc[s+1] = Nc_s;
         TabResolNl[s+2] = Nl_s;
         TabResolNc[s+2] = Nc_s;
-   }     
+   }
     s = NbrBand-1;
     TabBandNl[s] = Nl_s;
     TabBandNc[s] = Nc_s;
@@ -175,7 +175,7 @@ void wt_decompress (Ifloat &Imag, type_transform Transform,
 
     //extern long size_enc;
     float *LevelQ = new float[NbrBand];
-    for (s =  NbrBand -1 ; s  >= 0; s--) 
+    for (s =  NbrBand -1 ; s  >= 0; s--)
     {
        int NbrCoef;
        int Ind=0, Depi=0, Depj=0;
@@ -189,7 +189,7 @@ void wt_decompress (Ifloat &Imag, type_transform Transform,
        LevelQ[s] = Level;
        //int SizeScale = size_enc;
        // if (Verbose == True)
-       //      cerr << "Set " << s+1 << " " << Nls << "x" << Ncs << 
+       //      cerr << "Set " << s+1 << " " << Nls << "x" << Ncs <<
        //          " Quantif = " << Level  <<  " Size = " << SizeScale << endl;
        if (s != NbrBand -1)
        {
@@ -201,11 +201,11 @@ void wt_decompress (Ifloat &Imag, type_transform Transform,
              case D_HORIZONTAL:
                Depj += TabResolNc[s];
                break;
-             case D_DIAGONAL:  
+             case D_DIAGONAL:
                Depi += TabResolNl[s];
                Depj += TabResolNc[s];
                break;
-             case D_VERTICAL:  
+             case D_VERTICAL:
                Depi += TabResolNl[s];
                break;
              case I_SMOOTH: break;
@@ -213,7 +213,7 @@ void wt_decompress (Ifloat &Imag, type_transform Transform,
              default: cerr << "Error: unknown detail" << endl;
                  exit(0);
                  break;
-           }         
+           }
        }
        if (Level > FLOAT_EPSILON)
        {
@@ -236,17 +236,17 @@ void wt_decompress (Ifloat &Imag, type_transform Transform,
               for (i = 0; i < Nl_s; i++)
               for (j = 0; j < Nc_s; j++) Imag(i+Depi,j+Depj) =  data[0];
            }
-           else  
+           else
            {
               for (i = 0; i < Nl_s; i++)
               for (j = 0; j < Nc_s; j++)  Imag(i,j) = data[0];
            }
        }
        i_free(data);
-    }        
+    }
 
    if (NbrBand > 1) WT2D.recons(Imag, Nbr_Plan);
- 
+
    // In case of sub resolution reconstruction, the reconstructued
    // image must be renormalized because we used a L2 normalization
    float NormCoef=1.;
@@ -255,8 +255,8 @@ void wt_decompress (Ifloat &Imag, type_transform Transform,
       for (s=0; s < Resol; s++) NormCoef *=2;
       for (i = 0; i < Nl; i++)
       for (j = 0; j < Nc; j++) Imag(i,j) /= NormCoef;
-  
-   }     
+
+   }
 
    delete [] LevelQ;
    delete [] TabBandNl;
@@ -264,21 +264,21 @@ void wt_decompress (Ifloat &Imag, type_transform Transform,
    delete [] TabResolNl;
    delete [] TabResolNc;
 }
-    
+
 
 /****************************************************************************/
 
- 
+
 void MR_Comp3DData::read_tinfo()
 {
      extern softinfo Soft;
-   
+
     short ValIdent[3];
     fread(ValIdent, sizeof(short), 3, InFile);
 //    cout << "V1 = " << ValIdent[0] << endl;
 //    cout << "V2 = " << ValIdent[1] << endl;
 //    cout << "V3 = " << ValIdent[2] << endl;
-    
+
     float SoftVersion;
     SoftVersion = readfloat (InFile);
     if ((SoftVersion > 1) && (Soft.release() == 1))
@@ -288,7 +288,7 @@ void MR_Comp3DData::read_tinfo()
     }
     Comp_Method  = (type_comp) readint (InFile);
     switch (Comp_Method)
-    {       
+    {
        case COMP_HAAR: Transform = TO_HAAR; break;
        case COMP_MALLAT: Transform = TO_MALLAT;break;
        case COMP_FEAUVEAU: Transform = TO_FEAUVEAU;break;
@@ -299,12 +299,12 @@ void MR_Comp3DData::read_tinfo()
        case COMP_O_MIN_MAX: Transform = TM_MIN_MAX;break;
        case COMP_O_MORPHO:
        case COMP_MORPHO: break;
-       case COMP_INT_LIFTING: 
+       case COMP_INT_LIFTING:
              LiftingTrans = (type_lift) readint (InFile);
 	     Transform = TO_LIFTING;
              break;
        default: break;
-    }  
+    }
     Nbr_Plan = readint (InFile);
     // if (SoftVersion > 1.)
     {
@@ -313,20 +313,20 @@ void MR_Comp3DData::read_tinfo()
        KeepResi = readint (InFile);
     }
     if (Resol >= Nbr_Plan) Resol = Nbr_Plan-1;
-    
-    IntTrans = work_with_int(Comp_Method);     
+
+    IntTrans = work_with_int(Comp_Method);
     NoiseThresholding = noise_threshold(Comp_Method);
-        
-    FormatInput = (type_3d_format) readint (InFile); 
-    // test for compatibility software version     
+
+    FormatInput = (type_3d_format) readint (InFile);
+    // test for compatibility software version
     // if (SoftVersion > 1.)
     {
        int NCol = readint (InFile);
        if (NCol > 0)
        {
-          byte *r = new byte[NCol];
-	  byte *g = new byte[NCol];
-	  byte *b = new byte[NCol];
+          cbyte *r = new cbyte[NCol];
+	  cbyte *g = new cbyte[NCol];
+	  cbyte *b = new cbyte[NCol];
 	  fread(r, 1, NCol, InFile);
 	  fread(g, 1, NCol, InFile);
 	  fread(b, 1, NCol, InFile);
@@ -350,7 +350,7 @@ void MR_Comp3DData::read_tinfo()
 
     TypeQuant = (type_quant) readint (InFile);
     TypeCoder  = (type_coding) readint (InFile);
-    
+
     Stat_Noise = (type_noise) readint (InFile);
     if (Stat_Noise == NOISE_POISSON)
     {
@@ -358,8 +358,8 @@ void MR_Comp3DData::read_tinfo()
         SigmaGauss = readfloat(InFile);
         MeanGauss = readfloat(InFile);
     }
-    
-    if (readint (InFile) == 1)   
+
+    if (readint (InFile) == 1)
     {
        UseBlock  = True;
        // NbrImag = readint (InFile);
@@ -367,9 +367,9 @@ void MR_Comp3DData::read_tinfo()
        BlockSize = readint (InFile);
        BlockOverlap= readint (InFile);
     }
-     
+
     if (readint (InFile) == 1)
-    { 
+    {
        cout << "Problem: BadPixel must be false " << endl;
        exit(0);
        // BadPixel = True;
@@ -377,8 +377,8 @@ void MR_Comp3DData::read_tinfo()
        // MinDat = readfloat (InFile);
        // MaxDat = readfloat (InFile);
     }
-    
-    if (Verbose == True) 
+
+    if (Verbose == True)
     {
         cerr << endl;
         cerr << Soft.banner() << endl;
@@ -399,7 +399,7 @@ void MR_Comp3DData::read_tinfo()
 }
 
 /*****************************************************************/
- 
+
 void MR_Comp3DData::header_resol()
 {
   if (Resol > 0)
@@ -412,8 +412,8 @@ void MR_Comp3DData::header_resol()
             Header.crpixy /= 2.;
             Header.width = (Header.width+1)/2;
             Header.height = (Header.height+1)/2;
-        } 
-        Header.npix = Header.width*Header.height;   
+        }
+        Header.npix = Header.width*Header.height;
     }
 }
 
@@ -478,8 +478,8 @@ void MR_Comp3DData::read_header()
         Buff[Sname] = '\0';
         strcpy(Header.ctypey,Buff);
         header_resol();
-        Header.npix = Header.width*Header.height;   
-        if (Verbose == True) 
+        Header.npix = Header.width*Header.height;
+        if (Verbose == True)
         {
       cerr << "cmd = " <<  Header.origin << endl;
       cerr << "bitpix = " <<    Header.bitpix;
@@ -506,7 +506,7 @@ void MR_Comp3DData::read_header()
          cerr << "crotax = " <<    Header.crotax;
          cerr << " crotay = " <<    Header.crotay << endl;
       }
-      
+
       cerr << "bscale = " <<    Header.bscale;
       cerr << " bzero = " <<    Header.bzero << endl;
       if (Header.ngamma> 0)
@@ -517,7 +517,7 @@ void MR_Comp3DData::read_header()
          cerr << "pixscale = " <<    Header.pixscale << endl;
       if (strlen(Header.ctypex) > 0)
           cerr << "ctypex = " <<    Header.ctypex;
-      if (strlen(Header.ctypey) > 0)   
+      if (strlen(Header.ctypey) > 0)
           cerr << " ctypey = " <<    Header.ctypex << endl << endl;
         }
     }
@@ -532,8 +532,8 @@ void MR_Comp3DData::read_header()
        Elstr_Size = readint (InFile);
        Elstr_Shape = readint (InFile);
     }
-  
-    if (Verbose == True) 
+
+    if (Verbose == True)
     {
       if (NoBscale == True) cerr << "Bscaling not applied " << endl;
       if ((Comp_Method == COMP_O_MORPHO) || (Comp_Method == COMP_MORPHO))
@@ -547,7 +547,7 @@ void MR_Comp3DData::read_header()
    // modify the fits structure following user request
    type_3d_format FormatData = io_which_3d_format(File_Name_Imag);
    if (FormatData == F3D_UNKNOWN)
-   {  
+   {
       if (FormatInput != F3D_UNKNOWN) IO_3D_Format = FormatInput;
       else FormatInput = FormatData;
    }
@@ -567,7 +567,7 @@ void MR_Comp3DData::read_header()
    {
       Header.bitpix = -32;
       Header.bytepix = 4;
-   }    
+   }
 }
 
 /****************************************************************/
@@ -585,25 +585,25 @@ void MR_Comp3DData::decode_data()
     switch (Comp_Method)
     {
        case COMP_MALLAT:
-         if (Resol == -1) 
+         if (Resol == -1)
               wt_decompress(Buffer,Transform,0,InFile,Nli,Nci,Verbose);
          else wt_decompress(Buffer,Transform,Resol,InFile,Nli,Nci,Verbose);
          Nl = Buffer.nl();
-         Nc = Buffer.nc(); 
+         Nc = Buffer.nc();
          break;
-       case COMP_HAAR:  
+       case COMP_HAAR:
        case COMP_FEAUVEAU:
        case COMP_MIN_MAX:
        case COMP_WT_PMT:
           // if (Comp_Method != COMP_HAAR) IterRec = 0;
-          if (Resol == -1)   
+          if (Resol == -1)
 	       mr_buddecompress(Buffer, Transform, 0,InFile,Nli,Nci,IterRec,Verbose);
           else mr_buddecompress(Buffer, Transform, Resol,InFile,Nli,Nci,IterRec,Verbose);
               Nl = Buffer.nl();
-              Nc = Buffer.nc(); 
+              Nc = Buffer.nc();
 
              // Haar scaling function is not normalized by 1.
-             // It means that pixels values of the image at a lower 
+             // It means that pixels values of the image at a lower
              // resolution are higher than the original image
              // ===> we do a renormalization
              if ((Resol > 0) && (Comp_Method == COMP_HAAR))
@@ -631,7 +631,7 @@ void MR_Comp3DData::decode_data()
        case COMP_INT_LIFTING:
 //            {
 //	     // cout << "lift" << endl;
-//             if (Resol == -1)  
+//             if (Resol == -1)
 // 	          mr_i_ortho_decompress (ImagInt,0,  NScale, InFile, Nli,Nci,Verbose);
 //              else mr_i_ortho_decompress (ImagInt, Resol, NScale, InFile, Nli,Nci,Verbose);
 //              Nl = ImagInt.nl();
@@ -641,7 +641,7 @@ void MR_Comp3DData::decode_data()
 //              WT2D.recons(ImagInt, NScale);
 // 	     BIDat = ImagInt.buffer();
 //	    }
-//             break;        
+//             break;
        case COMP_O_MORPHO:
        case COMP_O_MRMEDIAN:
              cout << "Error: not implemented method " << endl;
@@ -651,7 +651,7 @@ void MR_Comp3DData::decode_data()
              cerr << "Error: unknown compression method ... " << endl;
              exit(-1);
              break;
-    } 
+    }
      if (f == 0) (*BDat).reform(Nc,Nl,Nf);
      if ((f == 0) || (RGBImage == False) || (RGBChromDownSample == False))
      {
@@ -667,15 +667,15 @@ void MR_Comp3DData::decode_data()
      }
      // cout << "skip to next block" << endl;
      if (Resol > 0)
-     {  
+     {
 	 int NB_seek = number_band_per_resol(Transform)*Resol;
 	     // cout << " NB_seek = " << NB_seek << endl;
 	 seek_band(NB_seek);
      }
    }
 
-    // inverse transform    
-//     if ((Stat_Noise == NOISE_POISSON) && 
+    // inverse transform
+//     if ((Stat_Noise == NOISE_POISSON) &&
 //             (Comp_Method != COMP_O_MIN_MAX) &&
 //             (Comp_Method != COMP_INT_LIFTING))
 //     {
@@ -683,7 +683,7 @@ void MR_Comp3DData::decode_data()
 //              noise_inverse_poisson_transform (*BDat, *BDat);
 //         else noise_inverse_poisson_transform (BIDat, BIDat, Nl, Nc);
 //     }
-    
+
     // if it is not a block compression, the original image size is
     // equal to Nli,Nci
     if (NbrBlock <= 1)
@@ -713,12 +713,12 @@ void MR_Comp3DData::decode_residu()
 {
    float Sigmaf;
    int i,j,k;
-   int *IResidual=NULL;  
-   for (int f=0; f < Nf; f++) 
+   int *IResidual=NULL;
+   for (int f=0; f < Nf; f++)
    {
      k=0;
      if ((Resol==-1) && (KeepResi!=0))
-     {        
+     {
         decode(InFile, &IResidual, &Nl, &Nc, &Sigmaf);
         // if (Verbose == True)   cerr << "Sigma residu = " << Sigmaf << endl;
         // if ((f == 0) || (RGBImage == False) || (RGBChromDownSample == False))
@@ -729,7 +729,7 @@ void MR_Comp3DData::decode_residu()
 // 	else
 // 	{
 //            for (i=0; i < (*BDat).ny(); i++)
-//            for (j=0; j < (*BDat).nx(); j++)  
+//            for (j=0; j < (*BDat).nx(); j++)
 // 	     (*BDat)(j,i,f) += IResidual[i/2*Nc+j/2] * Sigmaf;
 // 	}
      }
@@ -744,8 +744,8 @@ void MR_Comp3DData::put_block(int NumBlock)
     int Depi, Depj;
     Depj = TabBlockDepNc[NumBlock];
     Depi = TabBlockDepNl[NumBlock];
-    
-    io_3d_write_block_ima(File_Name_Imag, *BDat, Depi, Depj, InfoData, NoBscale);          
+
+    io_3d_write_block_ima(File_Name_Imag, *BDat, Depi, Depj, InfoData, NoBscale);
 }
 
 /*****************************************************************/
@@ -754,7 +754,7 @@ void MR_Comp3DData::write()
 {
    // write to ouput file the decompressed data
    // cout << "ReadHd = " << ReadHd << endl;
-   
+
    if (ReadHd > 0)  io_3d_write_data(File_Name_Imag, Dat, &Header);
    else  io_3d_write_data(File_Name_Imag, Dat);
 }
@@ -767,20 +767,20 @@ void MR_Comp3DData::set_block_info_data()
    int Nli=L_Nl,Nci=L_Nc;
   // cerr << "set_block_info_data:  L_Nl " << L_Nl  << " L_Nc =  " <<  L_Nc << endl;
   // cerr << "StringTransform = " << StringTransform(Transform) << endl;
-  
+
      if (BlockSize < 0) BlockSize = MAX(Nli,Nci);
-   set_tabblock(); 
-  
+   set_tabblock();
+
    // find final image size
-   if (Resol > 0)    
+   if (Resol > 0)
    {
        // BlockSize  = BlockSize >> Resol;
        int Depi=0;
-       int Depj=0; 
+       int Depj=0;
        Nli = 0;
        Nci = 0;
        for (i = 0; i < NbrBlock; i++)
-       {  
+       {
 	     TabBlockNl[i] = size_ima_resol(Resol, TabBlockNl[i]);
 	     TabBlockNc[i] = size_ima_resol(Resol, TabBlockNc[i]);
              if (i <  NbrBlocNc) Nci += TabBlockNc[i];
@@ -795,14 +795,14 @@ void MR_Comp3DData::set_block_info_data()
              Depj += TabBlockNc[i];
 //      cerr << "Block " << i+1 << ": " << TabBlockNl[i] << "x" << TabBlockNc[i] <<
 //              " DepNl = " << TabBlockDepNl[i] << " DepNc = " << TabBlockDepNc[i] << endl;
-   
-          }              
+
+          }
           Header.width = Nci;
           Header.height = Nli;
           Header.npix = Nci*Nli;
    }
    // cout << "FINAL Image Size= " << Nli  << "x" << Nci  <<  endl;
-    
+
    InfoData.Format = FormatInput;
    if (ReadHd > 0) InfoData.PtrFits = &Header;
    else
@@ -817,26 +817,26 @@ void MR_Comp3DData::set_block_info_data()
 /*****************************************************************/
 
 void MR_Comp3DData::decompress()
-{ 
+{
     int i;
     long BufSize;
-    
+
     // intialize the decompression
     init_decompress();
-        
-    if ((Resol > 0) && (    (Comp_Method == COMP_MORPHO) 
+
+    if ((Resol > 0) && (    (Comp_Method == COMP_MORPHO)
                          || (Comp_Method == COMP_O_MORPHO)))
     {
        cerr << "Error: morphology based method is not compatible with -r option ... " << endl;
        exit(-1);
-       
+
     }
 
     // decompress all blocks
-    if (NbrBlock > 1) 
+    if (NbrBlock > 1)
     {
        L_Nl = readint(InFile);
-       L_Nc = readint(InFile); 
+       L_Nc = readint(InFile);
        Nf = readint(InFile);
 
        if (Verbose == True)
@@ -848,21 +848,21 @@ void MR_Comp3DData::decompress()
        {
           BufSize = readint(InFile);
           if (Verbose == True)
-          {  
+          {
           cerr << "Block " << i+1 << ": " << TabBlockNl[i] << "x" << TabBlockNc[i] <<
                   " Size = " << BufSize << endl;
           }
-          decode_data(); 
-          
+          decode_data();
 
 
-        // cout << "decode noise" << endl;          
+
+        // cout << "decode noise" << endl;
           if (RGBImage == True) yuv_to_rgb(*BDat);
           if ((KeepResi) && (NoiseThresholding == True))
 	  {
 	      // read info parameters
 	      read_noise_info();
- 	      if (Resol < 0)  
+ 	      if (Resol < 0)
               {
                   decode_residu();
                }
@@ -873,13 +873,13 @@ void MR_Comp3DData::decompress()
 	      }
 	  }
           // if (RGBImage == True) yuv_to_rgb(*BDat);
-          
-       //  cout << "put_block" << endl; 
+
+       //  cout << "put_block" << endl;
           put_block(i);
           (*BDat).free();
        }
        InfoData.end_writing();
-    }   
+    }
     else
     {
         BDat = &Dat;
@@ -899,7 +899,7 @@ void MR_Comp3DData::decompress()
     {
         fprintf(stderr, "Sigma estimated noise = %f\n", Noise_Ima);
     }
-    
+
    if ((InFile != NULL) && (InFile != stdin)) fclose (InFile);
 }
 
@@ -926,28 +926,28 @@ void MR_Comp3DData::init_decompress()
 /*****************************************************************/
 
 void MR_Comp3DData::decompress(int NB)
-{ 
+{
     int NumBlock=NB-1;
-       
+
     init_decompress();
     long BufSize;
 
     if ((NumBlock<0) || (NumBlock >= NbrBlock)) NumBlock = 0;
-    
+
     // skip the first blocks
     seek_block(NumBlock);
-    
-    // read the total size 
+
+    // read the total size
     if (NbrBlock > 1) BufSize = readint(InFile);
-    
+
     BDat = &Dat;
     decode_data();
     //L_Nl = Nl;
     //L_Nc = Nc;
-          
+
     if (Verbose == True)
          cerr << "Block " <<  NumBlock+1 << ": " <<  Nl << "x" <<  Nc << endl;
-         
+
     // decode noise
     if ((KeepResi) && (NoiseThresholding == True) && (Resol < 0))
     {
@@ -955,11 +955,11 @@ void MR_Comp3DData::decompress(int NB)
         decode_residu();
     }
     if (RGBImage == True) yuv_to_rgb(*BDat);
- 
+
    if ((NoiseThresholding == True)
      && (Verbose == True) && (Stat_Noise == NOISE_GAUSSIAN) && (Resol < 0) )
          fprintf(stderr, "Sigma estimated noise = %f\n", Noise_Ima);
-   
+
     // dec_data();
     if (InFile != NULL) fclose (InFile);
 }
@@ -974,63 +974,63 @@ void MR_Comp3DData::get_resol(int RN, int &SizeBufResol, char * & BuffResol, int
     int ResolNumber=RN;
     init_decompress();
     if (ResolNumber >= Nbr_Plan) ResolNumber = Nbr_Plan-1;
-    
+
     // test compression method: must be based on multiresolution.
     if ((Comp_Method == COMP_MORPHO) || (Comp_Method == COMP_O_MORPHO))
     {
        cerr << "Error: this compression method is not multiresolution based. " << endl;
        exit(-1);
-    }    
+    }
     seek_block(NumBlock);
-    if (NbrBlock > 1) BufSize = readint(InFile); 
+    if (NbrBlock > 1) BufSize = readint(InFile);
 
     // read the original block image size
-    Nl =readint( InFile);  
-    Nc =readint( InFile);  
+    Nl =readint( InFile);
+    Nc =readint( InFile);
 
-    // read the number of scales 
-    Nbr_Plan=readint( InFile);    
-    
+    // read the number of scales
+    Nbr_Plan=readint( InFile);
+
     // calculate the number of resolution to skip
     NbrSkipResol = Nbr_Plan  - ResolNumber - 1;
-     
-    if (NbrSkipResol >= Nbr_Plan) 
+
+    if (NbrSkipResol >= Nbr_Plan)
     {
        seek_resol(Nbr_Plan);
        read_noise_info();
        if (Verbose == True)   cerr << "Noise ima = " << Noise_Ima << endl;
-       // test if the residu is stored 
-       if ((ResolNumber==-1) && (KeepResi!=0)) 
+       // test if the residu is stored
+       if ((ResolNumber==-1) && (KeepResi!=0))
        {
            SizeBufResol  = readint(InFile);
            if (Verbose == True)  cerr << "Size residual = " << SizeBufResol << endl;
            BuffResol = new char [SizeBufResol];
            fread((void *) BuffResol, sizeof(char), SizeBufResol, InFile);
        }
-       else 
+       else
        {
            cerr << "Error: no residual part in the compressed file ... " << endl;
            exit(-1);
-       } 
+       }
     }
     else
-    {   
+    {
         seek_resol(NbrSkipResol);
-        
-        // read the number of bands (contained in a single resolution) to read 
+
+        // read the number of bands (contained in a single resolution) to read
         int NbrB;
         if (NbrSkipResol == 0) NbrB = 1;
         else NbrB = number_band_per_resol(Transform);
-        
+
         // read the bands
         SizeBufResol = 0;
         long SizeOneBand;
         for (i=0; i < NbrB; i++)
         {
            char *PtrBuff;
-           
+
            SizeOneBand = readint(InFile);
-           if (Verbose == True)   
+           if (Verbose == True)
              cerr << "Resol " << ResolNumber <<  " Band " <<  i+1 << " Size = " << SizeOneBand << endl;
            if (SizeBufResol == 0) BuffResol = new char [SizeOneBand];
            else BuffResol = (char *) realloc(BuffResol, SizeBufResol+SizeOneBand);
@@ -1040,7 +1040,7 @@ void MR_Comp3DData::get_resol(int RN, int &SizeBufResol, char * & BuffResol, int
            fread((void *) PtrBuff, sizeof(char), SizeOneBand, InFile);
         }
      }
-    
+
     if (InFile != NULL) fclose (InFile);
 }
 
@@ -1050,18 +1050,18 @@ void MR_Comp3DData::seek_block(int NumBlock)
 {
     long BufSize;
     int i;
-    
-    if (NbrBlock > 1) 
+
+    if (NbrBlock > 1)
     {
        L_Nl = readint(InFile);
-       L_Nc = readint(InFile);  
+       L_Nc = readint(InFile);
        Nf = readint(InFile);
        set_tabblock();
     }
-    
+
     // skip the first blocks
     i =0;
-    while ((i < NumBlock) && (i < NbrBlock)) 
+    while ((i < NumBlock) && (i < NbrBlock))
     {
        BufSize = readint(InFile);
        if ( fseek(InFile, BufSize, SEEK_CUR) < 0)
@@ -1069,12 +1069,12 @@ void MR_Comp3DData::seek_block(int NumBlock)
 	  cerr << "Error in fseek: request shift is " <<  BufSize << endl;
           exit(-1);
        }       i++;
-    }      
+    }
 }
 
 /***************************************************/
 
-void MR_Comp3DData::seek_resol(int NbrSkipResol)   
+void MR_Comp3DData::seek_resol(int NbrSkipResol)
 {
     int NumberBand_per_Resol = number_band_per_resol(Transform);
     int NbrSkipBand = NumberBand_per_Resol*(NbrSkipResol-1)+1;
@@ -1086,18 +1086,18 @@ void MR_Comp3DData::seek_resol(int NbrSkipResol)
 
 /***************************************************/
 
-void MR_Comp3DData::seek_band(int NbrSkipBand)   
+void MR_Comp3DData::seek_band(int NbrSkipBand)
 {
     long BufSize;
-      
+
      // skip the resolutions
-    if (NbrSkipBand >  3*Nbr_Plan+1)  
+    if (NbrSkipBand >  3*Nbr_Plan+1)
     {
        cerr << "Error: the number of band to skip is too high ... " << endl;
        cerr << "       NbrSkipBand = " << NbrSkipBand << " Nbr_Plan = " << Nbr_Plan  << endl;
        exit(-1);
     }
-      
+
     for (int r=0; r < NbrSkipBand; r++)
     {
          BufSize = readint(InFile);
@@ -1107,8 +1107,7 @@ void MR_Comp3DData::seek_band(int NbrSkipBand)
 	      cerr << "Error in fseek: request shift is " <<  BufSize  << endl;
               exit(-1);
 	 }
-    }       
+    }
 }
 
 /***************************************************/
-

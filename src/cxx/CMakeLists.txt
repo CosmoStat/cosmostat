@@ -41,26 +41,32 @@ include_directories(${Python_INCLUDE_DIRS})
 link_directories(${Python_LIBRARY_DIRS})
 
 # Locate CFITSIO
-find_pkg(CFITSIO cfitsio)
+# find_pkg(CFITSIO cfitsio)
 
 # Locate HEALPix
-find_pkg(HEALPIX healpix_cxx>=3.80)
+# find_pkg(HEALPIX healpix_cxx)
 
 # Locate FFTW
-find_package(FFTW3 QUIET)
-
-# Build Sparse2D
-include(BuildSparse2D)
+find_pkg(FFTW3 fftw3)
 
 # Set compilation flags
 set(CMAKE_CXX_FLAGS
-  "${CMAKE_CXX_FLAGS} -DNO_DISP_IO -fPIC -Wno-write-strings -std=c++11\
+  "${CMAKE_CXX_FLAGS} -w -DNO_DISP_IO -fPIC -Wno-write-strings -std=c++17\
   ${OpenMP_CXX_FLAGS} ${BigMac_NOWARN}"
 )
 set(CMAKE_CXX_FLAGS_RELEASE
-  "${CMAKE_CXX_FLAGS_RELEASE} -g0 -fomit-frame-pointer"
+  "${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_CXX_FLAGS} -g0 -fomit-frame-pointer"
 )
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_FLAGS} -O0")
+
+# Build CFITSIO
+include(BuildCFITSIO)
+
+# Build HEALPix
+include(BuildHEALPix)
+
+# Build Sparse2D
+include(BuildSparse2D)
 
 # Set basic package dependency list including Sparse2D, CFITSIO and FFTW
 set(basic_libs ${sparse2d_libs} ${CFITSIO_LIBRARIES} ${fftw_libs})
@@ -210,7 +216,6 @@ message(STATUS "BUILD_DICLEARN Build: ${BUILD_DICLEARN}")
 if(BUILD_DICLEARN)
 
   # Locate GSL using pkg-config
-  pkg_check_modules(GSL gsl)
   find_pkg(GSL gsl)
 
   # Locate the Armadillo library
