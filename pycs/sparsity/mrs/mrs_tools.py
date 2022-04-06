@@ -42,13 +42,14 @@ def smooth(map, sigma):
     s= hp.smoothing(mapin, sigma=sigma/(360.*60.) * (np.pi*2),pol=False)
 
 #        lut='rainbow'  #  'inferno'   'gist_stern'
-def tvs(mapin,min=None,max=None,title=None,sigma=None,lut=None):
+def tvs(mapin,min=None,max=None,title=None,sigma=None,lut=None,filename=None):
     if sigma is None:
         hp.mollview(mapin,max=max,min=min, title=title,cmap=lut)
     else:
        s= hp.smoothing(mapin, sigma=sigma/(360.*60.) * (np.pi*2),pol=False)
        hp.mollview(s,max=max,min=min, title=title,cmap=lut)
-       hp.mollview
+    if filename is not None:
+        plt.savefig(filename)
 
 def get_nside(Npix):
     return hp.npix2nside(Npix)
