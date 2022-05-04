@@ -52,8 +52,21 @@ void CAlmR::alloc(int Nside, int u_lmax, bool Fast)
 	double Nelem = (double) (Nside)* (double) (Nside)*12.;
 	NormVal = sqrt( Nelem /(4.* PI));
 
-	std::string DirWeight = std::string(getenv("HEALPIX")) + std::string("/data");
-
+    char const* temp = getenv("HEALPIX");
+    std::string DirWeight;
+    if(temp != NULL)
+    {
+        DirWeight = std::string(temp) + std::string("/data");
+        // cout < " DirWeight " << DirWeight << endl;
+    }
+    else
+    {
+        cout << "Error: HEALPIX environment variable is not defined." << endl;
+        cout << "       cannot find directory $HEALPIX/data." << endl;
+        exit(-1);
+    }
+    // cout << DirWeight << endl;
+    
 	Set(L_Max, M_Max);
 	weight_T.alloc (2* Nside);
 	BeamEff.alloc(L_Max+1);
@@ -61,7 +74,7 @@ void CAlmR::alloc(int Nside, int u_lmax, bool Fast)
 	if (Fast == false)
 	{
 		// read the ring
-	if (Verbose == true)  std::cout << "DirW = " << DirWeight << " NormVal = " << NormVal << std::endl;
+    if (Verbose == true)  std::cout << "DirW = " << DirWeight << " NormVal = " << NormVal << std::endl;
 		read_weight_ring ( DirWeight, Nside, weight_T);
 		for (int m=0; m< (int) weight_T.size(); ++m) weight_T[m]+=1;
 	}

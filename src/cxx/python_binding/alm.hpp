@@ -38,6 +38,7 @@ public:
     // by default, number of scales is automatically estimated
     void alloc(int Nside, int lmax=0, bool Verbose=false)
     {
+        cout << "ALM ALLOC" << Nside << " " << lmax << endl;
         bool Fast=DEF_ALM_FAST;// false
         alm.alloc(Nside,lmax,Fast);
     }
@@ -56,7 +57,6 @@ public:
     py::array_t<float> alm2spec();
 
 private:
-    bool mr_initialized;
     std::string m_opath;
     int nb_procs;
     bool Verbose;
@@ -65,9 +65,9 @@ private:
 // Constructor
 C_ALM::C_ALM(bool verbose)
 {
+    cout << "ALM INIT" << endl;
     // Define instance attributes
     this->Verbose = verbose;
-    this->mr_initialized=false;
     this->nb_procs=0;
     // The maximum number of threads returned by omp_get_max_threads()
     // (which is the default number of threads used by OMP in parallel
@@ -88,6 +88,10 @@ C_ALM::C_ALM(bool verbose)
 void C_ALM::trans(py::array_t<float>& arr)
 {
     Hmap<REAL> Map = array2hmap(arr);
+    int Npix = arr.shape(0);
+    int Nside =floor(sqrt((double) Npix / 12.));
+    cout << "ALM ALLOC" << endl;
+    this->alloc(Nside);
     alm.alm_trans(Map);
 }
 py::array_t<float> C_ALM::recons()

@@ -142,7 +142,7 @@ def vsize(Data):
 
 def readfits(FileName, plot=False,verbose=False):
 #    print("READ FITS2: "+FileName)
-    fitsfile = fits.open(FileName)
+    fitsfile = fits.open(FileName, ignore_missing_end=True)
     if verbose:
         fitsfile.info()
     ima = fitsfile[0]
