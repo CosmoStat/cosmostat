@@ -3,25 +3,45 @@
 #=================#
 
 # Set Sparse2D Version
-set(Sparse2DVersion v2.1.6)
+set(Sparse2DVersion v2.1.7)
 
 # Set Sparse2D source dir
 set(SPARSE2D_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/sparse2d)
 
 # Check if FFTW should be built
 option(BUILD_FFTW "Build FFTW libraries" OFF)
-if(NOT FFTW3_FOUND)
-  set(BUILD_FFTW ON)
+# if(NOT FFTW3_FOUND)
+#   set(BUILD_FFTW ON)
+# endif()
+
+# Check for CMAKE_PREFIX_PATH
+if(NOT "${CMAKE_PREFIX_PATH}" STREQUAL "")
+  # Create a list with an alternate separator e.g. pipe symbol
+  string(REPLACE ";" "|" SPARSE2D_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
+endif()
+
+if(NOT "${SPARSE2D_PREFIX_PATH}" STREQUAL "")
+  message(WARNING "Using this prefix Path for Sparse2D build: ${SPARSE2D_PREFIX_PATH}")
 endif()
 
 # Download and build Sparse2D
 ExternalProject_Add(sparse2d-git
-  GIT_REPOSITORY https://github.com/CosmoStat/Sparse2D.git
-  GIT_TAG ${Sparse2DVersion}
+  # GIT_REPOSITORY https://github.com/CosmoStat/Sparse2D.git
+  # GIT_TAG ${Sparse2DVersion}
+  GIT_REPOSITORY https://github.com/sfarrens/Sparse2D.git
+  GIT_TAG fftw_build
   PREFIX sparse2d
-  CMAKE_ARGS ${CMAKE_ARGS} -DBUILD_MSVST=ON -DUSE_FFTW=ON
--DBUILD_FFTW=${BUILD_FFTW} -DBUILD_NFFT=OFF
--DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+  LIST_SEPARATOR | # Use the alternate list separator
+  CMAKE_ARGS ${CMAKE_ARGS}
+  -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+  -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+  -DBUILD_MSVST=ON
+  -DUSE_FFTW=ON
+  -DBUILD_FFTW=${BUILD_FFTW}
+  -DBUILD_NFFT=OFF
+  -DCMAKE_PREFIX_PATH:PATH=${CMAKE_BINARY_DIR}
+  -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+  DEPENDS healpix
 )
 
 # List Sparse2D libs
