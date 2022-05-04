@@ -26,16 +26,12 @@ installations of these packages may cause issues.
 
 ## Install
 
-To install without thinking:
-```
-$ pip install git+https://github.com/CosmoStat/cosmostat.git
-```
+To install the package:
 
-To install by cloning:
 ```
 $ git clone git@github.com:CosmoStat/cosmostat.git
 $ cd cosmostat
-$ pip install -e .
+$ python setup.py install
 ```
 
 ## Example
