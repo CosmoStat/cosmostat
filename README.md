@@ -4,11 +4,11 @@ Software package for cosmostatistics
 ## Requirements
 
 - Armadillo
-- CFITSIO
+- CFITSIO (installed automatically)
 - CMake
 - FFTW
 - GSL
-- HEALPix
+- HEALPix (installed automatically)
 - OpenMP
 - Python
 
@@ -18,21 +18,20 @@ To install the package requirements it is recommended to use [Homebrew](https://
 
 ```bash
 brew tap sfarrens/sf
-brew install armadillo bigmac cfitsio cmake fftw gsl healpix libomp
+brew install armadillo bigmac fftw gsl libomp
 ```
+
+Note that this package installs `CFITSIO` and `HealPIX` from source. Alternative
+installations of these packages may cause issues.
 
 ## Install
 
-To install without thinking:
-```
-$ pip install git+https://github.com/CosmoStat/cosmostat.git
-```
+To install the package:
 
-To install by cloning:
 ```
 $ git clone git@github.com:CosmoStat/cosmostat.git
 $ cd cosmostat
-$ pip install -e .
+$ python setup.py install
 ```
 
 ## Example
