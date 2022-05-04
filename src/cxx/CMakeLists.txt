@@ -24,6 +24,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "")
 endif()
 message(STATUS "CMake Build Type: ${CMAKE_BUILD_TYPE}")
 
+# Set RPATH options
+set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib")
+
 # ----------------- #
 # Find Dependencies #
 # ----------------- #
