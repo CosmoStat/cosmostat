@@ -1,9 +1,0 @@
-                                                            July 2000
-
-This directory contains any  data files which are used by procedures
-in the IDL astronomy library.   These procedures
-look for these data files in a directory with the logical name
-ASTRO_DATA (VMS) or the environment name ASTRO_DATA (Unix).
-
-As of July 2000, this directory contains the single file ebcasc.dat, which is 
-read by STREBCASC.PRO.   It gives the EBCDIC-ASCII conversion codes. 

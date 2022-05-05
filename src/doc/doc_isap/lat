@@ -1,6 +1,0 @@
-pdflatex doc_iSAP
-bibtex doc_iSAP
-pdflatex doc_iSAP
-makeindex doc_iSAP.idx
-pdflatex doc_iSAP
-pdflatex doc_iSAP

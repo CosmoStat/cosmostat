@@ -1,16 +1,13 @@
-# cosmostat
+# CosmoStat
 Software package for cosmostatistics
+
+This branch is stripped down to provide the binaries `cb_mca1d` and `cb_mmca1d` exclusively.
 
 ## Requirements
 
-- Armadillo
 - CFITSIO (installed automatically)
 - CMake
-- FFTW
-- GSL
-- HEALPix (installed automatically)
 - OpenMP
-- Python
 
 ### macOS Set Up
 
@@ -18,42 +15,31 @@ To install the package requirements it is recommended to use [Homebrew](https://
 
 ```bash
 brew tap sfarrens/sf
-brew install armadillo bigmac fftw gsl libomp
+brew install bigmac libomp
 ```
 
-Note that this package installs `CFITSIO` and `HealPIX` from source. Alternative
-installations of these packages may cause issues.
+Note that this package installs `CFITSIO` from source. Alternative
+installations of this package may cause issues.
 
 ## Install
 
 To install the package:
 
+```bash
+git clone -b cb_mca1d --depth 1 git@github.com:CosmoStat/shapepipe.git
+cd cosmostat
+mkdir build
+cd build
+cmake ../src/
+make
 ```
-$ git clone git@github.com:CosmoStat/cosmostat.git
-$ cd cosmostat
-$ python setup.py install
+
+The binaries will be available in the `build` directory by default. These binaries can be installed to the path of your choosing by passing the `-DCMAKE_INSTALL_PREFIX:PATH` option to CMake. e.g.
+
+```bash
+cmake ../src/ -DCMAKE_INSTALL_PREFIX:PATH=<PATH>
+make
+make install
 ```
 
-## Example
-
-```python
-import numpy as np
-import matplotlib.pyplot as plt
-import pycs
-
-# Generate a test image
-img = np.random.randn(256, 256)
-
-# Take the starlet transform with 5 wavelet scales
-st = pycs.astro.wl.image.transforms.starlet2d(img, nscales=5)
-
-# Compute the aperture mass map at scale 4 using the starlet filter
-apm = pycs.astro.wl.image.filters.aperture_mass(img, theta=2**4, filter='starlet')
-
-# Plot
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 5))
-ax1.imshow(st[3], cmap='magma')
-ax2.imshow(apm, cmap='magma')
-for ax in (ax1, ax2, ax3):
-    ax.set_axis_off()
-```
+where `<PATH>` is the path of your choice.
