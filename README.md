@@ -26,7 +26,7 @@ installations of this package may cause issues.
 To install the package:
 
 ```bash
-git clone -b cb_mca1d --depth 1 git@github.com:CosmoStat/shapepipe.git
+git clone --branch cb_mca1d https://github.com/CosmoStat/cosmostat.git
 cd cosmostat
 mkdir build
 cd build
