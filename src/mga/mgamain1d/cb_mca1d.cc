@@ -89,7 +89,7 @@ type_mca1dbase TabSelect[NBR_MCA1D];
 int NbrBase = 0;
 
 int NbrUndecimatedScale = -1;
-Bool WriteAllRec=True;
+Bool WriteAllRec=False;
 float FirstSoftThreshold= -1;
 float LastSoftThreshold = DEF_MCA1D_LAST_SOFT_THRESHOLD;
 Bool TV = False;
@@ -218,7 +218,12 @@ static void usage(char *argv[])
     fprintf(OUTMAN, "            Suppress the zero frequency in the DCT.\n");
     fprintf(OUTMAN, "            Default is false.\n");    
     manline();
-                      
+
+    fprintf(OUTMAN, "         [-w]\n");
+    fprintf(OUTMAN, "            Write each recovered source.\n");
+    fprintf(OUTMAN, "            Default is no.\n");
+    manline();
+    
 //     manline();    
 //     fprintf(OUTMAN, "   HDWT settings\n");
 //     fprintf(OUTMAN, "   -------------\n");
@@ -455,8 +460,9 @@ static void filtinit(int argc, char *argv[])
 		fprintf(OUTMAN, "Too many parameters: %s ...\n", argv[OptInd]);
 		exit(-1);
 	}
+	
+	// std::cout << "static void filtinit :: UseMask " << UseMask << std::endl;
 
-       	   
 #ifdef LARGE_BUFF
     if (OptZ == True) vms_init(VMSSize, VMSName, Verbose);
 #endif  
@@ -468,12 +474,12 @@ int main(int argc, char *argv[])
 {
     int i,k;
     fitsstruct Header;
-    char Cmd[512];
-    Cmd[0] = '\0';
+//Phil 23/06/22    char Cmd[512];
+//Phil 23/06/22    Cmd[0] = '\0';
     
     MCA1D MB;  // Multiple base decomposition Class
     
-    for (k =0; k < argc; k++) sprintf(Cmd, "%s %s", Cmd, argv[k]);
+//Phil 23/06/22    for (k =0; k < argc; k++) sprintf(Cmd, "%s %s", Cmd, argv[k]);
      
     // Get command line arguments, open input file(s) if necessary
     // lm_check(LIC_MR3);
@@ -495,7 +501,7 @@ int main(int argc, char *argv[])
     fltarray Data;
     io_1d_read_data(nameSignalIn, Data, &Header);
     reform_to_1d(Data);
-    Header.origin = Cmd;
+//Phil 23/06/22    Header.origin = Cmd;
     int Nx = Data.nx();
     
     if (NbrScale1D == 0) NbrScale1D=maxscalenumber(Nx);
@@ -556,7 +562,9 @@ int main(int argc, char *argv[])
     // MB.alloc (Nx, Tab); 
     MB.alloc (Nx);
     
-    if (UseMask == True)
+    MB.UseMask_ = UseMask ;
+    
+    if (MB.UseMask_ == True)
       {
       MB.MaskedData.alloc(Nx, "Mask");
         for (i=0; i < Nx; i++)

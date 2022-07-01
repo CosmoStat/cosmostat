@@ -45,7 +45,7 @@ void MDCT1D::alloc(int Nx, int Nbr_Plan, int FirstBlockSize){
     {
         TabDCT[s].alloc(Nx, TabBlockSize(s), BlockOverlap);
 	// TabTransMDCT [s] = & (TabDCT[s]._DCTSig);
-	// if (Verbose == True) 
+	if (Verbose == True) 
 	   printf("   Band %d, BlockSize = %d, Nx = %d \n", 
 	          s+1, TabBlockSize(s), nx(s));
     }
