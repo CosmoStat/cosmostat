@@ -8,5 +8,4 @@ This module contains all PYCS submodules.
 
 __all__ = ['astro', 'misc', 'sparsity']
 
-from . import *
-from .info import __version__
+__version__ = "0.0.0"

@@ -7,5 +7,3 @@ This module contains submodules for weak gravitational lensing.
 """
 
 __all__ = ['lenspack', 'mass_mapping']
-
-from . import *
