@@ -6,10 +6,15 @@ build-backend = "py_build_cmake.build"
 name = "pycs"
 readme = "README.md"
 requires-python = ">=3.7"
-license = { "file" = "LICENSE" }
 authors = [
-    { "name" = "Samuel Farrens", "email" = "samuel.farrens@cea.fr" },
+    { "name" = "The CosmoStat Lab" },
 ]
+maintainers = [
+    { "name" = "Samuel Farrens", "email" = "samuel.farrens@cea.fr" },
+    { "name" = "Jean-Luc Starck", "email" = "jean-luc.starck@cea.fr" },
+]
+dynamic = ["version", "description"]
+license = { "file" = "LICENSE" }
 keywords = ["CosmoStat", "astrostatistics", "cosmology", "signal processing"]
 classifiers = [
     "Development Status :: 1 - Planning",
@@ -34,7 +39,6 @@ dependencies = [
     "scipy>=1.5",
     "seaborn>=0.10"
 ]
-dynamic = ["version", "description"]
 
 [project.urls]
 Source = "https://github.com/CosmoStat/cosmostat"
@@ -43,6 +47,9 @@ Tracker = "https://github.com/CosmoStat/cosmostat/issues"
 
 [tool.py-build-cmake.module]
 name = "pycs"
+
+[tool.py-build-cmake.sdist]
+include = ["src/cxx/*"]
 
 [tool.py-build-cmake.cmake]
 source_path = "src/cxx"

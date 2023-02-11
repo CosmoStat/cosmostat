@@ -1,3 +1,0 @@
-[submodule "cxx/Sparse2D"]
-	path = cxx/Sparse2D
-	url = git@github.com:CosmoStat/Sparse2D.git
