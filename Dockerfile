@@ -1,9 +1,9 @@
 FROM ubuntu
 
 LABEL Description="CosmoStat"
-WORKDIR /home
 
 SHELL ["/bin/bash", "-c"]
+WORKDIR /workdir
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG CC=gcc-9
@@ -22,6 +22,12 @@ RUN apt-get update && \
     apt-get install -y healpy-data && \
     apt-get clean
 
+RUN wget https://github.com/catchorg/Catch2/archive/refs/tags/v3.1.0.tar.gz && \
+    tar -xvf v3.1.0.tar.gz && \
+    cd Catch2-3.1.0 && \
+    cmake -Bbuild -H. -DBUILD_TESTING=OFF && \
+    cmake --build build/ --target install
+
 ENV HEALPIX /usr/share/healpy
 
 RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
@@ -30,18 +36,17 @@ RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh &
 
 ENV PATH /miniconda/bin:${PATH}
 
-RUN conda create -n cosmostat python=3.9 -y && \
-    conda install jupyter -y
+RUN conda create -n cosmostat python=3.10 pip -y
 
 ENV PATH /miniconda/envs/cosmostat/bin:${PATH}
 
-RUN mkdir /cosmostat && \
-    cd /cosmostat && \
-    git clone https://github.com/sfarrens/cosmostat
+RUN python -m pip install jupyter
 
-RUN cd /cosmostat/cosmostat && \
-    git checkout gcc_build && \
-    source activate cosmostat && \
-    python setup.py install
+COPY . /home
 
-ENV PATH /cosmostat/cosmostat/build/bin:${PATH}
+RUN cd /home && \
+    python -m pip install .
+
+ENV LD_LIBRARY_PATH /miniconda/envs/cosmostat/lib
+
+RUN echo -e '#!/bin/bash\njupyter notebook --port=8888 --no-browser --ip=0.0.0.0 --allow-root' > /usr/bin/notebook && chmod +x /usr/bin/notebook

@@ -16,47 +16,33 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest]
-        python-version: [3.9]
+        python-version: [3.10]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Conda with Python ${{ matrix.python-version }}
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
-          auto-update-conda: true
           python-version: ${{ matrix.python-version }}
-          auto-activate-base: false
 
-      - name: Check Conda
-        shell: bash -l {0}
-        run: |
-          conda info
-          conda list
-          python --version
+      - name: Check Python Version
+        run: python --version
 
       - name: Install Linux Dependencies
-        shell: bash -l {0}
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libarmadillo-dev libfftw3-dev libgsl-dev pkg-config
+          sudo apt-get install -y libarmadillo-dev libcfitsio-dev libfftw3-dev libgsl-dev libhealpix-cxx-dev 
+          sudo apt-get install -y pkg-config
 
       - name: Install macOS Dependencies
-        shell: bash -l {0}
         if: runner.os == 'macOS'
         run: |
           brew tap sfarrens/sf
-          brew install armadillo bigmac fftw gsl libomp
-
-      - name: Install Dependencies
-        shell: bash -l {0}
-        run: |
-          python --version
-          python -m pip install --upgrade pip
+          brew install armadillo bigmac cfitsio fftw gsl healpix libomp
 
       - name: Run Tests
-        shell: bash -l {0}
         run: |
-          python setup.py test
+          pytest
