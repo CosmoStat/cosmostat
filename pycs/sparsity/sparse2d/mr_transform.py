@@ -50,13 +50,13 @@ def mr_transform(image, nscales=4, type=2, verbose=False):
 
     """
     # Verify that mr_transform is installed
-    assert which('mr_transform'), "Cannot find mr_transform. Is it installed?"
+    assert which("mr_transform"), "Cannot find mr_transform. Is it installed?"
 
     # Create a temporary directory to hold the image and its transform
     tmpdir = tempfile.mkdtemp()
     saved_umask = os.umask(0o077)
-    image_path = os.path.join(tmpdir, 'image.fits')
-    mr_path = os.path.join(tmpdir, 'image.mr')
+    image_path = os.path.join(tmpdir, "image.fits")
+    mr_path = os.path.join(tmpdir, "image.mr")
     if verbose:
         print("\nCreating {}".format(image_path))
         print("         {}".format(mr_path))
@@ -66,8 +66,15 @@ def mr_transform(image, nscales=4, type=2, verbose=False):
         if verbose:
             print("Writing image to fits.")
         fits.writeto(image_path, image)
-        callstr = ['mr_transform', '-t', str(type), '-n', str(nscales + 1),
-                   image_path, mr_path]
+        callstr = [
+            "mr_transform",
+            "-t",
+            str(type),
+            "-n",
+            str(nscales + 1),
+            image_path,
+            mr_path,
+        ]
         if verbose:
             print("Executing " + " ".join(callstr))
         call(callstr)
@@ -96,8 +103,7 @@ def mr_transform(image, nscales=4, type=2, verbose=False):
         if verbose:
             print("        {}".format(tmpdir))
 
-    if (os.path.exists(tmpdir) or os.path.exists(image_path) or
-            os.path.exists(mr_path)):
+    if os.path.exists(tmpdir) or os.path.exists(image_path) or os.path.exists(mr_path):
         print("Warning : not all files or directories were removed in")
         print(mr_path)
 

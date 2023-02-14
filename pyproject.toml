@@ -40,10 +40,29 @@ dependencies = [
     "seaborn>=0.10"
 ]
 
+[project.optional-dependencies]
+lint = [
+    "black",
+]
+release = [
+    "build",
+    "twine",
+]
+test = [
+  "pytest",
+  "pytest-black",
+  "pytest-cov",
+  "pytest-pydocstyle",
+]
+dev = ["pycs[lint,release,test]"]
+
 [project.urls]
 Source = "https://github.com/CosmoStat/cosmostat"
 Documentation = "https://github.com/CosmoStat/cosmostat"
 Tracker = "https://github.com/CosmoStat/cosmostat/issues"
+
+[tool.black]
+line-length = 88
 
 [tool.py-build-cmake.module]
 name = "pycs"
@@ -55,4 +74,12 @@ include = ["src/cxx/*"]
 source_path = "src/cxx"
 build_args = ["-j 8"]
 
+[tool.pydocstyle]
+convention = "numpy"
+# Only run docstyle tests on module init files until documentation cleaned up
+match = "__init__.py"
+
+[tool.pytest.ini_options]
+addopts = "--verbose --black --pydocstyle --cov=pycs"
+testpaths = ["pycs"]
 

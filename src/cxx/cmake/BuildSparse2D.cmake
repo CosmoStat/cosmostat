@@ -16,6 +16,6 @@ ExternalProject_Add(sparse2d
     -DCMAKE_INSTALL_PREFIX=${SPARSE2D_INSTALL_DIR}/..
     -DCMAKE_BUILD_TYPE=RELEASE
     -DPYBIND_INSTALL_PATH=${Python_SITELIB}
-    BUILD_COMMAND make install -j8
+    BUILD_COMMAND make install -j
     BUILD_IN_SOURCE 0
 )

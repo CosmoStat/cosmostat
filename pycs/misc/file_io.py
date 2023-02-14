@@ -41,8 +41,7 @@ def check_data_format(data, n_dim):
     check_npndarray(data, dtype=float, writeable=False, verbose=False)
 
     if data.ndim not in list(n_dim):
-        raise ValueError('Input data array has an invalid number of '
-                         'dimensions.')
+        raise ValueError("Input data array has an invalid number of " "dimensions.")
 
 
 def read_from_fits(file_name):
@@ -102,15 +101,19 @@ def read_file(file_name):
 
     """
 
-    if file_name.endswith('.npy'):
+    if file_name.endswith(".npy"):
         data = np.load(file_name)
 
-    elif file_name.endswith(('.fits', '.fit', '.FITS', '.FIT', '.mr')):
+    elif file_name.endswith((".fits", ".fit", ".FITS", ".FIT", ".mr")):
         data = read_from_fits(file_name)
 
     else:
-        raise ValueError(('Invalid file extension [{}]. Files must be FITS or .mr  or '
-                          'numpy binary.').format(splitext(file_name)[-1]))
+        raise ValueError(
+            (
+                "Invalid file extension [{}]. Files must be FITS or .mr  or "
+                "numpy binary."
+            ).format(splitext(file_name)[-1])
+        )
 
     check_data_format(data, [2, 3])
 
@@ -152,15 +155,19 @@ def read_input_files(data_file_name, psf_file_name, current_file_name=None):
     psf_data = read_file(psf_file_name)
 
     if psf_data.ndim == 3 and input_data.shape[0] < psf_data.shape[0]:
-        raise ValueError('The number of input images must be greater than or '
-                         'or equal to the number of PSF images.')
+        raise ValueError(
+            "The number of input images must be greater than or "
+            "or equal to the number of PSF images."
+        )
 
     if not isinstance(current_file_name, type(None)):
         current_data = read_file(current_file_name)
 
         if current_data.shape != input_data.shape:
-            raise ValueError('The number of current rescontruction images '
-                             'must match the number of input images.')
+            raise ValueError(
+                "The number of current rescontruction images "
+                "must match the number of input images."
+            )
 
     else:
         current_data = None
@@ -168,9 +175,9 @@ def read_input_files(data_file_name, psf_file_name, current_file_name=None):
     return input_data, psf_data, current_data
 
 
-def write_output_files(output_file_name, primal_res, dual_res=None,
-                       psf_res=None, output_format='npy'):
-
+def write_output_files(
+    output_file_name, primal_res, dual_res=None, psf_res=None, output_format="npy"
+):
     """Write output files
 
     This method writes the image data results to the specified output file(s)
@@ -190,20 +197,20 @@ def write_output_files(output_file_name, primal_res, dual_res=None,
 
     """
 
-    if output_format == 'fits':
-        write_to_fits(output_file_name + '_primal.fits', primal_res)
+    if output_format == "fits":
+        write_to_fits(output_file_name + "_primal.fits", primal_res)
 
         if not isinstance(dual_res, type(None)):
-            write_to_fits(output_file_name + '_dual.fits', dual_res)
+            write_to_fits(output_file_name + "_dual.fits", dual_res)
 
         if not isinstance(psf_res, type(None)):
-            write_to_fits(output_file_name + '_psf.fits', psf_res)
+            write_to_fits(output_file_name + "_psf.fits", psf_res)
 
     else:
-        np.save(output_file_name + '_primal', primal_res)
+        np.save(output_file_name + "_primal", primal_res)
 
         if not isinstance(dual_res, type(None)):
-            np.save(output_file_name + '_dual', dual_res)
+            np.save(output_file_name + "_dual", dual_res)
 
         if not isinstance(psf_res, type(None)):
-            np.save(output_file_name + '_psf', psf_res)
+            np.save(output_file_name + "_psf", psf_res)

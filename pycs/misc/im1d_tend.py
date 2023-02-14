@@ -16,6 +16,8 @@ from subprocess import call
 from datetime import datetime
 from astropy.io import fits
 import shlex
+
+
 ##
 #  Function that calls mr_filter to perform a wavelet filtering on the
 #  input data.
@@ -29,16 +31,16 @@ import shlex
 #
 # %load_ext autoreload
 # %autoreload 2
-def im1d_tend(data, opt=None, path='./', remove_files=True):
+def im1d_tend(data, opt=None, path="./", remove_files=True):
     # Create a unique string using the current date and time.
     # print('mr_filter ', opt)
-    unique_string = datetime.now().strftime('%Y.%m.%d_%H.%M.%S')
-    result=0
+    unique_string = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+    result = 0
     # Set the ouput file names.
-    file_name = path + 'mr_temp_' + unique_string
-    file_fits = file_name + '.fits'
-    file_out_1 = file_name + '_out1.fits'
-    file_out_2 = file_name + '_out2.fits'
+    file_name = path + "mr_temp_" + unique_string
+    file_fits = file_name + ".fits"
+    file_out_1 = file_name + "_out1.fits"
+    file_out_2 = file_name + "_out2.fits"
 
     # Write the input data to a fits file.
     fits.writeto(file_fits, data, overwrite=True)
@@ -46,12 +48,12 @@ def im1d_tend(data, opt=None, path='./', remove_files=True):
     cmd = "im1d_tend "
 
     if isinstance(opt, type(None)):
-        optF=' '
+        optF = " "
     else:
-        optF= opt
-    cmd = cmd + " " + optF + " "  + file_fits + " "   + file_out_1 + " " + file_out_2
+        optF = opt
+    cmd = cmd + " " + optF + " " + file_fits + " " + file_out_1 + " " + file_out_2
     # print ('CMD = ', cmd)
-    
+
     args = shlex.split(cmd)
     # print('args ', args)
     call(args)

@@ -43,6 +43,10 @@ jobs:
           brew tap sfarrens/sf
           brew install armadillo bigmac cfitsio fftw gsl healpix libomp
 
+      - name: Install Package
+        run: |
+          python -m pip install ".[test]"
+
       - name: Run Tests
         run: |
-          pytest
+          python -m pytest

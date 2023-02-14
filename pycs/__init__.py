@@ -5,4 +5,4 @@ This package is contains collection of tools developed at the CosmoStat Lab in C
 """
 
 __all__ = ["astro", "misc", "sparsity"]
-__version__ = "0.0.0"
+__version__ = "0.0.1"

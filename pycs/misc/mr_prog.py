@@ -19,6 +19,7 @@ import shlex
 from pycs.misc.cosmostat_init import *
 from pycs.misc.cosmostat_init import writefits
 
+
 ##
 #  Function that calls mr_filter to perform a wavelet filtering on the
 #  input data.
@@ -32,19 +33,26 @@ from pycs.misc.cosmostat_init import writefits
 #
 # %load_ext autoreload
 # %autoreload 2
-def mr_prog(data, prog="mr_filter", opt=None, path='./', remove_files=True, verbose=False, FileOut=None):
-
+def mr_prog(
+    data,
+    prog="mr_filter",
+    opt=None,
+    path="./",
+    remove_files=True,
+    verbose=False,
+    FileOut=None,
+):
     # Create a unique string using the current date and time.
     # print('mr_filter ', opt)
-    unique_string = datetime.now().strftime('%Y.%m.%d_%H.%M.%S')
-    result=0
+    unique_string = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+    result = 0
     # Set the ouput file names.
-    file_name = path + 'mr_temp_' + unique_string
-    file_fits = file_name + '.fits'
+    file_name = path + "mr_temp_" + unique_string
+    file_fits = file_name + ".fits"
     if FileOut is not None:
         file_out = FileOut
     else:
-        file_out = file_name + '_out.fits'
+        file_out = file_name + "_out.fits"
 
     # Write the input data to a fits file.
     writefits(file_fits, data)
@@ -53,15 +61,15 @@ def mr_prog(data, prog="mr_filter", opt=None, path='./', remove_files=True, verb
     cmd = prog
 
     if isinstance(opt, type(None)):
-        optF=' '
+        optF = " "
     else:
-        optF= opt
+        optF = opt
     if verbose:
         optF = optF + " -v "
 
-    cmd = cmd + " " + optF + " "  + file_fits + " "   + file_out
+    cmd = cmd + " " + optF + " " + file_fits + " " + file_out
     if verbose:
-        print ('CMD = ', cmd)
+        print("CMD = ", cmd)
 
     args = shlex.split(cmd)
     # print('args ', args)
