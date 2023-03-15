@@ -11,7 +11,7 @@ import numpy
 
 
 def fftconvolve(array, kernel):
-    """ Function that convolves an image with a kernal using FFT.
+    """Function that convolves an image with a kernal using FFT.
 
     Parameters
     ----------
@@ -28,12 +28,11 @@ def fftconvolve(array, kernel):
     x = numpy.fft.fftshift(numpy.fft.fftn(image))
     y = numpy.fft.fftshift(numpy.fft.fftn(kernel))
 
-    return numpy.real(numpynp.fft.fftshift(
-        numpy.fft.ifftn(numpy.fft.ifftshift(x * y))))
+    return numpy.real(numpynp.fft.fftshift(numpy.fft.ifftn(numpy.fft.ifftshift(x * y))))
 
 
 def fftdeconvolve(image, kernel):
-    """ Function that deconvolves and image with a kernal using FFT.
+    """Function that deconvolves and image with a kernal using FFT.
 
     Parameters
     ----------
@@ -50,5 +49,4 @@ def fftdeconvolve(image, kernel):
     x = numpy.fft.fftshift(numpy.fft.fftn(image))
     y = numpy.fft.fftshift(numpy.fft.fftn(kernel))
 
-    return numpy.real(numpy.fft.fftshift(
-        numpy.fft.ifftn(numpy.fft.ifftshift(x / y))))
+    return numpy.real(numpy.fft.fftshift(numpy.fft.ifftn(numpy.fft.ifftshift(x / y))))

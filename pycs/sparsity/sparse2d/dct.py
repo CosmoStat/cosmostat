@@ -10,7 +10,7 @@ from scipy.ndimage import convolve1d
 from scipy.fftpack import dct, idct
 
 
-def dct2d(image, norm='ortho'):
+def dct2d(image, norm="ortho"):
     """Compute the discrete cosine transform (type 2) of an image.
 
     Parameters
@@ -48,11 +48,11 @@ def dct2d(image, norm='ortho'):
     # Check inputs
     image = np.array(image)
     assert len(image.shape) == 2, "Input image must be 2D."
-    assert norm in (None, 'ortho', 'isap'), "Invalid norm."
+    assert norm in (None, "ortho", "isap"), "Invalid norm."
 
     # Compute DCT along each axis
-    if norm == 'isap':
-        result = dct(dct(image, norm='ortho', axis=0), norm='ortho', axis=1)
+    if norm == "isap":
+        result = dct(dct(image, norm="ortho", axis=0), norm="ortho", axis=1)
         result[:, 0] *= np.sqrt(2)
         result[0, :] *= np.sqrt(2)
     else:
@@ -61,7 +61,7 @@ def dct2d(image, norm='ortho'):
     return result
 
 
-def idct2d(image, norm='ortho'):
+def idct2d(image, norm="ortho"):
     """Compute the inverse discrete cosine transform (type 2) of an image.
 
     Parameters
@@ -89,20 +89,20 @@ def idct2d(image, norm='ortho'):
     # Check inputs
     image = np.array(image)
     assert len(image.shape) == 2, "Input image must be 2D."
-    assert norm in (None, 'ortho', 'isap'), "Invalid norm."
+    assert norm in (None, "ortho", "isap"), "Invalid norm."
 
     # Compute inverse DCT along each axis
-    if norm == 'isap':
+    if norm == "isap":
         image[:, 0] /= np.sqrt(2)
         image[0, :] /= np.sqrt(2)
-        result = idct(idct(image, norm='ortho', axis=0), norm='ortho', axis=1)
+        result = idct(idct(image, norm="ortho", axis=0), norm="ortho", axis=1)
     else:
         result = idct(idct(image, norm=norm, axis=0), norm=norm, axis=1)
 
     return result
 
 
-def blockdct2d(image, norm='ortho', blocksize=None, overlap=False):
+def blockdct2d(image, norm="ortho", blocksize=None, overlap=False):
     """Compute a block (local) discrete cosine transform of an image.
 
     This is an extension of dct2d to perform the transform on sub-blocks
@@ -146,7 +146,7 @@ def blockdct2d(image, norm='ortho', blocksize=None, overlap=False):
     image = np.array(image)
     assert len(image.shape) == 2, "Input image must be 2D."
     assert image.shape[0] == image.shape[1], "Input image must be square."
-    assert norm in (None, 'ortho', 'isap'), "Invalid norm."
+    assert norm in (None, "ortho", "isap"), "Invalid norm."
 
     # Determine output shape based on blocksize
     n = image.shape[0]
@@ -177,8 +177,7 @@ def blockdct2d(image, norm='ortho', blocksize=None, overlap=False):
                 i2 = i1 + blocksize
                 j1 = jj * blocksize
                 j2 = j1 + blocksize
-                imsub = image[i1 / 2: i1 / 2 + blocksize,
-                              j1 / 2: j1 / 2 + blocksize]
+                imsub = image[i1 / 2 : i1 / 2 + blocksize, j1 / 2 : j1 / 2 + blocksize]
                 result[i1:i2, j1:j2] = dct2d(imsub, norm=norm)
     else:
         for ii in range(0, n, blocksize):
@@ -193,7 +192,7 @@ def blockdct2d(image, norm='ortho', blocksize=None, overlap=False):
     return result
 
 
-def iblockdct2d(image, norm='ortho', blocksize=None, overlap=False):
+def iblockdct2d(image, norm="ortho", blocksize=None, overlap=False):
     """Compute the inverse block (local) discrete cosine transform of an image.
 
     This is an extension of idct2d to perform the transform on sub-blocks
@@ -228,9 +227,9 @@ def iblockdct2d(image, norm='ortho', blocksize=None, overlap=False):
         This needs MORE TESTING before deployment !
 
     """
-    if norm not in [None, 'ortho', 'isap']:
+    if norm not in [None, "ortho", "isap"]:
         print("Warning: invalid norm --> using isap")
-        norm = 'isap'
+        norm = "isap"
 
     # Determine output shape
     n = image.shape[0]

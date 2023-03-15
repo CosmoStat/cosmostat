@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
-
-"""MRS ROUTINES
+"""MRS ROUTINES.
 
 This module contains submodules for MRS.
 
 """
 
-__all__ = ['mrs_tools']
-
-from . import *
+__all__ = ["mrs_tools"]

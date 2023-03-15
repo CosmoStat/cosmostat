@@ -15,14 +15,16 @@ import scipy
 from modopt.math.stats import *
 
 
-
 ################################################
+
 
 def get_noise(data):
     m = data - scipy.signal.medfilt(data)
     return mad(m) / 0.6747
 
+
 ################################################
+
 
 def skew(x):
     """Compute the skewness of an array as the third standardized moment.
@@ -219,7 +221,7 @@ def fdr(x, tail, alpha=0.05, kde=False, n_samples=10000, debug=False):
 
     """
     # Check inputs
-    assert tail in ('left', 'right'), "Invalid tail."
+    assert tail in ("left", "right"), "Invalid tail."
 
     # Basic measures
     x = np.atleast_1d(x).flatten()
@@ -229,14 +231,14 @@ def fdr(x, tail, alpha=0.05, kde=False, n_samples=10000, debug=False):
 
     if kde:
         # Approximate the distribution by kernel density estimation
-        pdf = gaussian_kde(x, bw_method='silverman')
+        pdf = gaussian_kde(x, bw_method="silverman")
         amin, amax = x.min(), x.max()
         vmax = np.sign(amax) * np.abs(amax + sigma)
         vmin = np.sign(amin) * np.abs(amin - sigma)
 
         # Cumulative distribution function
         def cdf(z, tail):
-            if tail == 'right':
+            if tail == "right":
                 return pdf.integrate_box(-np.inf, z)
             else:
                 return pdf.integrate_box(z, np.inf)
@@ -255,7 +257,7 @@ def fdr(x, tail, alpha=0.05, kde=False, n_samples=10000, debug=False):
             return result
 
         # Compute p-values
-        if tail == 'right':
+        if tail == "right":
             smin = mean + sigma
             smax = vmax
         else:
@@ -266,7 +268,7 @@ def fdr(x, tail, alpha=0.05, kde=False, n_samples=10000, debug=False):
     else:
         # Compute p-values assuming Gaussian null hypothesis
         z = (x - mean) / sigma
-        if tail == 'right':
+        if tail == "right":
             pvals = 1 - norm.cdf(z)
         else:
             pvals = norm.cdf(z)
@@ -341,12 +343,11 @@ def hc(x, kind=1):
     ratio = numer / denom
 
     if kind == 2:
-        ninv = 1. / n
-        sel = (pvals >= ninv) & (pvals <= (1. - ninv))
+        ninv = 1.0 / n
+        sel = (pvals >= ninv) & (pvals <= (1.0 - ninv))
         ratio = ratio[sel]
 
     return np.abs(ratio).max()
-
 
 
 # function to generate a make a Gaussian Random field out of a gaussian spectrum
@@ -365,37 +366,42 @@ def get_grf(size, intput_power_map=None):
     np array
         2D images.
     """
-    k_map =  np.zeros((size, size), dtype = float)
-    power_map = np.zeros((size, size), dtype = float)
-    for (i,j), val in np.ndenumerate(power_map):
-        k1 = i - size/2.0
-        k2 = j - size/2.0
-        k_map[i, j] = (np.sqrt(k1*k1 + k2*k2))
-        if k_map[i,j]==0:
+    k_map = np.zeros((size, size), dtype=float)
+    power_map = np.zeros((size, size), dtype=float)
+    for (i, j), val in np.ndenumerate(power_map):
+        k1 = i - size / 2.0
+        k2 = j - size / 2.0
+        k_map[i, j] = np.sqrt(k1 * k1 + k2 * k2)
+        if k_map[i, j] == 0:
             power_map[i, j] = 1e-15
         else:
             if power_map is None:
-                power_map[i, j] = 1.
+                power_map[i, j] = 1.0
             else:
-                power_map[i, j] = intput_power_map[i,j]
+                power_map[i, j] = intput_power_map[i, j]
 
-    power_sample = np.random.normal(loc=0.0, scale=np.sqrt(0.5 * np.reshape(power_map, -1))) +               1j *  np.random.normal(loc=0.0, scale=np.sqrt(0.5 *  np.reshape(power_map, -1)))
+    power_sample = np.random.normal(
+        loc=0.0, scale=np.sqrt(0.5 * np.reshape(power_map, -1))
+    ) + 1j * np.random.normal(loc=0.0, scale=np.sqrt(0.5 * np.reshape(power_map, -1)))
     power_sample = np.reshape(power_sample, (size, size))
-    map_fourier = np.zeros((size,size), dtype = complex)
+    map_fourier = np.zeros((size, size), dtype=complex)
 
-    for (i, j,), value in np.ndenumerate(map_fourier):
-        n = i - int(size/2)
-        m = j - int(size/2)
+    for (
+        i,
+        j,
+    ), value in np.ndenumerate(map_fourier):
+        n = i - int(size / 2)
+        m = j - int(size / 2)
 
-        if n == 0 and m ==0:
-            map_fourier[i,j] = 1e-15
+        if n == 0 and m == 0:
+            map_fourier[i, j] = 1e-15
 
-        elif i ==0 or j == 0:
-            map_fourier[i,j] = np.sqrt(2.0)*power_sample[i,j].real
+        elif i == 0 or j == 0:
+            map_fourier[i, j] = np.sqrt(2.0) * power_sample[i, j].real
 
         else:
-            map_fourier[i,j] = power_sample[i,j] #
-            map_fourier[size - i,size - j] = np.conj(power_sample[i,j])
+            map_fourier[i, j] = power_sample[i, j]  #
+            map_fourier[size - i, size - j] = np.conj(power_sample[i, j])
 
     map_pixel = np.fft.ifft2(np.fft.fftshift(map_fourier))
 

@@ -128,4 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-build_gcc/
+# Cmake build
+.py-build-cmake_cache

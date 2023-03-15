@@ -1,9 +1,9 @@
 FROM ubuntu
 
 LABEL Description="CosmoStat"
-WORKDIR /home
 
 SHELL ["/bin/bash", "-c"]
+WORKDIR /workdir
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG CC=gcc-9
@@ -20,28 +20,16 @@ RUN apt-get update && \
     apt-get install -y libsharp-dev && \
     apt-get install -y libhealpix-cxx-dev && \
     apt-get install -y healpy-data && \
+    apt-get install -y python3 python3-pip && \
     apt-get clean
 
 ENV HEALPIX /usr/share/healpy
 
-RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p /miniconda && \
-    rm Miniconda3-latest-Linux-x86_64.sh
+RUN python3 -m pip install jupyter
 
-ENV PATH /miniconda/bin:${PATH}
+COPY . /home
 
-RUN conda create -n cosmostat python=3.9 -y && \
-    conda install jupyter -y
+RUN cd /home && \
+    python3 -m pip install .
 
-ENV PATH /miniconda/envs/cosmostat/bin:${PATH}
-
-RUN mkdir /cosmostat && \
-    cd /cosmostat && \
-    git clone https://github.com/sfarrens/cosmostat
-
-RUN cd /cosmostat/cosmostat && \
-    git checkout gcc_build && \
-    source activate cosmostat && \
-    python setup.py install
-
-ENV PATH /cosmostat/cosmostat/build/bin:${PATH}
+RUN echo -e '#!/bin/bash\njupyter notebook --port=8888 --no-browser --ip=0.0.0.0 --allow-root' > /usr/bin/notebook && chmod +x /usr/bin/notebook
