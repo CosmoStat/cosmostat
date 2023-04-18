@@ -9,7 +9,7 @@ Software developed at the [CosmoStat](https://www.cosmostat.org/) lab at [CEA](h
 The package can be installed with `pip` as follows.
 
 ```bash
-pythom -m pip install .
+python -m pip install .
 ```
 
 ### Requirements
