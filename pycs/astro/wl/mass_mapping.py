@@ -183,7 +183,7 @@ class massmap2d:
         self.WT = starlet2d(gen2=True, l2norm=True, bord=1, verb=False)
         self.WT.init_starlet(nx, ny, nscale=ns)
         self.WT.name = "WT-MassMap"
-        k1, k2 = np.meshgrid(np.fft.fftfreq(nx), np.fft.fftfreq(ny))
+        k1, k2 = np.meshgrid(np.fft.fftfreq(ny), np.fft.fftfreq(nx))
         denom = k1 * k1 + k2 * k2
         denom[0, 0] = 1  # avoid division by 0
         self.kernel1 = (k1**2 - k2**2) / denom
@@ -479,7 +479,7 @@ class massmap2d:
         ka_map_fft = np.fft.fft2(ka_map)
         kb_map_fft = np.fft.fft2(kb_map)
 
-        f1, f2 = np.meshgrid(np.fft.fftfreq(nx), np.fft.fftfreq(ny))
+        f1, f2 = np.meshgrid(np.fft.fftfreq(ny), np.fft.fftfreq(nx))
         p1 = f1 * f1 - f2 * f2
         p2 = 2 * f1 * f2
         f2 = f1 * f1 + f2 * f2
@@ -515,7 +515,7 @@ class massmap2d:
         kappa2 = np.zeros((nx, ny))
         g1_map_ifft = np.fft.ifft2(g1_map)
         g2_map_ifft = np.fft.ifft2(g2_map)
-        f1, f2 = np.meshgrid(np.fft.fftfreq(nx), np.fft.fftfreq(ny))
+        f1, f2 = np.meshgrid(np.fft.fftfreq(ny), np.fft.fftfreq(nx))
         p1 = f1 * f1 - f2 * f2
         p2 = 2 * f1 * f2
         f2 = f1 * f1 + f2 * f2
@@ -1837,3 +1837,6 @@ class massmap2d:
 
 # if __name__ == '__main__':
 #     print ( "Main :)")
+
+
+
