@@ -252,8 +252,8 @@ def idft2d(ima):
 
 
 def idft2dr(ima):
-    return real(np.fft.ifft2(np.fft.fftshift((ima))))
-
+    z = np.fft.ifft2(np.fft.fftshift((ima)))
+    return z.real
 
 def conv(ima1, ima2):
     return idft2dr(dft2d(ima1) * dft2d(ima2))
@@ -321,6 +321,28 @@ def tvilut(
 
 
 ################################################
+
+def tvimap(map_data, title='', lut='inferno', vmin=None, vmax=None,filename=None):
+    """
+    Plot a 2D map using a colormap.
+
+    Parameters:
+        map_data (numpy.ndarray): The 2D map data.
+        title (str): Title of the plot.
+        lut (str): Colormap name ('rainbow','inferno', 'gist_stern', etc)
+        vmin (float): Minimum value for colormap scaling.
+        vmax (float): Maximum value for colormap scaling.
+    """
+    plt.figure()
+    img = plt.imshow(map_data, cmap=lut, vmin=vmin, vmax=vmax, origin='lower')
+    plt.title(title)
+    plt.colorbar(img)
+    if filename is not None:
+        plt.savefig(filename)
+    plt.show()  
+    
+################################################
+    
 def history():
     print(
         "\n".join(
@@ -348,7 +370,7 @@ def journal(FileName):
 def tvima(im, vmax=0, gamma=0.5, cmap="gist_stern"):
     if vmax == 0:
         vmax = im.max()
-    plt.imshow(np.rot90(im, 2), cmap=cmap, vmax=vmax, norm=PowerNorm(gamma=gamma))
+    plt.imshow(np.rot90(im, 2), cmap=cmap, vmax=vmax) # , norm=PowerNorm(gamma=gamma))
     plt.colorbar()
     plt.show()
 
