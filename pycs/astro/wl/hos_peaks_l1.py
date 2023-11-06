@@ -375,7 +375,7 @@ def tvimap(map_data, title='', lut='inferno', vmin=None, vmax=None,filename=None
 # if __name__ == '__main__':
 #     print ( "Main :)")
 
-
+# Exemple for the CFIS experiment
 kappa_map = readfits("/Users/starck/tex/PPT/Y23/EuclidTutorialSchool2023/WLconv_z0.50_3316r.fits")
 SHAPE_NOISE = 0.44
 PIX_ARCMIN = 0.4
@@ -384,6 +384,7 @@ NSCALES = 5
 NBINS = 40 
 KAPPA_SNR = np.linspace(-2, 6, 31)
 
+# Make a noise 
 sigma_noise_CFIS = SHAPE_NOISE / (np.sqrt(2 * N_GAL * PIX_ARCMIN**2))
 noise_map_CFIS_z05 = sigma_noise_CFIS * np.random.randn(kappa_map.shape[0], kappa_map.shape[1]) # generate noise map
 kappa_map_noisy = kappa_map + noise_map_CFIS_z05 # Add noise to the mass map
