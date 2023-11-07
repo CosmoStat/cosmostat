@@ -19,6 +19,7 @@ from pycs.misc.stats import *
 from pycs.sparsity.sparse2d.dct import dct2d, idct2d
 from pycs.sparsity.sparse2d.dct_inpainting import dct_inpainting
 from pycs.misc.im_isospec import *
+from pycs.astro.wl.mass_mapping import *
 
 def get_wt_noiselevel(W, NoiseSigmaMap, Mask=None):
     """
@@ -45,18 +46,18 @@ def get_wt_noiselevel(W, NoiseSigmaMap, Mask=None):
         x[i,:,:] is the noise standard deviation map at the scale i.
     """
     if Mask is None:
-        NoiseStdMap = NoiseSigmaMap
+        NoiseStdMap = np.copy(NoiseSigmaMap)    
     else:
         # we will consider in the non observed area (mask == 0) that 
         # the noise is equivalent to the maximum noise level in the map.
         # This gives an over-estimation of the noise at these locations after 
         # inpaiting. 
-        NoiseStdMap = NoiseSigmaMap
+        NoiseStdMap = np.copy(NoiseSigmaMap) 
         ind = np.where(Mask == 1)
         MaxNoise = np.max(NoiseStdMap[ind])
         ind = np.where(Mask == 0)
         NoiseStdMap[ind] = MaxNoise
-    
+        
     nx = W.nx
     ny = W.ny
     im = np.zeros((nx, ny))
@@ -65,16 +66,41 @@ def get_wt_noiselevel(W, NoiseSigmaMap, Mask=None):
     wt = W.transform(im)
     VarianceCoeff = W.coef * 0.
     VarianceMap = NoiseStdMap**2
-    for i in np.arange(WT.ns):
+    for i in np.arange(W.ns):
         coef = W.coef[i, :, :]
         coef = coef**2
         VarianceCoeff[i, :, :] = conv(VarianceMap,coef)
+        VarianceCoeff[VarianceCoeff < 0] = 0
+        # info(VarianceCoeff[i, :, :])
     return np.sqrt(VarianceCoeff)
 
 
 def get_snr_noiselevel(W, Map, Wnoise, KeepSign=False):
-    WT.transform(Map)
-    WSnr = Wnoise * 0.
+    """
+    Take the wavelet transform of an image and compute the Signal-to-Noise Ratio (SNR)
+    for each wavelet coefficient. 
+    
+    Parameters
+    ----------
+    W : Starlet Call
+        Wavelet transorm class.
+    Map : 2D array
+        Image to anlyse.
+    Wnoise : 3D array
+        Wnoise[j,x,y] is the noise level for a wavelet coefficient a scale j and position (x,y)
+    KeepSign : Boolean, optional
+        If KeepSign is True, the sign of the wavelet coefficients are kept, and the 
+        SNR out cube contains both positive and negative values. The default is False.
+
+    Returns
+    -------
+    WSnr : 3D array
+        WSnr[j,x,y] is the SNR for a wavelet coefficient a scale j and position (x,y).
+
+    """
+    W.transform(Map)
+    WSnr = np.copy(Wnoise)  
+    WSnr[:,:,:] = 0.
     ind = np.where(Wnoise != 0)
     WSnr[ind] = W.coef[ind] / Wnoise[ind]
     if KeepSign is False:
@@ -190,35 +216,73 @@ def get_peaks(image, threshold=None, ordered=True, mask=None,
     return X, Y, heights
 
 
+# Class to compute multiscale peaks and wavelet l1 norm for an image
 class HOS_starlet_l1norm_peaks:
-    NBins = 0
-    TabBins = 0
-    WT = 0
-    Ns = 0
-    DataCoef = 0
-    NoiseCoef = 0
-    WSNR = 0
-    PIX_ARCMIN = 1
-    scales_arcmin = 0
-    TabBinsCenter = 0
-    Peaks_PosX = 0
-    Peaks_PosY = 0
-    Peaks_Height = 0
-    Peaks_Count = 0
-    DataMask = 0
-    l1bins = 0
-    l1_coll = 0
+    NBins = 0          # int: Number of bins to use 
+    TabBins = 0        # array indicated the bins
+    WT = 0             # WT transform class
+    Ns = 0             # int, number of scales
+    DataCoef = 0       # 3D array, containing the wavelet transform of the data
+    NoiseCoef = 0      # 3D array, containing the noise standard deviation for each wavelet coefficient
+    WSNR = 0           # 3D array, containing the signal to noise ratio for each wavelet coefficient
+    PIX_ARCMIN = 1     # pixel resolution 
+    scales_arcmin = 0  # 1D array, resolution in arcmin of each scale
+    TabBinsCenter = 0  # 1D array, center of each bin
+    Peaks_PosX = 0     # list of X peak positions at each scale
+    Peaks_PosY = 0     # list of Y peak positions at each scale
+    Peaks_Height = 0   # list of  peak amplitudes at each scale
+    Peaks_Count = 0    # list of  peak counts at each scale
+    l1bins = 0         # list of l1 bins at each scale
+    l1norm = 0         # list of l1 norm at each scale
     
-    def __init__(self, WTrans, PixResolArcMin=1):  # __init__ is the constructor
+    def __init__(self, WTrans,PixResolArcMin=1):  # __init__ is the constructor
         self.WT = WTrans  # Starlet wavelet Class defined in starlet.py
-        self.Ns = WTrans.ns
-        self.PIX_ARCMIN = PixResolArcMin
-        self.scales_arcmin = [2**(i+1) * PIX_ARCMIN for i in range(ns)]
+        self.Ns = WTrans.ns # number of scales
+        self.PIX_ARCMIN = PixResolArcMin # resolution
+        self.scales_arcmin = [2**(i+1) * PixResolArcMin for i in range(self.Ns)]
 
-    def set_wtnoise(self, SigmaMap, Mask=None):
-        NoiseCoef = get_wt_noiselevel(WT, SigmaMap, Mask=Mask)
+    def set_data(self, Map, SigmaMap, Mask=None):
+        """
+        Calcule the wavelet transform of the data, and estimation the noise standard deviation 
+        for every wavelet coeficient. 
+        If some pixels don't have a value, a mask has to be given.
+        Parameters
+        ----------
+        Map : 2D array
+            IMage to analyze.
+        SigmaMap : 2D array
+            Noise standard deviation map.
+        Mask : 2D array, optional
+            Mask indicating where we have observations. Mask[x,y]=1 means we have an
+            observation at location (x,y), Mask[x,y]=0 otherwise. The default is None.
 
+        Returns
+        -------
+        None.
+
+        """
+        self.NoiseCoef  = get_wt_noiselevel(self.WT, SigmaMap, Mask=Mask)
+        self.WSNR = get_snr_noiselevel(self.WT, Map, self.NoiseCoef, KeepSign=True)        
+        self.DataCoef = self.WT.coef
+        
     def set_bins(self, Min=-2, Max=6, nbins=31):
+        """
+        Set the bins for the histogram and the l1-norm.
+
+        Parameters
+        ----------
+        Min : int, optional
+            Minimm value for the histogram. The default is -2.
+        Max : int, optional
+            Maximum value for the histogram. The default is 6.
+        nbins : int, optional
+            Number of bins. The default is 31.
+
+        Returns
+        -------
+        None.
+
+        """
         self.NBins = nbins
         self.TabBins = np.linspace(Min, Max, self.NBins)
         self.TabBinsCenter = 0.5 * (self.TabBins[:-1] + self.TabBins[1:])
@@ -239,17 +303,43 @@ class HOS_starlet_l1norm_peaks:
          Scale[X,Y] = maxcoef*Max
         tvimap(Scale,title='Scale'+str(i+1),lut=lut)
         
-    def tvpeaks(self, maxcoef=None, lut='inferno', OnlyPeaks=None):
-        if maxcoef is None:
-            maxcoef = 2.
+    def tvpeaks(self, maxcoef=2, lut='inferno', OnlyPeaks=None):
+        """
+        Plot the scales, chaning the values at the position of the peaks 
+        to see them. The values at pixel positions are set to twice the maximum.
+
+        Parameters
+        ----------
+        maxcoef : float, optional
+            Multiplicative factor applied on the maximum value. The default is 2.
+        lut : string, optional
+            selected LUT. The default is 'inferno'.
+        OnlyPeaks : Boolean, optional
+            If set, only peaks are shown, not the wavelet images. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
         for i in np.arange(self.WT.ns):
             self.tvscalepeaks(i,maxcoef=maxcoef, lut=lut, OnlyPeaks=OnlyPeaks)
             
-    def get_wtpeaks(self, Map, SigmaMap, Mask=None):
-        self.DataMask = Mask
-        self.NoiseCoef = get_wt_noiselevel(self.WT, SigmaMap, Mask=Mask)
-        self.WSNR = get_snr_noiselevel(self.WT, Map, self.NoiseCoef, KeepSign=True)
-        self.DataCoef = self.WT.coef
+    def get_wtpeaks(self, Mask=None):
+        """
+        Calculate the histogram of of peak counts at all scales
+
+        Parameters
+        ----------
+        Mask : 2D array, optional
+            DESCRIPTION. The default is None.
+            Caculate the histogram of of peak counts  only in the mask area. 
+            The default is None, the whole image is used at every scale. 
+        Returns
+        -------
+        None.
+
+        """
         self.Peaks_Count = []
         self.Peaks_PosX = []
         self.Peaks_PosY = []
@@ -269,9 +359,9 @@ class HOS_starlet_l1norm_peaks:
         
     def plot_peaks_histo(self, Scale=None, title='Starlet Peak Counts Histogram', xlabel='SNR', ylabel='Peak Counts', log_scale=False):
         """
-        Plot histograms of peak counts.
-
+        PLot either the histogram of peak counts for a given scale or for all scales. 
         Parameters:
+        ----------
             title (str): Title of the plot.
             xlabel (str): Label for the x-axis.
             ylabel (str): Label for the y-axis.
@@ -296,6 +386,30 @@ class HOS_starlet_l1norm_peaks:
         plt.show()
 
     def plot_l1norm(self, Scale=None, xlim=None, title='Starlet l1-norm', xlabel='SNR', ylabel='l1-norm', log_scale=False):
+        """
+        PLot either the l1 norm per bin for a given scale or for all scales. 
+        Parameters
+        ----------
+        Scale : int, optional
+            Plot the l1 norm per bin at the specified scale. Scale=0 for the first scale.
+            The default is None, all scales are plotted.
+        xlim : int, optional
+            PLot only values for x > xlim. The default is None.
+        title : string, optional
+            Title of the plot. The default is 'Starlet l1-norm'.
+        xlabel : string, optional
+            x-label. The default is 'SNR'.
+        ylabel : string, optional
+            y label. The default is 'l1-norm'.
+        log_scale : Boolean, optional
+            Use log scale for the y axis . The default is False.
+
+        Returns
+        -------
+        None.
+
+        """
+        
         plt.figure()
 
         if Scale is not None:
@@ -318,6 +432,22 @@ class HOS_starlet_l1norm_peaks:
         plt.show()
         
     def get_wtl1(self, nbins=None, Mask=None):
+        """
+        Calculate the wavelet l1 norm per bin.
+
+        Parameters
+        ----------
+        nbins : int, optional
+            Number of bins. The default is NBins, defined using the set_bins function.
+        Mask : 2D array, optional
+            Caculate the l1 norm only in the mask area. 
+            The default is None, the whole image is used at every scale. 
+
+        Returns
+        -------
+        None.
+
+        """
         if nbins is None:
             nbins = NBins
         l1_coll = []
@@ -351,130 +481,231 @@ class HOS_starlet_l1norm_peaks:
 #     def set_linear_bins(Min, Max, Nbins=10):
 #         # Define bin ed
 
-def tvimap(map_data, title='', lut='inferno', vmin=None, vmax=None,filename=None):
-    """
-    Plot a 2D map using a colormap.
+# def tvimap(map_data, title='', lut='inferno', vmin=None, vmax=None,filename=None):
+#     """
+#     Plot a 2D map using a colormap.
 
-    Parameters:
-        map_data (numpy.ndarray): The 2D map data.
-        title (str): Title of the plot.
-        lut (str): Colormap name ('rainbow','inferno', 'gist_stern', etc)
-        vmin (float): Minimum value for colormap scaling.
-        vmax (float): Maximum value for colormap scaling.
-    """
-    plt.figure()
-    img = plt.imshow(map_data, cmap=lut, vmin=vmin, vmax=vmax, origin='lower')
-    plt.title(title)
-    plt.colorbar(img)
-    if filename is not None:
-        plt.savefig(filename)
-    plt.show()  
+#     Parameters:
+#         map_data (numpy.ndarray): The 2D map data.
+#         title (str): Title of the plot.
+#         lut (str): Colormap name ('rainbow','inferno', 'gist_stern', etc)
+#         vmin (float): Minimum value for colormap scaling.
+#         vmax (float): Maximum value for colormap scaling.
+#     """
+#     plt.figure()
+#     img = plt.imshow(map_data, cmap=lut, vmin=vmin, vmax=vmax, origin='lower')
+#     plt.title(title)
+#     plt.colorbar(img)
+#     if filename is not None:
+#         plt.savefig(filename)
+#     plt.show()  
+
+
+#############  TESTS routine ############ 
+
+
+def get_rms_error(Res, TrueSol, Mask, sigma=0):
+    if sigma > 0:
+        Resi = smooth2d(TrueSol - Res, sigma) * Mask
+        TS = smooth2d(TrueSol, sigma) * Mask
+    else:
+        Resi = (TrueSol - Res) * Mask
+        TS = TrueSol * Mask
+    ind = np.where(Mask != 0)
+    Resi[ind] = Resi[ind] - np.mean(Resi[ind])
+    TS[ind] = TS[ind] - np.mean(TS[ind])
+    Err =  LA.norm(Resi) / LA.norm(TrueSol*Mask) * 100.
+    return Err
+
+
+
+def test_hos_test1(lut='inferno'):
+
+    # For space constraints, we provide this experiment starting from a pixelized 
+    # shear map, and not from the catalog.   
+
+    # Read shear data and covariance matrix
+    DIR='/Users/starck/git/cosmostat/cosmostat/examples/mcalens_paper/'
+    g1 = readfits(DIR+'exp_wiener_miceDSV_g1.fits')
+    g2 = readfits(DIR+'exp_wiener_miceDSV_g2.fits')
+    Ncov = readfits(DIR+'exp_wiener_miceDSV_covmat.fits')
+
+    # Read the true convergence map and its theoretical power spectrum
+    ktr = readfits(DIR+'exp_wiener_miceDSV_true_convergence_map.fits')
+    ps1d = readfits(DIR+'exp_wiener_miceDSV_signal_powspec.fits')
+    
+    # Mass mapping class initialization
+    (nx,ny) = Ncov.shape 
+    M = massmap2d(name='mass')
+    M.init_massmap(nx,ny)
+    M.DEF_niter=200
+    Inpaint=True
+    M.niter_debias=30
+    M.Verbose=False    
+    
+    # Read the noise power spectrum. It has been derived from 
+    # from the covariance matrix using 1000 realization with the command:
+    #    Pn = M.get_noise_powspec(Ncov ,mask=mask,nsimu=1000, inpaint=True)
+    pn = readfits(DIR+'exp_wiener_miceDSV_noise_powspec.fits')
+
+    # derive the mask from the covariance matrix
+    index = np.where(Ncov<1e2)
+    mask = np.zeros((nx,ny))
+    mask[index] = 1
+    ind = np.where(mask != 1)
+    mask[ind]=0
+    
+    # Shear data class initialization
+    d=shear_data()
+    d.g1=g1
+    d.g2=g2
+    d.Ncov =Ncov
+    d.mask = mask
+    d.ps1d = ps1d
+    
+    # make Fig. 8 of MCAlens paper
+    tvilut(mask,title='DES-MICE Mask', lut=lut,filename='fig_mice_mask.png', vmin=0, vmax=1)
+    tvilut(smooth2d(ktr, 1.)*mask,title='Convergence map', lut=lut,filename='fig_mice_kappa.png', vmin=-0.03,vmax=0.03)
+    tvilut(g1,title='g1', lut=lut,filename='fig_mice_g1.png', vmin=-0.3,vmax=0.3)
+    tvilut(g2,title='g2', lut=lut,filename='fig_mice_g2.png', vmin=-0.3,vmax=0.3)
+
+   
+    # Proximal iterative filtering. 
+    ke_inp_pwiener,kb_winp = M.prox_wiener_filtering(g1, g2, ps1d, Ncov, Pn=pn, Inpaint=True) #, Pn=Pn) # ,ktr=InShearData.ktr)
+    tvilut(ke_inp_pwiener,title='Inpainted Wiener', lut=lut,filename='fig_mice_inp_wiener.png', vmin=-0.004,vmax=0.004)
+    
+    # KS
+    ks =  M.gamma_to_cf_kappa(g1,g2) 
+    ks = ks.real
+    tvilut(ks,title='Kaiser-Squire', lut=lut)
+    
+    # KS + Inpainting
+    ksi =  M.iks(g1,g2, mask) 
+    ksi = ksi.real
+    tvilut(ksi,title='iKS with Inpainting', lut=lut)
+    
+    # Example of error calculation at a give scale
+    sig=2
+    print("== ERROR Sigma = ", sig)
+    Err_ks = get_rms_error(ks, ktr,mask,sigma=sig)      
+    print("   Kaiser Squires Error: ", Err_ks)
+    Err_ksi = get_rms_error(ksi, ktr,mask,sigma=sig)      
+    print("   Iterative Kaiser Squires (with inpainting) Error: ", Err_ksi)
+    Err_kiw = get_rms_error(ke_inp_pwiener,ktr,mask,sigma=sig) 
+    print("   Iterative Wiener Error: ", Err_kiw)
+
+    # MCAlens
+    vm=0.2
+    vmin=-0.1
+    M.Verbose=True
+    M.DEF_niter=100
+    UseMCAlens = False
+    if UseMCAlens is True:
+        k1r5,k1i,k2r5,k2i = M.sparse_wiener_filtering(d, d.ps1d, Nsigma=5, Inpaint=True, Bmode=True, InpNiter=20)
+        tvilut(k1r5, title='MCAlens (lambda=5)',fs=5, vmin=vmin, vmax=vm,lut=lut)
+        tvilut((k1r5-k2r5), title='MCAlens-Gaussian Component (lambda=5)',fs=5, vmin=vmin, vmax=vm,lut=lut)
+        tvilut(k2r5, title='MCAlens-Sparse Component (lambda=5)',fs=5, vmin=vmin, vmax=vm,lut=lut)
+        Err_mcalens = get_rms_error(k1r5,ktr,mask,sigma=sig) 
+        print("   Iterative MCAlens: ", Err_mcalens)
+    
+    # Statistics 
+    MinSNR = -2
+    MaxSNR = 6
+    Nb=31
+    nx = g1.shape[0]
+    nx = g1.shape[1]
+    ns=5
+
+    WT = starlet2d(gen2=False,l2norm=False, verb=False)
+    WT.init_starlet(nx, ny, nscale=ns)
+    H = HOS_starlet_l1norm_peaks(WT)
+
+    H.set_bins(Min=MinSNR, Max=MaxSNR, nbins=Nb)
+    SigmaMap = np.sqrt(d.Ncov /2)
+    H.set_data(ksi, SigmaMap, Mask=mask)
+
+    info(H.DataCoef, name="DATA" )
+    info(H.NoiseCoef, name="NoiseCoef" )
+    info(H.WSNR , name="WSNR" )
+    
+    H.get_wtpeaks(Mask=mask)
+    pc = H.Peaks_Count
+    H.plot_peaks_histo(log_scale=True)
+    
+
+    
+    H.tvpeaks(maxcoef=3, lut='rainbow',OnlyPeaks=True)
+    H.get_wtl1(Nb*2)
+    H.plot_l1norm()                  
+    
+    
+def test_hos_cfis():
+    # Exemple for the CFIS experiment
+    DIR='/Users/starck/tex/PPT/Y23/EuclidTutorialSchool2023/'
+    kappa_map = readfits(DIR+'WLconv_z0.50_3316r.fits')
+    SHAPE_NOISE = 0.44
+    PIX_ARCMIN = 0.4
+    N_GAL = 7
+    NSCALES = 5
+    NBINS = 40 
+    KAPPA_SNR = np.linspace(-2, 6, 31)
+
+    # Make a noise 
+    sigma_noise_CFIS = SHAPE_NOISE / (np.sqrt(2 * N_GAL * PIX_ARCMIN**2))
+    noise_map_CFIS_z05 = sigma_noise_CFIS * np.random.randn(kappa_map.shape[0], kappa_map.shape[1]) # generate noise map
+    kappa_map_noisy = kappa_map + noise_map_CFIS_z05 # Add noise to the mass map
+
+
+    ; tvilut(k2r5*mask, title='CFIS kappa',fs=5, vmin=vmin, vmax=vm,lut=lut, filename='fig_ramses_mcalens_sparse_sig5_masked.png')
+
+    tvilut(kappa_map_noisy, title='CFIS kappa')
+    k = kappa_map_noisy
+    m = kappa_map * 0 + 1
+    nx=512
+    ny=512
+    ns=5
+    m [100:200,:] = 0
+    tvilut(m*kappa_map_noisy, title='mask')
+
+    WT = starlet2d(gen2=False,l2norm=False, verb=False)
+    WT.init_starlet(nx, ny, nscale=ns)
+    H = HOS_starlet_l1norm_peaks(WT)
+    SigmaMap = kappa_map * 0 + sigma_noise_CFIS
+
+
+    MinSNR = -2
+    MaxSNR = 6
+    Nb=31
+    H.set_bins(Min=MinSNR, Max=MaxSNR, nbins=Nb)
+    H.set_data(kappa_map_noisy, SigmaMap, Mask=m)
+    H.get_wtpeaks(Mask=m)
+    pc = H.Peaks_Count
+    # plot_peak_count_histograms(H.TabBinsCenter, pc, 'Peak Counts Histogram for Gaussian SNR Map', 'SNR smooth', 'Peak Counts', log_scale=True)
+    H.plot_peaks_histo(log_scale=True)
+    H.plot_peaks_histo(Scale=0, log_scale=True, title='Scale 1')
+    H.plot_peaks_histo(Scale=1, log_scale=True)
+
+    H.tvpeaks(maxcoef=3, lut='rainbow',OnlyPeaks=True)
+    H.get_wtl1(NBINS*2)
+    H.plot_l1norm()
+    H.plot_l1norm(Scale=0)
+                  
+
+    # Plot l1-norm histograms for different scales
+    # plot_l1norm_histograms(H.l1bins, H.l1norm, 'L1-norm Histograms for Different Scales', 'L1-norm', 'Frequency')
+
+    H.get_wtl1(NBINS*2,Mask=m)
+    # plot_l1norm_histograms(H.l1bins, H.l1norm, 'L1-norm Histograms for Different Scales', 'L1-norm', 'Frequency')
+    H.plot_l1norm()
+
 
 ############ END CLASS #######################
 
 # if __name__ == '__main__':
 #     print ( "Main :)")
 
-# Exemple for the CFIS experiment
-kappa_map = readfits("/Users/starck/tex/PPT/Y23/EuclidTutorialSchool2023/WLconv_z0.50_3316r.fits")
-SHAPE_NOISE = 0.44
-PIX_ARCMIN = 0.4
-N_GAL = 7
-NSCALES = 5
-NBINS = 40 
-KAPPA_SNR = np.linspace(-2, 6, 31)
-
-# Make a noise 
-sigma_noise_CFIS = SHAPE_NOISE / (np.sqrt(2 * N_GAL * PIX_ARCMIN**2))
-noise_map_CFIS_z05 = sigma_noise_CFIS * np.random.randn(kappa_map.shape[0], kappa_map.shape[1]) # generate noise map
-kappa_map_noisy = kappa_map + noise_map_CFIS_z05 # Add noise to the mass map
-
-
-
-; tvilut(k2r5*mask, title='CFIS kappa',fs=5, vmin=vmin, vmax=vm,lut=lut, filename='fig_ramses_mcalens_sparse_sig5_masked.png')
-
-tvilut(kappa_map_noisy, title='CFIS kappa')
-k = kappa_map_noisy
-m = kappa_map * 0 + 1
-nx=512
-ny=512
-ns=5
-m [100:200,:] = 0
-tvilut(m*kappa_map_noisy, title='mask')
-
-WT = starlet2d(gen2=False,l2norm=False, verb=False)
-WT.init_starlet(nx, ny, nscale=ns)
-H = HOS_starlet_l1norm_peaks(WT)
-SigmaMap = kappa_map * 0 + sigma_noise_CFIS
-
-
-MinSNR = -2
-MaxSNR = 6
-Nb=31
-H.set_bins(Min=MinSNR, Max=MaxSNR, nbins=Nb)
-H.get_wtpeaks(kappa_map_noisy, SigmaMap, Mask=m)
-pc = H.Peaks_Count
-# plot_peak_count_histograms(H.TabBinsCenter, pc, 'Peak Counts Histogram for Gaussian SNR Map', 'SNR smooth', 'Peak Counts', log_scale=True)
-H.plot_peaks_histo(log_scale=True)
-H.plot_peaks_histo(Scale=0, log_scale=True, title='Scale 1')
-H.plot_peaks_histo(Scale=1, log_scale=True)
-
-H.tvpeaks(maxcoef=3, lut='rainbow',OnlyPeaks=True)
-H.get_wtl1(NBINS*2)
-H.plot_l1norm()
-H.plot_l1norm(Scale=0)
-              
-
-# Plot l1-norm histograms for different scales
-# plot_l1norm_histograms(H.l1bins, H.l1norm, 'L1-norm Histograms for Different Scales', 'L1-norm', 'Frequency')
-
-H.get_wtl1(NBINS*2,Mask=m)
-# plot_l1norm_histograms(H.l1bins, H.l1norm, 'L1-norm Histograms for Different Scales', 'L1-norm', 'Frequency')
-H.plot_l1norm()
-
-# for i in np.arange(WT.ns):
-#     print(i)
-#     histo = pc[i]
-#     print(histo)
-#     plot_peak_count_histograms(H.TabBinsCenter, histo, 'Peak Counts Histogram for Gaussian SNR Map', 'SNR smooth', 'Peak Counts', log_scale=True)
-    
-
-
-
-# print("Result")
-# NoiseMap = k * 0. + 10.
-# Wtest = get_wt_noiselevel(WT, NoiseMap)
-# for i in np.arange(WT.ns):
-#     print("Scale ", i)
-#     info(Wtest[i, :, :])
-
-
-# for i in np.arange(WT.ns):
-#     # wt[i, :, :] *= WT.Starlet_Gen1TabNorm[i]
-#     print(WT.Starlet_Gen1TabNorm[i])
-
-
-# g1 = np.zeros((64,64))
-# g2 = g1
-# nx=64
-# ny=64
-# g1[32,32]= 1
-# g2[32,32]= 1
-# m = g1 * 0 + 1
-# g1 = np.random.normal(loc=0.0, scale=np.sqrt(1. / 1.0)*m)
-# g2 = np.random.normal(loc=0.0, scale=np.sqrt(1. / 1.0)*m)
-
-# nx=256
-# ny=256
-# M = massmap2d(name='mass')
-# M.init_massmap(nx,ny)    
-# k = M.gamma_to_kappa(g1, g2)
-
-# Use_Nrea=20
-# M.get_wt_noise_level(InshearData, Nrea=Use_Nrea)
-# info(k)
-# tvilut(k)
-
+# test_hos_cfis()
+# test_hos_test1()
 
 
 
