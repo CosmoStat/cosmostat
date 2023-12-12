@@ -209,7 +209,7 @@ def star2d(im, scale, gen2=False, bord=1, nb_procs=0, fast=True, verb=0):
         ima = np.zeros((nx, ny))
         ima[:, :] = im
         psWT = pysparse.MRStarlet(bord, gen2, nb_procs, verb)
-        wl = psWT.transform(ima.astype(np.float), nz)
+        wl = psWT.transform(ima.astype(np.float64), nz)
         wt = (np.stack(wl)).astype(np.double)
     else:
         wt = np.zeros((nz, nx, ny))
@@ -272,7 +272,7 @@ def istar2d(wt, gen2=True, bord=0, nb_procs=0, fast=True, verb=0):
         # print("RECBINDING: ", head, ", norm = ", l2norm)
         dat_list = []
         for s in range(nz):
-            dat_list.append(wt[s, :, :].astype(np.float))
+            dat_list.append(wt[s, :, :].astype(np.float64))
         psWT = pysparse.MRStarlet(bord, gen2, nb_procs, verb)
         imRec = (psWT.recons(dat_list)).astype(np.double)
     else:
