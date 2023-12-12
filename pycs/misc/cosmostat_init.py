@@ -72,6 +72,25 @@ def unpad(x, pad_width):
 def unpad2d(x, size):
     return unpad(x, pad_width2d(size))
 
+def gauss2d(size, fwhm = 20, center=None):
+    """ Make a square gaussian kernel.
+
+    size is the length of a side of the square
+    fwhm is full-width-half-maximum, which
+    can be thought of as an effective radius.
+    """
+
+    x = np.arange(0, size, 1, float)
+    y = x[:,np.newaxis]
+
+    if center is None:
+        x0 = y0 = size // 2
+    else:
+        x0 = center[0]
+        y0 = center[1]
+
+    return np.exp(-4*np.log(2) * ((x-x0)**2 + (y-y0)**2) / fwhm**2)
+
 
 # Test
 # pad_width = ((0, 0), (1, 0), (3, 4))
@@ -200,11 +219,11 @@ def dump(obj):
 def vsize(Data):
     # isinstance(P, (list, tuple, np.ndarray))
     if np.isscalar(Data):
-        vs = np.zeros([1], dtype=np.int)
+        vs = np.zeros([1], dtype=np.int64)
     else:
-        d = np.asarray(Data, dtype=np.int)
+        d = np.asarray(Data, dtype=np.int64)
         dim = d.ndim
-        vs = np.zeros([dim + 1], dtype=np.int)
+        vs = np.zeros([dim + 1], dtype=np.int64)
         vs[0] = dim
         size = np.array(d.shape)
         for i in np.arange(dim):
@@ -248,16 +267,20 @@ def dft2d(ima):
 
 
 def idft2d(ima):
-    return np.fft.ifft2(np.fft.fftshift((ima)))
+    return np.fft.ifft2(np.fft.ifftshift((ima)))
 
 
 def idft2dr(ima):
-    z = np.fft.ifft2(np.fft.fftshift((ima)))
+    z = np.fft.ifft2(ima)
     return z.real
 
 def conv(ima1, ima2):
-    return idft2dr(dft2d(ima1) * dft2d(ima2))
+    return scipy.signal.fftconvolve(ima1, ima2, mode='same')
 
+#    x = np.fft.fft2(ima1) * np.fft.fft2(ima2)
+#    z = np.fft.ifft2(x)
+#    return z.real
+#     return idft2dr(dft2d(ima1) * dft2d(ima2))
 
 def dft2dnorm(ima):
     z = np.fft.fftshift(np.fft.fft2(ima))
