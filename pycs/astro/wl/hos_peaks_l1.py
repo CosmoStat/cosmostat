@@ -36,7 +36,7 @@ def get_wt_noiselevel(W, NoiseSigmaMap, Mask=None):
        Starlet transform call (see starlet.py in CosmoStat package).
     NoiseSigmaMap : 2D array.
         Noise standard deviation map. 
-        It must have the same size as the size given in the starlet classs W.
+        It must have the same size as the size given in the starlet class W.
     Mask: 2D array
         mask on the data. Mask[i,j] = 1 if the pixel is observed, 0 otherwise
     Returns
@@ -83,9 +83,9 @@ def get_snr_noiselevel(W, Map, Wnoise, KeepSign=False):
     Parameters
     ----------
     W : Starlet Call
-        Wavelet transorm class.
+        Wavelet transform class.
     Map : 2D array
-        Image to anlyse.
+        Image to analyse.
     Wnoise : 3D array
         Wnoise[j,x,y] is the noise level for a wavelet coefficient a scale j and position (x,y)
     KeepSign : Boolean, optional
@@ -140,7 +140,7 @@ def get_peaks(image, threshold=None, ordered=True, mask=None,
 
     Notes
     -----
-    From LensPack, added here to avoid circular dependancies
+    From LensPack, added here to avoid circular dependencies
 
     Examples
     --------
@@ -232,6 +232,10 @@ class HOS_starlet_l1norm_peaks:
     Peaks_PosY = 0     # list of Y peak positions at each scale
     Peaks_Height = 0   # list of  peak amplitudes at each scale
     Peaks_Count = 0    # list of  peak counts at each scale
+    Mono_Peaks_PosX = 0     # list of X mono-scale peak positions
+    Mono_Peaks_PosY = 0     # list of Y mono-scale peak positions
+    Mono_Peaks_Height = 0   # list of  mono-scale peak amplitudes
+    Mono_Peaks_Count = 0    # list of  mono-scale peak counts
     l1bins = 0         # list of l1 bins at each scale
     l1norm = 0         # list of l1 norm at each scale
     
@@ -243,8 +247,8 @@ class HOS_starlet_l1norm_peaks:
 
     def set_data(self, Map, SigmaMap, Mask=None):
         """
-        Calcule the wavelet transform of the data, and estimation the noise standard deviation 
-        for every wavelet coeficient. 
+        Calculate the wavelet transform of the data, and estimation the noise standard deviation 
+        for every wavelet coefficient. 
         If some pixels don't have a value, a mask has to be given.
         Parameters
         ----------
@@ -324,7 +328,53 @@ class HOS_starlet_l1norm_peaks:
         """
         for i in np.arange(self.WT.ns):
             self.tvscalepeaks(i,maxcoef=maxcoef, lut=lut, OnlyPeaks=OnlyPeaks)
-            
+
+    def get_mono_scale_peaks(self, image, sigma_noise, smoothing_sigma=2, mask=None):
+        """
+        Calculate mono-scale peak counts with Gaussian smoothing.
+
+        Parameters
+        ----------
+        image : 2D array
+            Input image.
+        sigma_noise : float
+            Standard deviation of the noise.
+        smoothing_sigma : float, optional
+            Standard deviation for Gaussian smoothing. Default is 2.
+        mask : 2D array, optional
+            Mask indicating where observations are present.
+
+        Returns
+        -------
+        None.
+
+        """
+        # create a Gaussian kernel
+        im = np.zeros_like(image)
+        im[im.shape[0] // 2, im.shape[1] // 2] = 1.0
+        gaussian_kernel = ndimage.gaussian_filter(im, sigma=2)
+
+        # calculate the noise level for the smoothed pixels
+        variance_map = sigma_noise**2
+        square_gaussian_kernel = gaussian_kernel**2
+        smoothed_noise_sigma = np.sqrt(conv(variance_map, square_gaussian_kernel))
+
+        # calculate the SNR image
+        image_smoothed = ndimage.gaussian_filter(image, sigma=2)
+        snr_image = np.zeros_like(image_smoothed)
+        ind = np.where(smoothed_noise_sigma != 0)
+        snr_image[ind] = image_smoothed[ind] / smoothed_noise_sigma[ind]
+
+        # Get mono-scale peaks
+        X, Y, heights = get_peaks(snr_image, mask=mask)
+        self.Mono_Peaks_PosX = X
+        self.Mono_Peaks_PosY = Y
+        self.Mono_Peaks_Height = heights
+
+        # Calculate histogram of peak counts
+        counts, bin_edges = np.histogram(heights, bins=self.TabBins)
+        self.Mono_Peaks_Count = counts
+         
     def get_wtpeaks(self, Mask=None):
         """
         Calculate the histogram of of peak counts at all scales
@@ -356,7 +406,25 @@ class HOS_starlet_l1norm_peaks:
             self.Peaks_Height.append(heights)
             counts, bin_edges = np.histogram(heights, bins=self.TabBins)
             self.Peaks_Count.append(counts)
+
         
+    def plot_mono_peaks_histogram(self):
+        """
+        Plot histogram of mono-scale peak counts.
+
+        Returns
+        -------
+        None.
+        """
+        plt.figure()
+        plt.plot(self.TabBinsCenter, self.Mono_Peaks_Count)
+        plt.title('Mono-Scale Peak Counts Histogram')
+        plt.xlabel('SNR')
+        plt.ylabel('Counts')
+        plt.yscale('log')
+        plt.grid()
+        plt.show()
+
     def plot_peaks_histo(self, Scale=None, title='Starlet Peak Counts Histogram', xlabel='SNR', ylabel='Peak Counts', log_scale=False):
         """
         PLot either the histogram of peak counts for a given scale or for all scales. 
@@ -613,7 +681,7 @@ def test_hos_test1(lut='inferno'):
     MaxSNR = 6
     Nb=31
     nx = g1.shape[0]
-    nx = g1.shape[1]
+    nx = g2.shape[1]
     ns=5
 
     WT = starlet2d(gen2=False,l2norm=False, verb=False)
@@ -656,7 +724,7 @@ def test_hos_cfis():
     kappa_map_noisy = kappa_map + noise_map_CFIS_z05 # Add noise to the mass map
 
 
-    ; tvilut(k2r5*mask, title='CFIS kappa',fs=5, vmin=vmin, vmax=vm,lut=lut, filename='fig_ramses_mcalens_sparse_sig5_masked.png')
+    # tvilut(k2r5*mask, title='CFIS kappa',fs=5, vmin=vmin, vmax=vm,lut=lut, filename='fig_ramses_mcalens_sparse_sig5_masked.png')
 
     tvilut(kappa_map_noisy, title='CFIS kappa')
     k = kappa_map_noisy

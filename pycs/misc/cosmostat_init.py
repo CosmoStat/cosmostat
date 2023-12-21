@@ -26,7 +26,9 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy
 from matplotlib.colors import PowerNorm
 import seaborn as sns
+import scipy
 from scipy import ndimage
+from scipy import signal
 
 ################################################
 
