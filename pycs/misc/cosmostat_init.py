@@ -74,7 +74,8 @@ def unpad(x, pad_width):
 def unpad2d(x, size):
     return unpad(x, pad_width2d(size))
 
-def gauss2d(size, fwhm = 20, center=None):
+
+def gauss2d(size, fwhm=20, center=None):
     """ Make a square gaussian kernel.
 
     size is the length of a side of the square
@@ -83,7 +84,7 @@ def gauss2d(size, fwhm = 20, center=None):
     """
 
     x = np.arange(0, size, 1, float)
-    y = x[:,np.newaxis]
+    y = x[:, np.newaxis]
 
     if center is None:
         x0 = y0 = size // 2
@@ -91,7 +92,7 @@ def gauss2d(size, fwhm = 20, center=None):
         x0 = center[0]
         y0 = center[1]
 
-    return np.exp(-4*np.log(2) * ((x-x0)**2 + (y-y0)**2) / fwhm**2)
+    return np.exp(-4 * np.log(2) * ((x - x0)**2 + (y - y0)**2) / fwhm**2)
 
 
 # Test
@@ -276,6 +277,7 @@ def idft2dr(ima):
     z = np.fft.ifft2(ima)
     return z.real
 
+
 def conv(ima1, ima2):
     return scipy.signal.fftconvolve(ima1, ima2, mode='same')
 
@@ -283,6 +285,7 @@ def conv(ima1, ima2):
 #    z = np.fft.ifft2(x)
 #    return z.real
 #     return idft2dr(dft2d(ima1) * dft2d(ima2))
+
 
 def dft2dnorm(ima):
     z = np.fft.fftshift(np.fft.fft2(ima))
@@ -312,7 +315,7 @@ def tvilut(
     else:
         FigSize = fs
     if lut is None:
-        lut = "rainbow"  #  'inferno'   'gist_stern'
+        lut = "rainbow"  # 'inferno'   'gist_stern'
     fig, ax = plt.subplots(1, 1, facecolor="w", figsize=(FigSize, FigSize))
     cm = plt.cm.get_cmap(lut)
     img = ax.imshow(d, cmap=cm, origin="lower", vmin=vmin, vmax=vmax)
@@ -330,7 +333,8 @@ def tvilut(
     # cbar = fig.colorbar(cax, ticks=[-1, 0, 1])
     # cbar = fig.colorbar(cax, ticks=[d.min(), 0, d.max()])
     # cbar = fig.colorbar(cax)
-    # cbar.ax.set_yticklabels(['< -1', '0', '> 1'])  # vertically oriented colorbar
+    # cbar.ax.set_yticklabels(['< -1', '0', '> 1'])  # vertically oriented
+    # colorbar
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.1)
@@ -347,7 +351,8 @@ def tvilut(
 
 ################################################
 
-def tvimap(map_data, title='', lut='inferno', vmin=None, vmax=None,filename=None):
+def tvimap(map_data, title='', lut='inferno',
+           vmin=None, vmax=None, filename=None):
     """
     Plot a 2D map using a colormap.
 
@@ -364,10 +369,11 @@ def tvimap(map_data, title='', lut='inferno', vmin=None, vmax=None,filename=None
     plt.colorbar(img)
     if filename is not None:
         plt.savefig(filename)
-    plt.show()  
-    
+    plt.show()
+
 ################################################
-    
+
+
 def history():
     print(
         "\n".join(
@@ -395,7 +401,8 @@ def journal(FileName):
 def tvima(im, vmax=0, gamma=0.5, cmap="gist_stern"):
     if vmax == 0:
         vmax = im.max()
-    plt.imshow(np.rot90(im, 2), cmap=cmap, vmax=vmax) # , norm=PowerNorm(gamma=gamma))
+    # , norm=PowerNorm(gamma=gamma))
+    plt.imshow(np.rot90(im, 2), cmap=cmap, vmax=vmax)
     plt.colorbar()
     plt.show()
 
@@ -489,7 +496,8 @@ def tv_frames(TabFrame, scales=None, multiview=False):
         # > using multiview
         # TODO: update this code
         if multiview:
-            raise NotImplementedError("Multiview transform view not yet implemented.")
+            raise NotImplementedError(
+                "Multiview transform view not yet implemented.")
             window = pyqtgraph.image(numpy.asarray(transform[scale]))
             scroller.setWidget(window)
         # > using mosaic
@@ -538,7 +546,8 @@ def tv_frames(TabFrame, scales=None, multiview=False):
     app.exec_()
 
 
-def tvnima(images, ncol=1, nline=None, title=None, scale=1, vmin=None, vmax=None):
+def tvnima(images, ncol=1, nline=None, title=None,
+           scale=1, vmin=None, vmax=None):
     sns.set_style("ticks")
     n_images = len(images)
     if nline is None:
