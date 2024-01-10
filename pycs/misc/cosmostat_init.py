@@ -76,7 +76,7 @@ def unpad2d(x, size):
 
 
 def gauss2d(size, fwhm=20, center=None):
-    """ Make a square gaussian kernel.
+    """Make a square gaussian kernel.
 
     size is the length of a side of the square
     fwhm is full-width-half-maximum, which
@@ -92,7 +92,7 @@ def gauss2d(size, fwhm=20, center=None):
         x0 = center[0]
         y0 = center[1]
 
-    return np.exp(-4 * np.log(2) * ((x - x0)**2 + (y - y0)**2) / fwhm**2)
+    return np.exp(-4 * np.log(2) * ((x - x0) ** 2 + (y - y0) ** 2) / fwhm**2)
 
 
 # Test
@@ -279,7 +279,8 @@ def idft2dr(ima):
 
 
 def conv(ima1, ima2):
-    return scipy.signal.fftconvolve(ima1, ima2, mode='same')
+    return scipy.signal.fftconvolve(ima1, ima2, mode="same")
+
 
 #    x = np.fft.fft2(ima1) * np.fft.fft2(ima2)
 #    z = np.fft.ifft2(x)
@@ -351,8 +352,8 @@ def tvilut(
 
 ################################################
 
-def tvimap(map_data, title='', lut='inferno',
-           vmin=None, vmax=None, filename=None):
+
+def tvimap(map_data, title="", lut="inferno", vmin=None, vmax=None, filename=None):
     """
     Plot a 2D map using a colormap.
 
@@ -364,12 +365,13 @@ def tvimap(map_data, title='', lut='inferno',
         vmax (float): Maximum value for colormap scaling.
     """
     plt.figure()
-    img = plt.imshow(map_data, cmap=lut, vmin=vmin, vmax=vmax, origin='lower')
+    img = plt.imshow(map_data, cmap=lut, vmin=vmin, vmax=vmax, origin="lower")
     plt.title(title)
     plt.colorbar(img)
     if filename is not None:
         plt.savefig(filename)
     plt.show()
+
 
 ################################################
 
@@ -496,8 +498,7 @@ def tv_frames(TabFrame, scales=None, multiview=False):
         # > using multiview
         # TODO: update this code
         if multiview:
-            raise NotImplementedError(
-                "Multiview transform view not yet implemented.")
+            raise NotImplementedError("Multiview transform view not yet implemented.")
             window = pyqtgraph.image(numpy.asarray(transform[scale]))
             scroller.setWidget(window)
         # > using mosaic
@@ -546,8 +547,7 @@ def tv_frames(TabFrame, scales=None, multiview=False):
     app.exec_()
 
 
-def tvnima(images, ncol=1, nline=None, title=None,
-           scale=1, vmin=None, vmax=None):
+def tvnima(images, ncol=1, nline=None, title=None, scale=1, vmin=None, vmax=None):
     sns.set_style("ticks")
     n_images = len(images)
     if nline is None:

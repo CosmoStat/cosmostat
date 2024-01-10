@@ -363,8 +363,7 @@ class massmap2d:
             (nx, ny) = np.shape(g1)
             self.WT.init_starlet(nx, ny, gen2=1, l2norm=1, name="WT-MassMap")
         g = g1 + 1j * g2
-        return np.fft.ifft2(
-            (self.kernel1 - 1j * self.kernel2) * np.fft.fft2(g))
+        return np.fft.ifft2((self.kernel1 - 1j * self.kernel2) * np.fft.fft2(g))
 
     def gamma_to_kappa(self, g1, g2):
         """
@@ -644,23 +643,18 @@ class massmap2d:
             if OnlyPos is False:
                 if UseRea:
                     wsigma = WT_Sigma[j, :, :]
-                    ind = np.where(
-                        np.abs(wtscale) > wsigma *
-                        Nsig *
-                        self.WT.TabNorm[j])
+                    ind = np.where(np.abs(wtscale) > wsigma * Nsig * self.WT.TabNorm[j])
                     # WT_Support[j,:,:] = np.where( np.abs(self.WT.coef[j,:,:]) > WT_Sigma[j,:,:] * Nsig * self.WT.TabNorm[j], 1, 0)
                 else:
                     ind = np.where(
-                        np.abs(wtscale) > SigmaNoise *
-                        Nsig * self.WT.TabNorm[j]
+                        np.abs(wtscale) > SigmaNoise * Nsig * self.WT.TabNorm[j]
                     )
                     # WT_Support[j,:,:] = np.where( np.abs(self.WT.coef[j,:,:]) > SigmaNoise * Nsig * self.WT.TabNorm[j], 1, 0)
             else:
                 if UseRea:
                     wsigma = WT_Sigma[j, :, :]
                     # WT_Support[j,:,:] = np.where( self.WT.coef[j,:,:] > WT_Sigma[j,:,:] * Nsig * self.WT.TabNorm[j], 1, 0)
-                    ind = np.where(
-                        wtscale > wsigma * Nsig * self.WT.TabNorm[j])
+                    ind = np.where(wtscale > wsigma * Nsig * self.WT.TabNorm[j])
                 else:
                     T = SigmaNoise * Nsig * self.WT.TabNorm[j]
                     ind = np.where(wtscale > T)
@@ -721,10 +715,7 @@ class massmap2d:
     def mult_wiener(self, map, WienerFilterMap):
         """ " apply one wiener step in the iterative wiener filtering"""
         return np.fft.ifft2(
-            np.fft.fftshift(
-                WienerFilterMap *
-                np.fft.fftshift(
-                    np.fft.fft2(map)))
+            np.fft.fftshift(WienerFilterMap * np.fft.fftshift(np.fft.fft2(map)))
         )
 
     def wiener(self, gamma1, gamma2, PowSpecSignal, PowSpecNoise):
@@ -897,8 +888,7 @@ class massmap2d:
             r2[:, :] = mask * (g2 - t2)
             t1, t2 = self.H_adjoint_g2eb(r1, r2)
             xg[:, :] = xg + (t1 + 1j * t2)  # xg + H^T(eta / Sn * (y- H * xg))
-            xg[:, :] = self.step_dct_inpaint(
-                xg, xg, mask, n, niter, lmin, lmax)
+            xg[:, :] = self.step_dct_inpaint(xg, xg, mask, n, niter, lmin, lmax)
         return xg
 
     def get_resi(
@@ -1073,8 +1063,7 @@ class massmap2d:
                         "   it. Wiener Iter ",
                         n + 1,
                         ", Err = ",
-                        LA.norm((xg.real - ktr) * mask) /
-                        LA.norm(ktr * mask) * 100.0,
+                        LA.norm((xg.real - ktr) * mask) / LA.norm(ktr * mask) * 100.0,
                     )
                 else:
                     print(
@@ -1320,13 +1309,10 @@ class massmap2d:
                         n + 1,
                         ", Err = %5.4f"
                         % (
-                            np.std((xg.real[ind] - ktr[ind])) /
-                            np.std(ktr[ind]) * 100.0
+                            np.std((xg.real[ind] - ktr[ind])) / np.std(ktr[ind]) * 100.0
                         ),
-                        ", Resi ke (x100) =  %5.4f" % (
-                            np.std(resi1[ind]) * 100.0),
-                        ", Resi kb (x100) =  %5.4f" % (
-                            np.std(resi2[ind]) * 100.0),
+                        ", Resi ke (x100) =  %5.4f" % (np.std(resi1[ind]) * 100.0),
+                        ", Resi kb (x100) =  %5.4f" % (np.std(resi2[ind]) * 100.0),
                     )
                 else:
                     print(
@@ -1497,7 +1483,7 @@ class massmap2d:
             lmin = 0
             resi1, resi2 = self.get_resi(xg, gamma1, gamma2, WeightResi)
             self.WT.transform(resi1)
-            lmax = np.max(np.abs(self.WT.coef[0: self.WT.ns - 1, :, :]))
+            lmax = np.max(np.abs(self.WT.coef[0 : self.WT.ns - 1, :, :]))
 
         # Main iteration
         Verbose = self.Verbose
@@ -1523,8 +1509,7 @@ class massmap2d:
             rec[:, :] = self.WT.recons()
 
             if WT_Inpaint:
-                lval = lmin + (lmax - lmin) * \
-                    (1 - erf(2.8 * n / niter))  # exp decay
+                lval = lmin + (lmax - lmin) * (1 - erf(2.8 * n / niter))  # exp decay
                 self.WT.threshold(
                     SigmaNoise=1.0, Nsigma=lval, hard=False, KillCoarse=False
                 )
@@ -1534,8 +1519,7 @@ class massmap2d:
             # xg = self.step_wt_recons(t)
 
             if DCT_Inpaint:
-                rec[:, :] = self.step_dct_inpaint(
-                    xg, xn, mask, n, niter, lmin, lmax)
+                rec[:, :] = self.step_dct_inpaint(xg, xn, mask, n, niter, lmin, lmax)
                 rec[:, :] = (1 - mask) * rec + mask * xg.real
                 xg[:, :] = rec + Iz
 
@@ -1550,10 +1534,8 @@ class massmap2d:
                             / LA.norm(ktr * mask)
                             * 100.0
                         ),
-                        ", Resi ke (x100) =  %5.4f" % (
-                            LA.norm(resi1 * mask) * 100.0),
-                        ", Resi kb (x100) =  %5.4f" % (
-                            LA.norm(resi2 * mask) * 100.0),
+                        ", Resi ke (x100) =  %5.4f" % (LA.norm(resi1 * mask) * 100.0),
+                        ", Resi kb (x100) =  %5.4f" % (LA.norm(resi2 * mask) * 100.0),
                     )
                 else:
                     print(
@@ -1708,13 +1690,10 @@ class massmap2d:
                         n + 1,
                         ", Err = %5.4f"
                         % (
-                            np.std((xg.real[ind] - ktr[ind])) /
-                            np.std(ktr[ind]) * 100.0
+                            np.std((xg.real[ind] - ktr[ind])) / np.std(ktr[ind]) * 100.0
                         ),
-                        ", Resi ke (x100) =  %5.4f" % (
-                            np.std(resi1[ind]) * 100.0),
-                        ", Resi kb (x100) =  %5.4f" % (
-                            np.std(resi2[ind]) * 100.0),
+                        ", Resi ke (x100) =  %5.4f" % (np.std(resi1[ind]) * 100.0),
+                        ", Resi kb (x100) =  %5.4f" % (np.std(resi2[ind]) * 100.0),
                     )
                 else:
                     print(
@@ -1837,13 +1816,10 @@ class massmap2d:
                         n + 1,
                         ", Err = %5.4f"
                         % (
-                            np.std((xg.real[ind] - ktr[ind])) /
-                            np.std(ktr[ind]) * 100.0
+                            np.std((xg.real[ind] - ktr[ind])) / np.std(ktr[ind]) * 100.0
                         ),
-                        ", Resi ke (x100) =  %5.4f" % (
-                            np.std(resi1[ind]) * 100.0),
-                        ", Resi kb (x100) =  %5.4f" % (
-                            np.std(resi2[ind]) * 100.0),
+                        ", Resi ke (x100) =  %5.4f" % (np.std(resi1[ind]) * 100.0),
+                        ", Resi kb (x100) =  %5.4f" % (np.std(resi2[ind]) * 100.0),
                     )
                 else:
                     print(
