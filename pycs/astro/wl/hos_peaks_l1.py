@@ -746,6 +746,7 @@ def test_hos_test1(lut="inferno"):
     M.niter_debias = 30
     M.Verbose = True
 
+    sig = 3
     M.Verbose = True
     ProxMSE, ProxMSE_B = M.prox_mse(g1, g2, Ncov, ktr=ktr, Inpaint=True, sigma=0)
     tvilut(ProxMSE, title="Prox MSE with Inpainting", lut=lut)

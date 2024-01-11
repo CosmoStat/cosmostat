@@ -129,6 +129,111 @@ class shear_data:
 #     a = np.random.normal(loc=0.0, scale=10.0, size=[200])
 
 
+def massmap_get_rms_error(Res, TrueSol, Mask, sigma=0):
+    if sigma > 0:
+        Resi = smooth2d(TrueSol - Res, sigma) * Mask
+        TS = smooth2d(TrueSol, sigma) * Mask
+    else:
+        Resi = (TrueSol - Res) * Mask
+        TS = TrueSol * Mask
+    ind = np.where(Mask != 0)
+    Resi[ind] = Resi[ind] - np.mean(Resi[ind])
+    TS[ind] = TS[ind] - np.mean(TS[ind])
+    Err =  LA.norm(Resi) / LA.norm(TrueSol*Mask) * 100.
+    return Err
+
+
+# =============================================================================
+# def new_dct_inpainting(image, mask, niter=100, thresholding="hard",MultiScaleConstraint=None):
+#     """Fill in gaps in an image using the Discrete Cosine Transform (DCT).
+# 
+#     Parameters
+#     ----------
+#     image : array_like (2D)
+#         Input image.
+#     mask : array_like (2D)
+#         Boolean or binary mask representing the missing pixels of `image`.
+#         False or zero pixel values are considered to be masked.
+#     niter : int, optional
+#         Number of iterations. Default is 100.
+#     thresholding : {'soft', 'hard'}, optional
+#         Type of thresholding. Default is 'hard'.
+#     MultiScaleConstraint: boolean, optional
+#         If true, force the variance of the solution at every wavelet scale to the same
+#         in and out the mask. By default the variance constraint is only applied on the image
+#         at full resolution. 
+#     Returns
+#     -------
+#     2D numpy array
+#         Inpainted image.
+# 
+#     References
+#     ----------
+#     * Elad, Starck, Querre, & Donoho, ACHA 19, 340 (2005)
+#     * Pires, Starck, Amara, et al., MNRAS 395, 1265 (2009)
+# 
+#     """
+#     # Check inputs
+#     assert image.shape == mask.shape, "Incompatible mask."
+#     assert thresholding in ("soft", "hard"), "Invalid thresholding."
+# 
+#     # Enforce binary mask condition
+#     mask = mask.astype(bool).astype(float)
+# 
+#     # Set threshold limits
+#     lmax = np.max(np.abs(dct2d(image, norm="ortho")))
+#     lmin = 0
+# 
+#     if  MultiScaleConstraint is not None:
+#         WT = starlet2d(gen2=True,l2norm=False, verb=False)
+#         (nx, ny) = image.shape
+#         ns = int(np.log (np.min([nx,ny])))
+#         WT.init_starlet(nx, ny, nscale=ns)
+#     
+#     # Do iterative inpainting
+#     result = np.copy(image)
+#     residual = np.zeros_like(image)
+#     for ii in range(niter):
+#         # Change basis with DCT
+#         update = result
+#         alpha = dct2d(update, norm="ortho")
+#         # Threshold coefficients
+#         # lval = lmax - ii * (lmax - lmin) / (niter - 1)  # linear decay
+#         lval = lmin + (lmax - lmin) * (1 - erf(2.8 * ii / niter))  # exp decay
+#         new_alpha = np.copy(alpha)  # Can we do this without copying ?
+#         if thresholding == "hard":
+#             new_alpha[np.abs(new_alpha) <= lval] = 0
+#         else:
+#             new_alpha = np.abs(new_alpha) - lval
+#             new_alpha[new_alpha < 0] = 0
+#             new_alpha = np.sign(alpha) * new_alpha
+#         # Go back to direct space
+#         result = idct2d(new_alpha, norm="ortho")
+#         
+#         # Enforce std. dev. constraint inside the mask
+#         std_out = result[mask.astype(bool)].std()
+#         std_in = result[~mask.astype(bool)].std()
+#         if std_in != 0:
+#             if  MultiScaleConstraint is None:
+#                     result[~mask.astype(bool)] *= std_out / std_in
+#             else:
+#                 WT.transform(result)
+#                 for j in range(WT.ns):
+#                     scale = WT.get_scale(j)
+#                     scale[~mask.astype(bool)] *= std_out / std_in
+#                     WT.put_scale(scale, j)
+#                     result = WT.recons()
+# 
+#         # Compute residual
+#         residual = (image - result)*mask
+#         # print("Iter ", ii+1, ": Err = ", np.std(residual))
+#         # Take a step
+#         result += residual
+#         
+#     return result
+# 
+# =============================================================================
+
 class massmap2d:
     """Mass Mapping class
     This class contains the tools to reconstruct mass maps from shear measurements
@@ -218,7 +323,7 @@ class massmap2d:
             DESCRIPTION.
 
         """
-        return dct_inpainting(kappa, mask, niter=niter)
+        return dct_inpainting(kappa, mask, niter=niter, thresholding="soft")
 
     def get_theo_kappa_power_spectum(
         self, d, niter=None, PowSpecNoise=None, FirstFreqNoNoise=1
@@ -752,8 +857,7 @@ class massmap2d:
         ind = np.where(Den != 0)
         Wfc = np.zeros((nx, ny))
         Wfc[ind] = Ps_map[ind] / Den[ind]
-        # xg + H^T(eta / Sn * (y- H * xg))
-        t = self.gamma_to_cf_kappa(gamma1, gamma2)
+        t = self.gamma_to_cf_kappa(gamma1, gamma2)  # xg + H^T(eta / Sn * (y- H * xg))
         kw = self.mult_wiener(t, Wfc)
         retr = np.zeros((nx, ny))
         reti = np.zeros((nx, ny))
@@ -770,9 +874,7 @@ class massmap2d:
         lmax = np.max(np.abs(dct2d(eb.real, norm="ortho")))
         return lmax
 
-    def step_dct_inpaint(
-        self, xg, xn, mask, n, niter, lmin, lmax, InpaintAlsoImag=True
-    ):
+    def step_dct_inpaint(self, xg, xn, mask, n, niter, lmin, lmax, InpaintAlsoImag=True):
         """
         Apply one step of a iterative DCT inpainting method.
         First, we replace in xg value in mask[] == 0, obtained from the previous
@@ -819,7 +921,7 @@ class massmap2d:
         std_out = rec[mask.astype(bool)].std()
         std_in = rec[~mask.astype(bool)].std()
 
-        MultiScaleConstraint = False
+        MultiScaleConstraint = False # it seems not improving the result
         if std_in != 0:
             if not MultiScaleConstraint:
                 rec[~mask.astype(bool)] *= std_out / std_in
@@ -1059,12 +1161,8 @@ class massmap2d:
 
             if self.Verbose:
                 if ktr is not None:
-                    print(
-                        "   it. Wiener Iter ",
-                        n + 1,
-                        ", Err = ",
-                        LA.norm((xg.real - ktr) * mask) / LA.norm(ktr * mask) * 100.0,
-                    )
+                    Err = massmap_get_rms_error(xg.real, ktr, mask, sigma=0)
+                    print("   it. Wiener Iter ",n + 1,", Err = ",Err)
                 else:
                     print(
                         "   Wiener rec Iter: ",
@@ -1077,6 +1175,125 @@ class massmap2d:
         #              print("Iter ", n+1, ", Err = ", LA.norm(xg.real - ktr) / LA.norm(ktr) * 100.)
         return xg.real, xg.imag
 
+    def test(self):
+        print("hello")
+
+    def prox_mse(
+        self,
+        gamma1,
+        gamma2,
+        NcvIn,
+        niter=None,
+        Inpaint=True,
+        sigma=None,
+        ktr=None,
+        PropagateNoise=None,
+    ):
+        """
+        Compute the Mean Square Error Estimator of the mass map
+        considering not stationary noise, with an inpainting of the missing data.
+
+        Parameters
+        ----------
+        gamma1,  gamma2: 2D np.ndarray
+            shear fied.
+        Ncv : 2D np.ndarray
+            Diagonal covariance matrix (same size as gamma1 and gamm2), i.e. variance per pixel
+        niter: int
+            number of iterations. Default is DEF_niter
+        Inpaint: bool, optional
+            if true, inpainting the missing data. Default is True.
+        sigma: float
+            if set, a regularizing smoothing is applied to the solution.
+            Default is no.
+        ktr: 2D np.ndarray, optional
+            true convergence map, known in case simulated data are used.
+            if given, errors are calculated at each iteration.
+        PropagateNoise: Bool, optional
+            if True, run the routine on a noise realization instead of the input shear field.
+        Returns
+        -------
+        TYPE  2D np.ndarray
+              (E,B) reconstructed modes. Convergence = E
+        """
+        if niter is None:
+            niter = self.DEF_niter
+        (nx, ny) = gamma1.shape
+        if self.Verbose:
+            print("Proxinal MSE estimator: ", nx, ny, ", Niter = ", niter)
+        Ncv = NcvIn / 2.0
+        Ncv[Ncv == 0] = 1e9  # infinite value for no measurement
+        index = np.where(Ncv < 1e2)
+        mask = np.zeros((nx, ny))
+        mask[index] = 1
+
+        xg = np.zeros((nx, ny)) + 1j * np.zeros((nx, ny))
+        
+
+        # find the minimum noise variance
+        ind = np.where(Ncv != 0)
+        tau = np.min(Ncv[ind])
+
+        # set the step size
+        # eta = 1.83 * tau
+        eta = tau
+        # compute signal coefficient
+        Esn = eta / Ncv
+        Esn[Esn == np.inf] = 0
+        
+        if PropagateNoise is not None:
+            n1, n2 = PropagateNoise.get_shear_noise()
+            n1 = n1 * mask
+            n2 = n2 * mask
+            gamma1 = n1
+            gamma2 = n2
+        
+        xg =  self.gamma_to_cf_kappa(gamma1,gamma2) 
+        lmin=0
+        lmax = self.get_lmax_dct_inpaint(xg.real, xg.imag)
+# =============================================================================
+#         if Inpaint:
+#             u1 = xg.real
+#             u2 = xg.imag
+#             u1 = new_dct_inpainting(u1, mask, niter=100, thresholding="hard", MultiScaleConstraint=None)
+#             u2 = new_dct_inpainting(u2, mask, niter=100, thresholding="hard", MultiScaleConstraint=None)
+#             xg = u1 + 1j * u2
+#         
+#             tvilut(u1)
+#             tvilut(u2)
+# =============================================================================
+        for n in range(niter):
+            xn = np.copy(xg)
+            t1, t2 = self.get_resi(xg, gamma1, gamma2, Esn)
+            # print("T1     Sigma = ", np.std(t1), ", Max = ", np.max(t1))
+
+            xg = xg + (t1 + 1j * t2)  # xg + H^T(eta / Sn * (y- H * xg))
+    
+            # print("     Sigma = ", np.std(xg), ", Max = ", np.max(xg))
+            # info(xg.real,name="XGR=>")
+
+            if sigma is not None:
+                ksg = ndimage.filters.gaussian_filter(xg.real, sigma=sigma)
+                ksbg = ndimage.filters.gaussian_filter(xg.imag, sigma=sigma)
+                xg = ksg + 1j * ksbg
+            
+            if Inpaint:
+                xg[:, :] = self.step_dct_inpaint(xg, xg, mask, n, niter, lmin, lmax)
+
+            if self.Verbose:
+                if ktr is not None:
+                    Err = massmap_get_rms_error(xg.real, ktr, mask, sigma=0)
+                    print("   Prox MSE Iter ",n + 1,", Err = ",Err)
+                else:
+                    print("   Prox MSE rec Iter: ",n + 1,", std ke =  %5.4f" % (np.std(xg[ind] / tau)))
+
+        #       xg.real = M.inpaint(xg.real, mask, 50)
+        #          if ktr is not None:
+        #              print("Iter ", n+1, ", Err = ", LA.norm(xg.real - ktr) / LA.norm(ktr) * 100.)
+        
+        return xg.real, xg.imag
+    
+    
     def sparse_wiener_filtering(
         self,
         InshearData,
@@ -1800,8 +2017,7 @@ class massmap2d:
                     Esn * (gamma1 - t1), Esn * (gamma2 - t2)
                 )  # H^T(eta / Sn * (y- H * xg))
                 t = xg + (t1 + 1j * t2)  # xg + H^T(eta / Sn * (y- H * xg))
-                # wiener filtering in fourier space
-                xg = self.mult_wiener(t, Wfc)
+                xg = self.mult_wiener(t, Wfc)  # wiener filtering in fourier space
 
             xg = xg + xs
             if Inpaint:
@@ -1839,3 +2055,6 @@ class massmap2d:
 
 # if __name__ == '__main__':
 #     print ( "Main :)")
+
+
+
