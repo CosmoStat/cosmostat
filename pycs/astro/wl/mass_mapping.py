@@ -2060,3 +2060,170 @@ class massmap2d:
 
 # if __name__ == '__main__':
 #     print ( "Main :)")
+
+
+# from lenspack.utils 
+def bin2d(x, y, npix=10, v=None, w=None, extent=None, verbose=False):
+    """Bin samples of a spatially varying quantity according to position.
+
+    The (weighted) average is taken of values falling into the same bin. This
+    function is relatively general, but it is mainly used within this package
+    to produce maps of the two components of shear from a galaxy catalog.
+
+    Parameters
+    ----------
+    x, y : array_like
+        1D position arrays.
+    npix : int or list or tuple as (nx, ny), optional
+        Number of bins in the `x` and `y` directions. If an int N is given,
+        use (N, N). Binning defaults to (10, 10) if not provided.
+    v : array_like, optional
+        Values at positions (`x`, `y`). This can be given as many arrays
+        (v1, v2, ...) of len(`x`) to bin simultaneously. If None, the bin
+        count in each pixel is returned.
+    w : array_like, optional
+        Weights for `v` during averaging. If provided, the same weights are
+        applied to each input `v`.
+    extent : array_like, optional
+        Boundaries of the resulting grid, given as (xmin, xmax, ymin, ymax).
+        If None, bin edges are set as the min/max coordinate values of the
+        input position arrays.
+    verbose : boolean, optional
+        If True, print details of the binning.
+
+    Returns
+    -------
+    ndarray or tuple of ndarray
+        2D numpy arrays of values `v` binned into pixels. The number of
+        outputs matches the number of input `v` arrays.
+
+    Examples
+    --------
+    >>> # 100 values at random positions within the ranges -0.5 < x, y < 0.5
+    >>> # and binned within -1 < x, y < 1 to a (5, 5) grid.
+    >>> x = np.random.random(100) - 0.5
+    >>> y = np.random.random(100) - 0.5
+    >>> v = np.random.randn(100) * 5
+    >>> bin2d(x, y, v=v, npix=5, extent=(-1, 1, -1, 1))
+    array([[ 0.        ,  0.        ,  0.        ,  0.        ,  0.        ],
+           [ 0.        ,  4.43560619, -2.33308373,  0.48447844,  0.        ],
+           [ 0.        ,  1.94903524, -0.29253335,  1.3694618 ,  0.        ],
+           [ 0.        , -1.0202718 ,  0.37112266, -1.43062585,  0.        ],
+           [ 0.        ,  0.        ,  0.        ,  0.        ,  0.        ]])
+
+    """
+    # Regroup extent if necessary
+    if extent is not None:
+        assert len(extent) == 4
+        extent = [extent[:2], extent[2:]]
+
+    if v is None:
+        # Return the simple bin count map
+        bincount, xbins, ybins = np.histogram2d(x, y, bins=npix, range=extent)
+        result = bincount.T
+    else:
+        # Prepare values to bin
+        v = np.atleast_1d(v)
+        if len(v.shape) == 1:
+            v = v.reshape(1, len(v))
+
+        # Prepare weights
+        if w is not None:
+            w = np.atleast_1d(w)
+            has_weights = True
+        else:
+            w = np.ones_like(x)
+            has_weights = False
+
+        # Compute weighted bin count map
+        wmap, xbins, ybins = np.histogram2d(x, y, bins=npix, range=extent,
+                                            weights=w)
+        # Handle division by zero (i.e., empty pixels)
+        wmap[wmap == 0] = np.inf
+        # Compute mean values per pixel
+        result = tuple((np.histogram2d(x, y, bins=npix, range=extent,
+                        weights=(vv * w))[0] / wmap).T for vv in v)
+
+        # Clean up
+        if len(result) == 1:
+            result = result[0]
+
+    if verbose:
+        if v is not None:
+            print("Binning {} array{} with{} weights.".format(len(v),
+                  ['', 's'][(len(v) > 1)], ['out', ''][has_weights]))
+        else:
+            print("Returning bin count map.")
+        print("npix : {}".format(npix))
+        print("extent : {}".format([xbins[0], xbins[-1], ybins[0], ybins[-1]]))
+        print("(dx, dy) : ({}, {})".format(xbins[1] - xbins[0],
+                                           ybins[1] - ybins[0]))
+
+    return result
+
+
+# from lenspack.geometry.projections.gnom 
+def radec2xy(ra0, dec0, ra, dec):
+    """Project spherical sky coordinates to a tangent plane.
+
+    Parameters
+    ----------
+    ra0 : float
+        Right ascension of the projection origin.
+    dec0 : float
+        Declination of the projection origin.
+    ra : float or array_like
+        Right ascension of point(s) to project.
+    dec : float or array_like
+        Declination of point(s) to project.
+
+    Notes
+    -----
+    All input units are assumed to be degrees.
+
+    Returns
+    -------
+    x, y : tuple of floats or numpy arrays
+        Projected coordinate(s) in the tangent plane relative to (0, 0), i.e.
+        the origin in the projected space.
+
+    Raises
+    ------
+    Exception
+        For input arrays of different sizes.
+
+    Examples
+    --------
+    ...
+
+    """
+    # Standardize inputs
+    ra = np.atleast_1d(ra)
+    dec = np.atleast_1d(dec)
+
+    if len(ra) != len(dec):
+        raise Exception("Input ra and dec must have the same length.")
+
+    # Convert input coordinates to radians
+    alpha0 = np.deg2rad(ra0)
+    delta0 = np.deg2rad(dec0)
+    alpha = np.deg2rad(ra)
+    delta = np.deg2rad(dec)
+
+    # Project points
+    denom = (np.cos(delta0) * np.cos(delta) * np.cos(alpha - alpha0) +
+             np.sin(delta0) * np.sin(delta))
+    x = np.cos(delta) * np.sin(alpha - alpha0) / denom
+    y = ((np.cos(delta0) * np.sin(delta) -
+          np.sin(delta0) * np.cos(delta) * np.cos(alpha - alpha0)) / denom)
+
+    # Potentially remove unnecessary array layers
+    if len(x) == 1:
+        x, y = x[0], y[0]
+
+    return x, y
+
+
+
+
+
