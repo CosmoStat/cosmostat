@@ -2062,7 +2062,7 @@ class massmap2d:
 #     print ( "Main :)")
 
 
-# from lenspack.utils 
+# from lenspack.utils
 def bin2d(x, y, npix=10, v=None, w=None, extent=None, verbose=False):
     """Bin samples of a spatially varying quantity according to position.
 
@@ -2136,13 +2136,17 @@ def bin2d(x, y, npix=10, v=None, w=None, extent=None, verbose=False):
             has_weights = False
 
         # Compute weighted bin count map
-        wmap, xbins, ybins = np.histogram2d(x, y, bins=npix, range=extent,
-                                            weights=w)
+        wmap, xbins, ybins = np.histogram2d(x, y, bins=npix, range=extent, weights=w)
         # Handle division by zero (i.e., empty pixels)
         wmap[wmap == 0] = np.inf
         # Compute mean values per pixel
-        result = tuple((np.histogram2d(x, y, bins=npix, range=extent,
-                        weights=(vv * w))[0] / wmap).T for vv in v)
+        result = tuple(
+            (
+                np.histogram2d(x, y, bins=npix, range=extent, weights=(vv * w))[0]
+                / wmap
+            ).T
+            for vv in v
+        )
 
         # Clean up
         if len(result) == 1:
@@ -2150,19 +2154,21 @@ def bin2d(x, y, npix=10, v=None, w=None, extent=None, verbose=False):
 
     if verbose:
         if v is not None:
-            print("Binning {} array{} with{} weights.".format(len(v),
-                  ['', 's'][(len(v) > 1)], ['out', ''][has_weights]))
+            print(
+                "Binning {} array{} with{} weights.".format(
+                    len(v), ["", "s"][(len(v) > 1)], ["out", ""][has_weights]
+                )
+            )
         else:
             print("Returning bin count map.")
         print("npix : {}".format(npix))
         print("extent : {}".format([xbins[0], xbins[-1], ybins[0], ybins[-1]]))
-        print("(dx, dy) : ({}, {})".format(xbins[1] - xbins[0],
-                                           ybins[1] - ybins[0]))
+        print("(dx, dy) : ({}, {})".format(xbins[1] - xbins[0], ybins[1] - ybins[0]))
 
     return result
 
 
-# from lenspack.geometry.projections.gnom 
+# from lenspack.geometry.projections.gnom
 def radec2xy(ra0, dec0, ra, dec):
     """Project spherical sky coordinates to a tangent plane.
 
@@ -2211,19 +2217,17 @@ def radec2xy(ra0, dec0, ra, dec):
     delta = np.deg2rad(dec)
 
     # Project points
-    denom = (np.cos(delta0) * np.cos(delta) * np.cos(alpha - alpha0) +
-             np.sin(delta0) * np.sin(delta))
+    denom = np.cos(delta0) * np.cos(delta) * np.cos(alpha - alpha0) + np.sin(
+        delta0
+    ) * np.sin(delta)
     x = np.cos(delta) * np.sin(alpha - alpha0) / denom
-    y = ((np.cos(delta0) * np.sin(delta) -
-          np.sin(delta0) * np.cos(delta) * np.cos(alpha - alpha0)) / denom)
+    y = (
+        np.cos(delta0) * np.sin(delta)
+        - np.sin(delta0) * np.cos(delta) * np.cos(alpha - alpha0)
+    ) / denom
 
     # Potentially remove unnecessary array layers
     if len(x) == 1:
         x, y = x[0], y[0]
 
     return x, y
-
-
-
-
-
