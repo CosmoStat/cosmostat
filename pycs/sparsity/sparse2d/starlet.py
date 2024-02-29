@@ -60,36 +60,6 @@ if PYSAP_CXX is False:
 # print("PYSAP_CXX = ", PYSAP_CXX)
 
 
-def test_ind(ind, N):
-    """
-    function to handle the border using a mirror effect.
-    If the index is < 0 or >= N, where N is the size of image in one direction,
-    it returns the correct index in [0,N-1], using mirror effect.
-    Parameters
-    ----------
-    ind : TYPE
-        DESCRIPTION.
-    N : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    res : TYPE
-        DESCRIPTION.
-
-    """
-    res = ind
-    if ind < 0:
-        res = -ind
-        if res >= N:
-            res = 2 * N - 2 - ind
-    if ind >= N:
-        res = 2 * N - 2 - ind
-        if res < 0:
-            res = -ind
-    return res
-
-
 def b3splineTrans(im_in, step):
     """
     Apply a 2d B-spline smmothing to an image, using holes in the smoothing
@@ -101,44 +71,50 @@ def b3splineTrans(im_in, step):
     step : int
         the hole size.
 
-
-
     Returns
     -------
     im_out : 2D np.ndarray
         smoothed image.
     """
     (nx, ny) = np.shape(im_in)
-    im_out = np.zeros((nx, ny))
     c1 = 1.0 / 16
     c2 = 1.0 / 4
     c3 = 3.0 / 8
 
-    buff = np.zeros((nx, ny))
+    im_in_pad = np.pad(
+        im_in, (
+            (0, 0),
+            (2 * step, 2 * step)
+        ), mode='reflect'
+    )
+    im_in_shiftl = im_in_pad[:, step:step+ny]
+    im_in_shiftr = im_in_pad[:, -step-ny:-step]
+    im_in_shiftl2 = im_in_pad[:, :ny]
+    im_in_shiftr2 = im_in_pad[:, -ny:]
 
-    for i in np.arange(nx):
-        for j in np.arange(ny):
-            jl = test_ind(j - step, ny)
-            jr = test_ind(j + step, ny)
-            jl2 = test_ind(j - 2 * step, ny)
-            jr2 = test_ind(j + 2 * step, ny)
-            buff[i, j] = (
-                c3 * im_in[i, j]
-                + c2 * (im_in[i, jl] + im_in[i, jr])
-                + c1 * (im_in[i, jl2] + im_in[i, jr2])
-            )
+    im_out = np.zeros((nx, ny))
+    buff = (
+        c3 * im_in
+        + c2 * (im_in_shiftl + im_in_shiftr)
+        + c1 * (im_in_shiftl2 + im_in_shiftr2)
+    )
 
-    for j in np.arange(ny):
-        for i in np.arange(nx):
-            il = test_ind(i - step, nx)
-            ir = test_ind(i + step, nx)
-            il2 = test_ind(i - 2 * step, nx)
-            ir2 = test_ind(i + 2 * step, nx)
-            im_out[i, j] = (
-                c3 * buff[i, j]
-                + c2 * (buff[il, j] + buff[ir, j])
-                + c1 * (buff[il2, j] + buff[ir2, j])
-            )
+    buff_pad = np.pad(
+        buff, (
+            (2 * step, 2 * step),
+            (0, 0)
+        ), mode='reflect'
+    )
+    buff_shiftl = buff_pad[step:step+nx]
+    buff_shiftr = buff_pad[-step-nx:-step]
+    buff_shiftl2 = buff_pad[:nx]
+    buff_shiftr2 = buff_pad[-nx:]
+
+    im_out = (
+        c3 * buff
+        + c2 * (buff_shiftl + buff_shiftr)
+        + c1 * (buff_shiftl2 + buff_shiftr2)
+    )
 
     return im_out
 
@@ -270,9 +246,7 @@ def istar2d(wt, gen2=True, bord=0, nb_procs=0, fast=True, verb=0):
     # PYSAP_CXX=0
     if PYSAP_CXX is True:
         # print("RECBINDING: ", head, ", norm = ", l2norm)
-        dat_list = []
-        for s in range(nz):
-            dat_list.append(wt[s, :, :].astype(np.float64))
+        dat_list = list(wt.astype(np.float64))
         psWT = pysparse.MRStarlet(bord, gen2, nb_procs, verb)
         imRec = (psWT.recons(dat_list)).astype(np.double)
     else:
@@ -353,9 +327,7 @@ def adstar2d(wtOri, gen2=True, bord=0, nb_procs=0, fast=True, verb=0):
     wt = np.copy(wtOri)
     if PYSAP_CXX is True:
         # print("BINDING")
-        dat_list = []
-        for s in range(nz):
-            dat_list.append((wt[s, :, :]).astype(float))
+        dat_list = list(wt.astype(float))
         psWT = pysparse.MRStarlet(bord, gen2, nb_procs, verb)
         imRec = (psWT.recons(dat_list, True)).astype(double)
     else:
@@ -578,8 +550,7 @@ class starlet2d:
         """
         wt = np.copy(self.coef)
         if self.l2norm:
-            for i in np.arange(self.ns):
-                wt[i, :, :] *= self.Starlet_Gen1TabNorm[i]
+            wt *= self.Starlet_Gen1TabNorm[:, np.newaxis, np.newaxis]
         if adjoint:
             rec = adstar2d(
                 wt,
@@ -881,17 +852,16 @@ class starlet2d:
             Detection level per scale.
         """
         TabNsigma = np.zeros(nscale)
-        for j in np.arange(nscale):
-            vssig = vsize(Nsigma)
-            if vssig[0] == 0:
-                TabNsigma[j] = Nsigma
-                if j == 0:
-                    TabNsigma[j] += 1
+        vssig = vsize(Nsigma)
+        if vssig[0] == 0:
+            TabNsigma = np.full(nscale, Nsigma)
+            TabNsigma[0] += 1
+        else:
+            if vssig[1] < nscale:
+                extension = np.full(nscale - vssig[1], Nsigma[-1])
+                TabNsigma = np.concatenate([Nsigma, extension])
             else:
-                if vssig[1] > j:
-                    TabNsigma[j] = Nsigma[j]
-                else:
-                    TabNsigma[j] = Nsigma[vssig[1] - 1]
+                TabNsigma = Nsigma[:nscale]
         return TabNsigma
 
     def threshold(

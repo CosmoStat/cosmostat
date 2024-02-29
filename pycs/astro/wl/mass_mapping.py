@@ -39,20 +39,17 @@ def get_ima_spectrum_map(Px, nx, ny):
         2D image.
     """
     Np = Px.shape[0]
-    #    print("nx = ", nx, ", ny = ", ny, ", np = ", Np)
-    k_map = np.zeros((nx, ny))
-    power_map = np.zeros((nx, ny))
-    #    info(k_map)
-    for (i, j), val in np.ndenumerate(power_map):
-        k1 = i - nx / 2.0
-        k2 = j - ny / 2.0
-        k_map[i, j] = np.sqrt(k1 * k1 + k2 * k2)
-        if k_map[i, j] == 0:
-            power_map[i, j] = 0.0
-        else:
-            ip = int(k_map[i, j])
-            if ip < Np:
-                power_map[i, j] = Px[ip]
+    Px[0] = 0. # set the zero frequency to zero
+    Px = np.append(Px, 0) # set to 0 all frequencies above Np
+    k1, k2 = np.meshgrid(
+        np.arange(nx) - nx / 2.0,
+        np.arange(ny) - ny / 2.0,
+        indexing='ij'
+    )
+    ip = np.sqrt(k1**2 + k2**2).astype(int) # map of frequency norms
+    ip[ip > Np] = Np
+    power_map = Px[ip] # 2D power spectrum (isotropic)
+
     return power_map
 
 

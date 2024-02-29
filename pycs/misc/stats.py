@@ -366,6 +366,10 @@ def get_grf(size, intput_power_map=None):
     np array
         2D images.
     """
+    # TODO: remove for loops for this code
+    # TODO: check this code; it seems like
+    #       `map_fourier[size - i, size - j] = np.conj(power_sample[i, j])`
+    # is overwriting the line just above.
     k_map = np.zeros((size, size), dtype=float)
     power_map = np.zeros((size, size), dtype=float)
     for (i, j), val in np.ndenumerate(power_map):

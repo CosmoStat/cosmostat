@@ -228,9 +228,7 @@ def vsize(Data):
         dim = d.ndim
         vs = np.zeros([dim + 1], dtype=np.int64)
         vs[0] = dim
-        size = np.array(d.shape)
-        for i in np.arange(dim):
-            vs[i + 1] = size[i]
+        vs[1:] = np.array(d.shape)
     return vs
 
 
