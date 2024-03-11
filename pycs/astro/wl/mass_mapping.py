@@ -1051,10 +1051,8 @@ class massmap2d:
 
     def prox_wiener_filtering(
         self,
-        gamma1,
-        gamma2,
+        InshearData,
         PowSpecSignal,
-        NcvIn,
         Pn=None,
         niter=None,
         Inpaint=False,
@@ -1068,12 +1066,10 @@ class massmap2d:
             "CMB map restoration", Advances in Astronomy , 2012, Id703217, 2012.
         Parameters
         ----------
-        gamma1,  gamma2: 2D np.ndarray
-            shear fied.
+        InshearData : Shear Class
+            Class contains the shear information.
         PowSpecSignal : 1D np.ndarray
             Signal theorical power spectrum.
-        Ncv : 2D np.ndarray
-            Diagonal covariance matrix (same size as gamma1 and gamm2), i.e. variance per pixel
         Pn: 1D np.ndarray, optional
             noise theorical power spectrum.
         niter: int
@@ -1095,7 +1091,7 @@ class massmap2d:
         (nx, ny) = gamma1.shape
         if self.Verbose:
             print("Iterative Wiener filtering: ", nx, ny, ", Niter = ", niter)
-        Ncv = NcvIn / 2.0
+        Ncv = InshearData.Ncov / 2.0
         Ncv[Ncv == 0] = 1e9  # infinite value for no measurement
         index = np.where(Ncv < 1e2)
         mask = np.zeros((nx, ny))
@@ -1140,7 +1136,7 @@ class massmap2d:
         # print("lmax = ", lmax)
 
         if PropagateNoise is not None:
-            n1, n2 = PropagateNoise.get_shear_noise()
+            n1, n2 = InshearData.get_shear_noise()
             n1 = n1 * mask
             n2 = n2 * mask
             gamma1 = n1
@@ -1180,9 +1176,7 @@ class massmap2d:
 
     def prox_mse(
         self,
-        gamma1,
-        gamma2,
-        NcvIn,
+        InshearData,
         niter=None,
         Inpaint=True,
         sigma=None,
@@ -1195,10 +1189,8 @@ class massmap2d:
 
         Parameters
         ----------
-        gamma1,  gamma2: 2D np.ndarray
-            shear fied.
-        Ncv : 2D np.ndarray
-            Diagonal covariance matrix (same size as gamma1 and gamm2), i.e. variance per pixel
+        InshearData : Shear Class
+            Class contains the shear information.
         niter: int
             number of iterations. Default is DEF_niter
         Inpaint: bool, optional
@@ -1221,7 +1213,7 @@ class massmap2d:
         (nx, ny) = gamma1.shape
         if self.Verbose:
             print("Proxinal MSE estimator: ", nx, ny, ", Niter = ", niter)
-        Ncv = NcvIn / 2.0
+        Ncv = InshearData.Ncov / 2.0
         Ncv[Ncv == 0] = 1e9  # infinite value for no measurement
         index = np.where(Ncv < 1e2)
         mask = np.zeros((nx, ny))
@@ -1241,7 +1233,7 @@ class massmap2d:
         Esn[Esn == np.inf] = 0
 
         if PropagateNoise is not None:
-            n1, n2 = PropagateNoise.get_shear_noise()
+            n1, n2 = InshearData.get_shear_noise()
             n1 = n1 * mask
             n2 = n2 * mask
             gamma1 = n1
