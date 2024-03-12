@@ -45,7 +45,7 @@ from scipy import signal
 
 
 def smooth2d(map, sigma):
-    return ndimage.filters.gaussian_filter(map, sigma=sigma)
+    return ndimage.gaussian_filter(map, sigma=sigma)
 
 
 def rebin2d(a, shape):

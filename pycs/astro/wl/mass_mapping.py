@@ -508,7 +508,7 @@ class massmap2d:
             Smoother array.
 
         """
-        return ndimage.filters.gaussian_filter(map, sigma=sigma)
+        return ndimage.gaussian_filter(map, sigma=sigma, axes=(-2, -1))
 
     def kaiser_squires(self, gam1, gam2, sigma=2.0):
         """
@@ -530,7 +530,7 @@ class massmap2d:
         -----
         """
         ks = self.gamma_to_cf_kappa(gam1, gam2)
-        ksg = ndimage.filters.gaussian_filter(ks.real, sigma=sigma)
+        ksg = ndimage.gaussian_filter(ks.real, sigma=sigma, axes=(-2, -1))
         return ksg
 
     # Fast interactive call to kaiser_squires
@@ -556,8 +556,8 @@ class massmap2d:
         -----
         """
         ks = self.gamma_to_cf_kappa(gam1, gam2)
-        ksg = ndimage.filters.gaussian_filter(ks.real, sigma=sigma)
-        ksbg = ndimage.filters.gaussian_filter(ks.imag, sigma=sigma)
+        ksg = ndimage.gaussian_filter(ks.real, sigma=sigma, axes=(-2, -1))
+        ksbg = ndimage.gaussian_filter(ks.imag, sigma=sigma, axes=(-2, -1))
         return ksg, ksbg
 
     def H_operator_eb2g(self, ka_map, kb_map):
@@ -1264,8 +1264,8 @@ class massmap2d:
             # info(xg.real,name="XGR=>")
 
             if sigma is not None:
-                ksg = ndimage.filters.gaussian_filter(xg.real, sigma=sigma)
-                ksbg = ndimage.filters.gaussian_filter(xg.imag, sigma=sigma)
+                ksg = ndimage.gaussian_filter(xg.real, sigma=sigma)
+                ksbg = ndimage.gaussian_filter(xg.imag, sigma=sigma)
                 xg = ksg + 1j * ksbg
 
             if Inpaint:
