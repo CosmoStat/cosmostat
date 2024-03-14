@@ -288,6 +288,8 @@ class massmap2d:
         denom[0, 0] = 1  # avoid division by 0
         self.kernel1 = (k1**2 - k2**2) / denom
         self.kernel2 = (2 * k1 * k2) / denom
+        self.ker_kappa2gamma = (k1 + 1j * k2)**2 / denom
+        self.ker_gamma2kappa = (k1 - 1j * k2)**2 / denom
         if self.Verbose:
             print(
                 "Init Mass Mapping: Nx = ",
@@ -427,10 +429,9 @@ class massmap2d:
         (Nx, Ny) = np.shape(kappa)[-2:]
         if self.nx != Nx or self.ny != Ny:
             self.init_massmap(Nx, Ny)
-        k = np.fft.fft2(kappa)
-        g1 = np.fft.ifft2(self.kernel1 * k)
-        g2 = np.fft.ifft2(self.kernel2 * k)
-        return g1.real - g2.imag, g2.real + g1.imag
+        out = np.fft.fft2(kappa)
+        out = np.fft.ifft2(self.ker_kappa2gamma * out)
+        return out.real, out.imag
 
     # Fast call
     def k2g(self, kappa):
@@ -455,10 +456,11 @@ class massmap2d:
         -----
         """
         if self.WT.nx == 0 or self.WT.ny == 0:
+            raise NotImplementedError # wrong arguments in self.WT.init_starlet
             nx, ny = np.shape(g1)[-2:]
             self.WT.init_starlet(nx, ny, gen2=1, l2norm=1, name="WT-MassMap")
-        g = g1 + 1j * g2
-        return np.fft.ifft2((self.kernel1 - 1j * self.kernel2) * np.fft.fft2(g))
+        out = np.fft.fft2(g1 + 1j * g2)
+        return np.fft.ifft2(self.ker_gamma2kappa * out)
 
     def gamma_to_kappa(self, g1, g2):
         """
@@ -567,14 +569,9 @@ class massmap2d:
         output shear field
         None.
         """
-        # ka_map and kb_map should be of the same size
-        ka_map_fft = np.fft.fft2(ka_map)
-        kb_map_fft = np.fft.fft2(kb_map)
-        kafc = self.kernel1 * ka_map_fft - self.kernel2 * kb_map_fft
-        kbfc = self.kernel1 * kb_map_fft + self.kernel2 * ka_map_fft
-        g1_map = np.fft.ifft2(kafc).real
-        g2_map = np.fft.ifft2(kbfc).real
-        return g1_map, g2_map
+        out = np.fft.fft2(ka_map + 1j * kb_map)
+        out = np.fft.ifft2(self.ker_kappa2gamma * out)
+        return out.real, out.imag
 
     # Fast interactice call to H_operator_eb2g
     def eb2g(self, ka_map, kb_map):
@@ -595,13 +592,9 @@ class massmap2d:
             output convergence field
         None.
         """
-        g1_map_ifft = np.fft.ifft2(g1_map)
-        g2_map_ifft = np.fft.ifft2(g2_map)
-        g1fc = self.kernel1 * g1_map_ifft + self.kernel2 * g2_map_ifft
-        g2fc = self.kernel1 * g2_map_ifft - self.kernel2 * g1_map_ifft
-        kappa1 = np.fft.fft2(g1fc).real
-        kappa2 = np.fft.fft2(g2fc).real
-        return kappa1, kappa2
+        out = np.fft.fft2(g1_map + 1j * g2_map)
+        out = np.fft.ifft2(self.ker_gamma2kappa * out)
+        return out.real, out.imag
 
     # Fast interactice call to H_adjoint_g2eb
     def g2eb(self, g1_map, g2_map):
@@ -989,8 +982,8 @@ class massmap2d:
         if self.Verbose:
             print(f"{msg}: ", nx, ny, ", Niter = ", niter)
         Ncv = InshearData.Ncov / 2.0 # shape = (nx, ny)
+        mask = (Ncv != 0).astype(int) # shape = (nx, ny)
         Ncv[Ncv == 0] = 1e9  # infinite value for no measurement
-        mask = (Ncv < 1e2).astype(int) # shape = (nx, ny)
 
         # find the minimum noise variance
         ind = np.where(Ncv != 0)
