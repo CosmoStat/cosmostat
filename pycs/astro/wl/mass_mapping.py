@@ -981,12 +981,16 @@ class massmap2d:
         nx, ny = gamma1.shape[-2:]
         if self.Verbose:
             print(f"{msg}: ", nx, ny, ", Niter = ", niter)
+
+        if not isinstance(InshearData.mask, np.ndarray):
+            mask = (InshearData.Ncov != 0).astype(int) # shape = (nx, ny)
+        else:
+            mask = InshearData.mask
+        InshearData.Ncov[InshearData.Ncov == 0] = 1e9  # infinite value for no measurement
         Ncv = InshearData.Ncov / 2.0 # shape = (nx, ny)
-        mask = (Ncv != 0).astype(int) # shape = (nx, ny)
-        Ncv[Ncv == 0] = 1e9  # infinite value for no measurement
 
         # find the minimum noise variance
-        ind = np.where(Ncv != 0)
+        ind = np.where(Ncv != 0) # TODO: useless if we have set Ncv[mask == 0] = 1e9 before
         tau = np.min(Ncv[ind])
 
         # set the step size
@@ -994,7 +998,7 @@ class massmap2d:
         eta = tau
         # compute signal coefficient
         Esn = eta / Ncv # shape = (nx, ny)
-        Esn[Esn == np.inf] = 0
+        Esn[Esn == np.inf] = 0 # TODO: useless if we have set Ncv[mask == 0] = 1e9 before
 
         return gamma1, gamma2, nx, ny, eta, Esn, mask, ind, tau, niter
     
