@@ -112,6 +112,10 @@ def hthres(alpha, Thres):
 
 
 def hard_thresholding(alpha, Thres):
+    # alpha: shape = ([nimgs], [Nrea], ns, nx, ny)
+    # Thres: shape = (ns, [nx, ny])
+    if Thres.ndim == 1:
+        Thres = Thres[..., np.newaxis, np.newaxis]
     alpha[np.abs(alpha) <= Thres] = 0
 
 
@@ -119,9 +123,13 @@ def hard_thresholding(alpha, Thres):
 
 
 def soft_thresholding(alpha, Thres):
-    Res = np.copy(np.abs(alpha)) - Thres
+    # alpha: shape = ([nimgs], [Nrea], ns, nx, ny)
+    # Thres: shape = (ns, [nx, ny])
+    if Thres.ndim == 1:
+        Thres = Thres[..., np.newaxis, np.newaxis]
+    Res = np.abs(alpha) - Thres
     Res[Res < 0] = 0
-    alpha[:, :] = np.sign(alpha) * Res[:, :]
+    alpha[:, :] = np.sign(alpha) * Res
 
 
 def sthres(alpha, Thres):

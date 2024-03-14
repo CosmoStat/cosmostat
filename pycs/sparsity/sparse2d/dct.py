@@ -47,16 +47,15 @@ def dct2d(image, norm="ortho"):
     """
     # Check inputs
     image = np.array(image)
-    assert len(image.shape) == 2, "Input image must be 2D."
     assert norm in (None, "ortho", "isap"), "Invalid norm."
 
     # Compute DCT along each axis
     if norm == "isap":
-        result = dct(dct(image, norm="ortho", axis=0), norm="ortho", axis=1)
-        result[:, 0] *= np.sqrt(2)
-        result[0, :] *= np.sqrt(2)
+        result = dct(dct(image, norm="ortho", axis=-2), norm="ortho", axis=-1)
+        result[..., :, 0] *= np.sqrt(2)
+        result[..., 0, :] *= np.sqrt(2)
     else:
-        result = dct(dct(image, norm=norm, axis=0), norm=norm, axis=1)
+        result = dct(dct(image, norm=norm, axis=-2), norm=norm, axis=-1)
 
     return result
 
@@ -88,16 +87,15 @@ def idct2d(image, norm="ortho"):
     """
     # Check inputs
     image = np.array(image)
-    assert len(image.shape) == 2, "Input image must be 2D."
     assert norm in (None, "ortho", "isap"), "Invalid norm."
 
     # Compute inverse DCT along each axis
     if norm == "isap":
-        image[:, 0] /= np.sqrt(2)
-        image[0, :] /= np.sqrt(2)
-        result = idct(idct(image, norm="ortho", axis=0), norm="ortho", axis=1)
+        image[..., :, 0] /= np.sqrt(2)
+        image[..., 0, :] /= np.sqrt(2)
+        result = idct(idct(image, norm="ortho", axis=-2), norm="ortho", axis=-1)
     else:
-        result = idct(idct(image, norm=norm, axis=0), norm=norm, axis=1)
+        result = idct(idct(image, norm=norm, axis=-2), norm=norm, axis=-1)
 
     return result
 

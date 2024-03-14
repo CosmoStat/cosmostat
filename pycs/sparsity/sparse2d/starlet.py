@@ -58,6 +58,9 @@ if PYSAP_CXX is False:
     )
 
 # print("PYSAP_CXX = ", PYSAP_CXX)
+    
+
+
 
 
 def b3splineTrans(im_in, step):
@@ -146,6 +149,36 @@ def b3spline_fast(step):
     return kernel2d
 
 
+def vectorize(signature):
+
+    def decor(func):
+        """
+        Decorator to vectorize methods in class `MRStarlet`
+        
+        """
+        def wrapper(self, im, *args, **kwargs):
+            return np.vectorize(
+                lambda x: func(self, x, *args, **kwargs),
+                signature=signature
+            )(im)
+        return wrapper
+
+    return decor
+
+
+class MRStarlet(pysparse.MRStarlet):
+
+    @vectorize(signature='(n,m)->(p,n,m)')
+    def transform(self, im, nz, *args, **kwargs):
+        wl = super().transform(im.astype(np.float64), nz, *args, **kwargs)
+        return np.stack(wl).astype(np.float64)
+
+    @vectorize(signature='(p,n,m)->(n,m)')
+    def recons(self, wt, *args, **kwargs):
+        wl = list(wt.astype(np.float64))
+        return super().recons(wl, *args, **kwargs).astype(np.float64)
+
+
 def star2d(im, scale, gen2=False, bord=1, nb_procs=0, fast=True, verb=0):
     """
     Routie to calculate the 1st and 2nd generation starlet transform.
@@ -176,18 +209,18 @@ def star2d(im, scale, gen2=False, bord=1, nb_procs=0, fast=True, verb=0):
             output wavelet transform  [0:scale,0:nx,0:ny]
     """
     #    print ('IN STAR2D 2')
-    (nx, ny) = np.shape(im)
+    nx, ny = np.shape(im)[-2:]
     nz = scale
     # Normalized transfromation
     if PYSAP_CXX is True:
         # print("BINDING: ", head, ", norm = ", l2norm)
         # verb=1
-        ima = np.zeros((nx, ny))
-        ima[:, :] = im
-        psWT = pysparse.MRStarlet(bord, gen2, nb_procs, verb)
-        wl = psWT.transform(ima.astype(np.float64), nz)
-        wt = (np.stack(wl)).astype(np.double)
+        ima = im.copy()
+        psWT = MRStarlet(bord, gen2, nb_procs, verb)
+        wt = psWT.transform(ima, nz) # stack already done
     else:
+        if len(im.shape) > 2:
+            raise NotImplementedError # TODO: vectorize this part
         wt = np.zeros((nz, nx, ny))
         step_hole = int(1)
         im_in = np.copy(im)
@@ -241,15 +274,16 @@ def istar2d(wt, gen2=True, bord=0, nb_procs=0, fast=True, verb=0):
     2D np.ndarray:
         Reconstructed image
     """
-    (nz, nx, ny) = np.shape(wt)
+    nz, nx, ny = np.shape(wt)[-3:]
 
     # PYSAP_CXX=0
     if PYSAP_CXX is True:
         # print("RECBINDING: ", head, ", norm = ", l2norm)
-        dat_list = list(wt.astype(np.float64))
-        psWT = pysparse.MRStarlet(bord, gen2, nb_procs, verb)
-        imRec = (psWT.recons(dat_list)).astype(np.double)
+        psWT = MRStarlet(bord, gen2, nb_procs, verb)
+        imRec = psWT.recons(wt)
     else:
+        if len(wt.shape) > 3:
+            raise NotImplementedError # TODO: vectorize this part
         # trans = 1 if gen2 else 2
         if gen2:
             """
@@ -323,14 +357,15 @@ def adstar2d(wtOri, gen2=True, bord=0, nb_procs=0, fast=True, verb=0):
     2D np.ndarray:
         Reconstructed image
     """
-    (nz, nx, ny) = np.shape(wtOri)
+    nz, nx, ny = np.shape(wtOri)[-3:]
     wt = np.copy(wtOri)
     if PYSAP_CXX is True:
         # print("BINDING")
-        dat_list = list(wt.astype(float))
-        psWT = pysparse.MRStarlet(bord, gen2, nb_procs, verb)
-        imRec = (psWT.recons(dat_list, True)).astype(double)
+        psWT = MRStarlet(bord, gen2, nb_procs, verb)
+        imRec = psWT.recons(wt, True)
     else:
+        if len(wt.shape) > 3:
+            raise NotImplementedError # TODO: vectorize this part
         # print("NO BINDING")
         # Unnormalization step
         # !Attention: wt is not the original wt after unnormalization
@@ -510,7 +545,7 @@ class starlet2d:
         """
         Apply the starlet transform to image. Coeffients are stored in
         self.coef[:,:,:].  self.coef[s,:,:] is the wavelet scale at scale s.
-        See class routines get_scale, get_ptr_scale, put_scale to manipulate
+        See class routine put_scale to manipulate
         the coefficients.
         Parameters
         ----------
@@ -522,17 +557,16 @@ class starlet2d:
         -------
         None.
         """
-        (Nx, Ny) = im.shape
+        Nx, Ny = im.shape[-2:]
         if self.ns <= 1 or self.nx != Nx or self.ny != Ny:
             self.init_starlet(Nx, Ny, nscale=0)
         if WTname is not None:
             self.name = WTname
         self.coef = star2d(
             im, self.ns, self.gen2, self.bord, self.nb_procs, True, self.verb
-        )
+        ) # shape = ([nimgs], [Nrea], ns, nx, ny)
         if self.l2norm:
-            for i in np.arange(self.ns):
-                self.coef[i, :, :] /= self.Starlet_Gen1TabNorm[i]
+            self.coef /= self.Starlet_Gen1TabNorm[:, np.newaxis, np.newaxis]
 
     def recons(self, adjoint=False):
         """
@@ -548,7 +582,7 @@ class starlet2d:
         rec : 2D np.ndarray
             Reconstructed image.
         """
-        wt = np.copy(self.coef)
+        wt = np.copy(self.coef) # shape = (ns, nx, ny) or (nimgs, ns, nx, ny)
         if self.l2norm:
             wt *= self.Starlet_Gen1TabNorm[:, np.newaxis, np.newaxis]
         if adjoint:
@@ -619,7 +653,7 @@ class starlet2d:
         """
         Iterative method to make a decomposition on positive coefficients.
         Coeffients are stored in self.coef[:,:,:].
-        See class routines get_scale, get_ptr_scale, put_scale to manipulate
+        See class routine put_scale to manipulate
         the coefficients.
 
         Parameters
@@ -700,38 +734,6 @@ class starlet2d:
     #         fits.writeto('pstar2d'+str(it)+'.fits',rsd,clobber=True)
     #        print ((np.abs(rsd)).sum())
 
-    def get_scale(self, j):
-        """
-        Return a copy of a given scale of the decomposition.
-        Parameters
-        ----------
-        j : int
-            Scale number. It must be in [0:self.ns]
-        Returns
-        -------
-        Scale : 2D np.ndarray
-            jth wavelet scale of the decomposition.
-        """
-        Scale = np.zeros((self.nx, self.ny))
-        Scale[:, :] = (self.coef)[j, :, :]
-        return Scale
-
-    def get_ptr_scale(self, j):
-        """
-        Return a pointer to the jth scale. Modifying the return array will
-        impact the coefficients self.coef of the class.
-
-        Parameters
-        ----------
-        j : int
-            Scale number. It must be in [0:self.ns]
-        Returns
-        -------
-        Scale : 2D np.ndarray
-            jth wavelet scale of the decomposition.
-        """
-        return (self.coef)[j]
-
     def put_scale(self, ScaleCoef, j):
         """
         Replace the scale j in self.coef by the 2D array ScaleCoef.
@@ -759,7 +761,7 @@ class starlet2d:
         -------
         Window appearing showing scale j.
         """
-        s = self.get_ptr_scale(j)
+        s = self.coef[j]
         tvilut(s)
 
     def dump(self):
@@ -780,8 +782,9 @@ class starlet2d:
         SigmaNoise : float
             estimated noise standard deviation.
         """
-        s = (self.coef)[0]
-        SigmaNoise = mad(s)
+        s = self.coef[..., 0, :, :]
+        SigmaNoise = mad(s, axis=(-2, -1))
+        SigmaNoise = np.mean(SigmaNoise)
         return SigmaNoise
 
     def tvsl(self, j, SigmaNoise=0, Levels=[5]):
@@ -851,7 +854,6 @@ class starlet2d:
         TabNsigma : 1D np.ndarray
             Detection level per scale.
         """
-        TabNsigma = np.zeros(nscale)
         vssig = vsize(Nsigma)
         if vssig[0] == 0:
             TabNsigma = np.full(nscale, Nsigma)
@@ -899,49 +901,52 @@ class starlet2d:
         None.
 
         """
-        if ThresCoarse:
-            Last = self.ns
-        else:
-            Last = self.ns - 1
         vs = vsize(SigmaNoise)
         dim = vs[0]
-        if dim == 0:
+        if dim == 0: # SigmaNoise is a scalar or contains one single element
             if SigmaNoise == 0:
-                SigmaNoise = self.get_noise()
+                SigmaNoise = self.get_noise() # scalar
         self.SigmaNoise = SigmaNoise
         if Verbose:
             print("SigmaNoise = ", SigmaNoise, ", vsize(SigmaNoise) = ", vs)
-        TabNsigma = self.get_tabsigma(self.ns, Nsigma=Nsigma)
+        self.TabNsigma = self.get_tabsigma(self.ns, Nsigma=Nsigma) # shape = (ns,)
         if Verbose:
-            print("TabNsigma = ", TabNsigma)
-        for j in np.arange(Last):
-            s = self.get_ptr_scale(j)
-            if dim == 0:
-                Thres = SigmaNoise * TabNsigma[j] * self.TabNorm[j]
-            elif dim == 1:
-                Thres = SigmaNoise[j] * TabNsigma[j]
-            elif dim == 2:
-                Thres = SigmaNoise * TabNsigma[j] * self.TabNorm[j]
-            else:
-                # print(SigmaNoise.shape)
-                Nsig = TabNsigma[j]
-                Thres = SigmaNoise[j, :, :] * Nsig
-            self.TabNsigma = TabNsigma
-            if hard:
-                hard_thresholding(s, Thres)
-            else:
-                soft_thresholding(s, Thres)
-            if Verbose:
-                print(
-                    "     scale ",
-                    j + 1,
-                    ", % of non zeros = ",
-                    np.count_nonzero(s) * 100.0 / float(self.nx * self.ny),
-                )
+            print("TabNsigma = ", self.TabNsigma)
+
+        if dim in (0, 2): # SigmaNoise: scalar or shape = (nx, ny)
+            # The noise level is obtained at each scale by multiplying by self.TabNorm
+            Thres = SigmaNoise * (self.TabNsigma * self.TabNorm)[
+                :, np.newdim, np.newdim
+            ] # shape = (ns, nx, ny)
+        elif dim == 1: # SigmaNoise: shape = (ns,)
+            Thres = SigmaNoise * self.TabNsigma # shape = (ns,)
+        else: # SigmaNoise: shape = (ns, nx, ny)
+            Thres = SigmaNoise * self.TabNsigma[
+                :, np.newdim, np.newdim
+            ] # shape = (ns, nx, ny)
+
+        if ThresCoarse:
+            s = self.coef
+        else: # ignore the coarsest scale
+            s = self.coef[..., :-1, :, :]
+            Thres = Thres[:-1]
+
+        if hard:
+            hard_thresholding(s, Thres)
+        else:
+            soft_thresholding(s, Thres)
+        if Verbose:
+            print(
+                "     scale ",
+                j + 1,
+                ", % of non zeros = ",
+                np.count_nonzero(s) * 100.0 / float(self.nx * self.ny),
+            )
+
         if FirstDetectScale > 0:
-            self.coef[0:FirstDetectScale, :, :] = 0.0
+            self.coef[..., :FirstDetectScale, :, :] = 0.
         if KillCoarse:
-            self.coef[self.ns - 1, :, :] = 0.0
+            self.coef[..., -1, :, :] = 0.
 
     def copy(self, name="wt"):
         """
