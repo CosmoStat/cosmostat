@@ -971,13 +971,15 @@ class massmap2d:
         return r1, r2
 
     def _prepare_data(
-            self, InshearData, msg=None, niter=None
+            self, InshearData, msg=None, niter=None, Nsigma=None
     ):
         gamma1 = InshearData.g1 # shape = ([nimgs], nx, ny)
         gamma2 = InshearData.g2 # shape = ([nimgs], nx, ny)
 
         if niter is None:
             niter = self.DEF_niter
+        if Nsigma is None:
+            Nsigma = self.DEF_Nsigma
         nx, ny = gamma1.shape[-2:]
         if self.Verbose:
             print(f"{msg}: ", nx, ny, ", Niter = ", niter)
@@ -1000,7 +1002,7 @@ class massmap2d:
         Esn = eta / Ncv # shape = (nx, ny)
         Esn[Esn == np.inf] = 0 # TODO: useless if we have set Ncv[mask == 0] = 1e9 before
 
-        return gamma1, gamma2, nx, ny, eta, Esn, mask, ind, tau, niter
+        return gamma1, gamma2, nx, ny, eta, Esn, mask, ind, tau, niter, Nsigma
     
     def _get_Wfc(self, PowSpecSignal, nx, ny, Pn, eta):
     
@@ -1065,7 +1067,7 @@ class massmap2d:
         TYPE  2D np.ndarray
               (E,B) reconstructed modes. Convergence = E
         """
-        gamma1, gamma2, nx, ny, eta, Esn, mask, ind, tau, niter = self._prepare_data(
+        gamma1, gamma2, nx, ny, eta, Esn, mask, ind, tau, niter, _ = self._prepare_data(
             InshearData, msg="Iterative Wiener filtering", niter=niter
         )
 
@@ -1102,7 +1104,7 @@ class massmap2d:
                     print(
                         "   Wiener rec Iter: ",
                         n + 1,
-                        ", std ke =  %5.4f" % (np.std(xg[ind] / tau)),
+                        ", std ke =  %5.4f" % (np.std(xg[..., ind[0], ind[1]] / tau)),
                     )
 
         return xg.real, xg.imag
@@ -1147,7 +1149,7 @@ class massmap2d:
         TYPE  2D np.ndarray
               (E,B) reconstructed modes. Convergence = E
         """
-        gamma1, gamma2, _, _, _, Esn, mask, ind, tau, niter = self._prepare_data(
+        gamma1, gamma2, _, _, _, Esn, mask, ind, tau, niter, _ = self._prepare_data(
             InshearData, msg="Proxinal MSE estimator", niter=niter
         )
 
@@ -1195,7 +1197,7 @@ class massmap2d:
                     print(
                         "   Prox MSE rec Iter: ",
                         n + 1,
-                        ", std ke =  %5.4f" % (np.std(xg[ind] / tau)),
+                        ", std ke =  %5.4f" % (np.std(xg[..., ind[0], ind[1]] / tau)),
                     )
 
         return xg.real, xg.imag
@@ -1229,7 +1231,7 @@ class massmap2d:
         PowSpecSignal : 1D np.ndarray
              Theorical Signal power spectrum.
         niter : int, optional
-            number of iterations. Default is DEF_niter
+            number of iterations. Default is self.DEF_niter
         Nsigma : float, optional
             Detection level on wavelet coefficients. The default is self.DEF_Nsigma.
         Inpaint : Bool, optional
@@ -1260,12 +1262,9 @@ class massmap2d:
         2D np.ndarray
               B reconstructed mode  of the sparse component.
         """
-        gamma1, gamma2, nx, ny, eta, Esn, mask, ind, tau, niter = self._prepare_data(
-            InshearData, msg="MCALens estimator", niter=niter
+        gamma1, gamma2, nx, ny, eta, Esn, mask, ind, tau, niter, Nsigma = self._prepare_data(
+            InshearData, msg="MCALens estimator", niter=niter, Nsigma=Nsigma
         )
-
-        if Nsigma is None:
-            Nsigma = self.DEF_Nsigma
 
         RMS_ShearMap = np.sqrt(InshearData.Ncov / 2.0) # shape = (nx, ny)
         SigmaNoise = np.min(RMS_ShearMap) # float
@@ -1390,17 +1389,17 @@ class massmap2d:
                         n + 1,
                         ", Err = %5.4f"
                         % (
-                            np.std((xg.real[ind] - ktr[ind])) / np.std(ktr[ind]) * 100.0
+                            np.std((xg.real[..., ind[0], ind[1]] - ktr[..., ind[0], ind[1]])) / np.std(ktr[..., ind[0], ind[1]]) * 100.0
                         ),
-                        ", Resi ke (x100) =  %5.4f" % (np.std(resi1[ind]) * 100.0),
-                        ", Resi kb (x100) =  %5.4f" % (np.std(resi2[ind]) * 100.0),
+                        ", Resi ke (x100) =  %5.4f" % (np.std(resi1[..., ind[0], ind[1]]) * 100.0),
+                        ", Resi kb (x100) =  %5.4f" % (np.std(resi2[..., ind[0], ind[1]]) * 100.0),
                     )
                 else:
                     print(
                         "   Sparse rec Iter: ",
                         n + 1,
-                        ", Resi ke =  %5.4f" % (np.std(resi1[ind] / tau)),
-                        ", Resi kb = %5.4f" % (np.std(resi2[ind]) / tau),
+                        ", Resi ke =  %5.4f" % (np.std(resi1[..., ind[0], ind[1]] / tau)),
+                        ", Resi kb = %5.4f" % (np.std(resi2[..., ind[0], ind[1]]) / tau),
                     )
 
         return xg.real, xg.imag, xs.real, xs.imag
