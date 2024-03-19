@@ -700,7 +700,7 @@ class massmap2d:
         WT_Support = (
             inp > wsigma * Nsig[:, np.newaxis, np.newaxis] * \
             self.WT.TabNorm[:, np.newaxis, np.newaxis]
-        ).astype(int) # shape = (ns, nx, ny) or (nimgs, ns, nx, ny)
+        ).astype(int) # shape = ([nimgs], ns, nx, ny)
 
         if FirstDetectScale is not None:
             WT_Support[..., :FirstDetectScale, :, :] = 0
