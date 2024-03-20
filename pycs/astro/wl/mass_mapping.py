@@ -39,20 +39,17 @@ def get_ima_spectrum_map(Px, nx, ny):
         2D image.
     """
     Np = Px.shape[0]
-    #    print("nx = ", nx, ", ny = ", ny, ", np = ", Np)
-    k_map = np.zeros((nx, ny))
-    power_map = np.zeros((nx, ny))
-    #    info(k_map)
-    for (i, j), val in np.ndenumerate(power_map):
-        k1 = i - nx / 2.0
-        k2 = j - ny / 2.0
-        k_map[i, j] = np.sqrt(k1 * k1 + k2 * k2)
-        if k_map[i, j] == 0:
-            power_map[i, j] = 0.0
-        else:
-            ip = int(k_map[i, j])
-            if ip < Np:
-                power_map[i, j] = Px[ip]
+    Px[0] = 0. # set the zero frequency to zero
+    Px = np.append(Px, 0) # set to 0 all frequencies above Np
+    k1, k2 = np.meshgrid(
+        np.arange(nx) - nx / 2.0,
+        np.arange(ny) - ny / 2.0,
+        indexing='ij'
+    )
+    ip = np.sqrt(k1**2 + k2**2).astype(int) # map of frequency norms
+    ip[ip > Np] = Np
+    power_map = Px[ip] # 2D power spectrum (isotropic)
+
     return power_map
 
 
@@ -88,7 +85,7 @@ class shear_data:
     )
     ncov_fn = 0  # covariance filename
 
-    def get_shear_noise(self, FillMask=False):
+    def get_shear_noise(self, FillMask=False, Nrea=0, inpshape=None):
         """
         Return a noise realisation using the covariance matrix.
         If FillMask is True, the non observed area where the covariance is infinitate,
@@ -99,6 +96,8 @@ class shear_data:
         ----------
         FillMask : TYPE, optional
             DESCRIPTION. The default is False.
+        Nrea : int, optional
+
 
         Returns
         -------
@@ -108,25 +107,20 @@ class shear_data:
             noise realisation for g2.
 
         """
-        Mat = np.sqrt(self.Ncov / 2.0)
+        Mat = np.sqrt(self.Ncov / 2.0) # shape = (nx, ny)
         if FillMask == True:
             ind = np.where(self.mask == 1)
             MaxCov = np.max(Mat[ind])
             ind = np.where(self.mask == 0)
             Mat[ind] = MaxCov
-            # info(Mat, name="cov")
-            # info(Mat*self.mask, name="cov")
-            # print("MaxCov = ", MaxCov)
-            # tvima(self.mask)
-        n1 = np.random.normal(loc=0.0, scale=Mat)
-        n2 = np.random.normal(loc=0.0, scale=Mat)
+        size = Mat.shape
+        if Nrea > 0:
+            size = (Nrea, *size)
+        if inpshape is not None:
+            size = (*inpshape, *size)
+        n1 = np.random.normal(loc=0.0, scale=Mat, size=size)
+        n2 = np.random.normal(loc=0.0, scale=Mat, size=size)
         return n1, n2
-
-
-# class shear_simu():
-#     def __init__(self):
-#         a=0
-#     a = np.random.normal(loc=0.0, scale=10.0, size=[200])
 
 
 def massmap_get_rms_error(Res, TrueSol, Mask, sigma=0):
@@ -219,7 +213,7 @@ def massmap_get_rms_error(Res, TrueSol, Mask, sigma=0):
 #             else:
 #                 WT.transform(result)
 #                 for j in range(WT.ns):
-#                     scale = WT.get_scale(j)
+#                     scale = WT.coef[j]
 #                     scale[~mask.astype(bool)] *= std_out / std_in
 #                     WT.put_scale(scale, j)
 #                     result = WT.recons()
@@ -294,6 +288,8 @@ class massmap2d:
         denom[0, 0] = 1  # avoid division by 0
         self.kernel1 = (k1**2 - k2**2) / denom
         self.kernel2 = (2 * k1 * k2) / denom
+        self.ker_kappa2gamma = (k1 + 1j * k2)**2 / denom
+        self.ker_gamma2kappa = (k1 - 1j * k2)**2 / denom
         if self.Verbose:
             print(
                 "Init Mass Mapping: Nx = ",
@@ -401,12 +397,7 @@ class massmap2d:
             pke[fp::] = pke[fp]
             pke[fp::] = min_end
 
-        # pke[pkb < 0] = 0
         pkb[pkb < 0] = 0
-        # pe = pe - pn/fsky
-        # pb = pb - pn/fsky
-        # pef=mr_prog(pe, prog="mr1d_filter -m5 -P ")
-        # pbf=mr_prog(pb, prog="mr1d_filter -m5 -P ")
         tv = 0
         if tv:
             plot(pke)
@@ -435,13 +426,12 @@ class massmap2d:
         Notes
         -----
         """
-        (Nx, Ny) = np.shape(kappa)
+        (Nx, Ny) = np.shape(kappa)[-2:]
         if self.nx != Nx or self.ny != Ny:
             self.init_massmap(Nx, Ny)
-        k = np.fft.fft2(kappa)
-        g1 = np.fft.ifft2(self.kernel1 * k)
-        g2 = np.fft.ifft2(self.kernel2 * k)
-        return g1.real - g2.imag, g2.real + g1.imag
+        out = np.fft.fft2(kappa)
+        out = np.fft.ifft2(self.ker_kappa2gamma * out)
+        return out.real, out.imag
 
     # Fast call
     def k2g(self, kappa):
@@ -466,10 +456,11 @@ class massmap2d:
         -----
         """
         if self.WT.nx == 0 or self.WT.ny == 0:
-            (nx, ny) = np.shape(g1)
+            raise NotImplementedError # wrong arguments in self.WT.init_starlet
+            nx, ny = np.shape(g1)[-2:]
             self.WT.init_starlet(nx, ny, gen2=1, l2norm=1, name="WT-MassMap")
-        g = g1 + 1j * g2
-        return np.fft.ifft2((self.kernel1 - 1j * self.kernel2) * np.fft.fft2(g))
+        out = np.fft.fft2(g1 + 1j * g2)
+        return np.fft.ifft2(self.ker_gamma2kappa * out)
 
     def gamma_to_kappa(self, g1, g2):
         """
@@ -511,7 +502,7 @@ class massmap2d:
             Smoother array.
 
         """
-        return ndimage.filters.gaussian_filter(map, sigma=sigma)
+        return ndimage.gaussian_filter(map, sigma=sigma, axes=(-2, -1))
 
     def kaiser_squires(self, gam1, gam2, sigma=2.0):
         """
@@ -533,12 +524,12 @@ class massmap2d:
         -----
         """
         ks = self.gamma_to_cf_kappa(gam1, gam2)
-        ksg = ndimage.filters.gaussian_filter(ks.real, sigma=sigma)
+        ksg = ndimage.gaussian_filter(ks.real, sigma=sigma, axes=(-2, -1))
         return ksg
 
     # Fast interactive call to kaiser_squires
     def ks(self, gam1, gam2, sigma=2.0):
-        return self.kaiser_squires(gam1, gam2, sigma=2.0)
+        return self.kaiser_squires(gam1, gam2, sigma=sigma)
 
     def eb_kaiser_squires(self, gam1, gam2, sigma=2.0):
         """
@@ -559,8 +550,8 @@ class massmap2d:
         -----
         """
         ks = self.gamma_to_cf_kappa(gam1, gam2)
-        ksg = ndimage.filters.gaussian_filter(ks.real, sigma=sigma)
-        ksbg = ndimage.filters.gaussian_filter(ks.imag, sigma=sigma)
+        ksg = ndimage.gaussian_filter(ks.real, sigma=sigma, axes=(-2, -1))
+        ksbg = ndimage.gaussian_filter(ks.imag, sigma=sigma, axes=(-2, -1))
         return ksg, ksbg
 
     def H_operator_eb2g(self, ka_map, kb_map):
@@ -578,24 +569,9 @@ class massmap2d:
         output shear field
         None.
         """
-        # ka_map and kb_map should be of the same size
-        [nx, ny] = ka_map.shape
-        g1_map = np.zeros((nx, ny))
-        g2_map = np.zeros((nx, ny))
-        ka_map_fft = np.fft.fft2(ka_map)
-        kb_map_fft = np.fft.fft2(kb_map)
-
-        f1, f2 = np.meshgrid(np.fft.fftfreq(ny), np.fft.fftfreq(nx))
-        p1 = f1 * f1 - f2 * f2
-        p2 = 2 * f1 * f2
-        f2 = f1 * f1 + f2 * f2
-
-        f2[0, 0] = 1  # avoid division with zero
-        kafc = (p1 * ka_map_fft - p2 * kb_map_fft) / f2
-        kbfc = (p1 * kb_map_fft + p2 * ka_map_fft) / f2
-        g1_map[:, :] = np.fft.ifft2(kafc).real
-        g2_map[:, :] = np.fft.ifft2(kbfc).real
-        return g1_map, g2_map
+        out = np.fft.fft2(ka_map + 1j * kb_map)
+        out = np.fft.ifft2(self.ker_kappa2gamma * out)
+        return out.real, out.imag
 
     # Fast interactice call to H_operator_eb2g
     def eb2g(self, ka_map, kb_map):
@@ -607,8 +583,8 @@ class massmap2d:
 
         Parameters
         ----------
-        g1_map, g2_map : 2D np.ndarray
-            shear field.
+        g1_map, g2_map : 2D np.ndarray or stack of 2D np.array
+            shear field(s).
 
         Returns
         -------
@@ -616,21 +592,9 @@ class massmap2d:
             output convergence field
         None.
         """
-        [nx, ny] = g1_map.shape
-        kappa1 = np.zeros((nx, ny))
-        kappa2 = np.zeros((nx, ny))
-        g1_map_ifft = np.fft.ifft2(g1_map)
-        g2_map_ifft = np.fft.ifft2(g2_map)
-        f1, f2 = np.meshgrid(np.fft.fftfreq(ny), np.fft.fftfreq(nx))
-        p1 = f1 * f1 - f2 * f2
-        p2 = 2 * f1 * f2
-        f2 = f1 * f1 + f2 * f2
-        f2[0, 0] = 1
-        g1fc = (p1 * g1_map_ifft + p2 * g2_map_ifft) / f2
-        g2fc = (p1 * g2_map_ifft - p2 * g1_map_ifft) / f2
-        kappa1[:, :] = np.fft.fft2(g1fc).real
-        kappa2[:, :] = np.fft.fft2(g2fc).real
-        return kappa1, kappa2
+        out = np.fft.fft2(g1_map + 1j * g2_map)
+        out = np.fft.ifft2(self.ker_gamma2kappa * out)
+        return out.real, out.imag
 
     # Fast interactice call to H_adjoint_g2eb
     def g2eb(self, g1_map, g2_map):
@@ -655,18 +619,13 @@ class massmap2d:
             (i,j) of the convergence.
 
         """
-        mask = InshearData.mask
-        Ncov = InshearData.Ncov
-        for i in np.arange(Nrea):
-            n1, n2 = InshearData.get_shear_noise(FillMask=True)
-            ke, kb = self.g2eb(n1, n2)
-            self.WT.transform(ke)
-            if i == 0:
-                WT_Sigma = np.zeros((self.WT.ns, self.WT.nx, self.WT.ny))
-            WT_Sigma += (self.WT.coef) ** 2.0  # by definition the mean of wt
-            # is zero.
+        n1, n2 = InshearData.get_shear_noise(FillMask=True, Nrea=Nrea)
+        ke, _ = self.g2eb(n1, n2)
+        self.WT.transform(ke)
+        # Sum over noise realizations
+        WT_Sigma = np.sum(self.WT.coef**2, axis=0) # by definition the mean of wt is zero
         WT_Sigma = np.sqrt(WT_Sigma / Nrea)
-        # info(WT_Sigma)
+
         return WT_Sigma
 
     def get_active_wt_coef(
@@ -677,7 +636,7 @@ class massmap2d:
         Nsigma=None,
         Nrea=None,
         WT_Sigma=None,
-        FirstDetectScale=DEF_FirstDetectScale,
+        FirstDetectScale=None,
         OnlyPos=False,
         ComputeWTCoef=True,
     ):
@@ -720,60 +679,33 @@ class massmap2d:
         """
 
         if ComputeWTCoef:
-            e, b = self.g2eb(InshearData.g1, InshearData.g2)
+            e, _ = self.g2eb(InshearData.g1, InshearData.g2)
             self.WT.transform(e)
 
-        WT_Support = self.WT.coef * 0.0
-        Last = self.WT.ns - 1
+        WT_Support = np.zeros_like(self.WT.coef)
         if UseRea and WT_Sigma is None:
-            WT_Sigma = self.get_wt_noise_level(InshearData, Nrea=Nrea)
+            WT_Sigma = self.get_wt_noise_level(InshearData, Nrea=Nrea) # shape = (ns, nx, ny)
 
         if Nsigma is None:
             Nsigma = self.DEF_Nsigma
         if Nrea is None:
             Nrea = self.DEF_Nrea
-        if FirstDetectScale is None:
-            FirstDetectScale = DEF_FirstDetectScale
-        # TabFDRNSigma = [5,,4.5,3.5,3.]
-        # TabFDRNSigma = [5.,4.,3.,2.5,2.]
-        for j in range(Last):
-            wtscale = self.WT.get_scale(j)
-            # if j == 2:
-            #    tvilut(wtscale,title='scale2')
-            # Nsigma = TabFDRNSigma[j]
-            if j == 0:
-                Nsig = Nsigma + 1
-            else:
-                Nsig = Nsigma
-            # vThres = WT_Sigma * Nsigma * self.WT.TabNorm[j]
-            if OnlyPos is False:
-                if UseRea:
-                    wsigma = WT_Sigma[j, :, :]
-                    ind = np.where(np.abs(wtscale) > wsigma * Nsig * self.WT.TabNorm[j])
-                    # WT_Support[j,:,:] = np.where( np.abs(self.WT.coef[j,:,:]) > WT_Sigma[j,:,:] * Nsig * self.WT.TabNorm[j], 1, 0)
-                else:
-                    ind = np.where(
-                        np.abs(wtscale) > SigmaNoise * Nsig * self.WT.TabNorm[j]
-                    )
-                    # WT_Support[j,:,:] = np.where( np.abs(self.WT.coef[j,:,:]) > SigmaNoise * Nsig * self.WT.TabNorm[j], 1, 0)
-            else:
-                if UseRea:
-                    wsigma = WT_Sigma[j, :, :]
-                    # WT_Support[j,:,:] = np.where( self.WT.coef[j,:,:] > WT_Sigma[j,:,:] * Nsig * self.WT.TabNorm[j], 1, 0)
-                    ind = np.where(wtscale > wsigma * Nsig * self.WT.TabNorm[j])
-                else:
-                    T = SigmaNoise * Nsig * self.WT.TabNorm[j]
-                    ind = np.where(wtscale > T)
-                    # WT_Support[j,:,:] = np.where( self.WT.coef[j,:,:] > SigmaNoise * Nsig * self.WT.TabNorm[j], 1, 0)
-            wtscale[:, :] = 0
-            wtscale[ind] = 1
-            # if j == 2:
-            #    tvilut(wtscale,title='sup2')
-            WT_Support[j, :, :] = wtscale
-        if FirstDetectScale > 0:
-            WT_Support[0:FirstDetectScale, :, :] = 0
-        WT_Support[Last, :, :] = 1
-        self.WT_ActiveCoef = WT_Support
+
+        wt = self.WT.coef # shape = (ns, nx, ny) or (nimgs, ns, nx, ny)
+        Nsig = Nsigma * np.ones(self.WT.ns) # shape = (ns,)
+        Nsig[0] += 1 # TODO: why?
+
+        inp = np.abs(wt) if not OnlyPos else wt
+        wsigma = WT_Sigma if UseRea else SigmaNoise
+        WT_Support = (
+            inp > wsigma * Nsig[:, np.newaxis, np.newaxis] * \
+            self.WT.TabNorm[:, np.newaxis, np.newaxis]
+        ).astype(int) # shape = ([nimgs], ns, nx, ny)
+
+        if FirstDetectScale is not None:
+            WT_Support[..., :FirstDetectScale, :, :] = 0
+        WT_Support[..., -1, :, :] = 1 # TODO: why?
+
         return WT_Support
 
     def get_noise_powspec(self, CovMat, mask=None, nsimu=100, inpaint=False):
@@ -820,8 +752,14 @@ class massmap2d:
 
     def mult_wiener(self, map, WienerFilterMap):
         """ " apply one wiener step in the iterative wiener filtering"""
+        # TODO: Modify `get_ima_spectrum_map` in order to avoid `np.fft.fftshift`
+        # (should fix the bug with odd-sized arrays)
         return np.fft.ifft2(
-            np.fft.fftshift(WienerFilterMap * np.fft.fftshift(np.fft.fft2(map)))
+            np.fft.fftshift(
+                WienerFilterMap * np.fft.fftshift(
+                    np.fft.fft2(map), axes=(-2, -1)
+                ), axes=(-2, -1)
+            )
         )
 
     def wiener(self, gamma1, gamma2, PowSpecSignal, PowSpecNoise):
@@ -844,13 +782,6 @@ class massmap2d:
 
         if self.Verbose:
             print("Wiener filtering: ", nx, ny)
-        # if mask is None:
-        #    print("Wiener NO MASK")
-        # info(gamma1, name="Wiener g1: ")
-        # info(gamma2, name="Wiener g2: ")
-        # info(PowSpecSignal, name="Wiener PowSpecSignal: ")
-        # info(Ncv, name="Wiener Ncv: ")
-        # if isinstance(PowSpecNoise, int):
 
         Ps_map = get_ima_spectrum_map(PowSpecSignal, nx, ny)
         Pn_map = get_ima_spectrum_map(PowSpecNoise, nx, ny)
@@ -865,14 +796,12 @@ class massmap2d:
         retr[:, :] = kw.real
         reti[:, :] = kw.imag
 
-        # info(kw.real, name="WIENER OUTPUT: ")
         return retr, reti
 
     def get_lmax_dct_inpaint(self, gamma1, gamma2):
         """return the maximum of the DCT absolute value of the convergence map"""
-        # image, icf = self.H_adjoint_g2eb(gamma1, gamma2)
         eb = self.gamma_to_cf_kappa(gamma1, gamma2)
-        lmax = np.max(np.abs(dct2d(eb.real, norm="ortho")))
+        lmax = np.max(np.abs(dct2d(eb.real, norm="ortho")), axis=(-2, -1))
         return lmax
 
     def step_dct_inpaint(
@@ -910,51 +839,53 @@ class massmap2d:
         xg : 2D np.cfarray
             inpainted convergence field.
         """
-        (nx, ny) = xg.shape
-        ret = np.zeros((nx, ny)) + 1j * np.zeros((nx, ny))
-
         lval = lmin + (lmax - lmin) * (1 - erf(2.8 * n / niter))  # exp decay
+        if isinstance(lval, np.ndarray):
+            lval = lval[..., np.newaxis, np.newaxis] # broadcasting
+
+        def _normalize(inp):
+            # Enforce std. dev. constraint inside the mask
+            inp_out = inp[..., mask.astype(bool)] # shape = (p,) or (nimgs, p) or (nimgs, ns, p)
+            inp_in = inp[..., ~mask.astype(bool)] # shape = (p,) or (nimgs, p) or (nimgs, ns, p)
+            std_out = inp_out.std(axis=-1) # float or array of shape (nimgs,) or (nimgs, ns)
+            std_in = inp_in.std(axis=-1) # float or array of shape (nimgs,) or (nimgs, ns)
+            if isinstance(std_in, np.ndarray):
+                selectidx = (std_in != 0) # boolean array of shape (nimgs,) or (nimgs, ns)
+                inp_in[selectidx, :] *= (
+                    std_out[selectidx] / std_in[selectidx]
+                )[..., np.newaxis] # shape = (q, p)
+            else:
+                if std_in != 0:
+                    inp_in *= std_out / std_in
+
+        def _step_dct_inpaint(ima, MultiScaleConstraint=False):
+
+            alpha = dct2d(ima, norm="ortho")
+            new_alpha = np.copy(alpha)  # Can we do this without copying ?
+            new_alpha[np.abs(new_alpha) <= lval] = 0
+            rec = idct2d(new_alpha, norm="ortho") # shape = (nx, ny) or (nimgs, nx, ny)
+
+            if not MultiScaleConstraint:
+                _normalize(rec)
+            else: # it seems not improving the result
+                self.WT.transform(rec)
+                _normalize(self.WT.coef)
+                rec = self.WT.recons()
+
+            return rec
+
         # real part
         ima = mask * xg.real + (1 - mask) * xn.real
-        alpha = dct2d(ima, norm="ortho")
-        new_alpha = np.copy(alpha)  # Can we do this without copying ?
-        new_alpha[np.abs(new_alpha) <= lval] = 0
-        rec = idct2d(new_alpha, norm="ortho")
-        # Enforce std. dev. constraint inside the mask
-        std_out = rec[mask.astype(bool)].std()
-        std_in = rec[~mask.astype(bool)].std()
-
-        MultiScaleConstraint = False  # it seems not improving the result
-        if std_in != 0:
-            if not MultiScaleConstraint:
-                rec[~mask.astype(bool)] *= std_out / std_in
-            else:
-                self.WT.transform(rec)
-                for j in range(self.WT.ns):
-                    scale = self.WT.get_scale(j)
-                    std_out = scale[mask.astype(bool)].std()
-                    std_in = scale[~mask.astype(bool)].std()
-                    scale[~mask.astype(bool)] *= std_out / std_in
-                    self.WT.put_scale(scale, j)
-                    rec = self.WT.recons()
+        rec = _step_dct_inpaint(ima, MultiScaleConstraint=False)
 
         # imaginary part
         if InpaintAlsoImag:
             ima = mask * xg.imag + (1 - mask) * xn.imag
-            alpha = dct2d(ima, norm="ortho")
-            new_alpha = np.copy(alpha)  # Can we do this without copying ?
-            new_alpha[np.abs(new_alpha) <= lval] = 0
-            reci = idct2d(new_alpha, norm="ortho")
-            # Enforce std. dev. constraint inside the mask
-            std_out = reci[mask.astype(bool)].std()
-            std_in = reci[~mask.astype(bool)].std()
-            if std_in != 0:
-                reci[~mask.astype(bool)] *= std_out / std_in
-
+            reci = _step_dct_inpaint(ima)
         else:
-            reci = 0.0 * rec
-        ret[:, :] = rec + 1j * reci
-        return ret
+            reci = np.zeros_like(rec)
+
+        return rec + 1j * reci
 
     def iks(self, g1, g2, mask, niter=None, dctmax=None):
         """
@@ -977,10 +908,9 @@ class massmap2d:
         if niter is None:
             niter = self.DEF_niter
         lmin = 0
-        nx, ny = g1.shape
-        xg = np.zeros((nx, ny)) + 1j * np.zeros((nx, ny))
-        r1 = np.zeros((nx, ny))
-        r2 = np.zeros((nx, ny))
+        assert g1.shape == g2.shape
+
+        xg = np.zeros_like(g1, dtype=complex) # TODO: complex or complex128?
         if dctmax is None:
             ks = self.gamma_to_cf_kappa(g1 * mask, g2 * mask)
             lmax = self.get_lmax_dct_inpaint(ks.real, ks.imag)
@@ -989,11 +919,11 @@ class massmap2d:
 
         for n in range(niter):
             t1, t2 = self.H_operator_eb2g(xg.real, xg.imag)
-            r1[:, :] = mask * (g1 - t1)
-            r2[:, :] = mask * (g2 - t2)
+            r1 = mask * (g1 - t1)
+            r2 = mask * (g2 - t2)
             t1, t2 = self.H_adjoint_g2eb(r1, r2)
-            xg[:, :] = xg + (t1 + 1j * t2)  # xg + H^T(eta / Sn * (y- H * xg))
-            xg[:, :] = self.step_dct_inpaint(xg, xg, mask, n, niter, lmin, lmax)
+            xg += (t1 + 1j * t2)  # xg + H^T(eta / Sn * (y- H * xg))
+            xg = self.step_dct_inpaint(xg, xg, mask, n, niter, lmin, lmax)
         return xg
 
     def get_resi(
@@ -1030,39 +960,89 @@ class massmap2d:
             residual B mode.
 
         """
-        (nx, ny) = xg.shape
-        r1 = np.zeros((nx, ny))
-        r2 = np.zeros((nx, ny))
         t1, t2 = self.H_operator_eb2g(xg.real, xg.imag)
-        r1[:, :] = ResiWeight * (gamma1 - t1)
-        r2[:, :] = ResiWeight * (gamma2 - t2)
+        r1 = ResiWeight * (gamma1 - t1) # shape = ([nimgs], [Nrea], nx, ny)
+        r2 = ResiWeight * (gamma2 - t2) # shape = ([nimgs], [Nrea], nx, ny)
 
         if mask is None:
             # H * xg
-            t1, t2 = self.H_adjoint_g2eb(r1, r2)
-            r1[:, :] = t1
-            r2[:, :] = t2
+            r1, r2 = self.H_adjoint_g2eb(r1, r2)
         else:
             if niter is None:
                 niter = self.DEF_niter
             # iterative Kaiser Squires with inpainting
             xi = self.iks(r1, r2, mask, niter=niter, dctmax=dctmax)
-            r1[:, :] = xi.real
-            r2[:, :] = xi.imag
-        # resi = (gamma1 + 1j * gamma2 -  self.gamma_to_cf_kappa(gamma1,gamma2)) * ResiWeight
+            r1 = xi.real
+            r2 = xi.imag
         return r1, r2
+
+    def _prepare_data(
+            self, InshearData, msg=None, niter=None, Nsigma=None
+    ):
+        gamma1 = InshearData.g1 # shape = ([nimgs], nx, ny)
+        gamma2 = InshearData.g2 # shape = ([nimgs], nx, ny)
+
+        if niter is None:
+            niter = self.DEF_niter
+        if Nsigma is None:
+            Nsigma = self.DEF_Nsigma
+        nx, ny = gamma1.shape[-2:]
+        if self.Verbose:
+            print(f"{msg}: ", nx, ny, ", Niter = ", niter)
+
+        if not isinstance(InshearData.mask, np.ndarray):
+            mask = (InshearData.Ncov != 0).astype(int) # shape = (nx, ny)
+        else:
+            mask = InshearData.mask
+        InshearData.Ncov[InshearData.Ncov == 0] = 1e9  # infinite value for no measurement
+        Ncv = InshearData.Ncov / 2.0 # shape = (nx, ny)
+
+        # find the minimum noise variance
+        ind = np.where(Ncv != 0) # TODO: useless if we have set Ncv[mask == 0] = 1e9 before
+        tau = np.min(Ncv[ind])
+
+        # set the step size
+        # eta = 1.83 * tau
+        eta = tau
+        # compute signal coefficient
+        Esn = eta / Ncv # shape = (nx, ny)
+        Esn[Esn == np.inf] = 0 # TODO: useless if we have set Ncv[mask == 0] = 1e9 before
+
+        return gamma1, gamma2, nx, ny, eta, Esn, mask, ind, tau, niter, Nsigma
+    
+    def _get_Wfc(self, PowSpecSignal, nx, ny, Pn, eta):
+    
+        # calculate the wiener filter coefficients
+        Px_map = get_ima_spectrum_map(PowSpecSignal, nx, ny)
+        # info((Px_map + eta))
+        if Pn is not None:
+            Pn_map = get_ima_spectrum_map(Pn, nx, ny)
+            Den = Px_map + Pn_map
+            ind = np.where(Den == 0)
+            Den[ind] = eta
+            Wfc = Px_map / Den
+        else:
+            Wfc = Px_map / (Px_map + eta)
+        Wfc[Wfc == np.inf] = 0
+
+        return Wfc
+    
+    def _noise_realizations(self, InshearData, mask, **kwargs):
+        n1, n2 = InshearData.get_shear_noise(**kwargs)
+        gamma1 = n1 * mask # shape = ([nimgs], [Nrea], nx, ny)
+        gamma2 = n2 * mask # shape = ([nimgs], [Nrea], nx, ny)
+        return gamma1, gamma2
 
     def prox_wiener_filtering(
         self,
-        gamma1,
-        gamma2,
+        InshearData,
         PowSpecSignal,
-        NcvIn,
         Pn=None,
         niter=None,
         Inpaint=False,
         ktr=None,
-        PropagateNoise=None,
+        PropagateNoise=False,
+        Nrea=None
     ):
         """
         Compute the wiener mass map considering not stationary noise
@@ -1071,12 +1051,10 @@ class massmap2d:
             "CMB map restoration", Advances in Astronomy , 2012, Id703217, 2012.
         Parameters
         ----------
-        gamma1,  gamma2: 2D np.ndarray
-            shear fied.
+        InshearData : Shear Class
+            Class contains the shear information.
         PowSpecSignal : 1D np.ndarray
             Signal theorical power spectrum.
-        Ncv : 2D np.ndarray
-            Diagonal covariance matrix (same size as gamma1 and gamm2), i.e. variance per pixel
         Pn: 1D np.ndarray, optional
             noise theorical power spectrum.
         niter: int
@@ -1088,79 +1066,41 @@ class massmap2d:
             if given, errors are calculated at each iteration.
         PropagateNoise: Bool, optional
             if True, run the routine on a noise realization instead of the input shear field.
+        Nrea: int, optional
+            number of noise realizations
         Returns
         -------
         TYPE  2D np.ndarray
               (E,B) reconstructed modes. Convergence = E
         """
-        if niter is None:
-            niter = self.DEF_niter
-        (nx, ny) = gamma1.shape
-        if self.Verbose:
-            print("Iterative Wiener filtering: ", nx, ny, ", Niter = ", niter)
-        Ncv = NcvIn / 2.0
-        Ncv[Ncv == 0] = 1e9  # infinite value for no measurement
-        index = np.where(Ncv < 1e2)
-        mask = np.zeros((nx, ny))
-        mask[index] = 1
-
-        xg = np.zeros((nx, ny)) + 1j * np.zeros((nx, ny))
-
-        # find the minimum noise variance
-        ind = np.where(Ncv != 0)
-        tau = np.min(Ncv[ind])
-
-        # set the step size
-        # eta = 1.83 * tau
-        eta = tau
-        # compute signal coefficient
-        Esn = eta / Ncv
-        Esn[Esn == np.inf] = 0
+        gamma1, gamma2, nx, ny, eta, Esn, mask, ind, tau, niter, _ = self._prepare_data(
+            InshearData, msg="Iterative Wiener filtering", niter=niter
+        )
 
         # calculate the wiener filter coefficients
-        Px_map = get_ima_spectrum_map(PowSpecSignal, nx, ny)
-        # info((Px_map + eta))
-        Wfc = np.zeros((nx, ny))
-        if Pn is not None:
-            Pn_map = get_ima_spectrum_map(Pn, nx, ny)
-            Den = Px_map + Pn_map
-            ind = np.where(Den == 0)
-            Den[ind] = eta
-            Wfc = Px_map / Den
-        else:
-            Wfc = Px_map / (Px_map + eta)
-        # info(Esn,name='Esn')
-        # info(mask,name='mask')
+        Wfc = self._get_Wfc(PowSpecSignal, nx, ny, Pn, eta)
 
-        #    writefits("xx_fft_wfc.fits", Wfc)
-        #    t = gamma1 + 1j*gamma2
-        #    z = np.fft.fftshift(np.fft.fft2(t))
-        #    z1 = z*conj(z)
-        #    writefits("xx_fft_k.fits", real(z1))
         if Inpaint:
+            # TODO: to be placed before or after "if PropagateNoise"? Inconsistent between methods.
             lmin = 0
             lmax = self.get_lmax_dct_inpaint(gamma1, gamma2)
-        # print("lmax = ", lmax)
 
-        if PropagateNoise is not None:
-            n1, n2 = PropagateNoise.get_shear_noise()
-            n1 = n1 * mask
-            n2 = n2 * mask
-            gamma1 = n1
-            gamma2 = n2
+        if PropagateNoise:
+            # Linear operator: uncertainty intervals do not depend on the input images
+            gamma1, gamma2 = self._noise_realizations(
+                InshearData, mask, Nrea=Nrea
+            ) # shape = (Nrea, nx, ny)
+
+        xg = np.zeros_like(gamma1)
 
         for n in range(niter):
             xn = np.copy(xg)
             t1, t2 = self.get_resi(xg, gamma1, gamma2, Esn)
-            # print("T1     Sigma = ", np.std(t1), ", Max = ", np.max(t1))
 
             t = xg + (t1 + 1j * t2)  # xg + H^T(eta / Sn * (y- H * xg))
             xg = self.mult_wiener(t, Wfc)  # wiener filtering in fourier space
             if Inpaint:
                 xg = self.step_dct_inpaint(xg, xn, mask, n, niter, lmin, lmax)
-
-                # print("     Sigma = ", np.std(xg), ", Max = ", np.max(xg))
-            # info(xg.real,name="XGR=>")
 
             if self.Verbose:
                 if ktr is not None:
@@ -1170,12 +1110,9 @@ class massmap2d:
                     print(
                         "   Wiener rec Iter: ",
                         n + 1,
-                        ", std ke =  %5.4f" % (np.std(xg[ind] / tau)),
+                        ", std ke =  %5.4f" % (np.std(xg[..., ind[0], ind[1]] / tau)),
                     )
 
-        #       xg.real = M.inpaint(xg.real, mask, 50)
-        #          if ktr is not None:
-        #              print("Iter ", n+1, ", Err = ", LA.norm(xg.real - ktr) / LA.norm(ktr) * 100.)
         return xg.real, xg.imag
 
     def test(self):
@@ -1183,14 +1120,13 @@ class massmap2d:
 
     def prox_mse(
         self,
-        gamma1,
-        gamma2,
-        NcvIn,
+        InshearData,
         niter=None,
         Inpaint=True,
         sigma=None,
         ktr=None,
-        PropagateNoise=None,
+        PropagateNoise=False,
+        Nrea=None
     ):
         """
         Compute the Mean Square Error Estimator of the mass map
@@ -1198,10 +1134,8 @@ class massmap2d:
 
         Parameters
         ----------
-        gamma1,  gamma2: 2D np.ndarray
-            shear fied.
-        Ncv : 2D np.ndarray
-            Diagonal covariance matrix (same size as gamma1 and gamm2), i.e. variance per pixel
+        InshearData : Shear Class
+            Class contains the shear information.
         niter: int
             number of iterations. Default is DEF_niter
         Inpaint: bool, optional
@@ -1214,45 +1148,29 @@ class massmap2d:
             if given, errors are calculated at each iteration.
         PropagateNoise: Bool, optional
             if True, run the routine on a noise realization instead of the input shear field.
+        Nrea: int, optional
+            number of noise realizations
         Returns
         -------
         TYPE  2D np.ndarray
               (E,B) reconstructed modes. Convergence = E
         """
-        if niter is None:
-            niter = self.DEF_niter
-        (nx, ny) = gamma1.shape
-        if self.Verbose:
-            print("Proxinal MSE estimator: ", nx, ny, ", Niter = ", niter)
-        Ncv = NcvIn / 2.0
-        Ncv[Ncv == 0] = 1e9  # infinite value for no measurement
-        index = np.where(Ncv < 1e2)
-        mask = np.zeros((nx, ny))
-        mask[index] = 1
+        gamma1, gamma2, _, _, _, Esn, mask, ind, tau, niter, _ = self._prepare_data(
+            InshearData, msg="Proxinal MSE estimator", niter=niter
+        )
 
-        xg = np.zeros((nx, ny)) + 1j * np.zeros((nx, ny))
+        if PropagateNoise:
+            # Linear operator: uncertainty intervals do not depend on the input images
+            gamma1, gamma2 = self._noise_realizations(
+                InshearData, mask, Nrea=Nrea
+            ) # shape = ([Nrea], nx, ny)
 
-        # find the minimum noise variance
-        ind = np.where(Ncv != 0)
-        tau = np.min(Ncv[ind])
-
-        # set the step size
-        # eta = 1.83 * tau
-        eta = tau
-        # compute signal coefficient
-        Esn = eta / Ncv
-        Esn[Esn == np.inf] = 0
-
-        if PropagateNoise is not None:
-            n1, n2 = PropagateNoise.get_shear_noise()
-            n1 = n1 * mask
-            n2 = n2 * mask
-            gamma1 = n1
-            gamma2 = n2
-
-        xg = self.gamma_to_cf_kappa(gamma1, gamma2)
-        lmin = 0
-        lmax = self.get_lmax_dct_inpaint(xg.real, xg.imag)
+        xg = self.gamma_to_cf_kappa(gamma1, gamma2) # shape = ([nimgs], nx, ny)
+        if Inpaint:
+            # TODO: check code: self.get_resi should be computed on shear maps, not convergence maps.
+            # TODO: to be placed before or after "if PropagateNoise"? Inconsistent between methods.
+            lmin = 0
+            lmax = self.get_lmax_dct_inpaint(xg.real, xg.imag)
         # =============================================================================
         #         if Inpaint:
         #             u1 = xg.real
@@ -1265,22 +1183,17 @@ class massmap2d:
         #             tvilut(u2)
         # =============================================================================
         for n in range(niter):
-            xn = np.copy(xg)
-            t1, t2 = self.get_resi(xg, gamma1, gamma2, Esn)
-            # print("T1     Sigma = ", np.std(t1), ", Max = ", np.max(t1))
+            t1, t2 = self.get_resi(xg, gamma1, gamma2, Esn) # shape = ([nimgs], nx, ny)
 
             xg = xg + (t1 + 1j * t2)  # xg + H^T(eta / Sn * (y- H * xg))
 
-            # print("     Sigma = ", np.std(xg), ", Max = ", np.max(xg))
-            # info(xg.real,name="XGR=>")
-
             if sigma is not None:
-                ksg = ndimage.filters.gaussian_filter(xg.real, sigma=sigma)
-                ksbg = ndimage.filters.gaussian_filter(xg.imag, sigma=sigma)
+                ksg = ndimage.gaussian_filter(xg.real, sigma=sigma, axes=(-2, -1))
+                ksbg = ndimage.gaussian_filter(xg.imag, sigma=sigma, axes=(-2, -1))
                 xg = ksg + 1j * ksbg
 
             if Inpaint:
-                xg[:, :] = self.step_dct_inpaint(xg, xg, mask, n, niter, lmin, lmax)
+                xg = self.step_dct_inpaint(xg, xg, mask, n, niter, lmin, lmax)
 
             if self.Verbose:
                 if ktr is not None:
@@ -1290,12 +1203,8 @@ class massmap2d:
                     print(
                         "   Prox MSE rec Iter: ",
                         n + 1,
-                        ", std ke =  %5.4f" % (np.std(xg[ind] / tau)),
+                        ", std ke =  %5.4f" % (np.std(xg[..., ind[0], ind[1]] / tau)),
                     )
-
-        #       xg.real = M.inpaint(xg.real, mask, 50)
-        #          if ktr is not None:
-        #              print("Iter ", n+1, ", Err = ", LA.norm(xg.real - ktr) / LA.norm(ktr) * 100.)
 
         return xg.real, xg.imag
 
@@ -1312,6 +1221,7 @@ class massmap2d:
         Bmode=True,
         ktr=None,
         PropagateNoise=False,
+        Nrea=None
     ):
         """
         MCAlens algorithm; Estimate the complex EB mode. The solution is assumed to have
@@ -1327,7 +1237,7 @@ class massmap2d:
         PowSpecSignal : 1D np.ndarray
              Theorical Signal power spectrum.
         niter : int, optional
-            number of iterations. Default is DEF_niter
+            number of iterations. Default is self.DEF_niter
         Nsigma : float, optional
             Detection level on wavelet coefficients. The default is self.DEF_Nsigma.
         Inpaint : Bool, optional
@@ -1345,6 +1255,8 @@ class massmap2d:
             if given, errors are calculated at each iteration.
         PropagateNoise : Bool, optional
             if True, run the routine on a noise realization instead of the input shear field.
+        Nrea: int, optional
+            number of noise realizations
         Returns
         -------
         2D np.ndarray
@@ -1356,56 +1268,17 @@ class massmap2d:
         2D np.ndarray
               B reconstructed mode  of the sparse component.
         """
+        gamma1, gamma2, nx, ny, eta, Esn, mask, ind, tau, niter, Nsigma = self._prepare_data(
+            InshearData, msg="MCALens estimator", niter=niter, Nsigma=Nsigma
+        )
 
-        # print("Mass Mapping routine")
-
-        gamma1 = InshearData.g1
-        gamma2 = InshearData.g2
-        nx = self.nx
-        ny = self.ny
-        xg = np.zeros((nx, ny)) + 1j * np.zeros((nx, ny))
-        mask = InshearData.mask
-
-        if niter is None:
-            niter = self.DEF_niter
-        if Nsigma is None:
-            Nsigma = self.DEF_Nsigma
-
-        RMS_ShearMap = np.sqrt(InshearData.Ncov / 2.0)
-        Ncv = InshearData.Ncov / 2.0
-        xg = np.zeros((nx, ny)) + 1j * np.zeros((nx, ny))
-        xs = np.zeros((nx, ny)) + 1j * np.zeros((nx, ny))
-        xw = np.zeros((nx, ny)) + 1j * np.zeros((nx, ny))
-        xt = np.zeros((nx, ny)) + 1j * np.zeros((nx, ny))
-        rec = np.zeros((nx, ny))
-        reci = np.zeros((nx, ny))
-        SigmaNoise = np.min(RMS_ShearMap)
-        Esn_Sparse = SigmaNoise / RMS_ShearMap
+        RMS_ShearMap = np.sqrt(InshearData.Ncov / 2.0) # shape = (nx, ny)
+        SigmaNoise = np.min(RMS_ShearMap) # float
+        Esn_Sparse = SigmaNoise / RMS_ShearMap # shape = (nx, ny)
         Esn_Sparse[Esn_Sparse == np.inf] = 0
 
-        # find the minimum noise variance
-        tau = np.min(Ncv)
-        # set the step size
-        # eta = 1.83 * tau
-        eta = tau
-        # compute signal coefficient
-        Esn = eta / Ncv
-
         # calculate the wiener filter coefficients
-        Px_map = get_ima_spectrum_map(PowSpecSignal, nx, ny)
-        Wfc = Px_map / (Px_map + eta)
-        Wfc[Wfc == np.inf] = 0
-
-        #    writefits("xx_fft_wfc.fits", Wfc)
-        #    t = gamma1 + 1j*gamma2
-        #    z = np.fft.fftshift(np.fft.fft2(t))
-        #    z1 = z*conj(z)
-        #    writefits("xx_fft_k.fits", real(z1))
-
-        ind_maskOK = np.where(mask == 1)
-        ind_maskZero = np.where(mask == 0)
-
-        # xg1,xg2 = self.prox_wiener_filtering(gamma1, gamma2, PowSpecSignal, InshearData.Ncov, Pn=None, niter=10, Inpaint=True, ktr=None)
+        Wfc = self._get_Wfc(PowSpecSignal, nx, ny, None, eta) # shape = (nx, ny)
 
         # Detection of the significant wavelet coefficents.
         # to avoid border artefacts, we first make a rough very smooth estimate
@@ -1414,12 +1287,14 @@ class massmap2d:
         # the border.
 
         if Inpaint:
+            # TODO: check code: self.get_resi should be computed on shear maps, not convergence maps.
+            # TODO: to be placed before or after "if PropagateNoise is True"? Inconsistent between methods.
             lmin = 0
             resi1, resi2 = self.get_resi(xg, gamma1, gamma2, Esn)
             lmax = self.get_lmax_dct_inpaint(resi1, resi2)
 
         ks = self.gamma_to_cf_kappa(gamma1, gamma2)
-        rec[:, :] = ks.real
+        rec = ks.real
         ks = self.smooth(rec, sigma=15)
         resi1, resi2 = self.get_resi(ks, gamma1, gamma2, Esn_Sparse)
 
@@ -1432,44 +1307,41 @@ class massmap2d:
             SigmaNoise=SigmaNoise,
             Nsigma=Nsigma,
             ComputeWTCoef=False,
-        )
-        self.WT_ActiveCoef[self.WT.ns - 1, :, :] = 0
+        ) # shape = ([nimgs], ns, nx, ny)
+        self.WT_ActiveCoef[..., -1, :, :] = 0
 
         # Replace the shear measurements by noise realisations
-        if PropagateNoise is True:
-            n1, n2 = InshearData.get_shear_noise()
-            n1 = n1 * mask
-            n2 = n2 * mask
-            gamma1 = n1
-            gamma2 = n2
+        if PropagateNoise:
+            # Nonlinear operator: uncertainty intervals depend on the input image
+            # Each input image gets its own set of noise realizations
+            if Nrea > 0:
+                self.WT_ActiveCoef = self.WT_ActiveCoef[..., np.newaxis, :, :, :] # shape = ([nimgs], 1, ns, nx, ny)
+            inpshape = gamma1.shape[:-2] # typically, inpshape = (nimgs,)
+            gamma1, gamma2 = self._noise_realizations(
+                InshearData, mask, Nrea=Nrea, inpshape=inpshape
+            ) # shape = ([nimgs], [Nrea], nx, ny)
+
+        # shape = ([nimgs], [Nrea], nx, ny)
+        # TODO: complex or complex128? Same question for real-valued arrays
+        xg = np.zeros_like(gamma1, dtype=complex) # Gaussian + sparse components
+        xs = np.zeros_like(gamma1, dtype=complex) # sparse component
+        xw = np.zeros_like(gamma1, dtype=complex) # Gaussian component
 
         for n in range(niter):
             resi1, resi2 = self.get_resi(
                 xg, gamma1, gamma2, Esn_Sparse
-            )  # , mask=mask, niter=20)
+            ) # shape = ([nimgs], [Nrea], nx, ny)
 
             # sparse component
-            xt[:, :] = resi1 + 1j * resi2  # xg + H^T(eta / Sn * (y- H * xg))
+            xt = resi1 + 1j * resi2  # xg + H^T(eta / Sn * (y- H * xg))
             self.WT.transform(xt.real)
-            self.WT.coef *= self.WT_ActiveCoef
-            # self.WT.threshold(SigmaNoise=SigmaNoise, Nsigma=Nsigma, ThresCoarse=True, hard=True, FirstDetectScale=FirstDetectScale,Verbose=False)
-            # if OnlyPos:
-            #    ind = np.where(self.WT.coef < 0)
-            #    self.WT.coef[ind]=0
-            signif_resi = self.WT.recons()
-            # if n % 10 == 0:
-            #    info(signif_resi)
-            rec[:, :] = xs.real + signif_resi
+            self.WT.coef *= self.WT_ActiveCoef # shape = ([nimgs], [Nrea], ns, nx, ny)
+            signif_resi = self.WT.recons() # shape = ([nimgs], [Nrea], nx, ny)
+            rec = xs.real + signif_resi # shape = ([nimgs], [Nrea], nx, ny)
 
-            # if n % 10 == 0:
-            #    print(n, "max = ", np.max(rec))
-
-            # if n % 100 == 0:
-            #    tvilut(rec,title='S_f'+str(n))
             if PropagateNoise is False:
                 if OnlyPos:
-                    ind = np.where(rec < 0)
-                    rec[ind] = 0
+                    rec[rec < 0] = 0
             if Bmode:
                 self.WT.transform(xs.imag)
                 self.WT.threshold(
@@ -1480,18 +1352,11 @@ class massmap2d:
                     FirstDetectScale=FirstDetectScale,
                     Verbose=False,
                 )
-                reci[:, :] = self.WT.recons()
+                reci = self.WT.recons() # shape = ([nimgs], [Nrea], nx, ny)
             else:
-                reci[:, :] = 0
-            xs = rec + 1j * reci
-            xg[:, :] = xw + xs
-
-            # ind_maskOK
-            # xw[:,:] = inp_x[:,:]
-            # Wiener component
-            # calculate the residual
-            # xs =0
-            xn = np.copy(xw)
+                reci = 0
+            xs = rec + 1j * reci # shape = ([nimgs], [Nrea], nx, ny)
+            xg = xw + xs
 
             InpMethod1 = 1
             if InpMethod1:
@@ -1500,28 +1365,27 @@ class massmap2d:
                 nw = 1
             for i in range(nw):
                 if Inpaint and InpMethod1:
+                    # TODO: why not using self.step_dct_inpaint as in the other methods?
                     t1, t2 = self.get_resi(
                         xg, gamma1, gamma2, Esn, mask=mask, niter=InpNiter, dctmax=lmax
                     )
                 else:
                     t1, t2 = self.get_resi(xg, gamma1, gamma2, Esn)
-                xt[:, :] = t1 + 1j * t2
+                xt = t1 + 1j * t2 # shape = ([nimgs], [Nrea], nx, ny)
                 xt += xw  # xg + H^T(eta / Sn * (y- H * xg))
-                xw[:, :] = self.mult_wiener(
+                xw = self.mult_wiener(
                     xt, Wfc
-                )  # wiener filtering in fourier space
-                xg[:, :] = xw + xs
+                ) # wiener filtering in fourier space; shape = ([nimgs], [Nrea], nx, ny)
+                xg = xw + xs # shape = ([nimgs], [Nrea], nx, ny)
 
-            xg[:, :] = xw + xs
             ZeroMeanCst = False
             if ZeroMeanCst is True:
                 xgr = xg.real
                 xgi = xg.imag
-                ind = np.where(mask == 1)
-                mxg = np.mean(xgr)
-                mxgm = np.mean(xgr[ind])
-                xgr[:, :] = xgr[:, :] - mxg
-                xg[:, :] = xgr[:, :] + 1j * xgi[:, :]
+                mxg = np.mean(xgr, axis=(-2, -1), keepdims=True) # shape = ([nimgs], [Nrea], 1, 1)
+                # mxgm = np.mean(xgr[mask == 1], axis=(-1), keepdims=True) # shape = ([nimgs], [Nrea], 1)
+                xgr = xgr - mxg # shape = ([nimgs], [Nrea], nx, ny)
+                xg = xgr + 1j * xgi # shape = ([nimgs], [Nrea], nx, ny)
 
             if self.Verbose:
                 ind = np.where(mask == 1)
@@ -1531,19 +1395,18 @@ class massmap2d:
                         n + 1,
                         ", Err = %5.4f"
                         % (
-                            np.std((xg.real[ind] - ktr[ind])) / np.std(ktr[ind]) * 100.0
+                            np.std((xg.real[..., ind[0], ind[1]] - ktr[..., ind[0], ind[1]])) / np.std(ktr[..., ind[0], ind[1]]) * 100.0
                         ),
-                        ", Resi ke (x100) =  %5.4f" % (np.std(resi1[ind]) * 100.0),
-                        ", Resi kb (x100) =  %5.4f" % (np.std(resi2[ind]) * 100.0),
+                        ", Resi ke (x100) =  %5.4f" % (np.std(resi1[..., ind[0], ind[1]]) * 100.0),
+                        ", Resi kb (x100) =  %5.4f" % (np.std(resi2[..., ind[0], ind[1]]) * 100.0),
                     )
                 else:
                     print(
                         "   Sparse rec Iter: ",
                         n + 1,
-                        ", Resi ke =  %5.4f" % (np.std(resi1[ind] / tau)),
-                        ", Resi kb = %5.4f" % (np.std(resi2[ind]) / tau),
+                        ", Resi ke =  %5.4f" % (np.std(resi1[..., ind[0], ind[1]] / tau)),
+                        ", Resi kb = %5.4f" % (np.std(resi2[..., ind[0], ind[1]]) / tau),
                     )
-        # endfor
 
         return xg.real, xg.imag, xs.real, xs.imag
 
@@ -1637,11 +1500,6 @@ class massmap2d:
                 self.WT_Sigma = self.get_wt_noise_level(InshearData, Nrea=Nrea)
             else:
                 self.WT_Sigma = WT_Sigma
-            #            info(self.WT_Sigma, name='WT_Sigma2')
-            #            if WT_Support is None:
-            #                self.WT_ActiveCoef = self.get_active_wt_coef(InshearData,  UseRea=True, SigmaNoise=1., Nsigma=Nsigma, Nrea=Nrea, WT_Sigma=WT_Sigma)
-            #            else:
-            #                self.WT_ActiveCoef = WT_Support
             WeightResi = InshearData.mask
         else:
             RMS_ShearMap = np.sqrt(InshearData.Ncov / 2.0)
@@ -1688,8 +1546,6 @@ class massmap2d:
                     "Hard = ",
                     hard,
                 )
-        #           for j in range(self.WT.ns):
-        #               print("   Scale ", j+1, ": Numner of active coeffs = ", (self.WT_ActiveCoef[j,:,:]).sum(), ", Nbr (%) = ", (self.WT_ActiveCoef[j,:,:]).sum() / (nx*ny)*100.)
 
         # Initialisation for  inpainting
         WT_Inpaint = 0
@@ -1709,7 +1565,6 @@ class massmap2d:
 
         # Main iteration
         Verbose = self.Verbose
-        # info(WeightResi, name='Esn')
         rec = np.zeros((nx, ny))
         reci = np.zeros((nx, ny))
         for n in range(niter):
@@ -1717,7 +1572,6 @@ class massmap2d:
             # print("XG=", xg.shape)
             resi1, resi2 = self.get_resi(xg, gamma1, gamma2, WeightResi)
             xg += resi1 + 1j * resi2
-            # print("   BEF  0.87?Sparse rec Iter: ", n+1, ", Sol =  %5.4f" %  LA.norm(xg.real))
 
             self.WT.transform(xg.real)
             self.WT.threshold(
@@ -1845,11 +1699,9 @@ class massmap2d:
 
         # find the minimum noise variance
         tau = np.min(RMS_ShearMap)
-        # tau =1.
         SigmaNoise = tau
         # compute signal coefficient
         Esn = tau / RMS_ShearMap
-        # print("size ESN ", vsize(Esn))
 
         if self.Verbose:
             print(
@@ -1990,11 +1842,6 @@ class massmap2d:
         Px_map = get_ima_spectrum_map(PowSpecSignal, nx, ny)
 
         Wfc = Px_map / (Px_map + eta)
-        #    writefits("xx_fft_wfc.fits", Wfc)
-        #    t = gamma1 + 1j*gamma2
-        #    z = np.fft.fftshift(np.fft.fft2(t))
-        #    z1 = z*conj(z)
-        #    writefits("xx_fft_k.fits", real(z1))
         if Inpaint:
             lmin = 0
             lmax = self.get_lmax_dct_inpaint(gamma1, gamma2)
@@ -2028,7 +1875,6 @@ class massmap2d:
             if Inpaint:
                 xg = self.step_dct_inpaint(xg, xn, mask, n, niter, lmin, lmax)
 
-                # xg.real = (1.-mask)*rec + mask * xg.real
             if self.Verbose:
                 ind = np.where(mask == 1)
                 if ktr is not None:
@@ -2050,16 +1896,10 @@ class massmap2d:
                         ", Resi kb = %5.4f" % (np.std(resi2[ind]) / tau),
                     )
 
-        # k = M.inpaint(Res.ikw, d.mask, 50)
-        #          if ktr is not None:
-        #              print("Iter ", n+1, ", Err = ", LA.norm(xg.real - ktr) / LA.norm(ktr) * 100.)
         return xg.real, xs.real
 
 
 ############ END CLASS #######################
-
-# if __name__ == '__main__':
-#     print ( "Main :)")
 
 
 # from lenspack.utils

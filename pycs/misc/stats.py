@@ -366,6 +366,10 @@ def get_grf(size, intput_power_map=None):
     np array
         2D images.
     """
+    # TODO: remove for loops for this code
+    # TODO: check this code; it seems like
+    #       `map_fourier[size - i, size - j] = np.conj(power_sample[i, j])`
+    # is overwriting the line just above.
     k_map = np.zeros((size, size), dtype=float)
     power_map = np.zeros((size, size), dtype=float)
     for (i, j), val in np.ndenumerate(power_map):
@@ -403,6 +407,57 @@ def get_grf(size, intput_power_map=None):
             map_fourier[i, j] = power_sample[i, j]  #
             map_fourier[size - i, size - j] = np.conj(power_sample[i, j])
 
-    map_pixel = np.fft.ifft2(np.fft.fftshift(map_fourier))
+    map_pixel = np.fft.ifft2(np.fft.fftshift(map_fourier, axes=(-2, -1)))
 
     return map_pixel
+
+
+def mad(input_data, axis=None, keepdims=False):
+    r"""Median absolute deviation.
+
+    This method calculates the median absolute deviation of the input data.
+    Modification from modopt.math.stats
+
+    Parameters
+    ----------
+    input_data : numpy.ndarray
+        Input data array
+    axis (int or tuple of ints)
+        Axis or axes along which the mad is computed.
+        The default is to compute the mad of the flattened array.
+    keepdims (bool, optional)
+        If this is set to True, the axes which are reduced are left in the
+        result as dimensions with size one. With this option, the result will
+        broadcast correctly against the original arr.
+
+    Returns
+    -------
+    float
+        MAD value
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from modopt.math.stats import mad
+    >>> a = np.arange(9).reshape(3, 3)
+    >>> mad(a)
+    2.0
+
+    Notes
+    -----
+    The MAD is calculated as follows:
+
+    .. math::
+
+        \mathrm{MAD} = \mathrm{median}\left(|X_i - \mathrm{median}(X)|\right)
+
+    See Also
+    --------
+    numpy.median : median function used
+
+    """
+    return np.median(
+        np.abs(
+            input_data - np.median(input_data, axis=axis, keepdims=True)
+        ), axis=axis, keepdims=keepdims
+    )

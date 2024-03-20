@@ -45,7 +45,7 @@ from scipy import signal
 
 
 def smooth2d(map, sigma):
-    return ndimage.filters.gaussian_filter(map, sigma=sigma)
+    return ndimage.gaussian_filter(map, sigma=sigma)
 
 
 def rebin2d(a, shape):
@@ -112,6 +112,10 @@ def hthres(alpha, Thres):
 
 
 def hard_thresholding(alpha, Thres):
+    # alpha: shape = ([nimgs], [Nrea], ns, nx, ny)
+    # Thres: shape = (ns, [nx, ny])
+    if Thres.ndim == 1:
+        Thres = Thres[..., np.newaxis, np.newaxis]
     alpha[np.abs(alpha) <= Thres] = 0
 
 
@@ -119,9 +123,13 @@ def hard_thresholding(alpha, Thres):
 
 
 def soft_thresholding(alpha, Thres):
-    Res = np.copy(np.abs(alpha)) - Thres
+    # alpha: shape = ([nimgs], [Nrea], ns, nx, ny)
+    # Thres: shape = (ns, [nx, ny])
+    if Thres.ndim == 1:
+        Thres = Thres[..., np.newaxis, np.newaxis]
+    Res = np.abs(alpha) - Thres
     Res[Res < 0] = 0
-    alpha[:, :] = np.sign(alpha) * Res[:, :]
+    alpha[:, :] = np.sign(alpha) * Res
 
 
 def sthres(alpha, Thres):
@@ -228,9 +236,7 @@ def vsize(Data):
         dim = d.ndim
         vs = np.zeros([dim + 1], dtype=np.int64)
         vs[0] = dim
-        size = np.array(d.shape)
-        for i in np.arange(dim):
-            vs[i + 1] = size[i]
+        vs[1:] = np.array(d.shape)
     return vs
 
 
@@ -266,11 +272,15 @@ def writefits(FileName, Data):
 
 
 def dft2d(ima):
-    return np.fft.fftshift(np.fft.fft2(ima))
+    return np.fft.fftshift(
+        np.fft.fft2(ima), axes=(-2, -1)
+    )
 
 
 def idft2d(ima):
-    return np.fft.ifft2(np.fft.ifftshift((ima)))
+    return np.fft.ifft2(np.fft.ifftshift(
+        ima, axes=(-2, -1)
+    ))
 
 
 def idft2dr(ima):
@@ -289,7 +299,9 @@ def conv(ima1, ima2):
 
 
 def dft2dnorm(ima):
-    z = np.fft.fftshift(np.fft.fft2(ima))
+    z = np.fft.fftshift(
+        np.fft.fft2(ima), axes=(-2, -1)
+    )
     z = z * z.conj()
     return z.real
 

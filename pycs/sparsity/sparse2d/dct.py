@@ -47,16 +47,15 @@ def dct2d(image, norm="ortho"):
     """
     # Check inputs
     image = np.array(image)
-    assert len(image.shape) == 2, "Input image must be 2D."
     assert norm in (None, "ortho", "isap"), "Invalid norm."
 
     # Compute DCT along each axis
     if norm == "isap":
-        result = dct(dct(image, norm="ortho", axis=0), norm="ortho", axis=1)
-        result[:, 0] *= np.sqrt(2)
-        result[0, :] *= np.sqrt(2)
+        result = dct(dct(image, norm="ortho", axis=-2), norm="ortho", axis=-1)
+        result[..., :, 0] *= np.sqrt(2)
+        result[..., 0, :] *= np.sqrt(2)
     else:
-        result = dct(dct(image, norm=norm, axis=0), norm=norm, axis=1)
+        result = dct(dct(image, norm=norm, axis=-2), norm=norm, axis=-1)
 
     return result
 
@@ -88,16 +87,15 @@ def idct2d(image, norm="ortho"):
     """
     # Check inputs
     image = np.array(image)
-    assert len(image.shape) == 2, "Input image must be 2D."
     assert norm in (None, "ortho", "isap"), "Invalid norm."
 
     # Compute inverse DCT along each axis
     if norm == "isap":
-        image[:, 0] /= np.sqrt(2)
-        image[0, :] /= np.sqrt(2)
-        result = idct(idct(image, norm="ortho", axis=0), norm="ortho", axis=1)
+        image[..., :, 0] /= np.sqrt(2)
+        image[..., 0, :] /= np.sqrt(2)
+        result = idct(idct(image, norm="ortho", axis=-2), norm="ortho", axis=-1)
     else:
-        result = idct(idct(image, norm=norm, axis=0), norm=norm, axis=1)
+        result = idct(idct(image, norm=norm, axis=-2), norm=norm, axis=-1)
 
     return result
 
@@ -170,6 +168,16 @@ def blockdct2d(image, norm="ortho", blocksize=None, overlap=False):
     print(blocksize)
 
     # Compute DCT on sub blocks
+    # TODO: remove the for loops by using module `sliding_window_view` from `numpy.lib.stride_tricks`?
+    # Check the following code:
+    #if overlap:
+    #    block_slices = sliding_window_view(image, (blocksize, blocksize), step=blocksize // 2)
+    #    dct_slices = dct2d(block_slices, norm=norm)
+    #    result[::blocksize // 2, ::blocksize // 2] = dct_slices
+    #else:
+    #    block_slices = sliding_window_view(image, (blocksize, blocksize), step=blocksize)
+    #    dct_slices = dct2d(block_slices, norm=norm)
+    #    result[:n: blocksize, :n: blocksize] = dct_slices
     if overlap:
         for ii in range(2 * n / blocksize - 1):
             for jj in range(2 * n / blocksize - 1):
@@ -227,6 +235,7 @@ def iblockdct2d(image, norm="ortho", blocksize=None, overlap=False):
         This needs MORE TESTING before deployment !
 
     """
+    # TODO: remove the for loops by using module `sliding_window_view` from `numpy.lib.stride_tricks`?
     if norm not in [None, "ortho", "isap"]:
         print("Warning: invalid norm --> using isap")
         norm = "isap"
