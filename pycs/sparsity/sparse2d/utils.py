@@ -30,9 +30,7 @@ def fftconvolve(array, kernel):
 
     return numpy.real(
         numpynp.fft.fftshift(
-            numpy.fft.ifft2(
-                numpy.fft.ifftshift(x * y, axes=(-2, -1))
-            ), axes=(-2, -1)
+            numpy.fft.ifft2(numpy.fft.ifftshift(x * y, axes=(-2, -1))), axes=(-2, -1)
         )
     )
 
@@ -52,15 +50,10 @@ def fftdeconvolve(image, kernel):
     out: array
         the deconvolved image.
     """
-    x = numpy.fft.fftshift(
-        numpy.fft.fft2(image), axes=(-2, -1)
-    )
-    y = numpy.fft.fftshift(
-        numpy.fft.fft2(kernel), axes=(-2, -1)
-    )
+    x = numpy.fft.fftshift(numpy.fft.fft2(image), axes=(-2, -1))
+    y = numpy.fft.fftshift(numpy.fft.fft2(kernel), axes=(-2, -1))
 
     return numpy.real(
-        numpy.fft.fftshift(
-            numpy.fft.ifft2(numpy.fft.ifftshift(x / y, axes=(-2, -1)))
-        ), axes=(-2, -1)
+        numpy.fft.fftshift(numpy.fft.ifft2(numpy.fft.ifftshift(x / y, axes=(-2, -1)))),
+        axes=(-2, -1),
     )

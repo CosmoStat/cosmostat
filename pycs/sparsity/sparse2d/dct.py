@@ -170,11 +170,11 @@ def blockdct2d(image, norm="ortho", blocksize=None, overlap=False):
     # Compute DCT on sub blocks
     # TODO: remove the for loops by using module `sliding_window_view` from `numpy.lib.stride_tricks`?
     # Check the following code:
-    #if overlap:
+    # if overlap:
     #    block_slices = sliding_window_view(image, (blocksize, blocksize), step=blocksize // 2)
     #    dct_slices = dct2d(block_slices, norm=norm)
     #    result[::blocksize // 2, ::blocksize // 2] = dct_slices
-    #else:
+    # else:
     #    block_slices = sliding_window_view(image, (blocksize, blocksize), step=blocksize)
     #    dct_slices = dct2d(block_slices, norm=norm)
     #    result[:n: blocksize, :n: blocksize] = dct_slices

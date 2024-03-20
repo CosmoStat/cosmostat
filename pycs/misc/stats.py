@@ -457,7 +457,7 @@ def mad(input_data, axis=None, keepdims=False):
 
     """
     return np.median(
-        np.abs(
-            input_data - np.median(input_data, axis=axis, keepdims=True)
-        ), axis=axis, keepdims=keepdims
+        np.abs(input_data - np.median(input_data, axis=axis, keepdims=True)),
+        axis=axis,
+        keepdims=keepdims,
     )
