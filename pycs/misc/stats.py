@@ -407,7 +407,7 @@ def get_grf(size, intput_power_map=None):
             map_fourier[i, j] = power_sample[i, j]  #
             map_fourier[size - i, size - j] = np.conj(power_sample[i, j])
 
-    map_pixel = np.fft.ifft2(np.fft.fftshift(map_fourier))
+    map_pixel = np.fft.ifft2(np.fft.fftshift(map_fourier, axes=(-2, -1)))
 
     return map_pixel
 

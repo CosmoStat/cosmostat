@@ -752,8 +752,14 @@ class massmap2d:
 
     def mult_wiener(self, map, WienerFilterMap):
         """ " apply one wiener step in the iterative wiener filtering"""
+        # TODO: Modify `get_ima_spectrum_map` in order to avoid `np.fft.fftshift`
+        # (should fix the bug with odd-sized arrays)
         return np.fft.ifft2(
-            np.fft.fftshift(WienerFilterMap * np.fft.fftshift(np.fft.fft2(map)))
+            np.fft.fftshift(
+                WienerFilterMap * np.fft.fftshift(
+                    np.fft.fft2(map), axes=(-2, -1)
+                ), axes=(-2, -1)
+            )
         )
 
     def wiener(self, gamma1, gamma2, PowSpecSignal, PowSpecNoise):
