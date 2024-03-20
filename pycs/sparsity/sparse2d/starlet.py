@@ -30,6 +30,7 @@ Created on Mar 30, 2015
         r = CW.recons()       #  reconstruct an image from its coefficients
     more examples are given at the end of this file.
 """
+
 import numpy as np
 import scipy.signal as psg
 
@@ -58,9 +59,6 @@ if PYSAP_CXX is False:
     )
 
 # print("PYSAP_CXX = ", PYSAP_CXX)
-    
-
-
 
 
 def b3splineTrans(im_in, step):
@@ -84,14 +82,9 @@ def b3splineTrans(im_in, step):
     c2 = 1.0 / 4
     c3 = 3.0 / 8
 
-    im_in_pad = np.pad(
-        im_in, (
-            (0, 0),
-            (2 * step, 2 * step)
-        ), mode='reflect'
-    )
-    im_in_shiftl = im_in_pad[:, step:step+ny]
-    im_in_shiftr = im_in_pad[:, -step-ny:-step]
+    im_in_pad = np.pad(im_in, ((0, 0), (2 * step, 2 * step)), mode="reflect")
+    im_in_shiftl = im_in_pad[:, step : step + ny]
+    im_in_shiftr = im_in_pad[:, -step - ny : -step]
     im_in_shiftl2 = im_in_pad[:, :ny]
     im_in_shiftr2 = im_in_pad[:, -ny:]
 
@@ -102,14 +95,9 @@ def b3splineTrans(im_in, step):
         + c1 * (im_in_shiftl2 + im_in_shiftr2)
     )
 
-    buff_pad = np.pad(
-        buff, (
-            (2 * step, 2 * step),
-            (0, 0)
-        ), mode='reflect'
-    )
-    buff_shiftl = buff_pad[step:step+nx]
-    buff_shiftr = buff_pad[-step-nx:-step]
+    buff_pad = np.pad(buff, ((2 * step, 2 * step), (0, 0)), mode="reflect")
+    buff_shiftl = buff_pad[step : step + nx]
+    buff_shiftr = buff_pad[-step - nx : -step]
     buff_shiftl2 = buff_pad[:nx]
     buff_shiftr2 = buff_pad[-nx:]
 
@@ -154,13 +142,14 @@ def vectorize(signature):
     def decor(func):
         """
         Decorator to vectorize methods in class `MRStarlet`
-        
+
         """
+
         def wrapper(self, im, *args, **kwargs):
             return np.vectorize(
-                lambda x: func(self, x, *args, **kwargs),
-                signature=signature
+                lambda x: func(self, x, *args, **kwargs), signature=signature
             )(im)
+
         return wrapper
 
     return decor
@@ -168,12 +157,12 @@ def vectorize(signature):
 
 class MRStarlet(pysparse.MRStarlet):
 
-    @vectorize(signature='(n,m)->(p,n,m)')
+    @vectorize(signature="(n,m)->(p,n,m)")
     def transform(self, im, nz, *args, **kwargs):
         wl = super().transform(im.astype(np.float64), nz, *args, **kwargs)
         return np.stack(wl).astype(np.float64)
 
-    @vectorize(signature='(p,n,m)->(n,m)')
+    @vectorize(signature="(p,n,m)->(n,m)")
     def recons(self, wt, *args, **kwargs):
         wl = list(wt.astype(np.float64))
         return super().recons(wl, *args, **kwargs).astype(np.float64)
@@ -217,10 +206,10 @@ def star2d(im, scale, gen2=False, bord=1, nb_procs=0, fast=True, verb=0):
         # verb=1
         ima = im.copy()
         psWT = MRStarlet(bord, gen2, nb_procs, verb)
-        wt = psWT.transform(ima, nz) # stack already done
+        wt = psWT.transform(ima, nz)  # stack already done
     else:
         if len(im.shape) > 2:
-            raise NotImplementedError # TODO: vectorize this part
+            raise NotImplementedError  # TODO: vectorize this part
         wt = np.zeros((nz, nx, ny))
         step_hole = int(1)
         im_in = np.copy(im)
@@ -283,7 +272,7 @@ def istar2d(wt, gen2=True, bord=0, nb_procs=0, fast=True, verb=0):
         imRec = psWT.recons(wt)
     else:
         if len(wt.shape) > 3:
-            raise NotImplementedError # TODO: vectorize this part
+            raise NotImplementedError  # TODO: vectorize this part
         # trans = 1 if gen2 else 2
         if gen2:
             """
@@ -365,7 +354,7 @@ def adstar2d(wtOri, gen2=True, bord=0, nb_procs=0, fast=True, verb=0):
         imRec = psWT.recons(wt, True)
     else:
         if len(wt.shape) > 3:
-            raise NotImplementedError # TODO: vectorize this part
+            raise NotImplementedError  # TODO: vectorize this part
         # print("NO BINDING")
         # Unnormalization step
         # !Attention: wt is not the original wt after unnormalization
@@ -564,7 +553,7 @@ class starlet2d:
             self.name = WTname
         self.coef = star2d(
             im, self.ns, self.gen2, self.bord, self.nb_procs, True, self.verb
-        ) # shape = ([nimgs], [Nrea], ns, nx, ny)
+        )  # shape = ([nimgs], [Nrea], ns, nx, ny)
         if self.l2norm:
             self.coef /= self.Starlet_Gen1TabNorm[:, np.newaxis, np.newaxis]
 
@@ -582,7 +571,7 @@ class starlet2d:
         rec : 2D np.ndarray
             Reconstructed image.
         """
-        wt = np.copy(self.coef) # shape = (ns, nx, ny) or (nimgs, ns, nx, ny)
+        wt = np.copy(self.coef)  # shape = (ns, nx, ny) or (nimgs, ns, nx, ny)
         if self.l2norm:
             wt *= self.Starlet_Gen1TabNorm[:, np.newaxis, np.newaxis]
         if adjoint:
@@ -903,31 +892,31 @@ class starlet2d:
         """
         vs = vsize(SigmaNoise)
         dim = vs[0]
-        if dim == 0: # SigmaNoise is a scalar or contains one single element
+        if dim == 0:  # SigmaNoise is a scalar or contains one single element
             if SigmaNoise == 0:
-                SigmaNoise = self.get_noise() # scalar
+                SigmaNoise = self.get_noise()  # scalar
         self.SigmaNoise = SigmaNoise
         if Verbose:
             print("SigmaNoise = ", SigmaNoise, ", vsize(SigmaNoise) = ", vs)
-        self.TabNsigma = self.get_tabsigma(self.ns, Nsigma=Nsigma) # shape = (ns,)
+        self.TabNsigma = self.get_tabsigma(self.ns, Nsigma=Nsigma)  # shape = (ns,)
         if Verbose:
             print("TabNsigma = ", self.TabNsigma)
 
-        if dim in (0, 2): # SigmaNoise: scalar or shape = (nx, ny)
+        if dim in (0, 2):  # SigmaNoise: scalar or shape = (nx, ny)
             # The noise level is obtained at each scale by multiplying by self.TabNorm
-            Thres = SigmaNoise * (self.TabNsigma * self.TabNorm)[
-                :, np.newdim, np.newdim
-            ] # shape = (ns, nx, ny)
-        elif dim == 1: # SigmaNoise: shape = (ns,)
-            Thres = SigmaNoise * self.TabNsigma # shape = (ns,)
-        else: # SigmaNoise: shape = (ns, nx, ny)
-            Thres = SigmaNoise * self.TabNsigma[
-                :, np.newdim, np.newdim
-            ] # shape = (ns, nx, ny)
+            Thres = (
+                SigmaNoise * (self.TabNsigma * self.TabNorm)[:, np.newdim, np.newdim]
+            )  # shape = (ns, nx, ny)
+        elif dim == 1:  # SigmaNoise: shape = (ns,)
+            Thres = SigmaNoise * self.TabNsigma  # shape = (ns,)
+        else:  # SigmaNoise: shape = (ns, nx, ny)
+            Thres = (
+                SigmaNoise * self.TabNsigma[:, np.newdim, np.newdim]
+            )  # shape = (ns, nx, ny)
 
         if ThresCoarse:
             s = self.coef
-        else: # ignore the coarsest scale
+        else:  # ignore the coarsest scale
             s = self.coef[..., :-1, :, :]
             Thres = Thres[:-1]
 
@@ -944,9 +933,9 @@ class starlet2d:
             )
 
         if FirstDetectScale > 0:
-            self.coef[..., :FirstDetectScale, :, :] = 0.
+            self.coef[..., :FirstDetectScale, :, :] = 0.0
         if KillCoarse:
-            self.coef[..., -1, :, :] = 0.
+            self.coef[..., -1, :, :] = 0.0
 
     def copy(self, name="wt"):
         """

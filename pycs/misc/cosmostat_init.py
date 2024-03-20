@@ -272,15 +272,11 @@ def writefits(FileName, Data):
 
 
 def dft2d(ima):
-    return np.fft.fftshift(
-        np.fft.fft2(ima), axes=(-2, -1)
-    )
+    return np.fft.fftshift(np.fft.fft2(ima), axes=(-2, -1))
 
 
 def idft2d(ima):
-    return np.fft.ifft2(np.fft.ifftshift(
-        ima, axes=(-2, -1)
-    ))
+    return np.fft.ifft2(np.fft.ifftshift(ima, axes=(-2, -1)))
 
 
 def idft2dr(ima):
@@ -299,9 +295,7 @@ def conv(ima1, ima2):
 
 
 def dft2dnorm(ima):
-    z = np.fft.fftshift(
-        np.fft.fft2(ima), axes=(-2, -1)
-    )
+    z = np.fft.fftshift(np.fft.fft2(ima), axes=(-2, -1))
     z = z * z.conj()
     return z.real
 
