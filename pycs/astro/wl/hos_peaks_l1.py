@@ -363,7 +363,7 @@ class HOS_starlet_l1norm_peaks:
         # create a Gaussian kernel
         im = np.zeros_like(image)
         im[im.shape[0] // 2, im.shape[1] // 2] = 1.0
-        gaussian_kernel = ndimage.gaussian_filter(im, sigma=2)
+        gaussian_kernel = ndimage.gaussian_filter(im, smoothing_sigma)
 
         # calculate the noise level for the smoothed pixels
         variance_map = sigma_noise**2
@@ -371,7 +371,7 @@ class HOS_starlet_l1norm_peaks:
         smoothed_noise_sigma = np.sqrt(conv(variance_map, square_gaussian_kernel))
 
         # calculate the SNR image
-        image_smoothed = ndimage.gaussian_filter(image, sigma=2)
+        image_smoothed = ndimage.gaussian_filter(image, smoothing_sigma)
         snr_image = np.zeros_like(image_smoothed)
         ind = np.where(smoothed_noise_sigma != 0)
         snr_image[ind] = image_smoothed[ind] / smoothed_noise_sigma[ind]
@@ -386,7 +386,7 @@ class HOS_starlet_l1norm_peaks:
         counts, bin_edges = np.histogram(heights, bins=self.TabBins)
         self.Mono_Peaks_Count = counts
 
-    def get_wtpeaks(self, Mask=None):
+    def get_wtpeaks(self, Mask=None, verbose=False):
         """
         Calculate the histogram of of peak counts at all scales
 
@@ -396,6 +396,8 @@ class HOS_starlet_l1norm_peaks:
             DESCRIPTION. The default is None.
             Caculate the histogram of of peak counts  only in the mask area.
             The default is None, the whole image is used at every scale.
+        verbose : bool, optional
+            DESCRIPTION. If True, print the minimum and maximum values at each scale. The default is False.
         Returns
         -------
         None.
@@ -407,9 +409,6 @@ class HOS_starlet_l1norm_peaks:
         self.Peaks_Height = []
         for i in np.arange(self.WT.ns):
             Scale = self.WSNR[i, :, :]
-            Min = Scale.min()
-            Max = Scale.max()
-            print("Scale ", i + 1, ": Min = ", Min, ", Max = ", Max)
             X, Y, heights = get_peaks(
                 Scale, threshold=None, ordered=True, mask=Mask, include_border=False
             )
@@ -418,6 +417,11 @@ class HOS_starlet_l1norm_peaks:
             self.Peaks_Height.append(heights)
             counts, bin_edges = np.histogram(heights, bins=self.TabBins)
             self.Peaks_Count.append(counts)
+
+            if verbose:
+                Min = Scale.min()
+                Max = Scale.max()
+                print("Scale ", i + 1, ": Min = ", Min, ", Max = ", Max)
 
     def plot_mono_peaks_histogram(self):
         """
@@ -525,7 +529,7 @@ class HOS_starlet_l1norm_peaks:
             plt.yscale("log")
         plt.show()
 
-    def get_wtl1(self, nbins=None, Mask=None):
+    def get_wtl1(self, nbins=None, Mask=None, min_snr=None, max_snr=None):
         """
         Calculate the wavelet l1 norm per bin.
 
@@ -536,6 +540,11 @@ class HOS_starlet_l1norm_peaks:
         Mask : 2D array, optional
             Caculate the l1 norm only in the mask area.
             The default is None, the whole image is used at every scale.
+        min_snr : float, optional
+            Minimum SNR value for calculating l1 norms. The default is None, which will use the minimum SNR found in the data.
+        max_snr : float, optional
+            Maximum SNR value for calculating l1 norms. The default is None, which will use the maximum SNR found in the data.
+
 
         Returns
         -------
@@ -543,15 +552,21 @@ class HOS_starlet_l1norm_peaks:
 
         """
         if nbins is None:
-            nbins = NBins
+            nbins = self.NBins
+
         l1_coll = []
         bins_coll = []
+
         for i in np.arange(self.WT.ns):
             ScaleSNR = self.WSNR[i, :, :]
             if Mask is not None:
                 ind = np.where(Mask == 0)
                 ScaleSNR = ScaleSNR[ind]
-            thresholds_snr = np.linspace(np.min(ScaleSNR), np.max(ScaleSNR), nbins + 1)
+
+            min_snr_value = min_snr if min_snr is not None else np.min(ScaleSNR)
+            max_snr_value = max_snr if max_snr is not None else np.max(ScaleSNR)
+
+            thresholds_snr = np.linspace(min_snr_value, max_snr_value, nbins + 1)
             bins_snr = 0.5 * (thresholds_snr[:-1] + thresholds_snr[1:])
             digitized = np.digitize(ScaleSNR, thresholds_snr)
             bin_l1_norm = [
@@ -560,6 +575,7 @@ class HOS_starlet_l1norm_peaks:
             ]
             bins_coll.append(bins_snr)
             l1_coll.append(bin_l1_norm)
+
         self.l1bins = np.array(bins_coll)
         self.l1norm = np.array(l1_coll)
 
