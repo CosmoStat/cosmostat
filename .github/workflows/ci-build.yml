@@ -16,11 +16,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest]
-        python-version: ["3.10"]
+        python-version: ["3.11"]
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -50,3 +50,15 @@ jobs:
       - name: Run Tests
         run: |
           python -m pytest
+
+  linter-check:
+    name: Black Linter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check Black formatting
+        uses: rickstaa/action-black@v1
+        with:
+          black_args: ". --check"
