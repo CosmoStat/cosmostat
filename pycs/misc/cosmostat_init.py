@@ -26,7 +26,9 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy
 from matplotlib.colors import PowerNorm
 import seaborn as sns
+import scipy
 from scipy import ndimage
+from scipy import signal
 
 ################################################
 
@@ -43,7 +45,7 @@ from scipy import ndimage
 
 
 def smooth2d(map, sigma):
-    return ndimage.filters.gaussian_filter(map, sigma=sigma)
+    return ndimage.gaussian_filter(map, sigma=sigma)
 
 
 def rebin2d(a, shape):
@@ -73,6 +75,26 @@ def unpad2d(x, size):
     return unpad(x, pad_width2d(size))
 
 
+def gauss2d(size, fwhm=20, center=None):
+    """Make a square gaussian kernel.
+
+    size is the length of a side of the square
+    fwhm is full-width-half-maximum, which
+    can be thought of as an effective radius.
+    """
+
+    x = np.arange(0, size, 1, float)
+    y = x[:, np.newaxis]
+
+    if center is None:
+        x0 = y0 = size // 2
+    else:
+        x0 = center[0]
+        y0 = center[1]
+
+    return np.exp(-4 * np.log(2) * ((x - x0) ** 2 + (y - y0) ** 2) / fwhm**2)
+
+
 # Test
 # pad_width = ((0, 0), (1, 0), (3, 4))
 # a = np.random.rand(10, 10, 10)
@@ -90,6 +112,10 @@ def hthres(alpha, Thres):
 
 
 def hard_thresholding(alpha, Thres):
+    # alpha: shape = ([nimgs], [Nrea], ns, nx, ny)
+    # Thres: shape = (ns, [nx, ny])
+    if Thres.ndim == 1:
+        Thres = Thres[..., np.newaxis, np.newaxis]
     alpha[np.abs(alpha) <= Thres] = 0
 
 
@@ -97,9 +123,13 @@ def hard_thresholding(alpha, Thres):
 
 
 def soft_thresholding(alpha, Thres):
-    Res = np.copy(np.abs(alpha)) - Thres
+    # alpha: shape = ([nimgs], [Nrea], ns, nx, ny)
+    # Thres: shape = (ns, [nx, ny])
+    if Thres.ndim == 1:
+        Thres = Thres[..., np.newaxis, np.newaxis]
+    Res = np.abs(alpha) - Thres
     Res[Res < 0] = 0
-    alpha[:, :] = np.sign(alpha) * Res[:, :]
+    alpha[:, :] = np.sign(alpha) * Res
 
 
 def sthres(alpha, Thres):
@@ -200,15 +230,13 @@ def dump(obj):
 def vsize(Data):
     # isinstance(P, (list, tuple, np.ndarray))
     if np.isscalar(Data):
-        vs = np.zeros([1], dtype=np.int)
+        vs = np.zeros([1], dtype=np.int64)
     else:
-        d = np.asarray(Data, dtype=np.int)
+        d = np.asarray(Data, dtype=np.int64)
         dim = d.ndim
-        vs = np.zeros([dim + 1], dtype=np.int)
+        vs = np.zeros([dim + 1], dtype=np.int64)
         vs[0] = dim
-        size = np.array(d.shape)
-        for i in np.arange(dim):
-            vs[i + 1] = size[i]
+        vs[1:] = np.array(d.shape)
     return vs
 
 
@@ -244,23 +272,30 @@ def writefits(FileName, Data):
 
 
 def dft2d(ima):
-    return np.fft.fftshift(np.fft.fft2(ima))
+    return np.fft.fftshift(np.fft.fft2(ima), axes=(-2, -1))
 
 
 def idft2d(ima):
-    return np.fft.ifft2(np.fft.fftshift((ima)))
+    return np.fft.ifft2(np.fft.ifftshift(ima, axes=(-2, -1)))
 
 
 def idft2dr(ima):
-    return real(np.fft.ifft2(np.fft.fftshift((ima))))
+    z = np.fft.ifft2(ima)
+    return z.real
 
 
 def conv(ima1, ima2):
-    return idft2dr(dft2d(ima1) * dft2d(ima2))
+    return scipy.signal.fftconvolve(ima1, ima2, mode="same")
+
+
+#    x = np.fft.fft2(ima1) * np.fft.fft2(ima2)
+#    z = np.fft.ifft2(x)
+#    return z.real
+#     return idft2dr(dft2d(ima1) * dft2d(ima2))
 
 
 def dft2dnorm(ima):
-    z = np.fft.fftshift(np.fft.fft2(ima))
+    z = np.fft.fftshift(np.fft.fft2(ima), axes=(-2, -1))
     z = z * z.conj()
     return z.real
 
@@ -287,7 +322,7 @@ def tvilut(
     else:
         FigSize = fs
     if lut is None:
-        lut = "rainbow"  #  'inferno'   'gist_stern'
+        lut = "rainbow"  # 'inferno'   'gist_stern'
     fig, ax = plt.subplots(1, 1, facecolor="w", figsize=(FigSize, FigSize))
     cm = plt.cm.get_cmap(lut)
     img = ax.imshow(d, cmap=cm, origin="lower", vmin=vmin, vmax=vmax)
@@ -305,7 +340,8 @@ def tvilut(
     # cbar = fig.colorbar(cax, ticks=[-1, 0, 1])
     # cbar = fig.colorbar(cax, ticks=[d.min(), 0, d.max()])
     # cbar = fig.colorbar(cax)
-    # cbar.ax.set_yticklabels(['< -1', '0', '> 1'])  # vertically oriented colorbar
+    # cbar.ax.set_yticklabels(['< -1', '0', '> 1'])  # vertically oriented
+    # colorbar
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.1)
@@ -321,6 +357,31 @@ def tvilut(
 
 
 ################################################
+
+
+def tvimap(map_data, title="", lut="inferno", vmin=None, vmax=None, filename=None):
+    """
+    Plot a 2D map using a colormap.
+
+    Parameters:
+        map_data (numpy.ndarray): The 2D map data.
+        title (str): Title of the plot.
+        lut (str): Colormap name ('rainbow','inferno', 'gist_stern', etc)
+        vmin (float): Minimum value for colormap scaling.
+        vmax (float): Maximum value for colormap scaling.
+    """
+    plt.figure()
+    img = plt.imshow(map_data, cmap=lut, vmin=vmin, vmax=vmax, origin="lower")
+    plt.title(title)
+    plt.colorbar(img)
+    if filename is not None:
+        plt.savefig(filename)
+    plt.show()
+
+
+################################################
+
+
 def history():
     print(
         "\n".join(
@@ -348,7 +409,8 @@ def journal(FileName):
 def tvima(im, vmax=0, gamma=0.5, cmap="gist_stern"):
     if vmax == 0:
         vmax = im.max()
-    plt.imshow(np.rot90(im, 2), cmap=cmap, vmax=vmax, norm=PowerNorm(gamma=gamma))
+    # , norm=PowerNorm(gamma=gamma))
+    plt.imshow(np.rot90(im, 2), cmap=cmap, vmax=vmax)
     plt.colorbar()
     plt.show()
 

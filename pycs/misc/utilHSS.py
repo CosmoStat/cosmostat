@@ -3,135 +3,74 @@ Created on Nov 4, 2015
 
 @author: mjiang
 """
+
 import numpy as np
 import scipy.fftpack as pfft
 
 
 def fftshift2d1d(cubefft):
-    (nz, nx, ny) = np.shape(cubefft)
-    cubefftSh = (
-        np.zeros((nz, nx, ny)) + np.zeros((nz, nx, ny)) * 1j
-    )  # Convert to complex array
-    for fm in np.arange(nz):
-        cubefftSh[fm] = pfft.fftshift(cubefft[fm])
-    return cubefftSh
+    return np.fft.fftshift(cubefft, axes=(1, 2))
 
 
 def ifftshift2d1d(cubefftSh):
-    (nz, nx, ny) = np.shape(cubefftSh)
-    cubefft = (
-        np.zeros((nz, nx, ny)) + np.zeros((nz, nx, ny)) * 1j
-    )  # Convert to complex array
-    for fm in np.arange(nz):
-        cubefft[fm] = pfft.ifftshift(cubefftSh[fm])
-    return cubefft
+    return np.fft.ifftshift(cubefftSh, axes=(1, 2))
 
 
 def fft2d1d(cube):
-    (nz, nx, ny) = np.shape(cube)
-    cubefft = (
-        np.zeros((nz, nx, ny)) + np.zeros((nz, nx, ny)) * 1j
-    )  # Convert to complex array
-    for fm in np.arange(nz):
-        cubefft[fm] = pfft.fft2(cube[fm])
-    return cubefft
+    return np.fft.fft2(cube)
 
 
 def ifft2d1d(cubefft):
-    (nz, nx, ny) = np.shape(cubefft)
-    cube = (
-        np.zeros((nz, nx, ny)) + np.zeros((nz, nx, ny)) * 1j
-    )  # Convert to complex array
-    for fm in np.arange(nz):
-        cube[fm] = pfft.ifft2(cubefft[fm])
-    return cube
+    return np.fft.ifft2(cubefft)
 
 
 def fftshiftNd1d(imagefft, N):
+    assert len(imagefft.shape) == (N + 1)
     if N == 1:
-        (nz, ny) = np.shape(imagefft)
-        imagefftSh = (
-            np.zeros((nz, ny)) + np.zeros((nz, ny)) * 1j
-        )  # Convert to complex array
+        axes = 1
     if N == 2:
-        (nz, nx, ny) = np.shape(imagefft)
-        imagefftSh = (
-            np.zeros((nz, nx, ny)) + np.zeros((nz, nx, ny)) * 1j
-        )  # Convert to complex array
-    for fm in np.arange(nz):
-        imagefftSh[fm] = pfft.fftshift(imagefft[fm])
-    return imagefftSh
+        axes = (1, 2)
+    return np.fft.fftshift(imagefft, axes=axes)
 
 
 def ifftshiftNd1d(imagefftSh, N):
+    assert len(imagefftSh.shape) == (N + 1)
     if N == 1:
-        (nz, ny) = np.shape(imagefftSh)
-        imagefft = (
-            np.zeros((nz, ny)) + np.zeros((nz, ny)) * 1j
-        )  # Convert to complex array
+        axes = 1
     if N == 2:
-        (nz, nx, ny) = np.shape(imagefftSh)
-        imagefft = (
-            np.zeros((nz, nx, ny)) + np.zeros((nz, nx, ny)) * 1j
-        )  # Convert to complex array
-    for fm in np.arange(nz):
-        imagefft[fm] = pfft.ifftshift(imagefftSh[fm])
-    return imagefft
+        axes = (1, 2)
+    return np.fft.ifftshift(imagefftSh, axes=axes)
 
 
 def fftNd1d(image, N):
+    assert len(image.shape) == (N + 1)
     if N == 1:
-        (nz, ny) = np.shape(image)
-        imagefft = (
-            np.zeros((nz, ny)) + np.zeros((nz, ny)) * 1j
-        )  # Convert to complex array
+        out = np.fft.fft(image)
     if N == 2:
-        (nz, nx, ny) = np.shape(image)
-        imagefft = (
-            np.zeros((nz, nx, ny)) + np.zeros((nz, nx, ny)) * 1j
-        )  # Convert to complex array
-    for fm in np.arange(nz):
-        if N == 1:
-            imagefft[fm] = pfft.fft(image[fm])
-        if N == 2:
-            imagefft[fm] = pfft.fft2(image[fm])
-    return imagefft
+        out = np.fft.fft2(image)
+    return out
 
 
 def ifftNd1d(imagefft, N):
+    assert len(imagefft.shape) == (N + 1)
     if N == 1:
-        (nz, ny) = np.shape(imagefft)
-        image = np.zeros((nz, ny)) + np.zeros((nz, ny)) * 1j  # Convert to complex array
+        out = np.fft.ifft(imagefft)
     if N == 2:
-        (nz, nx, ny) = np.shape(imagefft)
-        image = (
-            np.zeros((nz, nx, ny)) + np.zeros((nz, nx, ny)) * 1j
-        )  # Convert to complex array
-    for fm in np.arange(nz):
-        if N == 1:
-            image[fm] = pfft.ifft(imagefft[fm])
-        if N == 2:
-            image[fm] = pfft.ifft2(imagefft[fm])
-    return image
+        out = np.fft.ifft2(imagefft)
+    return out
 
 
 def mad(alpha):
     dim = np.size(np.shape(alpha))
     if dim == 1:
         alpha = alpha[np.newaxis, :]
-    #     elif dim == 2:
-    #         alpha = alpha[np.newaxis,:,:]
-    #         (nx,ny) = np.shape(alpha)
-    #         alpha = alpha.reshape(1,nx,ny)
-    nz = np.size(alpha, axis=0)
-    sigma = np.zeros(nz)
-    for i in np.arange(nz):
-        sigma[i] = np.median(np.abs(alpha[i] - np.median(alpha[i]))) / 0.6745
-    alpha = np.squeeze(alpha)
+    axes = tuple(range(1, dim))
+    sigma = np.median(np.abs(alpha - np.median(alpha, axis=axes)), axis=axes) / 0.6745
     return sigma
 
 
 def softTh(alpha, thTab, weights=None, reweighted=False):
+    # TODO: remove for loop
     nz = np.size(thTab)
     #     print (weights.shape)
     #     print (thTab.shape)
@@ -147,6 +86,7 @@ def softTh(alpha, thTab, weights=None, reweighted=False):
 
 
 def hardTh(alpha, thTab, weights=None, reweighted=False):
+    # TODO: remove for loop
     nz = np.size(thTab)
     #     print (weights.shape)
     #     print (thTab.shape)
