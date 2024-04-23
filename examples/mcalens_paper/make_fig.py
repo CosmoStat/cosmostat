@@ -15,6 +15,7 @@ import os
 import numpy as np
 from astropy.io import fits
 from scipy import ndimage
+from scipy.ndimage.filters import gaussian_filter as gf
 import math
 import matplotlib.pyplot as plt
 import astropy
@@ -141,7 +142,6 @@ def get_rms_error(Res, TrueSol, Mask, sigma=0):
 
 
 def make_fig_exp_wiener(lut=DEF_lut):
-
     # For space constraints, we provide this experiment starting from a pixelized
     # shear map, and not from the catalog.
 
@@ -582,7 +582,7 @@ def tvradec(
     if smooth is None:
         imaS = ima
     else:
-        imaS = ndimage.gaussian_filter(ima, smooth)
+        imaS = gf(ima, smooth)
     img = ax.imshow(
         imaS, origin="lower", cmap=lut, vmin=vmin, vmax=vmax, extent=extent_radec
     )

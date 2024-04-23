@@ -49,7 +49,6 @@ release = [
 ]
 test = [
   "pytest",
-  "pytest-black",
   "pytest-cov",
   "pytest-pydocstyle",
 ]
@@ -80,6 +79,6 @@ convention = "numpy"
 match = "__init__.py"
 
 [tool.pytest.ini_options]
-addopts = "--verbose --black --pydocstyle --cov=pycs"
+addopts = "--verbose --pydocstyle --cov=pycs"
 testpaths = ["pycs"]
 
