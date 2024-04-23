@@ -580,7 +580,6 @@ class HOS_starlet_l1norm_peaks:
         self.l1norm = np.array(l1_coll)
 
 
-
 #############  TESTS routine ############
 
 
