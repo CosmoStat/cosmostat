@@ -135,98 +135,6 @@ def massmap_get_rms_error(Res, TrueSol, Mask, sigma=0):
     return Err
 
 
-# =============================================================================
-# def new_dct_inpainting(image, mask, niter=100, thresholding="hard",MultiScaleConstraint=None):
-#     """Fill in gaps in an image using the Discrete Cosine Transform (DCT).
-#
-#     Parameters
-#     ----------
-#     image : array_like (2D)
-#         Input image.
-#     mask : array_like (2D)
-#         Boolean or binary mask representing the missing pixels of `image`.
-#         False or zero pixel values are considered to be masked.
-#     niter : int, optional
-#         Number of iterations. Default is 100.
-#     thresholding : {'soft', 'hard'}, optional
-#         Type of thresholding. Default is 'hard'.
-#     MultiScaleConstraint: boolean, optional
-#         If true, force the variance of the solution at every wavelet scale to the same
-#         in and out the mask. By default the variance constraint is only applied on the image
-#         at full resolution.
-#     Returns
-#     -------
-#     2D numpy array
-#         Inpainted image.
-#
-#     References
-#     ----------
-#     * Elad, Starck, Querre, & Donoho, ACHA 19, 340 (2005)
-#     * Pires, Starck, Amara, et al., MNRAS 395, 1265 (2009)
-#
-#     """
-#     # Check inputs
-#     assert image.shape == mask.shape, "Incompatible mask."
-#     assert thresholding in ("soft", "hard"), "Invalid thresholding."
-#
-#     # Enforce binary mask condition
-#     mask = mask.astype(bool).astype(float)
-#
-#     # Set threshold limits
-#     lmax = np.max(np.abs(dct2d(image, norm="ortho")))
-#     lmin = 0
-#
-#     if  MultiScaleConstraint is not None:
-#         WT = starlet2d(gen2=True,l2norm=False, verb=False)
-#         (nx, ny) = image.shape
-#         ns = int(np.log (np.min([nx,ny])))
-#         WT.init_starlet(nx, ny, nscale=ns)
-#
-#     # Do iterative inpainting
-#     result = np.copy(image)
-#     residual = np.zeros_like(image)
-#     for ii in range(niter):
-#         # Change basis with DCT
-#         update = result
-#         alpha = dct2d(update, norm="ortho")
-#         # Threshold coefficients
-#         # lval = lmax - ii * (lmax - lmin) / (niter - 1)  # linear decay
-#         lval = lmin + (lmax - lmin) * (1 - erf(2.8 * ii / niter))  # exp decay
-#         new_alpha = np.copy(alpha)  # Can we do this without copying ?
-#         if thresholding == "hard":
-#             new_alpha[np.abs(new_alpha) <= lval] = 0
-#         else:
-#             new_alpha = np.abs(new_alpha) - lval
-#             new_alpha[new_alpha < 0] = 0
-#             new_alpha = np.sign(alpha) * new_alpha
-#         # Go back to direct space
-#         result = idct2d(new_alpha, norm="ortho")
-#
-#         # Enforce std. dev. constraint inside the mask
-#         std_out = result[mask.astype(bool)].std()
-#         std_in = result[~mask.astype(bool)].std()
-#         if std_in != 0:
-#             if  MultiScaleConstraint is None:
-#                     result[~mask.astype(bool)] *= std_out / std_in
-#             else:
-#                 WT.transform(result)
-#                 for j in range(WT.ns):
-#                     scale = WT.coef[j]
-#                     scale[~mask.astype(bool)] *= std_out / std_in
-#                     WT.put_scale(scale, j)
-#                     result = WT.recons()
-#
-#         # Compute residual
-#         residual = (image - result)*mask
-#         # print("Iter ", ii+1, ": Err = ", np.std(residual))
-#         # Take a step
-#         result += residual
-#
-#     return result
-#
-# =============================================================================
-
-
 class massmap2d:
     """Mass Mapping class
     This class contains the tools to reconstruct mass maps from shear measurements
@@ -1190,17 +1098,7 @@ class massmap2d:
             # TODO: to be placed before or after "if PropagateNoise"? Inconsistent between methods.
             lmin = 0
             lmax = self.get_lmax_dct_inpaint(xg.real, xg.imag)
-        # =============================================================================
-        #         if Inpaint:
-        #             u1 = xg.real
-        #             u2 = xg.imag
-        #             u1 = new_dct_inpainting(u1, mask, niter=100, thresholding="hard", MultiScaleConstraint=None)
-        #             u2 = new_dct_inpainting(u2, mask, niter=100, thresholding="hard", MultiScaleConstraint=None)
-        #             xg = u1 + 1j * u2
-        #
-        #             tvilut(u1)
-        #             tvilut(u2)
-        # =============================================================================
+
         for n in range(niter):
             t1, t2 = self.get_resi(xg, gamma1, gamma2, Esn)  # shape = ([nimgs], nx, ny)
 

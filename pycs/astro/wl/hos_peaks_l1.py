@@ -1,8 +1,8 @@
 #! /usr/bin/env Python
 """
-Created on April 9 2020
+Created on Nov 7, 2023
 
-@authors: Kostas Themelis & Jean-Luc Starck & Austin Peel
+@authors: Andreas Tersenov & Jean-Luc Starck
 """
 
 import numpy as np
@@ -580,39 +580,6 @@ class HOS_starlet_l1norm_peaks:
         self.l1norm = np.array(l1_coll)
 
 
-#     """High order statistics class for wavelet peaks and l1 norm
-#     """
-
-#     UseMask = False
-#     Mask = 0
-#     PIX_ARCMIN = 1
-
-#     def __init__(self, name="HOS", PixArmin=None):  # __init__ is the constructor
-#         if PixArmin is not None:
-#             self.PIX_ARCMIN = PixArmin
-
-#     def set_linear_bins(Min, Max, Nbins=10):
-#         # Define bin ed
-
-# def tvimap(map_data, title='', lut='inferno', vmin=None, vmax=None,filename=None):
-#     """
-#     Plot a 2D map using a colormap.
-
-#     Parameters:
-#         map_data (numpy.ndarray): The 2D map data.
-#         title (str): Title of the plot.
-#         lut (str): Colormap name ('rainbow','inferno', 'gist_stern', etc)
-#         vmin (float): Minimum value for colormap scaling.
-#         vmax (float): Maximum value for colormap scaling.
-#     """
-#     plt.figure()
-#     img = plt.imshow(map_data, cmap=lut, vmin=vmin, vmax=vmax, origin='lower')
-#     plt.title(title)
-#     plt.colorbar(img)
-#     if filename is not None:
-#         plt.savefig(filename)
-#     plt.show()
-
 
 #############  TESTS routine ############
 
@@ -914,9 +881,3 @@ def test_hos_cfis():
 
 
 ############ END CLASS #######################
-
-# if __name__ == '__main__':
-#     print ( "Main :)")
-
-# test_hos_cfis()
-# test_hos_test1()
