@@ -138,7 +138,6 @@ def b3spline_fast(step):
 
 
 def vectorize(signature):
-
     def decor(func):
         """
         Decorator to vectorize methods in class `MRStarlet`
@@ -156,7 +155,6 @@ def vectorize(signature):
 
 
 class MRStarlet(pysparse.MRStarlet):
-
     @vectorize(signature="(n,m)->(p,n,m)")
     def transform(self, im, nz, *args, **kwargs):
         wl = super().transform(im.astype(np.float64), nz, *args, **kwargs)
