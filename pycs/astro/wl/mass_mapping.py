@@ -782,7 +782,6 @@ class massmap2d:
                     inp_in *= std_out / std_in
 
         def _step_dct_inpaint(ima, MultiScaleConstraint=False):
-
             alpha = dct2d(ima, norm="ortho")
             new_alpha = np.copy(alpha)  # Can we do this without copying ?
             new_alpha[np.abs(new_alpha) <= lval] = 0
@@ -938,7 +937,6 @@ class massmap2d:
         return gamma1, gamma2, nx, ny, eta, Esn, mask, ind, tau, niter, Nsigma
 
     def _get_Wfc(self, PowSpecSignal, nx, ny, Pn, eta):
-
         # calculate the wiener filter coefficients
         Px_map = get_ima_spectrum_map(PowSpecSignal, nx, ny)
         # info((Px_map + eta))
