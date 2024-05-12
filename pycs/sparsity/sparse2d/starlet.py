@@ -903,13 +903,13 @@ class starlet2d:
         if dim in (0, 2):  # SigmaNoise: scalar or shape = (nx, ny)
             # The noise level is obtained at each scale by multiplying by self.TabNorm
             Thres = (
-                SigmaNoise * (self.TabNsigma * self.TabNorm)[:, np.newdim, np.newdim]
+                SigmaNoise * (self.TabNsigma * self.TabNorm)[:, np.newaxis, np.newaxis]
             )  # shape = (ns, nx, ny)
         elif dim == 1:  # SigmaNoise: shape = (ns,)
             Thres = SigmaNoise * self.TabNsigma  # shape = (ns,)
         else:  # SigmaNoise: shape = (ns, nx, ny)
             Thres = (
-                SigmaNoise * self.TabNsigma[:, np.newdim, np.newdim]
+                SigmaNoise * self.TabNsigma[:, np.newaxis, np.newaxis]
             )  # shape = (ns, nx, ny)
 
         if ThresCoarse:
