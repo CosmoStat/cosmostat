@@ -834,8 +834,7 @@ class massmap2d:
 
         xg = np.zeros_like(g1, dtype=complex)  # TODO: complex or complex128?
         if dctmax is None:
-            ks = self.gamma_to_cf_kappa(g1 * mask, g2 * mask)
-            lmax = self.get_lmax_dct_inpaint(ks.real, ks.imag)
+            lmax = self.get_lmax_dct_inpaint(g1 * mask, g2 * mask)
         else:
             lmax = dctmax
 
@@ -1094,10 +1093,9 @@ class massmap2d:
 
         xg = self.gamma_to_cf_kappa(gamma1, gamma2)  # shape = ([nimgs], nx, ny)
         if Inpaint:
-            # TODO: check code: self.get_resi should be computed on shear maps, not convergence maps.
             # TODO: to be placed before or after "if PropagateNoise"? Inconsistent between methods.
             lmin = 0
-            lmax = self.get_lmax_dct_inpaint(xg.real, xg.imag)
+            lmax = self.get_lmax_dct_inpaint(gamma1, gamma2)
 
         for n in range(niter):
             t1, t2 = self.get_resi(xg, gamma1, gamma2, Esn)  # shape = ([nimgs], nx, ny)
@@ -1202,11 +1200,6 @@ class massmap2d:
         )
 
         RMS_ShearMap = np.sqrt(InshearData.Ncov / 2.0)  # shape = (nx, ny)
-        # shape = ([nimgs], [Nrea], nx, ny)
-        # TODO: complex or complex128? Same question for real-valued arrays
-        xg = np.zeros_like(gamma1, dtype=complex)  # Gaussian + sparse components
-        xs = np.zeros_like(gamma1, dtype=complex)  # sparse component
-        xw = np.zeros_like(gamma1, dtype=complex)  # Gaussian component
         SigmaNoise = np.min(RMS_ShearMap)  # float
         Esn_Sparse = SigmaNoise / RMS_ShearMap  # shape = (nx, ny)
         Esn_Sparse[Esn_Sparse == np.inf] = 0
@@ -1221,9 +1214,8 @@ class massmap2d:
         # the border.
 
         if Inpaint:
-            # TODO: check code: self.get_resi should be computed on shear maps, not convergence maps.
             # TODO: to be placed before or after "if PropagateNoise is True"? Inconsistent between methods.
-            lmin = 0
+            xg = np.zeros_like(gamma1, dtype=complex)
             resi1, resi2 = self.get_resi(xg, gamma1, gamma2, Esn)
             lmax = self.get_lmax_dct_inpaint(resi1, resi2)
 
@@ -1257,7 +1249,11 @@ class massmap2d:
                 InshearData, mask, Nrea=Nrea, inpshape=inpshape
             )  # shape = ([nimgs], [Nrea], nx, ny)
 
-        
+        # shape = ([nimgs], [Nrea], nx, ny)
+        # TODO: complex or complex128? Same question for real-valued arrays
+        xg = np.zeros_like(gamma1, dtype=complex)  # Gaussian + sparse components
+        xs = np.zeros_like(gamma1, dtype=complex)  # sparse component
+        xw = np.zeros_like(gamma1, dtype=complex)  # Gaussian component
 
         for n in range(niter):
             resi1, resi2 = self.get_resi(
