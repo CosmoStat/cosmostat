@@ -1202,6 +1202,11 @@ class massmap2d:
         )
 
         RMS_ShearMap = np.sqrt(InshearData.Ncov / 2.0)  # shape = (nx, ny)
+        # shape = ([nimgs], [Nrea], nx, ny)
+        # TODO: complex or complex128? Same question for real-valued arrays
+        xg = np.zeros_like(gamma1, dtype=complex)  # Gaussian + sparse components
+        xs = np.zeros_like(gamma1, dtype=complex)  # sparse component
+        xw = np.zeros_like(gamma1, dtype=complex)  # Gaussian component
         SigmaNoise = np.min(RMS_ShearMap)  # float
         Esn_Sparse = SigmaNoise / RMS_ShearMap  # shape = (nx, ny)
         Esn_Sparse[Esn_Sparse == np.inf] = 0
@@ -1252,11 +1257,7 @@ class massmap2d:
                 InshearData, mask, Nrea=Nrea, inpshape=inpshape
             )  # shape = ([nimgs], [Nrea], nx, ny)
 
-        # shape = ([nimgs], [Nrea], nx, ny)
-        # TODO: complex or complex128? Same question for real-valued arrays
-        xg = np.zeros_like(gamma1, dtype=complex)  # Gaussian + sparse components
-        xs = np.zeros_like(gamma1, dtype=complex)  # sparse component
-        xw = np.zeros_like(gamma1, dtype=complex)  # Gaussian component
+        
 
         for n in range(niter):
             resi1, resi2 = self.get_resi(
