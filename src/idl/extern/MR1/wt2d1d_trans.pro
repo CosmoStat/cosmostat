@@ -85,7 +85,8 @@ function wt2d1dget, Trans, b=b, s2d=s2d, s1d=s1d
      if keyword_set(s1d) then IndBand=IndBand+s1d-1
      BandNumber = IndBand - FirstPos
   end
-   
+     ; print, "Ind Band GET = ", IndBand
+
   ; print, s, d, IndBand
   band = Trans.(IndBand)
   ; help, band
@@ -130,7 +131,7 @@ pro wt2d1put, Trans, Band, b=b, s2d=s2d, s1d=s1d
      IndBand=IndBand+Nb
      if keyword_set(s1d) then IndBand=IndBand+s1d-1
   end
-   
+   ; print, "Ind Band PUT= ", IndBand
   Trans.(IndBand) =  band 
 DONE:
 
@@ -243,23 +244,29 @@ TabBandNx = lonarr(NbrBand)
 TabBandNy = lonarr(NbrBand)
 TabBandNz = lonarr(NbrBand)
 BandName = strarr(NbrBand)
-indband = 0
+indband = 0L
 Ind=2L
 for s=0,NbrBand2D-1 do begin
 for s1=0,NbrBand1D-1 do begin
-  Nxb = WT2D1D[ind]
-  Nyb = WT2D1D[ind+1] 
-  Nzb = WT2D1D[ind+2] 
+  Nxb = long( WT2D1D[ind] )
+  Nyb = long( WT2D1D[ind+1L])
+  Nzb = long(WT2D1D[ind+2L]) 
   TabBandNx[indband] = Nxb
   TabBandNy[indband] = Nyb
   TabBandNz[indband] = Nzb
+  SizeBand = Nxb * Nyb * Nzb
   
-  TabDep[indband] = ind+3
-  TabEnd[indband] = ind+2+Nxb*Nyb*Nzb
+  TabDep[indband] = ind+3L
+  TabEnd[indband] = TabDep[indband] + SizeBand -1L
   
-  print, s+1, s1+1, TabBandNx[indband], TabBandNy[indband], TabBandNz[indband]
-  Band =  reform(WT2D1D[ TabDep[indband]:TabEnd[indband]],  TabBandNx[indband], TabBandNy[indband], TabBandNz[indband])
-  ind = ind + 3 + Nxb*Nyb*Nzb
+ ; print, "ind = ", Ind, Nxb, Nyb, Nzb ;  WT2D1D[ TabEnd[indband]+1 ], WT2D1D[ TabEnd[indband]+2 ], WT2D1D[ TabEnd[indband]+3 ]
+ ; print, s+1, s1+1, TabBandNx[indband], TabBandNy[indband], TabBandNz[indband]
+  Coef = WT2D1D[ TabDep[indband]:TabEnd[indband]] 
+;  help, Coef
+;  print , SizeBand
+  
+  Band =  reform(Coef,  TabBandNx[indband], TabBandNy[indband], TabBandNz[indband])
+  Ind = TabEnd[indband] + 1L
  
   my_command = 's2d_'+strcompress(string(s+1), /remove_all) + '_s1d_' + strcompress(string(s1+1), /remove_all)
   BandName[indband] = my_command
@@ -268,7 +275,7 @@ for s1=0,NbrBand1D-1 do begin
   ; print,  TabDepRe[indband], TabEndRe[indband], TabDepIm[indband], TabEndIm[indband]
   ; print, my_command
   ACK = EXECUTE( my_command)
-  indband = indband + 1 
+  indband = indband + 1L
  end
 end
  
@@ -309,10 +316,74 @@ end
 
  pro wt2d1d_test
  Cube = randomn(seed, 64,64,128)*100.
- wt2d1d_trans, Cube, Trans, OPT='-n3 -N4'
- wt2d1d_stat, Trans
+ wt2d1d_trans, Cube, Trans, OPT='-t2 -v -n3 -N4 -M'
+ ; wt2d1d_stat, Trans
+ 
+ for s=1, Trans.NbrBand2D do begin
+ for s1=1, Trans.NbrBand1D do begin
+    Band = wt2d1dget(Trans, s2d=s, s1d=s1)   
+    wt2d1put, Trans, Band, s2d=s, s1d=s1
+ end
+ end
  wt2d1d_rec, Trans, rec
  info, cube-rec
  end
  
 ;====================================
+
+pro wt2d1d_filter, Cube, Rec, OPT=OPT, Nsigma=Nsigma, Trans=Trans
+
+if not keyword_set(OPT) then opt=' -t2 -A '
+if not keyword_set(Nsigma) then Nsigma = 3.
+
+; Cube = randomn(seed, 64,64,256)*100.
+wt2d1d_trans, Cube, Trans, OPT=OPT
+for s=1, Trans.NbrBand2D do begin
+for s1=1, Trans.NbrBand1D do begin
+   Band = wt2d1dget(Trans, s2d=s, s1d=s1)   
+   ; print, 'Band2D', s, ' Band1D ', s1, '     Sigma = ', sigma(band), ' Skewness = ', skewness(band), ' Kurtosis = ', kurtosis(band)
+
+   Nel = N_ELEMENTS(Band)
+   SigmaNoise = mad(Band)
+   ThresholdLevel = SigmaNoise * Nsigma
+   index = where ( ABS(Band) LT ThresholdLevel, count )
+   if count GT 0 then Band[index] = 0
+   print, 'Band2D', s, ' Band1D ', s1, ": Thres = ", ThresholdLevel, ", Percentage of Thres = ", float(count) / float(Nel) * 100.
+   wt2d1put, Trans, Band, s2d=s, s1d=s1
+end
+end
+
+wt2d1d_rec, Trans, rec
+end
+
+;====================================
+
+pro test_2d1dfilter
+
+cube = readfits('test.fits')
+
+
+wt2d1d_filter, Cube, Rec3, Nsigma=3, opt='-t24 '
+writefits, 'rec3.fits', Rec3
+
+disp
+load, total(Cube,3)
+Disp, win=1
+load, total(Rec3,3)
+disp, win=2
+load, total(Cube-Rec3,3)
+
+
+wt2d1d_filter, Cube, Rec5, Nsigma=5, opt='-t24 ' 
+writefits, 'rec5.fits', Rec5
+
+
+Disp, win=3
+load, total(Rec5,3)
+disp, win=4
+load, total(Cube-Rec5,3)
+
+
+
+
+end
