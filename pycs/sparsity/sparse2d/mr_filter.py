@@ -16,6 +16,8 @@ from subprocess import call
 from datetime import datetime
 from astropy.io import fits
 import shlex
+
+
 ##
 #  Function that calls mr_filter to perform a wavelet filtering on the
 #  input data.
@@ -29,27 +31,26 @@ import shlex
 #
 # %load_ext autoreload
 # %autoreload 2
-def mr_filter(data, opt=None, path='./', remove_files=True):
-
+def mr_filter(data, opt=None, path="./", remove_files=True):
     # Create a unique string using the current date and time.
     # print('mr_filter ', opt)
-    unique_string = datetime.now().strftime('%Y.%m.%d_%H.%M.%S')
-    result=0
+    unique_string = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+    result = 0
     # Set the ouput file names.
-    file_name = path + 'mr_temp_' + unique_string
-    file_fits = file_name + '.fits'
-    file_out = file_name + '_out.fits'
+    file_name = path + "mr_temp_" + unique_string
+    file_fits = file_name + ".fits"
+    file_out = file_name + "_out.fits"
 
     # Write the input data to a fits file.
     fits.writeto(file_fits, data)
 
-    cmd = 'mr_filter '
+    cmd = "mr_filter "
 
     if isinstance(opt, type(None)):
-        optF=' '
+        optF = " "
     else:
-        optF=opt
-    cmd = cmd + optF + ' ' + file_fits + ' '  + file_out
+        optF = opt
+    cmd = cmd + optF + " " + file_fits + " " + file_out
     # print 'CMD = ', cmd
     args = shlex.split(cmd)
     # print('args ', args)
