@@ -26,11 +26,21 @@ RUN apt-get update && \
 
 ENV HEALPIX=/usr/share/healpy
 
-RUN python3 -m pip install jupyter --break-system-packages
+RUN PIP_VERSION=$(python3 -m pip --version | awk '{print $2}') && \
+    PIP_OPTS="" && \
+    if [[ $(echo -e "23.1\n$PIP_VERSION" | sort -V | head -n1) == "23.1" && "$PIP_VERSION" != "23.1" ]]; then \
+        PIP_OPTS="--break-system-packages"; \
+    fi && \
+    echo "export PIP_OPTS=$PIP_OPTS" >> ~/.bashrc && \
+    export PIP_OPTS=$PIP_OPTS
+
+RUN echo $PIP_OPTS
+
+RUN python3 -m pip install jupyter $PIP_OPTS
 
 COPY . /home
 
 RUN cd /home && \
-    python3 -m pip install . --break-system-packages
+    python3 -m pip install . $PIP_OPTS
 
 RUN echo -e '#!/bin/bash\njupyter notebook --port=8888 --no-browser --ip=0.0.0.0 --allow-root' > /usr/bin/notebook && chmod +x /usr/bin/notebook
