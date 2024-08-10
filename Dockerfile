@@ -24,13 +24,13 @@ RUN apt-get update && \
     apt-get install -y python3 python3-pip && \
     apt-get clean
 
-ENV HEALPIX /usr/share/healpy
+ENV HEALPIX=/usr/share/healpy
 
-RUN python3 -m pip install jupyter
+RUN python3 -m pip install jupyter --break-system-packages
 
 COPY . /home
 
 RUN cd /home && \
-    python3 -m pip install .
+    python3 -m pip install . --break-system-packages
 
 RUN echo -e '#!/bin/bash\njupyter notebook --port=8888 --no-browser --ip=0.0.0.0 --allow-root' > /usr/bin/notebook && chmod +x /usr/bin/notebook
