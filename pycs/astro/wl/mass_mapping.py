@@ -913,9 +913,9 @@ class massmap2d:
             mask = (InshearData.Ncov != 0).astype(int)  # shape = (nx, ny)
         else:
             mask = InshearData.mask
-        InshearData.Ncov[InshearData.Ncov == 0] = (
-            1e9  # infinite value for no measurement
-        )
+        InshearData.Ncov[
+            InshearData.Ncov == 0
+        ] = 1e9  # infinite value for no measurement
         Ncv = InshearData.Ncov / 2.0  # shape = (nx, ny)
 
         # find the minimum noise variance
@@ -929,9 +929,9 @@ class massmap2d:
         eta = tau
         # compute signal coefficient
         Esn = eta / Ncv  # shape = (nx, ny)
-        Esn[Esn == np.inf] = (
-            0  # TODO: useless if we have set Ncv[mask == 0] = 1e9 before
-        )
+        Esn[
+            Esn == np.inf
+        ] = 0  # TODO: useless if we have set Ncv[mask == 0] = 1e9 before
 
         return gamma1, gamma2, nx, ny, eta, Esn, mask, ind, tau, niter, Nsigma
 
