@@ -35,6 +35,15 @@ brew tap sfarrens/sf
 brew install armadillo bigmac cfitsio fftw gsl healpix libomp
 ```
 
+### Ubuntu Set Up
+
+To install the package requirements on Ubuntu, it is recommended to use [apt](https://ubuntu.com/server/docs/package-management).
+
+```bash
+sudo apt-get update
+sudo apt-get install -y libarmadillo-dev libcfitsio-dev libfftw3-dev libgsl-dev libhealpix-cxx-dev pkg-config
+```
+
 ## Docker installation
 
 ### Pull the Docker image
