@@ -8,7 +8,15 @@ Software developed at the [CosmoStat](https://www.cosmostat.org/) lab at [CEA](h
 
 The package can be installed with `pip` as follows.
 
+On a Unix-like shell, run
 ```bash
+export ENABLE_PACKAGE=OFF
+python -m pip install .
+```
+
+On Windows, run
+```bash
+set ENABLE_PACKAGE=OFF
 python -m pip install .
 ```
 
