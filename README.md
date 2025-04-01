@@ -6,23 +6,29 @@ Software developed at the [CosmoStat](https://www.cosmostat.org/) lab at [CEA](h
 
 ## Basic installation
 
-The package can be installed with `pip` as follows.
+This package has an option to install [Sparse2D](https://github.com/CosmoStat/Sparse2D) as a backend (disabled by default). 
 
-On a Unix-like shell, run
+To enable the installation of Sparse2D, run the folowing command before proceeding further.
+
+On a Unix-like shell,
 ```bash
-export ENABLE_PACKAGE=OFF
-python -m pip install .
+export BUILD_SPARSE2D=OFF
 ```
 
-On Windows, run
+On Windows,
 ```bash
-set ENABLE_PACKAGE=OFF
+set BUILD_SPARSE2D=OFF
+```
+
+The package can now be installed with `pip` as follows.
+
+```bash
 python -m pip install .
 ```
 
 ### Requirements
 
-This package installs [Sparse2D](https://github.com/CosmoStat/Sparse2D) as a backend, which requires the follow dependencies.
+[Sparse2D](https://github.com/CosmoStat/Sparse2D) requires the following dependencies.
 
 - [Armadillo](https://arma.sourceforge.net/)
 - [BigMac](https://github.com/sfarrens/bigmac) (macOS only)
