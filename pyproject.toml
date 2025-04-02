@@ -69,7 +69,6 @@ name = "pycs"
 include = ["src/cxx/*"]
 
 [tool.py-build-cmake.cmake]
-options = {"BUILD_SPARSE2D" = OFF}
 source_path = "src/cxx"
 build_args = ["-j 8"]
 find_python = true
