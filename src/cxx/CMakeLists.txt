@@ -28,7 +28,7 @@ message(STATUS "Binary install path : ${SPARSE2D_INSTALL_DIR}")
 if (DEFINED ENV{BUILD_SPARSE2D})
     set(BUILD_SPARSE2D $ENV{BUILD_SPARSE2D})
 else()
-    set(BUILD_PACKAGE OFF)
+    set(BUILD_SPARSE2D OFF)
 endif()
 
 if (BUILD_SPARSE2D)
