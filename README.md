@@ -6,15 +6,22 @@ Software developed at the [CosmoStat](https://www.cosmostat.org/) lab at [CEA](h
 
 ## Basic installation
 
+This package has an option to install [Sparse2D](https://github.com/CosmoStat/Sparse2D) as a backend (disabled by default). 
+
 The package can be installed with `pip` as follows.
 
 ```bash
 python -m pip install .
 ```
 
+ To install the Sparse2D backend along with the package installation, run:
+```bash
+BUILD_SPARSE2D=ON python -m pip install .
+```
+
 ### Requirements
 
-This package installs [Sparse2D](https://github.com/CosmoStat/Sparse2D) as a backend, which requires the follow dependencies.
+[Sparse2D](https://github.com/CosmoStat/Sparse2D) requires the following dependencies.
 
 - [Armadillo](https://arma.sourceforge.net/)
 - [BigMac](https://github.com/sfarrens/bigmac) (macOS only)
@@ -41,7 +48,7 @@ To install the package requirements on Ubuntu, it is recommended to use [apt](ht
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y libarmadillo-dev libcfitsio-dev libfftw3-dev libgsl-dev libhealpix-cxx-dev pkg-config
+sudo apt-get install -y libarmadillo-dev libcfitsio-dev cmake libfftw3-dev libgsl-dev libhealpix-cxx-dev pkg-config build-essential 
 ```
 
 ## Docker installation

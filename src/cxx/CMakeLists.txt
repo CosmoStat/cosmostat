@@ -24,5 +24,13 @@ message(STATUS "Python binding install path : ${Python_EXECUTABLE}")
 get_filename_component(SPARSE2D_INSTALL_DIR ${Python_EXECUTABLE} DIRECTORY)
 message(STATUS "Binary install path : ${SPARSE2D_INSTALL_DIR}")
 
-# Build Sparse2D
-include(BuildSparse2D)
+# Build Sparse2D (optionally)
+if (DEFINED ENV{BUILD_SPARSE2D})
+    set(BUILD_SPARSE2D $ENV{BUILD_SPARSE2D})
+else()
+    set(BUILD_SPARSE2D OFF)
+endif()
+
+if (BUILD_SPARSE2D)
+    include(BuildSparse2D)
+endif()
