@@ -3,7 +3,7 @@
 # =================================================#
 
 # Set Sparse2D Version
-set(sparse2dVersion 3.0.2)
+set(sparse2dVersion 3.0.3)
 
 # Download and build Sparse2D
 ExternalProject_Add(sparse2d
