@@ -40,7 +40,7 @@ from pycs.misc.stats import *
 
 import sys
 
-import imp
+# import imp
 
 PYSAP_CXX = True
 try:
