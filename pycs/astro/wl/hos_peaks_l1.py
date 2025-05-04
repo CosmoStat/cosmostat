@@ -20,6 +20,7 @@ from pycs.sparsity.sparse2d.dct import dct2d, idct2d
 from pycs.sparsity.sparse2d.dct_inpainting import dct_inpainting
 from pycs.misc.im_isospec import *
 from pycs.astro.wl.mass_mapping import *
+from pycs.sparsity.mrs.mrs_tools import mrs_uwttrans
 
 
 def get_wt_noiselevel(W, NoiseSigmaMap, Mask=None):
@@ -578,6 +579,86 @@ class HOS_starlet_l1norm_peaks:
 
         self.l1bins = np.array(bins_coll)
         self.l1norm = np.array(l1_coll)
+
+
+def get_norm_wtl1_sphere(
+    Map, nscales, nbins=None, Mask=None, min_snr=None, max_snr=None, path="/."
+):
+    """
+    Computes L1 norms of wavelet transform coefficients at different scales for a HEALPix map. The wavelet transform is performed using the undecimated wavelet transform.
+
+    Parameters
+    ----------
+    Map : array_like
+        HEALPix map to analyze.
+    nscales : int
+        Number of wavelet scales to use.
+    nbins : int, optional
+        Number of bins for the histogram. Default is 40.
+    Mask : array_like, optional
+        Mask indicating where we have observations. Only pixels where Mask != 0 are considered.
+    min_snr : float, optional
+        Minimum value for binning. If None, uses the minimum value in the normalized coefficients.
+    max_snr : float, optional
+        Maximum value for binning. If None, uses the maximum value in the normalized coefficients.
+    path : str, optional
+        Path to the directory for temporary files. Default is "/.".
+
+    Returns
+    -------
+    tuple of numpy arrays
+        (bins, l1norm) where:
+        - bins[i] are the bin centers for scale i
+        - l1norm[i] are the L1 norms for each bin at scale i
+    """
+
+    # Set default for nbins if not provided
+    if nbins is None:
+        nbins = 40
+
+    # Perform undecimated wavelet transform on the spherical map
+    WT = mrs_uwttrans(Map, verbose=False, path=path)
+
+    l1norm_coll = []
+    bins_coll = []
+
+    # Loop through each scale of the wavelet transform
+    for i in range(nscales):
+        ScaleCoeffs = WT[i]  # coefficients for the i-th scale
+
+        # Apply the mask if provided
+        if Mask is not None:
+            ScaleCoeffs = ScaleCoeffs[Mask != 0]
+
+        # Normalize the wavelet scale to the same energy level
+        energy = np.sum(ScaleCoeffs**2)
+        normalization_factor = np.sqrt(energy)
+        if normalization_factor > 0:
+            ScaleCoeffs_normalized = ScaleCoeffs / normalization_factor
+
+        # Set the minimum and maximum values based on inputs or defaults
+        min_val = min_snr if min_snr is not None else np.min(ScaleCoeffs_normalized)
+        max_val = max_snr if max_snr is not None else np.max(ScaleCoeffs_normalized)
+
+        # Define thresholds and bins
+        thresholds = np.linspace(min_val, max_val, nbins + 1)
+        bins = 0.5 * (thresholds[:-1] + thresholds[1:])
+
+        # Digitize the values into bins
+        digitized = np.digitize(ScaleCoeffs_normalized, thresholds)
+
+        # Calculate the l1 norm for each bin
+        bin_l1_norm = [
+            np.sum(np.abs(ScaleCoeffs_normalized[digitized == j]))
+            for j in range(1, len(thresholds))
+        ]
+
+        # Store the bins and l1 norms for this scale
+        bins_coll.append(bins)
+        l1norm_coll.append(bin_l1_norm)
+
+    # Return the bins and l1 norms for each scale
+    return np.array(bins_coll), np.array(l1norm_coll)
 
 
 #############  TESTS routine ############
