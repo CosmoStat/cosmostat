@@ -12,6 +12,7 @@ from pycs.misc.cosmostat_init import *
 from pycs.misc.mr_prog import *
 from pycs.sparsity.mrs.mrs_tools import *
 
+
 def mrs_starlet(map, nscale=None, lmax=None):
     nside = gnside(map)
     if nscale is None:
@@ -20,16 +21,26 @@ def mrs_starlet(map, nscale=None, lmax=None):
         Ns = nscale
 
     npix = map.shape[0]
-    w = wt_trans(map, lmax=lmax,nscales=Ns-1)
+    w = wt_trans(map, lmax=lmax, nscales=Ns - 1)
     trans = w.T
     return trans
+
 
 def mrs_istarlet(trans):
     r = np.sum(trans, axis=0)
     return r
 
 
-def mrs_uwttrans(map, nscale=None, lmax=None, opt=None, verbose=False, path="./", progpath=None, cxx=False):
+def mrs_uwttrans(
+    map,
+    nscale=None,
+    lmax=None,
+    opt=None,
+    verbose=False,
+    path="./",
+    progpath=None,
+    cxx=False,
+):
     nside = gnside(map)
     if nscale is None:
         Ns = np.log2(nside) - 2
@@ -58,11 +69,10 @@ def mrs_uwttrans(map, nscale=None, lmax=None, opt=None, verbose=False, path="./"
         )
     else:
         npix = map.shape[0]
-        w = wt_trans(map, lmax=lmax,nscales=Ns-1)
-        p = np.zeros(Ns, npix)
+        w = wt_trans(map, lmax=lmax, nscales=Ns - 1)
+        p = np.zeros((Ns, npix))
         for j in range(Ns):
-            print(j+1)
-            p[j,:] = w[:,j]
+            p[j, :] = w[:, j]
 
     return p
 
@@ -89,8 +99,8 @@ def mrs_uwtrecons(Tmap, lmax=None, opt=None, verbose=False, path="./", progpath=
     return p
 
 
-
 # Wavelet filtering
+
 
 def spline2(size, l, lc):
     """
@@ -111,9 +121,20 @@ def spline2(size, l, lc):
         (size,) float array, spline
     """
 
-    res = np.arange(0, size+1)
-    res = 2*l*res/(lc*size)
-    res = (3/2) * 1/12 * (abs(res-2)**3 - 4*abs(res-1)**3 + 6*abs(res)**3 - 4*abs(res+1)**3 + abs(res+2)**3)
+    res = np.arange(0, size + 1)
+    res = 2 * l * res / (lc * size)
+    res = (
+        (3 / 2)
+        * 1
+        / 12
+        * (
+            abs(res - 2) ** 3
+            - 4 * abs(res - 1) ** 3
+            + 6 * abs(res) ** 3
+            - 4 * abs(res + 1) ** 3
+            + abs(res + 2) ** 3
+        )
+    )
     return res
 
 
@@ -134,10 +155,10 @@ def compute_h(size, lc):
         (size,) float array, filter
     """
 
-    tab1 = spline2(size, 2*lc, 1)
+    tab1 = spline2(size, 2 * lc, 1)
     tab2 = spline2(size, lc, 1)
-    h = tab1/(tab2+1e-6)
-    h[np.int64(size/(2*lc)):size] = 0
+    h = tab1 / (tab2 + 1e-6)
+    h[np.int64(size / (2 * lc)) : size] = 0
     return h
 
 
@@ -158,10 +179,10 @@ def compute_g(size, lc):
         (size,) float array, filter
     """
 
-    tab1 = spline2(size, 2*lc, 1)
+    tab1 = spline2(size, 2 * lc, 1)
     tab2 = spline2(size, lc, 1)
-    g = (tab2-tab1)/(tab2+1e-6)
-    g[np.int64(size/(2*lc)):size] = 1
+    g = (tab2 - tab1) / (tab2 + 1e-6)
+    g[np.int64(size / (2 * lc)) : size] = 1
     return g
 
 
@@ -181,9 +202,11 @@ def get_wt_filters(lmax, nscales):
         (lmax+1,nscales+1) float array, filters
     """
 
-    wt_filters = np.ones((lmax+1, nscales+1))
-    wt_filters[:, 1:] = np.array([compute_h(lmax, 2**scale) for scale in range(nscales)]).T
-    wt_filters[:, :nscales] -= wt_filters[:, 1:(nscales+1)]
+    wt_filters = np.ones((lmax + 1, nscales + 1))
+    wt_filters[:, 1:] = np.array(
+        [compute_h(lmax, 2**scale) for scale in range(nscales)]
+    ).T
+    wt_filters[:, :nscales] -= wt_filters[:, 1 : (nscales + 1)]
     return wt_filters
 
 
@@ -247,10 +270,10 @@ def wt_trans(inputs, nscales=3, lmax=None, alm_in=False, nside=None, alm_out=Fal
         l_scale = alms.copy()
         if dim_inputs == 1:
             npix = np.size(alms)
-            wts = np.zeros((npix, nscales + 1), dtype='complex')
+            wts = np.zeros((npix, nscales + 1), dtype="complex")
         else:
             npix = np.shape(alms)[1]
-            wts = np.zeros((np.shape(maps)[0], npix, nscales + 1), dtype='complex')
+            wts = np.zeros((np.shape(maps)[0], npix, nscales + 1), dtype="complex")
 
     scale = 1
     for j in range(nscales):
@@ -295,7 +318,8 @@ def wt_rec(wts):
 
 # Plots
 
-def mrs_tv(maps, log=False, unit='', title='', minimum=None, maximum=None, cbar=True):
+
+def mrs_tv(maps, log=False, unit="", title="", minimum=None, maximum=None, cbar=True):
     """Plot one or more Healpix maps in Mollweide projection.
 
     Parameters
@@ -325,19 +349,31 @@ def mrs_tv(maps, log=False, unit='', title='', minimum=None, maximum=None, cbar=
 
     if minimum is None:
         minimum = np.min(maps)
-        
+
     if maximum is None:
         maximum = np.max(maps)
-        
+
     if not log:
-        def f(x): return x
+
+        def f(x):
+            return x
+
     else:
-        def f(x): return np.log10(x - minimum + 1)
+
+        def f(x):
+            return np.log10(x - minimum + 1)
+
     for i in range(np.shape(maps)[0]):
         if title:
-            tit = title + ": Scale " + str(i+1)
+            tit = title + ": Scale " + str(i + 1)
         else:
-            tit = "Scale " + str(i+1)
-        hp.mollview(f(maps[i, :]), fig=None, unit=unit, title=tit, min=f(minimum), max=f(maximum), cbar=cbar)
-
-
+            tit = "Scale " + str(i + 1)
+        hp.mollview(
+            f(maps[i, :]),
+            fig=None,
+            unit=unit,
+            title=tit,
+            min=f(minimum),
+            max=f(maximum),
+            cbar=cbar,
+        )

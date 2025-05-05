@@ -20,7 +20,7 @@ from pycs.sparsity.sparse2d.dct import dct2d, idct2d
 from pycs.sparsity.sparse2d.dct_inpainting import dct_inpainting
 from pycs.misc.im_isospec import *
 from pycs.astro.wl.mass_mapping import *
-from pycs.sparsity.mrs.mrs_tools import mrs_uwttrans
+from pycs.sparsity.mrs.mrs_starlet import mrs_uwttrans
 
 
 def get_wt_noiselevel(W, NoiseSigmaMap, Mask=None):
@@ -617,7 +617,8 @@ def get_norm_wtl1_sphere(
         nbins = 40
 
     # Perform undecimated wavelet transform on the spherical map
-    WT = mrs_uwttrans(Map, verbose=False, path=path)
+    # WT = mrs_uwttrans(Map, verbose=False, path=path, cxx=True)
+    WT = mrs_uwttrans(Map, nscale=nscales, verbose=False, path=path, cxx=False)
 
     l1norm_coll = []
     bins_coll = []
