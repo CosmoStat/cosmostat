@@ -610,3 +610,16 @@ def getbeam(fwhm=100, lmax=512):
     ell = l * (l + 1)
     bl = np.exp(-ell * F * F / 16 / np.log(2))
     return bl
+################################################
+
+
+def mrs_hard_thresholding(alpha, Thres):
+    alpha[np.abs(alpha) <= Thres] = 0
+
+################################################
+
+
+def mrs_soft_thresholding(alpha, Thres):
+    Res = np.abs(alpha) - Thres
+    Res[Res < 0] = 0
+    alpha[:, :] = np.sign(alpha) * Res
