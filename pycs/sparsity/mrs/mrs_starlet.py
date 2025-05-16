@@ -49,24 +49,28 @@ from pycs.misc.cosmostat_init import *
 from pycs.misc.stats import *
 from pycs.misc.mr_prog import *
 from pycs.sparsity.mrs.mrs_tools import *
-
+import getpass
 import time
+
 
 
 def test_mrs_class(Init=None):
     if Init is None:
-        os.chdir("/Users/starck/Main/python/data/wlens/DES_UNION")
-        print("Current directory:", os.getcwd())
-        d = mrs_read("mars_topo_mola_hpx_1024.fits")
-        Nside = gnside(d)
-        print("Nside = ", Nside)
+        if  getpass.getuser() == "starck":
+            os.chdir("/Users/starck/Main/python/data/wlens/DES_UNION")
+            print("Current directory:", os.getcwd())
+            d = mrs_read("mars_topo_mola_hpx_1024.fits")
+            Nside = gnside(d)
+            print("Nside = ", Nside)
+        else:
+            Nside=1024
+            d = np.random.normal(size=(Nside**2*12))
         Ns = 9
         ALM_iter=0
         C = CMRStarlet()
         C.init_starlet(Nside, nscale=Ns, ALM_iter=ALM_iter)
         print("PYTHON Code computation time:")
         start = time.time()
-        # d = np.random.normal(size=(Nside**2*12))
         C.transform(d)
         end = time.time()
         print(f"Execution time python: {end - start:.4f} seconds")
@@ -103,8 +107,26 @@ def test_mrs_class(Init=None):
     if Init is None:
         tvs(d-r, title="Estimated noise map")
     
+    C.eval_computation_time()
+    
     return C
     
+    
+def pycs_env_status():
+    import os
+    import subprocess
+    # subprocess.run(['tcsh', '-c', 'source ~/.tcshrc; echo $PATH'], check=True)
+    print(os.environ.get("DYLD_LIBRARY_PATH"))
+    print(os.environ.get("DYLD_FALLBACK_LIBRARY_PATH"))
+    print(os.environ.get("LD_LIBRARY_PATH"))
+    print(os.environ.get("PYTHONPATH"))
+    env = os.environ.copy()
+    env["DYLD_LIBRARY_PATH"] = "/usr/lib"
+    result = subprocess.run(["mr_filter"], capture_output=True, text=True,env=env)
+    print("STDOUT:", result.stdout)
+    print("STDERR:", result.stderr)
+    print("Return code:", result.returncode)
+
 
 MRS_StarletTabNorm = np.array( [0.969856, 0.103676, 0.051809, 0.025798, 0.012852, 0.006446, 0.003230, 0.001725] )
 
@@ -247,8 +269,8 @@ class CMRStarlet:
         
         if MRS_CXX and self.TypeCode == 1:
             CMRS = pymrs.MRS()
-            CMRS.alloc(nside, ns,nside*3, ALM_iter, True)
-            self.coef = CMRS.uwt(d,ns)
+            CMRS.alloc(self.nside, self.ns,self.nside*3, self.ALM_iter, True)
+            self.coef = CMRS.uwt(im,self.ns)
         elif self.TypeCode == 2:
             self.coef =  mrs_uwttrans(im, self.ns, self.lmax, opt=opt, verbose=self.verb, path="./", cxx=True)
         else:
@@ -516,22 +538,27 @@ class CMRStarlet:
         print(f"==> Execution time : {end - start:.4f} seconds")
         
         self.TypeCode = 1 
+        print("Use ", self.TabNameCode[self.TypeCode], " code:")
+
         start = time.time()
         w = self.transform(d)
         end = time.time()
-        print(f"Execution time : {end - start:.4f} seconds")
+        print(f"==> Execution time : {end - start:.4f} seconds")
         
-        # self.TypeCode = 2 
-        # start = time.time()
-        # w = self.transform(d)
-        # end = time.time()
-        # print(f"Execution time : {end - start:.4f} seconds")
+        self.TypeCode = 2 
+        print("Use ", self.TabNameCode[self.TypeCode], " code:")
+        start = time.time()
+        w = self.transform(d)
+        end = time.time()
+        print(f"==> Execution time : {end - start:.4f} seconds")
 
         
         
         
         
 ################################  END CLASS ######################
+
+
 
 def mrs_starlet(map, nscale=None, lmax=None):
     nside = gnside(map)
