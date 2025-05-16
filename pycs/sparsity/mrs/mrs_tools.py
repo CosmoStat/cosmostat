@@ -107,6 +107,7 @@ def g2k(g1, g2):
     ke = hp.alm2map(ae, nside, pol=False)
     return ke
 
+
 def k2g(ke):
     nside = gnside(ke)
     ae = hp.map2alm(ke, 1, pol=False)
@@ -244,6 +245,7 @@ def tol(map, lmax_amin, amin=False):
 
 # Spherical harmonic transform : Code from Remi Carloni Gertosio
 
+
 def map2alm(maps, lmax=None, iter=3):
     """Computes the alm of a Healpix map.
 
@@ -264,13 +266,15 @@ def map2alm(maps, lmax=None, iter=3):
 
     if len(np.shape(maps)) == 1:
         if lmax is None:
-            lmax = 3*hp.get_nside(maps)
+            lmax = 3 * hp.get_nside(maps)
         return hp.sphtfunc.map2alm(maps, lmax=lmax, iter=iter)
 
     n = np.shape(maps)[0]
     if lmax is None:
-        lmax = 3*hp.get_nside(maps[0, :])
-    return np.array([hp.sphtfunc.map2alm(maps[i, :], lmax=lmax, iter=iter) for i in range(n)])
+        lmax = 3 * hp.get_nside(maps[0, :])
+    return np.array(
+        [hp.sphtfunc.map2alm(maps[i, :], lmax=lmax, iter=iter) for i in range(n)]
+    )
 
 
 def alm2map(alms, nside):
@@ -322,11 +326,23 @@ def alm_product(alms, filters):
     n = np.shape(alms)[0]
 
     if dim_filters == 1:
-        return np.array([hp.sphtfunc.smoothalm(alms[i, :], beam_window=filters, verbose=False, inplace=False)
-                         for i in range(n)])
+        return np.array(
+            [
+                hp.sphtfunc.smoothalm(
+                    alms[i, :], beam_window=filters, verbose=False, inplace=False
+                )
+                for i in range(n)
+            ]
+        )
 
-    return np.array([hp.sphtfunc.smoothalm(alms[i, :], beam_window=filters[i, :], verbose=False, inplace=False)
-                     for i in range(n)])
+    return np.array(
+        [
+            hp.sphtfunc.smoothalm(
+                alms[i, :], beam_window=filters[i, :], verbose=False, inplace=False
+            )
+            for i in range(n)
+        ]
+    )
 
 
 def convolve(maps, filters, lmax=None, nside=None):
@@ -385,7 +401,7 @@ def anafast(maps, lmax=None, iter=3):
 
     if len(np.shape(maps)) == 1:
         if lmax is None:
-            lmax = 3*hp.get_nside(maps)
+            lmax = 3 * hp.get_nside(maps)
         return hp.sphtfunc.anafast(maps, lmax=lmax, iter=iter)
 
     n = np.shape(maps)[0]
@@ -416,6 +432,7 @@ def alm2cl(alms):
 
 
 # Alm index computation
+
 
 def getsize(lmax):
     """Returns the size of the array needed to store alm up to lmax.
@@ -470,10 +487,20 @@ def npix2nside(npix):
 
     return hp.npix2nside(npix)
 
- 
+
 # Plots
 
-def mollview(maps, maps2=None, log=False, unit='', title='', minimum=None, maximum=None, cbar=True):
+
+def mollview(
+    maps,
+    maps2=None,
+    log=False,
+    unit="",
+    title="",
+    minimum=None,
+    maximum=None,
+    cbar=True,
+):
     """Plot one or more Healpix maps in Mollweide projection.
 
     Parameters
@@ -513,13 +540,36 @@ def mollview(maps, maps2=None, log=False, unit='', title='', minimum=None, maxim
         if maps2 is not None:
             maximum = np.max([maximum, np.max(maps2)])
     if not log:
-        def f(x): return x
+
+        def f(x):
+            return x
+
     else:
-        def f(x): return np.log10(x - minimum + 1)
+
+        def f(x):
+            return np.log10(x - minimum + 1)
+
     for i in range(np.shape(maps)[0]):
-        hp.mollview(f(maps[i, :]), fig=None, unit=unit, title=title, min=f(minimum), max=f(maximum), cbar=cbar)
+        hp.mollview(
+            f(maps[i, :]),
+            fig=None,
+            unit=unit,
+            title=title,
+            min=f(minimum),
+            max=f(maximum),
+            cbar=cbar,
+        )
         if maps2 is not None:
-            hp.mollview(f(maps2[i, :]), fig=None, unit=unit, title=title, min=f(minimum), max=f(maximum), cbar=cbar)
+            hp.mollview(
+                f(maps2[i, :]),
+                fig=None,
+                unit=unit,
+                title=title,
+                min=f(minimum),
+                max=f(maximum),
+                cbar=cbar,
+            )
+
 
 def view_spec(inputs, lmax=None, alm_in=False):
     """Plot the angular power spectrum of one or several maps.
@@ -549,13 +599,15 @@ def view_spec(inputs, lmax=None, alm_in=False):
 
     plt.figure()
     for i in range(np.shape(inputs)[0]):
-        plt.semilogy(cls[i, :], label='Source '+str(i+1))
-    plt.xlabel('$l$')
-    plt.ylabel('$c_l$')
+        plt.semilogy(cls[i, :], label="Source " + str(i + 1))
+    plt.xlabel("$l$")
+    plt.ylabel("$c_l$")
     if np.shape(inputs)[0] != 1:
         plt.legend()
 
+
 # Miscellaneous
+
 
 def getidealbeam(lmax, cutmin=None, cutmax=None):
     """Compute a beam, with value 1 until a first cutoff frequency and 0 after a second cutoff frequency. The transition
@@ -577,12 +629,12 @@ def getidealbeam(lmax, cutmin=None, cutmax=None):
     """
 
     if cutmin is None:
-        cutmin = np.int64((lmax+1)/4)
+        cutmin = np.int64((lmax + 1) / 4)
     if cutmax is None:
-        cutmax = np.int64((lmax+1)/2)
-    bl = np.zeros(lmax+1)
+        cutmax = np.int64((lmax + 1) / 2)
+    bl = np.zeros(lmax + 1)
     bl[0:cutmin] = 1
-    bl[cutmin:cutmax] = spline2(cutmax-cutmin-1, 1, 1)
+    bl[cutmin:cutmax] = spline2(cutmax - cutmin - 1, 1, 1)
     return bl
 
 
@@ -601,12 +653,28 @@ def getbeam(fwhm=100, lmax=512):
     np.ndarray
         (lmax+1,) float array, Gaussian-shaped beam
     """
-    
+
     tor = 0.0174533
     if len(np.shape(fwhm)) == 1:
         fwhm = np.expand_dims(fwhm, axis=1)
     F = fwhm / 60 * tor
-    l = np.arange(0, lmax+1)
+    l = np.arange(0, lmax + 1)
     ell = l * (l + 1)
     bl = np.exp(-ell * F * F / 16 / np.log(2))
     return bl
+
+
+################################################
+
+
+def mrs_hard_thresholding(alpha, Thres):
+    alpha[np.abs(alpha) <= Thres] = 0
+
+
+################################################
+
+
+def mrs_soft_thresholding(alpha, Thres):
+    Res = np.abs(alpha) - Thres
+    Res[Res < 0] = 0
+    alpha[:, :] = np.sign(alpha) * Res
