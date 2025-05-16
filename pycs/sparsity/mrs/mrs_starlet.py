@@ -26,16 +26,17 @@ Created on May 13, 2025
 """
 
 import importlib.util
+
 spec = importlib.util.find_spec("pymrs")
-if spec is  None:
+if spec is None:
     # print("pymrs is available at:", spec.origin)
-    MRS_CXX=False
+    MRS_CXX = False
 else:
     pymrs = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(pymrs)
     MRS_CXX = True
 
-    
+
 import numpy as np
 import random
 import os, sys
@@ -53,20 +54,19 @@ import getpass
 import time
 
 
-
 def test_mrs_class(Init=None):
     if Init is None:
-        if  getpass.getuser() == "starck":
+        if getpass.getuser() == "starck":
             os.chdir("/Users/starck/Main/python/data/wlens/DES_UNION")
             print("Current directory:", os.getcwd())
             d = mrs_read("mars_topo_mola_hpx_1024.fits")
             Nside = gnside(d)
             print("Nside = ", Nside)
         else:
-            Nside=1024
-            d = np.random.normal(size=(Nside**2*12))
+            Nside = 1024
+            d = np.random.normal(size=(Nside**2 * 12))
         Ns = 9
-        ALM_iter=0
+        ALM_iter = 0
         C = CMRStarlet()
         C.init_starlet(Nside, nscale=Ns, ALM_iter=ALM_iter)
         print("PYTHON Code computation time:")
@@ -76,45 +76,45 @@ def test_mrs_class(Init=None):
         print(f"Execution time python: {end - start:.4f} seconds")
     else:
         C = Init
-    
+
     # Visualization of scale 3
-    j=3
+    j = 3
     C.tvs(j, title="Scale 3 of Mars")
 
-    
     # Visualization of all scales
     C.tv(title="Mars")
-    
+
     # Stat of all scales
     C.stat()
-    
+
     r = C.recons()
     if Init is None:
-        info(d-r, "Reconstruction error: ")
-    
+        info(d - r, "Reconstruction error: ")
+
     C.threshold(SigmaNoise=20)
     r = C.recons()
     if Init is None:
-        info(d-r, "Reconstruction error: ")
+        info(d - r, "Reconstruction error: ")
     tvs(r, title="Denoised map")
     if Init is None:
-        tvs(d-r, title="Estimated noise map")
+        tvs(d - r, title="Estimated noise map")
 
     # Denoising routine
     # def denoising(self, Image, SigmaNoise=0, Nsigma=3, ThresCoarse=False, hard=True):
-    r = C.denoising(d, Nsigma=[4,3,2], ThresCoarse=True)
+    r = C.denoising(d, Nsigma=[4, 3, 2], ThresCoarse=True)
     tvs(r, title="Denoised map")
     if Init is None:
-        tvs(d-r, title="Estimated noise map")
-    
+        tvs(d - r, title="Estimated noise map")
+
     C.eval_computation_time()
-    
+
     return C
-    
-    
+
+
 def pycs_env_status():
     import os
     import subprocess
+
     # subprocess.run(['tcsh', '-c', 'source ~/.tcshrc; echo $PATH'], check=True)
     print(os.environ.get("DYLD_LIBRARY_PATH"))
     print(os.environ.get("DYLD_FALLBACK_LIBRARY_PATH"))
@@ -122,13 +122,16 @@ def pycs_env_status():
     print(os.environ.get("PYTHONPATH"))
     env = os.environ.copy()
     env["DYLD_LIBRARY_PATH"] = "/usr/lib"
-    result = subprocess.run(["mr_filter"], capture_output=True, text=True,env=env)
+    result = subprocess.run(["mr_filter"], capture_output=True, text=True, env=env)
     print("STDOUT:", result.stdout)
     print("STDERR:", result.stderr)
     print("Return code:", result.returncode)
 
 
-MRS_StarletTabNorm = np.array( [0.969856, 0.103676, 0.051809, 0.025798, 0.012852, 0.006446, 0.003230, 0.001725] )
+MRS_StarletTabNorm = np.array(
+    [0.969856, 0.103676, 0.051809, 0.025798, 0.012852, 0.006446, 0.003230, 0.001725]
+)
+
 
 class CMRStarlet:
     """
@@ -146,12 +149,11 @@ class CMRStarlet:
     nside = 0
     lmax = 0
     ALM_iter = 0
-    TabNameCode = ['Full python', 'c++ Binding', 'c++ binary']
-    TypeCode = 0 # 0 for 'Full python', '1' for 'c++ Binding' and 2 for'c++ binary'
-    
+    TabNameCode = ["Full python", "c++ Binding", "c++ binary"]
+    TypeCode = 0  # 0 for 'Full python', '1' for 'c++ Binding' and 2 for'c++ binary'
+
     # __init__ is the constructor
-    def __init__(
-        self, name="wt", verb=False):
+    def __init__(self, name="wt", verb=False):
         """
         Constructor
 
@@ -184,26 +186,25 @@ class CMRStarlet:
         None.
         """
         self.nside = np.int64(nside)
-        self.nx = 12*self.nside*self.nside
+        self.nx = 12 * self.nside * self.nside
         if nscale == 0:
             nscale = np.int64(np.log(nx) // 1)
         self.ns = np.int64(nscale)
         if lmax != 0:
-            self.lmax =  np.int64(lmax)  
+            self.lmax = np.int64(lmax)
         else:
-            self.lmax = 3*self.nside
+            self.lmax = 3 * self.nside
         if ALM_iter != 0:
-            self.ALM_iter  = np.int64(ALM_iter) 
+            self.ALM_iter = np.int64(ALM_iter)
 
         if MRS_CXX and self.TypeCode == 1:
             CMRS = pymrs.MRS()
             CMRS.alloc(nside, self.ns, self.lmax, self.ALM_iter, self.verb)
-    
-        
-        Ne = len( MRS_StarletTabNorm)
+
+        Ne = len(MRS_StarletTabNorm)
         self.TabNorm = np.zeros(self.ns, dtype=np.float64)
         if Ne >= self.ns:
-            self.TabNorm = MRS_StarletTabNorm[:self.ns]
+            self.TabNorm = MRS_StarletTabNorm[: self.ns]
         else:
             self.TabNorm[:Ne] = MRS_StarletTabNorm
             val = MRS_StarletTabNorm[-1]
@@ -211,7 +212,7 @@ class CMRStarlet:
                 val /= 2
                 self.TabNorm[i] = val
         # print("TabNorm = ", self.TabNorm)
- 
+
     def info(self):  # sound is a method (a method is a function of an object)
         """
         Print information relative to the intialisation.
@@ -261,20 +262,30 @@ class CMRStarlet:
         Nx = (im.shape[-2:])[0]
         if Nx != self.nx:
             raise ValueError(f"Error: expected {self.nx}, but got {Nx}")
-        
+
         if self.ns <= 1 or self.nx != Nx:
-            self.init_starlet(Nx,nscale=0)
+            self.init_starlet(Nx, nscale=0)
         if WTname is not None:
             self.name = WTname
-        
+
         if MRS_CXX and self.TypeCode == 1:
             CMRS = pymrs.MRS()
-            CMRS.alloc(self.nside, self.ns,self.nside*3, self.ALM_iter, True)
-            self.coef = CMRS.uwt(im,self.ns)
+            CMRS.alloc(self.nside, self.ns, self.nside * 3, self.ALM_iter, True)
+            self.coef = CMRS.uwt(im, self.ns)
         elif self.TypeCode == 2:
-            self.coef =  mrs_uwttrans(im, self.ns, self.lmax, opt=opt, verbose=self.verb, path="./", cxx=True)
+            self.coef = mrs_uwttrans(
+                im, self.ns, self.lmax, opt=opt, verbose=self.verb, path="./", cxx=True
+            )
         else:
-            self.coef =  mrs_uwttrans(im, self.ns, self.lmax, opt=None, verbose=self.verb, path="./", cxx=False)
+            self.coef = mrs_uwttrans(
+                im,
+                self.ns,
+                self.lmax,
+                opt=None,
+                verbose=self.verb,
+                path="./",
+                cxx=False,
+            )
 
     def recons(self):
         """
@@ -288,7 +299,6 @@ class CMRStarlet:
             Reconstructed image.
         """
         return np.sum(self.coef, axis=0)
-
 
     def denoising(self, data, SigmaNoise=0, Nsigma=3, ThresCoarse=False, hard=True):
         """
@@ -318,9 +328,10 @@ class CMRStarlet:
             SigmaNoise = get_noise(Image)
         self.SigmaNoise = SigmaNoise
         self.transform(Image)
-        self.threshold(SigmaNoise=SigmaNoise, Nsigma=Nsigma, ThresCoarse=ThresCoarse, hard=hard)
+        self.threshold(
+            SigmaNoise=SigmaNoise, Nsigma=Nsigma, ThresCoarse=ThresCoarse, hard=hard
+        )
         return self.recons()
-
 
     def put_scale(self, ScaleCoef, j):
         """
@@ -337,8 +348,18 @@ class CMRStarlet:
 
         """
         self.coef[j, :] = ScaleCoef
-        
-    def tvs(self, j, min=None, max=None, title=None, sigma=None, lut=None, filename=None, dpi=100):
+
+    def tvs(
+        self,
+        j,
+        min=None,
+        max=None,
+        title=None,
+        sigma=None,
+        lut=None,
+        filename=None,
+        dpi=100,
+    ):
         """
         Display the scale j
         Parameters
@@ -350,8 +371,17 @@ class CMRStarlet:
         Window appearing showing scale j.
         """
         s = self.coef[j]
-        tvs(s, min=min, max=max, title=title, sigma=sigma, lut=lut, filename=filename, dpi=dpi)
-    
+        tvs(
+            s,
+            min=min,
+            max=max,
+            title=title,
+            sigma=sigma,
+            lut=lut,
+            filename=filename,
+            dpi=dpi,
+        )
+
     def tv(self, log=False, unit="", title="", minimum=None, maximum=None, cbar=True):
         """
         Display the scale j
@@ -363,8 +393,16 @@ class CMRStarlet:
         -------
         Window appearing showing scale j.
         """
-        mrs_tv(self.coef, log=log, unit=unit, title=title, minimum=minimum, maximum=maximum, cbar=cbar)
-        
+        mrs_tv(
+            self.coef,
+            log=log,
+            unit=unit,
+            title=title,
+            minimum=minimum,
+            maximum=maximum,
+            cbar=cbar,
+        )
+
     def dump(self):
         """
         Print all variable and function names of the class
@@ -374,7 +412,7 @@ class CMRStarlet:
 
         """
         print(self.__dict__)
-        
+
     def get_noise(self):
         """
         Estimate the noise in the data from the first wavelet scale
@@ -421,7 +459,6 @@ class CMRStarlet:
                 TabNsigma = Nsigma[:nscale]
         return TabNsigma
 
-
     def threshold(
         self,
         SigmaNoise=0,
@@ -457,42 +494,51 @@ class CMRStarlet:
         None.
 
         """
- 
+
         if SigmaNoise == 0:
             SigmaNoise = self.get_noise()  # scalar
         self.SigmaNoise = SigmaNoise
         if Verbose:
             print("SigmaNoise = ", SigmaNoise, ", vsize(SigmaNoise) = ", vs)
-        
-        self.TabNsigma = self.get_tabsigma(Nsigma=Nsigma)  
+
+        self.TabNsigma = self.get_tabsigma(Nsigma=Nsigma)
         if Verbose:
             print("TabNsigma = ", self.TabNsigma)
 
         # The noise level is obtained at each scale by multiplying by self.TabNorm
         Thres = SigmaNoise * self.TabNsigma * self.TabNorm
-        
-        Last = self.ns -1
+
+        Last = self.ns - 1
         if ThresCoarse:
             Last = self.ns
-            
+
         for j in range(Last):
-            s = self.coef[j,:]
+            s = self.coef[j, :]
             if hard:
                 mrs_hard_thresholding(s, Thres[j])
             else:
                 mrs_soft_thresholding(s, Thres[j])
             if Verbose:
-                print("     scale ",j+1,", % of non zeros = ", np.count_nonzero(s) * 100.0 / float(self.nx) )
-            
+                print(
+                    "     scale ",
+                    j + 1,
+                    ", % of non zeros = ",
+                    np.count_nonzero(s) * 100.0 / float(self.nx),
+                )
+
             if Verbose:
-                print("     scale ",j+1,", % of non zeros = ", np.count_nonzero(s) * 100.0 / float(self.nx) )
-            self.coef[j,:] = s
+                print(
+                    "     scale ",
+                    j + 1,
+                    ", % of non zeros = ",
+                    np.count_nonzero(s) * 100.0 / float(self.nx),
+                )
+            self.coef[j, :] = s
 
         if FirstDetectScale > 0:
             self.coef[:FirstDetectScale, :] = 0.0
         if KillCoarse:
-            self.coef[ -1, :] = 0.0
-           
+            self.coef[-1, :] = 0.0
 
     def copy(self, name="wt"):
         """
@@ -512,52 +558,49 @@ class CMRStarlet:
         x.coef = np.zeros((x.ns, x.nx))
         x.TabNorm = np.copy(self.TabNorm)
         return x
-        
 
     def eval_computation_time(self):
         import time
-        
+
         # TabNameCode = ['Full python', 'c++ Binding', 'c++ binary']
         Nside = 1024
         Ns = 9
-        ALMiter=0
+        ALMiter = 0
         self.init_starlet(Nside, nscale=Ns, ALM_iter=ALMiter)
-        
+
         # d = np.random.normal(scale=100., size=self.nx)
         os.chdir("/Users/starck/Main/python/data/wlens/DES_UNION")
         print("Current directory:", os.getcwd())
         di = mrs_read("mars_topo_mola_hpx_1024.fits")
-        d = di.astype(float) 
+        d = di.astype(float)
         print(d.dtype)
-        self.TypeCode = 0    # 0 for 'Full python', '1' for 'c++ Binding' and 2 for'c++ binary'
+        self.TypeCode = (
+            0  # 0 for 'Full python', '1' for 'c++ Binding' and 2 for'c++ binary'
+        )
         print("Use ", self.TabNameCode[self.TypeCode], " code:")
 
         start = time.time()
         w = self.transform(d)
         end = time.time()
         print(f"==> Execution time : {end - start:.4f} seconds")
-        
-        self.TypeCode = 1 
+
+        self.TypeCode = 1
         print("Use ", self.TabNameCode[self.TypeCode], " code:")
 
         start = time.time()
         w = self.transform(d)
         end = time.time()
         print(f"==> Execution time : {end - start:.4f} seconds")
-        
-        self.TypeCode = 2 
+
+        self.TypeCode = 2
         print("Use ", self.TabNameCode[self.TypeCode], " code:")
         start = time.time()
         w = self.transform(d)
         end = time.time()
         print(f"==> Execution time : {end - start:.4f} seconds")
 
-        
-        
-        
-        
+
 ################################  END CLASS ######################
-
 
 
 def mrs_starlet(map, nscale=None, lmax=None):
@@ -568,7 +611,7 @@ def mrs_starlet(map, nscale=None, lmax=None):
         Ns = np.int64(nscale)
 
     npix = map.shape[0]
-    w = wt_trans(map, lmax=lmax, nscales=Ns-1)
+    w = wt_trans(map, lmax=lmax, nscales=Ns - 1)
     trans = w.T
     return trans
 
@@ -926,10 +969,9 @@ def mrs_tv(maps, log=False, unit="", title="", minimum=None, maximum=None, cbar=
         )
 
 
-
 if __name__ == "__main__":
     print("Main :)")
- 
+
     testclass = 1
     if testclass:
         C = test_mrs_class()
