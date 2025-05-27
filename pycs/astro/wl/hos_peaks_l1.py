@@ -582,7 +582,14 @@ class HOS_starlet_l1norm_peaks:
 
 
 def get_norm_wtl1_sphere(
-    Map, nscales, nbins=None, Mask=None, min_snr=None, max_snr=None, path="/."
+    Map,
+    nscales,
+    nbins=None,
+    Mask=None,
+    min_snr=None,
+    max_snr=None,
+    path="/.",
+    normalize_energy=False,
 ):
     """
     Computes L1 norms of wavelet transform coefficients at different scales for a HEALPix map. The wavelet transform is performed using the undecimated wavelet transform.
@@ -598,11 +605,13 @@ def get_norm_wtl1_sphere(
     Mask : array_like, optional
         Mask indicating where we have observations. Only pixels where Mask != 0 are considered.
     min_snr : float, optional
-        Minimum value for binning. If None, uses the minimum value in the normalized coefficients.
+        Minimum value for binning. If None, uses the minimum value in the coefficients.
     max_snr : float, optional
-        Maximum value for binning. If None, uses the maximum value in the normalized coefficients.
+        Maximum value for binning. If None, uses the maximum value in the coefficients.
     path : str, optional
         Path to the directory for temporary files. Default is "/.".
+    normalize_energy : bool, optional
+        If True, normalize wavelet coefficients by their energy. Default is False.
 
     Returns
     -------
@@ -617,7 +626,6 @@ def get_norm_wtl1_sphere(
         nbins = 40
 
     # Perform undecimated wavelet transform on the spherical map
-    # WT = mrs_uwttrans(Map, verbose=False, path=path, cxx=True)
     WT = mrs_uwttrans(Map, nscale=nscales, verbose=False, path=path, cxx=False)
 
     l1norm_coll = []
@@ -631,26 +639,27 @@ def get_norm_wtl1_sphere(
         if Mask is not None:
             ScaleCoeffs = ScaleCoeffs[Mask != 0]
 
-        # Normalize the wavelet scale to the same energy level
-        energy = np.sum(ScaleCoeffs**2)
-        normalization_factor = np.sqrt(energy)
-        if normalization_factor > 0:
-            ScaleCoeffs_normalized = ScaleCoeffs / normalization_factor
+        # Normalize the wavelet scale to the same energy level if requested
+        if normalize_energy:
+            energy = np.sum(ScaleCoeffs**2)
+            normalization_factor = np.sqrt(energy)
+            if normalization_factor > 0:
+                ScaleCoeffs = ScaleCoeffs / normalization_factor
 
         # Set the minimum and maximum values based on inputs or defaults
-        min_val = min_snr if min_snr is not None else np.min(ScaleCoeffs_normalized)
-        max_val = max_snr if max_snr is not None else np.max(ScaleCoeffs_normalized)
+        min_val = min_snr if min_snr is not None else np.min(ScaleCoeffs)
+        max_val = max_snr if max_snr is not None else np.max(ScaleCoeffs)
 
         # Define thresholds and bins
         thresholds = np.linspace(min_val, max_val, nbins + 1)
         bins = 0.5 * (thresholds[:-1] + thresholds[1:])
 
         # Digitize the values into bins
-        digitized = np.digitize(ScaleCoeffs_normalized, thresholds)
+        digitized = np.digitize(ScaleCoeffs, thresholds)
 
         # Calculate the l1 norm for each bin
         bin_l1_norm = [
-            np.sum(np.abs(ScaleCoeffs_normalized[digitized == j]))
+            np.sum(np.abs(ScaleCoeffs[digitized == j]))
             for j in range(1, len(thresholds))
         ]
 
