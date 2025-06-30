@@ -20,7 +20,8 @@ from pycs.sparsity.sparse2d.dct import dct2d, idct2d
 from pycs.sparsity.sparse2d.dct_inpainting import dct_inpainting
 from pycs.misc.im_isospec import *
 from pycs.astro.wl.mass_mapping import *
-from pycs.sparsity.mrs.mrs_starlet import mrs_uwttrans
+from pycs.sparsity.mrs.mrs_starlet import mrs_uwttrans, CMRStarlet
+import healpy as hp  # Added for Nside calculation
 
 
 def get_wt_noiselevel(W, NoiseSigmaMap, Mask=None):
@@ -581,18 +582,18 @@ class HOS_starlet_l1norm_peaks:
         self.l1norm = np.array(l1_coll)
 
 
-def get_norm_wtl1_sphere(
+def get_wtl1_sphere(
     Map,
     nscales,
     nbins=None,
     Mask=None,
     min_snr=None,
     max_snr=None,
-    path="/.",
-    normalize_energy=False,
 ):
     """
-    Computes L1 norms of wavelet transform coefficients at different scales for a HEALPix map. The wavelet transform is performed using the undecimated wavelet transform.
+    Computes L1 norms of normalized wavelet transform coefficients at different scales for a HEALPix map.
+    The wavelet transform is performed using CMRStarlet. The normalization ensures || Psi_j ||^2 = 1.
+    The values binned are C.coef[j] / C.TabNorm[j].
 
     Parameters
     ----------
@@ -605,13 +606,11 @@ def get_norm_wtl1_sphere(
     Mask : array_like, optional
         Mask indicating where we have observations. Only pixels where Mask != 0 are considered.
     min_snr : float, optional
-        Minimum value for binning. If None, uses the minimum value in the coefficients.
+        Minimum value for binning the normalized coefficients (C.coef[j] / C.TabNorm[j]).
+        If None, uses the minimum value in the coefficients for the current scale.
     max_snr : float, optional
-        Maximum value for binning. If None, uses the maximum value in the coefficients.
-    path : str, optional
-        Path to the directory for temporary files. Default is "/.".
-    normalize_energy : bool, optional
-        If True, normalize wavelet coefficients by their energy. Default is False.
+        Maximum value for binning the normalized coefficients (C.coef[j] / C.TabNorm[j]).
+        If None, uses the maximum value in the coefficients for the current scale.
 
     Returns
     -------
@@ -625,33 +624,37 @@ def get_norm_wtl1_sphere(
     if nbins is None:
         nbins = 40
 
-    # Perform undecimated wavelet transform on the spherical map
-    WT = mrs_uwttrans(Map, nscale=nscales, verbose=False, path=path, cxx=False)
+    # Determine Nside from the input map
+    Nside = hp.npix2nside(Map.shape[0])
+
+    # Initialize and perform CMRStarlet transform
+    C = CMRStarlet()
+    C.init_starlet(Nside, nscale=nscales)
+    C.transform(Map)
 
     l1norm_coll = []
     bins_coll = []
 
     # Loop through each scale of the wavelet transform
     for i in range(nscales):
-        ScaleCoeffs = WT[i]  # coefficients for the i-th scale
+        # Get normalized wavelet coefficients for the i-th scale
+        if C.TabNorm[i] == 0:  # Avoid division by zero if TabNorm is zero
+            ScaleCoeffs = C.coef[i].copy()  # Or handle as an error/warning
+        else:
+            ScaleCoeffs = C.coef[i] / C.TabNorm[i]
 
         # Apply the mask if provided
         if Mask is not None:
+            if Mask.shape[0] != ScaleCoeffs.shape[0]:
+                raise ValueError("Mask shape does not match coefficient map shape.")
             ScaleCoeffs = ScaleCoeffs[Mask != 0]
 
-        # Normalize the wavelet scale to the same energy level if requested
-        if normalize_energy:
-            energy = np.sum(ScaleCoeffs**2)
-            normalization_factor = np.sqrt(energy)
-            if normalization_factor > 0:
-                ScaleCoeffs = ScaleCoeffs / normalization_factor
-
         # Set the minimum and maximum values based on inputs or defaults
-        min_val = min_snr if min_snr is not None else np.min(ScaleCoeffs)
-        max_val = max_snr if max_snr is not None else np.max(ScaleCoeffs)
+        current_min_val = min_snr if min_snr is not None else np.min(ScaleCoeffs)
+        current_max_val = max_snr if max_snr is not None else np.max(ScaleCoeffs)
 
         # Define thresholds and bins
-        thresholds = np.linspace(min_val, max_val, nbins + 1)
+        thresholds = np.linspace(current_min_val, current_max_val, nbins + 1)
         bins = 0.5 * (thresholds[:-1] + thresholds[1:])
 
         # Digitize the values into bins
