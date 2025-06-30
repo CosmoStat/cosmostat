@@ -18,11 +18,12 @@ from pycs.misc.cosmostat_init import writefits
 from skimage import data, color
 from skimage.transform import resize
 
+
 def load_source_images(shape=(128, 128)):
     # Load grayscale source images and resize
     img1 = resize(data.camera(), shape, anti_aliasing=True)
     img2 = color.rgb2gray(resize(data.astronaut(), shape, anti_aliasing=True))
-    
+
     # Normalize images
     img1 = (img1 - np.mean(img1)) / np.std(img1)
     img2 = (img2 - np.mean(img2)) / np.std(img2)
@@ -31,16 +32,17 @@ def load_source_images(shape=(128, 128)):
     sources = np.stack([img1, img2], axis=0)
     return sources
 
+
 def mix_sources_images(sources):
     n_sources, H, W = sources.shape
     n_pixels = H * W
-    
+
     # Flatten sources: (2, H*W)
     S = sources.reshape(n_sources, n_pixels)
 
     # Create random mixing matrix: (3, 2)
     A = np.random.randn(3, 2)
-    
+
     # Mix: (3, H*W)
     mixed = A @ S
 
@@ -65,7 +67,7 @@ def mix_sources_images_noise(sources, noise_level=0.05):
     # Add Gaussian noise
     noise = np.random.normal(scale=noise_level, size=mixed.shape)
     mixed += noise
-    
+
     # Reshape back to images
     mixed_images = mixed.reshape(3, H, W)
     return mixed_images, A
@@ -87,9 +89,9 @@ def reorder_and_fix_sign(true_sources, estimated_sources):
     S_est = estimated_sources.reshape(n_sources, -1)
 
     # Normalize
-    S_true = (S_true - S_true.mean(axis=1, keepdims=True))
+    S_true = S_true - S_true.mean(axis=1, keepdims=True)
     S_true /= np.linalg.norm(S_true, axis=1, keepdims=True)
-    S_est = (S_est - S_est.mean(axis=1, keepdims=True))
+    S_est = S_est - S_est.mean(axis=1, keepdims=True)
     S_est /= np.linalg.norm(S_est, axis=1, keepdims=True)
 
     # Correlation matrix
@@ -110,6 +112,7 @@ def reorder_and_fix_sign(true_sources, estimated_sources):
 
     return corrected_sources
 
+
 def compute_sdr(true_sources, estimated_sources):
     """
     Compute SDR for each pair of true and estimated sources.
@@ -126,7 +129,7 @@ def compute_sdr(true_sources, estimated_sources):
         s_true = true_sources[i].flatten()
         s_est = estimated_sources[i].flatten()
         noise = s_true - s_est
-        sdr = 10 * np.log10(np.sum(s_true ** 2) / np.sum(noise ** 2))
+        sdr = 10 * np.log10(np.sum(s_true**2) / np.sum(noise**2))
         sdr_values.append(sdr)
     return sdr_values
 
@@ -145,13 +148,15 @@ def amari_error(A_true, A_est):
     try:
         # Estimate the unmixing matrix
         W_est = np.linalg.pinv(A_est)  # shape: (n_sources, n_obs)
-        G = W_est @ A_true             # shape: (n_sources, n_sources)
+        G = W_est @ A_true  # shape: (n_sources, n_sources)
     except np.linalg.LinAlgError:
         return np.inf
 
     # DEBUG
     if G.shape[0] != G.shape[1]:
-        raise ValueError(f"G should be square, but got shape {G.shape}. Check input shapes.")
+        raise ValueError(
+            f"G should be square, but got shape {G.shape}. Check input shapes."
+        )
 
     G = np.abs(G)
     row_sums = np.sum(G, axis=1, keepdims=True)
@@ -162,7 +167,9 @@ def amari_error(A_true, A_est):
 
     return (row_error + col_error) / (2 * G.shape[0])
 
+
 # Metrics
+
 
 def evaluate(A0, S0, A, S, corrPerm=False):
     """Computes the NMSE and the CA.
@@ -203,12 +210,11 @@ def evaluate(A0, S0, A, S, corrPerm=False):
     corr_perm(A0, S0, A, S, inplace=True)
 
     # CA = -10 * np.log10(np.mean(np.abs(np.dot(np.linalg.pinv(A), A0) - np.eye(n))))
-    CA = (np.mean(np.abs(np.dot(np.linalg.pinv(A), A0) - np.eye(n))))
+    CA = np.mean(np.abs(np.dot(np.linalg.pinv(A), A0) - np.eye(n)))
     # NMSE = -10 * np.log10(np.sum((S0-S)**2)/np.sum(S0**2))
-    NMSE =  (np.sum((S0-S)**2)/np.sum(S0**2))
+    NMSE = np.sum((S0 - S) ** 2) / np.sum(S0**2)
 
     return CA, NMSE
-
 
 
 def corr_perm(A0, S0, A, S, inplace=False, optInd=False):
@@ -246,16 +252,16 @@ def corr_perm(A0, S0, A, S, inplace=False, optInd=False):
     n = np.shape(A0)[1]
 
     for i in range(0, n):
-        S[i, :] *= (1e-24 + np.linalg.norm(A[:, i]))
-        A[:, i] /= (1e-24 + np.linalg.norm(A[:, i]))
-        S0[i, :] *= (1e-24 + np.linalg.norm(A0[:, i]))
-        A0[:, i] /= (1e-24 + np.linalg.norm(A0[:, i]))
+        S[i, :] *= 1e-24 + np.linalg.norm(A[:, i])
+        A[:, i] /= 1e-24 + np.linalg.norm(A[:, i])
+        S0[i, :] *= 1e-24 + np.linalg.norm(A0[:, i])
+        A0[:, i] /= 1e-24 + np.linalg.norm(A0[:, i])
 
     try:
         diff = abs(np.dot(np.linalg.inv(np.dot(A0.T, A0)), np.dot(A0.T, A)))
     except np.linalg.LinAlgError:
         diff = abs(np.dot(np.linalg.pinv(A0), A))
-        print('Warning! Pseudo-inverse used.')
+        print("Warning! Pseudo-inverse used.")
 
     ind = np.arange(0, n)
 
@@ -296,7 +302,7 @@ def nmse(S0, S):
     float
         NMSE (dB)
     """
-    return -10 * np.log10(np.sum((S0-S)**2)/np.sum(S0**2))
+    return -10 * np.log10(np.sum((S0 - S) ** 2) / np.sum(S0**2))
 
 
 def ca(A0, A):
@@ -314,8 +320,6 @@ def ca(A0, A):
     float
         CA (dB)
     """
-    return -10 * np.log10(np.mean(np.abs(np.dot(np.linalg.pinv(A), A0) - np.eye(np.shape(A0)[1]))))
-
-
-
-
+    return -10 * np.log10(
+        np.mean(np.abs(np.dot(np.linalg.pinv(A), A0) - np.eye(np.shape(A0)[1])))
+    )
