@@ -589,11 +589,13 @@ def get_wtl1_sphere(
     Mask=None,
     min_snr=None,
     max_snr=None,
+    noise_std=None,
 ):
     """
     Computes L1 norms of normalized wavelet transform coefficients at different scales for a HEALPix map.
     The wavelet transform is performed using CMRStarlet. The normalization ensures || Psi_j ||^2 = 1.
-    The values binned are C.coef[j] / C.TabNorm[j].
+    If `noise_std` is provided, the binned values are SNR = (C.coef[j] / C.TabNorm[j]) / noise_std.
+    Otherwise, the binned values are the normalized coefficients C.coef[j] / C.TabNorm[j].
 
     Parameters
     ----------
@@ -611,12 +613,15 @@ def get_wtl1_sphere(
     max_snr : float, optional
         Maximum value for binning the normalized coefficients (C.coef[j] / C.TabNorm[j]).
         If None, uses the maximum value in the coefficients for the current scale.
+    noise_std : float, optional
+        Noise standard deviation. If provided, coefficients are divided by this value
+        to compute an SNR before binning. Default is None.
 
     Returns
     -------
     tuple of numpy arrays
         (bins, l1norm) where:
-        - bins[i] are the bin centers for scale i
+        - bins[i] are the bin centers for scale i (representing SNR if noise_std is used)
         - l1norm[i] are the L1 norms for each bin at scale i
     """
 
@@ -642,6 +647,10 @@ def get_wtl1_sphere(
             ScaleCoeffs = C.coef[i].copy()  # Or handle as an error/warning
         else:
             ScaleCoeffs = C.coef[i] / C.TabNorm[i]
+
+        # If noise_std is provided, convert to SNR
+        if noise_std is not None:
+            ScaleCoeffs = ScaleCoeffs / noise_std
 
         # Apply the mask if provided
         if Mask is not None:
