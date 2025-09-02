@@ -225,6 +225,83 @@ def get_peaks(image, threshold=None, ordered=True, mask=None, include_border=Fal
     return X, Y, heights
 
 
+def get_peaks_sphere(image, nside, threshold=None, ordered=True, mask=None):
+    """
+    Identify peaks in a spherical HEALPix map using a vectorized approach.
+
+    A peak is defined as a pixel with a value greater than all of its neighbors.
+    The neighborhood is determined by the healpy's `get_all_neighbors` function.
+
+    Parameters
+    ----------
+    image : array_like
+        HEALPix map (1D array).
+    nside : int
+        Nside parameter of the HEALPix map.
+    threshold : float, optional
+        Minimum pixel amplitude to be considered as a peak. If not provided,
+        the default value is set to the minimum of `image`.
+    ordered : bool, optional
+        If True, return peaks in decreasing order according to height.
+    mask : array_like (same shape as `image`), optional
+        Boolean array identifying which pixels of `image` to consider/exclude
+        in finding peaks. A numerical array will be converted to binary, where
+        only zero values are considered masked.
+
+    Returns
+    -------
+    X, heights : tuple of 1D numpy arrays
+        Pixel indices of peak positions and their associated heights.
+    """
+    image = np.atleast_1d(image)
+    npix = hp.nside2npix(nside)
+
+    if mask is None:
+        mask = np.ones(npix, dtype=bool)
+    else:
+        mask = mask.astype(bool)
+
+    # Handle threshold like the original implementation
+    if threshold is None:
+        threshold = image[mask].min()
+
+    # Get the indices of all neighbors for every pixel
+    neighbors_indices = hp.get_all_neighbours(nside, np.arange(npix))
+
+    # neighbors_indices has shape (8, npix) - 8 neighbors for each pixel
+    # We need to transpose it to get (npix, 8) for easier processing
+    neighbors_indices = neighbors_indices.T  # Now shape is (npix, 8)
+
+    # Pad the image to handle -1 indices
+    image_padded = np.zeros(npix + 1)
+    image_padded[1:] = image[:]
+    # Set the value for index -1 to a very low number to ensure it is never
+    # considered the maximum. This corresponds to a padding value for invalid neighbors.
+    image_padded[0] = -np.inf
+
+    # Shift neighbor indices by +1 so -1 becomes 0
+    neighbors_indices_padded = neighbors_indices + 1
+
+    # Get the values of all neighbors from the padded image.
+    neighbor_values = image_padded[neighbors_indices_padded]
+
+    # Find the maximum value among all neighbors for each pixel
+    max_neighbor_values = np.max(neighbor_values, axis=1)
+
+    # A pixel is a peak if its value is strictly greater than the maximum of its neighbors
+    # AND it meets the threshold AND it's in the mask
+    peaks_mask = (image > max_neighbor_values) & (image >= threshold) & mask
+
+    peak_indices = np.where(peaks_mask)[0]
+    peak_heights = image[peak_indices]
+
+    if ordered:
+        inds = np.argsort(peak_heights)[::-1]
+        return peak_indices[inds], peak_heights[inds]
+
+    return peak_indices, peak_heights
+
+
 # Class to compute multiscale peaks and wavelet l1 norm for an image
 class HOS_starlet_l1norm_peaks:
     NBins = 0  # int: Number of bins to use
@@ -681,6 +758,86 @@ def get_wtl1_sphere(
 
     # Return the bins and l1 norms for each scale
     return np.array(bins_coll), np.array(l1norm_coll)
+
+
+def get_wtpeaks_sphere(
+    Map, nscales, noise_std=None, Mask=None, nbins=31, Min=-2, Max=6, verbose=False
+):
+    """
+    Calculate the histogram of peak counts at all scales for a spherical HEALPix map.
+    The overall logic and functionality is similar to the get_wtpeaks function.
+    The wavelet transform is performed using CMRStarlet().
+
+    Parameters
+    ----------
+    Map : array_like
+        HEALPix map to analyze.
+    nscales : int
+        Number of wavelet scales to use.
+    noise_std : float, optional
+        Standard deviation of the noise. If provided, the wavelet coefficients
+        are divided by this value to obtain an SNR map.
+    Mask : array_like, optional
+        Caculate the histogram of peak counts only in the mask area.
+        The default is None, the whole image is used at every scale.
+    nbins : int, optional
+        Number of bins for the histogram. The default is 31.
+    Min : int, optional
+        Minimum value for the histogram bins. The default is -2.
+    Max : int, optional
+        Maximum value for the histogram bins. The default is 6.
+    verbose : bool, optional
+        If True, print the minimum and maximum values at each scale. The default is False.
+
+    Returns
+    -------
+    tuple of lists
+        (Peaks_Count, TabBinsCenter) where:
+        - Peaks_Count[i] is a numpy array containing the histogram of peak counts for scale i.
+        - TabBinsCenter is a numpy array with the center of each bin.
+    """
+
+    # Determine Nside from the input map
+    Nside = hp.npix2nside(Map.shape[0])
+
+    # Initialize and perform CMRStarlet transform
+    C = CMRStarlet()
+    C.init_starlet(Nside, nscale=nscales)
+    C.transform(Map)
+
+    # Set up histogram bins
+    TabBins = np.linspace(Min, Max, nbins)
+    TabBinsCenter = 0.5 * (TabBins[:-1] + TabBins[1:])
+
+    Peaks_Count = []
+
+    # Loop through each scale
+    for i in range(nscales):
+        # Get normalized wavelet coefficients for the i-th scale
+        if C.TabNorm[i] == 0:
+            ScaleCoeffs = C.coef[i].copy()
+        else:
+            ScaleCoeffs = C.coef[i] / C.TabNorm[i]
+
+        # If noise_std is provided, convert to SNR
+        if noise_std is not None:
+            ScaleCoeffs = ScaleCoeffs / noise_std
+
+        if verbose:
+            print(
+                f"Scale {i + 1}: Min = {ScaleCoeffs.min():.4f}, Max = {ScaleCoeffs.max():.4f}"
+            )
+
+        # Get peaks for the current scale
+        peak_indices, peak_heights = get_peaks_sphere(
+            ScaleCoeffs, Nside, threshold=None, ordered=True, mask=Mask
+        )
+
+        # Calculate histogram of peak heights
+        counts, bin_edges = np.histogram(peak_heights, bins=TabBins)
+        Peaks_Count.append(counts)
+
+    return Peaks_Count, TabBinsCenter
 
 
 #############  TESTS routine ############
