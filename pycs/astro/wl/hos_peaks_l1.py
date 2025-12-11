@@ -667,6 +667,8 @@ def get_wtl1_sphere(
     min_snr=None,
     max_snr=None,
     noise_std=None,
+    min_snr_coarse=None,
+    max_snr_coarse=None,
 ):
     """
     Computes L1 norms of normalized wavelet transform coefficients at different scales for a HEALPix map.
@@ -693,6 +695,13 @@ def get_wtl1_sphere(
     noise_std : float, optional
         Noise standard deviation. If provided, coefficients are divided by this value
         to compute an SNR before binning. Default is None.
+    min_snr_coarse : float, optional
+        Minimum value for binning the coarse (last) scale coefficients.
+        If None, uses `min_snr` or the minimum value in the coefficients for the coarse scale.
+        The coarse scale typically contains only positive values.
+    max_snr_coarse : float, optional
+        Maximum value for binning the coarse (last) scale coefficients.
+        If None, uses `max_snr` or the maximum value in the coefficients for the coarse scale.
 
     Returns
     -------
@@ -736,8 +745,26 @@ def get_wtl1_sphere(
             ScaleCoeffs = ScaleCoeffs[Mask != 0]
 
         # Set the minimum and maximum values based on inputs or defaults
-        current_min_val = min_snr if min_snr is not None else np.min(ScaleCoeffs)
-        current_max_val = max_snr if max_snr is not None else np.max(ScaleCoeffs)
+        # For the last (coarse) scale, use coarse-specific parameters if provided
+        is_coarse_scale = (i == nscales - 1)
+        if is_coarse_scale:
+            # Use coarse scale parameters, falling back to regular parameters, then to data
+            if min_snr_coarse is not None:
+                current_min_val = min_snr_coarse
+            elif min_snr is not None:
+                current_min_val = min_snr
+            else:
+                current_min_val = np.min(ScaleCoeffs)
+
+            if max_snr_coarse is not None:
+                current_max_val = max_snr_coarse
+            elif max_snr is not None:
+                current_max_val = max_snr
+            else:
+                current_max_val = np.max(ScaleCoeffs)
+        else:
+            current_min_val = min_snr if min_snr is not None else np.min(ScaleCoeffs)
+            current_max_val = max_snr if max_snr is not None else np.max(ScaleCoeffs)
 
         # Define thresholds and bins
         thresholds = np.linspace(current_min_val, current_max_val, nbins + 1)
