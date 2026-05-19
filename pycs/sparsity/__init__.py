@@ -4,4 +4,4 @@ This module contains submodules for sparsity.
 
 """
 
-__all__ = ["mrs", "sparse2d"]
+__all__ = ["mrs", "sparse2d", "sparse3d"]
