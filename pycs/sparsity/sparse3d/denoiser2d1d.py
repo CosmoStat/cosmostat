@@ -6,119 +6,60 @@ from pycs.sparsity.sparse3d.wavelet2d1d_transform import Wavelet2D1DTransform
 
 class Denoiser2D1D(object):
     """
-    Advanced 3D Spectral Cube Denoiser using 2D-1D Multi-Scale Wavelets
+    3D spectral cube denoiser using a 2D-1D undecimated wavelet transform.
 
-    This class implements sophisticated denoising algorithms for IFU spectral cubes
-    using a hybrid 2D-1D wavelet decomposition. The approach combines spatial and
-    spectral information to achieve superior noise reduction while preserving both
-    morphological and kinematic features.
+    Denoises IFU data cubes under the additive noise model Y = X + N by
+    decomposing each cube into 2D spatial (starlet) scales cross 1D spectral
+    scales, thresholding insignificant wavelet coefficients, and reconstructing
+    the cleaned cube.
 
-    The denoising framework assumes an additive noise model:
-        Y = X + N
-    where Y is the observed noisy cube, X is the true signal, and N is the noise.
+    Two thresholding strategies are available, selected at construction time:
 
-    Available Denoising Methods:
-    ---------------------------
-    1. Iterative Hard: Multiple iterations with binary (hard) thresholding
-    2. Iterative Soft: Multiple iterations and re-weighting with adaptive (soft) thresholding
+    * ``threshold_type='hard'`` — Iterative Hard Thresholding (IHT).
+      A single threshold pass establishes the signal support; subsequent
+      iterations extract additional signal from the residual within that
+      support (L0 debias).  Sharp features and faint wings are preserved
+      without flux bias from shrinkage.
 
-    The iterative methods use advanced techniques:
-    - Adaptive re-weighting to reduce bias from soft thresholding
-    - Residual signal extraction to recover previously missed features
-    - Plateau-based convergence criteria for robust stopping
+    * ``threshold_type='soft'`` — Iterative Soft Thresholding (IST).
+      Adaptive reweighting drives the effective threshold toward zero for
+      bright coefficients over successive iterations (IRLS / reweighted
+      L1), followed by a weighted L1 debias pass to recover flux lost to
+      soft-shrinkage.  Produces smoother reconstructions than IHT.
 
-    Key Advantages:
-    --------------
-    - Preserves spatial morphology through 2D starlet decomposition
-    - Maintains spectral line profiles via 1D wavelet analysis
-    - Adapts thresholds to local noise characteristics
-    - Recovers faint emission through iterative refinement
-    - Supports both synthetic and observational noise modeling
+    Both methods apply the finest-scale threshold increment
+    (``threshold_increment_high_freq``) to the noisiest spatial band
+    (scale2d == 0) and share the same plateau-based convergence test.
 
-    Typical Applications:
-    --------------------
-    - ALMA/JWST IFU observations with low SNR
-    - High-redshift galaxy emission line recovery
-    - Continuum-subtracted line cube cleaning
-    - Kinematic analysis preprocessing
-    - Extended emission detection enhancement
+    Parameters
+    ----------
+    threshold_type : {'soft', 'hard'}
+        Thresholding strategy.  Default ``'soft'``.
+    verbose : bool
+        Print iteration-by-iteration diagnostics.  Default ``True``.
+    plot : bool
+        Show diagnostic plots during processing.  Default ``False``.
 
     Attributes
     ----------
     mr2d1d : Wavelet2D1DTransform
-        The wavelet transform object for decomposition/reconstruction
-    _threshold_type : str
-        Thresholding strategy ('soft' or 'hard')
-    _verbose : bool
-        Controls progress reporting and diagnostics
-    _plot : bool
-        Enables diagnostic plotting during processing
-
-    Methods
-    -------
-    denoise(x, y, method='simple', **kwargs)
-        Main denoising interface with multiple algorithm options
-    __call__(*args, **kwargs)
-        Convenience alias for denoise() method
-
-    Private Methods
-    ---------------
-
-    _denoise_iterative_hard(**kwargs)
-        Multi-iteration hard thresholding with L0 regularization
-    _denoise_iterative_soft(**kwargs)
-        Multi-iteration soft thresholding with adaptive reweighting
-    _generate_hard_threshold_mask(coeffs, thresh, noise_level)
-        Create binary masks for hard thresholding
-    _residual_signal_extraction_l0/l1(...)
-        Extract additional signal from residuals
-    _apply_positivity(arr)
-        Apply positivity constraint when enabled; return arr unchanged otherwise
-    _estimate_noise(array)
-        Robust noise estimation using median absolute deviation
-    _compute_emission_rmse(model)
-        Calculate reconstruction error in emission regions
+        Underlying 2D-1D wavelet engine (pysparse MR2D1D wrapper).
     """
 
     def __init__(self, threshold_type='soft', verbose=True, plot=False):
         """
-        Initialize the 3D denoising framework with specified parameters.
-
-        Sets up the wavelet transform object and configures algorithm parameters
-        for subsequent denoising operations. The choice of threshold type determines
-        which iterative algorithms are available.
-
         Parameters
         ----------
-        threshold_type : str, optional
-            Thresholding strategy for coefficient processing, by default 'soft'.
-            Options:
-            - 'soft': Shrink coefficients by threshold amount (preserves gradients)
-            - 'hard': Set coefficients below threshold to zero (creates sparsity)
-            Soft thresholding generally produces smoother results but may over-smooth.
-            Hard thresholding preserves sharp features but can introduce artifacts.
-        verbose : bool, optional
-            Enable detailed progress reporting and diagnostics, by default True.
-            When True, prints iteration progress, convergence status, flux measurements,
-            and algorithm-specific information during processing.
-        plot : bool, optional
-            Enable diagnostic plotting during denoising, by default False.
-            When True, displays:
-            - Coefficient distributions before/after thresholding
-            - Iteration-by-iteration reconstruction progress
-            - Residual analysis and signal extraction visualization
-            - Final comparison plots (original/denoised/residual)
-            Useful for algorithm development and result validation.
-
-        Notes
-        -----
-        The wavelet transform object is created with default parameters and can
-        handle cubes with dimensions up to the limits of available memory.
-        Transform parameters are automatically configured based on input cube
-        dimensions during the first call to denoise().
-
-        For large cubes (>1GB), consider setting verbose=False to reduce I/O
-        overhead during processing.
+        threshold_type : {'soft', 'hard'}
+            ``'hard'`` — binary hard threshold; preserves sharp features without
+            shrinkage bias.  ``'soft'`` — shrinks coefficients toward zero;
+            produces smoother results via adaptive reweighting.  Default ``'soft'``.
+        verbose : bool
+            Print per-iteration diagnostics (flux, residual STD, convergence
+            status).  Default ``True``.
+        plot : bool
+            Display diagnostic plots during processing (coefficient histograms,
+            per-iteration reconstructions, final comparison).  Default ``False``.
         """
         # Initialize the 2D-1D wavelet transform engine
         self.mr2d1d = Wavelet2D1DTransform()
@@ -129,18 +70,7 @@ class Denoiser2D1D(object):
         self._plot = plot
 
     def __call__(self, *args, **kwargs):
-        """
-        Convenience method to call denoise() directly on the object.
-
-        Allows using the denoiser object as a function:
-        denoiser(cube, signal, method='iterative')
-
-        This is equivalent to denoiser.denoise(cube, signal, method='iterative')
-
-        Returns
-        -------
-        Denoised cube or tuple of results depending on method used.
-        """
+        """Alias for :meth:`denoise`."""
         return self.denoise(*args, **kwargs)
 
     def denoise(self, x, y, method='iterative', threshold_level=3,
@@ -148,132 +78,77 @@ class Denoiser2D1D(object):
                 num_scales_1d=None, noise_cube=None, emission_mask=None,
                 positivity=False, positivity_final=False, **kwargs_method):
         """
-        Denoise a 3D spectral cube using advanced 2D-1D wavelet techniques.
-
-        This is the main interface for all denoising algorithms. The method applies
-        multi-scale wavelet decomposition followed by intelligent thresholding to
-        remove noise while preserving both spatial morphology and spectral features.
-
-        The algorithm automatically determines optimal scale numbers if not specified,
-        adapts thresholds to noise characteristics, and can incorporate ground truth
-        for algorithm validation and noise modeling.
+        Denoise a 3D spectral cube with 2D-1D wavelet thresholding.
 
         Parameters
         ----------
         x : np.ndarray, shape (nz, ny, nx)
-            Input noisy data cube. The spectral/frequency axis must be first (axis=0),
-            followed by spatial dimensions. Each x[i,:,:] is a 2D image at wavelength i.
+            Noisy input cube; spectral axis first.
         y : np.ndarray, shape (nz, ny, nx)
-            Clean signal cube (ground truth) with same shape as x.
-            Used for algorithm validation, noise modeling, and performance assessment.
-            In real observations, this would be unknown - here used for synthetic testing.
-        method : str, optional
-            Denoising algorithm to use, by default 'simple'.
-            Options:
-            - 'simple': Single-iteration thresholding (fast, good for high SNR)
-            - 'iterative': Multi-iteration adaptive algorithm (slower, better for low SNR)
-              For iterative method, the specific algorithm depends on threshold_type:
-              * 'hard' → Iterative hard thresholding with L0 regularization
-              * 'soft' → Iterative soft thresholding with adaptive reweighting
-        threshold_level : float, optional
-            Base threshold level in noise standard deviations, by default 3.
-            Typical range: 2-5 for 2-5σ detection significance.
-            Lower values preserve more signal but retain more noise.
-            Higher values create cleaner results but may remove faint features.
-        threshold_increment_high_freq : float, optional
-            Additional threshold increment for highest frequency scales, by default 2.
-            These scales typically contain pure noise and benefit from higher thresholds.
-            Final threshold = threshold_level + threshold_increment_high_freq for finest scales.
+            Reference cube used for verbose flux comparisons and plot limits.
+            For real observations with no ground truth, pass ``x``.
+        method : {'simple', 'iterative'}
+            ``'simple'`` — single hard-threshold pass (fast).
+            ``'iterative'`` — multi-iteration algorithm selected by
+            ``threshold_type``: IHT for ``'hard'``, IST for ``'soft'``.
+            Default ``'iterative'``.
+        threshold_level : float
+            Detection threshold in units of per-band noise σ.  Default ``3``.
+        threshold_increment_high_freq : float
+            Extra threshold added at the finest 2D scale (scale2d == 0),
+            which carries the largest noise fraction.  Default ``2``.
         num_scales_2d : int, optional
-            Number of 2D spatial starlet scales, by default None (auto-determined).
-            If None, uses maximum: int(log2(min(ny, nx))).
-            Range: 2 to maximum allowed by image dimensions.
-            More scales capture finer spatial details but increase computation.
+            Spatial starlet scales.  Auto-set to ``floor(log2(min(ny, nx)))``
+            when ``None`` or out of range.
         num_scales_1d : int, optional
-            Number of 1D spectral wavelet scales, by default None (auto-determined).
-            If None, uses maximum: int(log2(nz)).
-            Range: 2 to maximum allowed by spectral dimensions.
-            More scales capture narrower spectral features but increase computation.
+            Spectral wavelet scales.  Auto-set to ``floor(log2(nz))`` when
+            ``None`` or out of range.
         noise_cube : np.ndarray, shape (nz, ny, nx), optional
-            Independent noise realization with same shape as input, by default None.
-            If provided, used to accurately estimate noise levels in each wavelet sub-band.
-            If None, noise levels estimated from the data using robust statistics.
-            Recommended for synthetic data where true noise is known.
+            Independent noise realization.  When provided, per-band noise
+            levels are estimated from this cube (unbiased std per band)
+            instead of via MAD on the data coefficients.
         emission_mask : np.ndarray, shape (nz, ny, nx), optional
-            Binary mask indicating emission regions (1=emission, 0=background), by default None.
-            If None, creates mask of all ones (assumes entire cube contains signal).
-            Used for targeted error calculation and emission-focused denoising.
-            Particularly useful for line emission cubes with known source extent.
-        positivity : bool, optional
-            Whether to enforce non-negativity on the reconstructed model, by default True.
-            Set to True for emission-only sources where negative flux is unphysical.
-            Set to False when the data may contain absorption features or is mean-subtracted.
-        **kwargs_method : dict
-            Additional keyword arguments passed to specific denoising methods:
+            Binary mask (1 = emission) used by ``_compute_emission_rmse``.
+            Defaults to all-ones (whole cube treated as emission).
+        positivity : bool
+            Clip reconstructed model to non-negative values after each
+            iteration.  Appropriate for pure-emission sources; leave
+            ``False`` for mean-subtracted or absorption-containing data.
+            Default ``False``.
+        positivity_final : bool
+            Apply a single non-negativity clip to the final model only,
+            without affecting intermediate iterations.  Default ``False``.
+        **kwargs_method
+            Passed through to the selected algorithm:
 
-            For method='iterative' with threshold_type='hard':
-            - num_iter : int, default 20
-                Number of hard thresholding iterations
+            IHT (``threshold_type='hard'``, ``method='iterative'``):
+              ``num_iter`` (int, default 20), ``patience`` (int, default 3)
 
-            For method='iterative' with threshold_type='soft':
-            - num_iter_reweight : int, default 20
-                Number of reweighting iterations
-            - num_iter_debias : int, default 20
-                Number of debiasing iterations
-            - debias : bool, default True
-                Whether to perform debiasing step
+            IST (``threshold_type='soft'``, ``method='iterative'``):
+              ``num_iter_reweight`` (int, default 20),
+              ``num_iter_debias`` (int, default 20),
+              ``patience`` (int, default 3)
 
         Returns
         -------
-        result : np.ndarray or tuple
-            Denoised results. Return format depends on method:
+        tuple
+            For ``method='simple'``:
+              ``(model, noise_levels)``
 
-            For method='simple':
-                np.ndarray, shape (nz, ny, nx) : Denoised cube
+            For ``method='iterative'``, ``threshold_type='hard'``:
+              ``(best_model, deltas, residual_stds, best_iteration, noise_levels)``
 
-            For method='iterative':
-                tuple with multiple outputs depending on threshold_type:
-
-                Hard thresholding returns:
-                - best_model : Denoised cube at best iteration
-                - deltas : Accumulated residual signals extracted
-                - residual_stds : Standard deviation history per iteration
-                - best_iteration : Iteration number of best result
-                - noise_levels : Noise estimates per wavelet sub-band
-
-                Soft thresholding returns:
-                - best_model : Final denoised cube
-                - model_1_step : Result after first reweighting phase
-                - model_no_reweight : Result without reweighting
-                - deltas : Accumulated residual signals from debiasing
-                - residual_stds_reweight : Residual history during reweighting
-                - residual_stds_debias : Residual history during debiasing
-                - best_iteration : Iteration of best result
-                - dists : Selected coefficient distributions for diagnostics
-                - noise_levels : Noise level estimates per sub-band
+            For ``method='iterative'``, ``threshold_type='soft'``:
+              ``(best_model, model_1_step, model_no_reweight, deltas,
+              residual_stds_reweight, residual_stds_debias,
+              best_iteration, dists, noise_levels)``
 
         Raises
         ------
         ValueError
-            If method is not 'simple' or 'iterative'
+            If ``method`` is not ``'simple'`` or ``'iterative'``.
         AssertionError
-            If noise_cube provided but shape doesn't match input x
-
-        Notes
-        -----
-        Processing Time:
-        - Simple method: ~10-30 seconds for 100³ cube
-        - Iterative method: ~2-10 minutes depending on iterations and convergence
-
-        Memory Requirements:
-        - Peak usage ~4-5x input cube size during transform operations
-        - Coefficient storage ~1.5x input cube size
-
-        Algorithm Selection Guide:
-        - High SNR (>10): Simple method often sufficient
-        - Low SNR (<5): Iterative soft thresholding recommended
-        - Preserving sharp features: Hard thresholding
-        - Smooth reconstruction: Soft thresholding
+            If ``noise_cube`` shape does not match ``x``.
         """
 
         # Validate and set default number of 2D decomposition scales
@@ -299,8 +174,6 @@ class Denoiser2D1D(object):
         # Initialise settings for the denoiser
         self._data = x
         self._signal = y
-        self._num_bands = self._data.shape[0]
-        self._num_pixels = self._data.shape[1] * self._data.shape[2]
         self._num_scales_2d = num_scales_2d
         self._num_scales_1d = num_scales_1d
         self._threshold_level = float(threshold_level)
@@ -319,8 +192,10 @@ class Denoiser2D1D(object):
             if self._verbose:   print('\n--- [ PERFORMING ITERATIVE DENOISING ] ---\n')
             if self._threshold_type == 'hard':
                 result = self._denoise_iterative_hard(**kwargs_method)
-            if self._threshold_type == 'soft':
+            elif self._threshold_type == 'soft':
                 result = self._denoise_iterative_soft(**kwargs_method)
+            else:
+                raise ValueError(f"threshold_type '{self._threshold_type}' is not supported")
         else:
             raise ValueError(f"Denoising method '{method}' is not supported")
 
@@ -425,12 +300,11 @@ class Denoiser2D1D(object):
         See Also
         --------
         _denoise_iterative_hard : Multi-iteration extension of this approach.
-        _generate_hard_threshold_mask : Binary mask construction.
         """
         if self._verbose:
             print('(*) Decomposing data and estimating per-band noise levels')
 
-        inds, shapes, w_data, noise_levels = self._decompose_and_estimate_noise()
+        inds, _, w_data, noise_levels = self._decompose_and_estimate_noise()
         if self._verbose:
             src = 'noise cube (std)' if self._noise is not None else 'data (MAD)'
             print(f'    Noise estimated from {src} across {len(noise_levels)} sub-bands')
@@ -444,9 +318,7 @@ class Denoiser2D1D(object):
                 if scale2d == self._num_scales_2d - 1 and scale1d == self._num_scales_1d - 1:
                     continue  # leave coarse approximation band untouched
                 thresh = self._threshold_level + (self._thresh_increm if scale2d == 0 else 0)
-                mask_coeff[start:end] = self._generate_hard_threshold_mask(
-                    w_data[start:end], thresh, noise_levels[i]
-                )
+                mask_coeff[start:end] = np.abs(w_data[start:end]) > thresh * noise_levels[i]
                 i += 1
 
         # Save coarse band before masking then restore it after — the mask loop leaves
@@ -527,7 +399,7 @@ class Denoiser2D1D(object):
         if iteration == 0:
             if self._verbose: print('(*) Decomposing residual into wavelet scales')
 
-        inds, shapes, w_residual = self.mr2d1d.decompose(
+        inds, _, w_residual = self.mr2d1d.decompose(
             residual, self._num_scales_2d, self._num_scales_1d
         )
 
@@ -842,9 +714,9 @@ class Denoiser2D1D(object):
         if iteration == 0:
             if self._verbose: print('(*) Decomposing residual into wavelet scales')
 
-        inds, shapes, w_residual = self.mr2d1d.decompose(residual,
-                                                            self._num_scales_2d,
-                                                            self._num_scales_1d)
+        inds, _, w_residual = self.mr2d1d.decompose(residual,
+                                                         self._num_scales_2d,
+                                                         self._num_scales_1d)
 
         if iteration == 0:
             if self._verbose: print('(*) Performing weighted de-biasing with previously calculated weights')
@@ -923,44 +795,56 @@ class Denoiser2D1D(object):
 
         return model, delta
 
-    def _denoise_iterative_soft(self, num_iter_reweight=20, num_iter_debias=20, debias=True, patience=3):
+    def _denoise_iterative_soft(self, num_iter_reweight=20, num_iter_debias=20, patience=3):
         """
-        Perform iterative soft-thresholding denoising on the 3D data cube.
+        Iterative Soft Thresholding (IST) with adaptive reweighting and L1 debias.
 
-        This method applies multiple re-weighting iterations followed by an optional
-        debiasing step to recover the underlying signal from noisy data. It uses a
-        2D-1D multiscale wavelet decomposition for denoising, adaptive thresholding,
-        and plateau-based convergence criteria.
+        Phase 1 — reweighted IST: iterates weighted soft-thresholding on the
+        data coefficients.  Weights are updated each iteration as
+        ``thresh·σ / (|c_model| + ε)``, driving the effective threshold
+        toward zero for bright, previously-detected coefficients (IRLS).
+        The finest 2D scale (scale2d == 0) always uses
+        ``threshold_level + threshold_increment_high_freq`` to suppress
+        spurious noise peaks from being reweighted to full amplitude.
+
+        Phase 2 — L1 debias: iteratively extracts residual signal within the
+        detected support using weighted soft-thresholding on the residual
+        coefficients, recovering flux lost to soft-shrinkage in Phase 1.
+
+        Both phases use plateau-based convergence (``patience`` consecutive
+        iterations with relative residual-STD change ≤ ε).
 
         Parameters
         ----------
-        num_iter_reweight : int, optional
-            Number of iterations for the re-weighting denoising step (default is 20).
-        num_iter_debias : int, optional
-            Number of iterations for the debiasing step to extract residual signal (default is 20).
-        debias : bool, optional
-            Whether to perform the debiasing step (default is True).
+        num_iter_reweight : int
+            Maximum reweighting iterations.  Default 20.
+        num_iter_debias : int
+            Maximum debias iterations.  Default 20.
+        patience : int
+            Plateau patience: number of consecutive near-stable iterations
+            required to declare convergence.  Default 3.
 
         Returns
         -------
         best_model : np.ndarray
-            Final denoised model after all iterations.
+            Final denoised cube (best residual STD across debias iterations).
         model_1_step : np.ndarray
-            Model after the first re-weighted denoising iteration.
+            Model after the first reweight iteration (no adaptive weights yet).
         model_no_reweight : np.ndarray
-            Model obtained without re-weighting in the first iteration.
+            Model from the un-reweighted first pass (uniform weights).
         deltas : np.ndarray
-            Accumulated residual signals extracted during debiasing.
+            Accumulated delta cubes extracted during the debias phase.
         residual_stds_reweight : list of float
-            Standard deviations of residuals during the re-weighting step.
+            Residual STD at each reweight iteration.
         residual_stds_debias : list of float
-            Standard deviations of residuals during the debiasing step.
+            Residual STD at each debias iteration (empty when ``debias=False``).
         best_iteration : int
-            Iteration number where the best model (lowest residual std) was achieved.
+            Iteration index of the best model.
         dists : list of np.ndarray
-            Selected wavelet sub-band distributions for diagnostic purposes.
+            Coefficient distributions sampled at scale2d=5, scale1d=0 for
+            diagnostics.
         noise_levels : list of float
-            Estimated noise levels for each wavelet sub-band.
+            Per-sub-band noise σ estimates.
         """
         if self._verbose:
             print('----[ Denoising with ITERATIVE SOFT THRESHOLDING ]----')
@@ -972,7 +856,6 @@ class Denoiser2D1D(object):
             src = 'noise cube (std)' if self._noise is not None else 'data (MAD)'
             print(f'    Noise estimated from {src} across {len(noise_levels)} sub-bands')
 
-        self.mean, self.std = np.mean(self._data), np.std(self._data)
         model = self._data.copy()
         thresh = self._threshold_level
 
@@ -987,13 +870,15 @@ class Denoiser2D1D(object):
         for scale2d in range(self._num_scales_2d):
             for scale1d in range(self._num_scales_1d):
                 start, end = inds[scale2d][scale1d]
-                if (scale2d == 5) and (scale1d == 0):
+                if (scale2d == self._num_scales_2d - 2) and (scale1d == 0):
                     dists.append(w_data_fixed[start:end])
 
         converged_reweight = False
         global_min_residual_std_rw = np.inf
         global_best_model_rw = None
         global_best_iteration_rw = 0
+        global_best_mask_coeff = None
+        global_best_all_weights = None
         for p in range(p_init, -1, -1):
             if self._verbose:
                 print(f'\n[*] Trying with plateau condition: {p} consecutive stable residuals needed for convergence')
@@ -1002,7 +887,6 @@ class Denoiser2D1D(object):
             previous_residual_std = 1e-33
             epsilon = 1e-3
 
-            flux_history = []
             residual_stds_reweight = []
 
             for iteration in range(num_iter_reweight):
@@ -1025,7 +909,7 @@ class Denoiser2D1D(object):
                     print('(*) Thresholding noisy data with updated adaptive weights (ISTA proximal step)')
                     print('(*) Calculating weights to account for soft-thresholding bias')
 
-                w_data_copy = w_data.copy()
+                w_data_copy = w_data.copy() if self._plot else None
                 mask_coeff = np.zeros_like(w_data, dtype=bool)
                 all_weights = np.ones_like(w_data)
 
@@ -1042,8 +926,6 @@ class Denoiser2D1D(object):
 
                         noise_level = noise_levels[i]
 
-                        noise_level_weight = self._estimate_noise(w_data_weights[start:end])
-
                         # Apply the same high-frequency increment as IHT: finest 2D scale
                         # (scale2d==0) is the noisiest; a higher threshold here prevents
                         # spurious noise peaks from being reweighted to full amplitude.
@@ -1054,6 +936,7 @@ class Denoiser2D1D(object):
                             weights = np.ones_like(c_data)
                         else:
                             # Epsilon scaled to noise prevents weight blow-up for near-zero coefficients
+                            noise_level_weight = self._estimate_noise(w_data_weights[start:end])
                             weights = thresh * noise_level_weight / (
                                 np.abs(w_data_weights[start:end]) + noise_level_weight * 1e-6
                             )
@@ -1071,14 +954,11 @@ class Denoiser2D1D(object):
 
                         i += 1
 
-                        if (scale2d == 5) and (scale1d == 0):
+                        if (scale2d == self._num_scales_2d - 2) and (scale1d == 0):
                             dists.append(w_data[start:end])
 
                         if self._plot:
                             if (scale2d==5) and (scale1d==0):
-
-                                denosied_dist = w_data[start:end]
-                                threshold_noise = thresh * noise_level
 
                                 bins = np.linspace(w_data_copy[start:end].min(), w_data_copy[start:end].max(),100)
 
@@ -1099,13 +979,13 @@ class Denoiser2D1D(object):
                         if self._verbose: print('(*) Reconstructing the new signal coefficients into the real space')
 
                 model_denoised = self.mr2d1d.reconstruct(np.ascontiguousarray(w_data, dtype=np.float32))
-                model_print = self.mr2d1d.reconstruct(np.ascontiguousarray(w_data_copy, dtype=np.float32))
 
                 if iteration==0:
                         if self._verbose: print('(*) Applying the positivity constraint')
                 model_denoised = self._apply_positivity(model_denoised)
 
                 if self._plot:
+                    model_print = self.mr2d1d.reconstruct(np.ascontiguousarray(w_data_copy, dtype=np.float32))
                     plt.figure(figsize = (15,12))
                     plt.subplot(221)
                     plt.imshow(model_print[iz], cmap = 'RdBu_r',  vmin=self._data[iz].min(), vmax=self._data[iz].max())
@@ -1151,6 +1031,8 @@ class Denoiser2D1D(object):
                     global_min_residual_std_rw = residual_std
                     global_best_model_rw = model.copy()
                     global_best_iteration_rw = iteration + 1
+                    global_best_mask_coeff = mask_coeff.copy()
+                    global_best_all_weights = all_weights.copy()
 
                 if p > 0:
                     if abs(residual_std - previous_residual_std) / previous_residual_std <= epsilon:
@@ -1179,6 +1061,8 @@ class Denoiser2D1D(object):
 
         best_model = global_best_model_rw if global_best_model_rw is not None else model
         best_iteration = global_best_iteration_rw
+        mask_coeff = global_best_mask_coeff if global_best_mask_coeff is not None else mask_coeff
+        all_weights = global_best_all_weights if global_best_all_weights is not None else all_weights
 
         if not converged_reweight:
             if self._verbose:
@@ -1221,7 +1105,6 @@ class Denoiser2D1D(object):
                 if self._verbose:
                     print(f"(*) Aperture Flux: {aperture_flux:.3e}, Residual STD: {residual_std:.3e}")
 
-                flux_history.append(aperture_flux)
                 residual_stds_debias.append(residual_std)
 
                 if residual_std < global_min_residual_std_db:
